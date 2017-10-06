@@ -26,7 +26,7 @@ import scala.concurrent.Future
 
 @Singleton
 class KycController @Inject()(override val authConnector: AuthConnector) extends Controller with AuthActions {
-	def authorisedForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
+	def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
 		Future successful NoContent
 	}
 }

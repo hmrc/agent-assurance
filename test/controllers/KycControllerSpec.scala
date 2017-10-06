@@ -49,7 +49,7 @@ class KycControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSu
     "return NO_CONTENT where the current user is enrolled in IR-SA-AGENT" in {
       when(authConnector.authorise(any[Predicate],any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
 
-      val response = controller.authorisedForIrSAAgent()(FakeRequest())
+      val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
       status(response) mustBe NO_CONTENT
     }
@@ -57,7 +57,7 @@ class KycControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSu
     "return FORBIDDEN where the current user is not enrolled in IR-SA-AGENT" in {
       when(authConnector.authorise(any[Predicate],any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithoutIrSAAgent))
 
-      val response = controller.authorisedForIrSAAgent()(FakeRequest())
+      val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
       status(response) mustBe FORBIDDEN
     }

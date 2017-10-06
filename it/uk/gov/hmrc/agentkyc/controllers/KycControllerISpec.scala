@@ -32,7 +32,7 @@ class KycControllerISpec extends PlaySpec with MockitoSugar with GuiceOneAppPerS
     "return Status: OK Body: empty" in {
       when(authConnector.authorise(any[Predicate],any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enr))
 
-      val response = controller.authorisedForIrSAAgent()(FakeRequest())
+      val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
       status(response) mustBe NO_CONTENT
     }
