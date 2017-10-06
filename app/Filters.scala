@@ -18,11 +18,14 @@ import javax.inject.Inject
 
 import akka.stream.Materializer
 import com.kenshoo.play.metrics.MetricsFilter
-import play.api.Configuration
 import play.api.http.DefaultHttpFilters
-import uk.gov.hmrc.http.hooks.HttpHooks
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.auth.core.PlayAuthConnector
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.hooks.{HttpHook, HttpHooks}
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.http.ws.WSPost
 import uk.gov.hmrc.play.microservice.filters.{AuditFilter, LoggingFilter}
 
 import scala.concurrent.ExecutionContext
@@ -54,4 +57,11 @@ class Hooks @Inject()(implicit  val configuration: Configuration) extends HttpHo
   override val hooks = Seq(AuditingHook)
   override lazy val auditConnector: AuditConnector = new MicroserviceAuditConnector(configuration)
   override def appName: String = configuration.getString("appName").get
+}
+
+class MicroserviceAuthConnector (val configuration: Configuration, val environment: Environment) extends PlayAuthConnector with ServicesConfig {
+  override val serviceUrl: String = baseUrl("auth")
+  lazy val http = new HttpPost with WSPost {
+    override val hooks: Seq[HttpHook] = NoneRequired
+  }
 }

@@ -4,7 +4,7 @@ import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 scalaVersion := "2.11.11"
 
 lazy val compileDeps = Seq(
-  "uk.gov.hmrc" %% "play-auth" % "2.4.2",
+  "uk.gov.hmrc" %% "auth-client" % "2.3.0",
   "uk.gov.hmrc" %% "logback-json-logger" % "3.1.0",
   "de.threedimensions" %% "metrics-play" % "2.5.13",
   "uk.gov.hmrc" %% "play-reactivemongo" % "6.1.0",
