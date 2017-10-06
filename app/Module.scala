@@ -24,6 +24,7 @@ import com.google.inject.AbstractModule
 import org.slf4j.MDC
 import play.api.inject.ApplicationLifecycle
 import play.api.{Configuration, Environment, Logger, Mode}
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.audit.http.config.{AuditingConfig, BaseUri, Consumer}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
@@ -40,6 +41,7 @@ class Module(environment: Environment, configuration: Configuration) extends Abs
     loggerDateFormat.foreach(str => MDC.put("logger.json.dateformat", str))
     bind(classOf[AuditConnector]).to(classOf[MicroserviceAuditConnector])
     bind(classOf[GraphiteStartUp]).asEagerSingleton()
+    bind(classOf[AuthConnector]).to(classOf[MicroserviceAuthConnector])
   }
 }
 

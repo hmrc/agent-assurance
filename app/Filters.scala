@@ -59,7 +59,7 @@ class Hooks @Inject()(implicit  val configuration: Configuration) extends HttpHo
   override def appName: String = configuration.getString("appName").get
 }
 
-class MicroserviceAuthConnector (val configuration: Configuration, val environment: Environment) extends PlayAuthConnector with ServicesConfig {
+class MicroserviceAuthConnector @Inject()(val configuration: Configuration, val environment: Environment) extends PlayAuthConnector with ServicesConfig {
   override val serviceUrl: String = baseUrl("auth")
   lazy val http = new HttpPost with WSPost {
     override val hooks: Seq[HttpHook] = NoneRequired

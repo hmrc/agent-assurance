@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package controllers
+package uk.gov.hmrc.agentkyc.controllers
 
 import javax.inject._
 
-import play.api.mvc.{Action, AnyContent, Controller}
+import play.api.mvc._
+import uk.gov.hmrc.agentkyc.auth.AuthActions
+import uk.gov.hmrc.auth.core.AuthConnector
+
+import scala.concurrent.Future
 
 @Singleton
-class HelloWorldController @Inject() extends Controller {
-
-	def helloWorld(): Action[AnyContent] = Action {
-		Ok("hello world!")
+class KycController @Inject()(override val authConnector: AuthConnector) extends Controller with AuthActions {
+	def authorisedForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
+		Future successful NoContent
 	}
 }

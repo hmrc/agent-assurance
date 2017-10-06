@@ -9,6 +9,7 @@ lazy val compileDeps = Seq(
   "de.threedimensions" %% "metrics-play" % "2.5.13",
   "uk.gov.hmrc" %% "play-reactivemongo" % "6.1.0",
   "uk.gov.hmrc" %% "microservice-bootstrap" % "6.9.0",
+  "uk.gov.hmrc" %% "domain" % "4.1.0",
   "org.typelevel" %% "cats" % "0.9.0"
 )
 
