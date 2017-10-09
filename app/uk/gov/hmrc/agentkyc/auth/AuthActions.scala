@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentkyc.auth
 
+import play.api.Logger
 import play.api.mvc._
 import uk.gov.hmrc.agentkyc.controllers.ErrorResults.NoPermission
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
@@ -23,6 +24,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals._
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+
 import scala.concurrent.Future
 
 trait AuthActions extends AuthorisedFunctions {
@@ -44,6 +46,10 @@ trait AuthActions extends AuthorisedFunctions {
             case Some(_) => body(request)
             case _ => Future successful NoPermission
           }
+      } recoverWith {
+        case ex: NoActiveSession =>
+          Logger.warn("NoActiveSession while trying to access check IR SA endpoint", ex)
+          Future.successful(Unauthorized)
       }
   }
 }

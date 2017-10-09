@@ -38,11 +38,16 @@ class KycControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSu
 
   implicit val hc = new HeaderCarrier
 
-  val agentEnrolment = Set(
-    Enrolment("IR-SA-AGENT", Seq(EnrolmentIdentifier("IRAgentReference", "123")), state = "activated", delegatedAuthRule = None)
+  val irSaAgentEnrolment = Set(
+    Enrolment("IR-SA-AGENT", Seq(EnrolmentIdentifier("IRAgentReference", "IRSA-123")), state = "activated", delegatedAuthRule = None)
   )
 
-  val enrolmentsWithIrSAAgent = Enrolments(agentEnrolment)
+  val hmrcAsAgentEnrolment = Set(
+    Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", "ARN123")), state = "activated", delegatedAuthRule = None)
+  )
+
+  val enrolmentsWithIrSAAgent = Enrolments(irSaAgentEnrolment)
+  val enrolmentsWithNoIrSAAgent = Enrolments(hmrcAsAgentEnrolment)
   val enrolmentsWithoutIrSAAgent = Enrolments(Set.empty)
 
   "KycController" should {
@@ -55,6 +60,14 @@ class KycControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSu
     }
 
     "return FORBIDDEN where the current user is not enrolled in IR-SA-AGENT" in {
+      when(authConnector.authorise(any[Predicate],any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithNoIrSAAgent))
+
+      val response = controller.enrolledForIrSAAgent()(FakeRequest())
+
+      status(response) mustBe FORBIDDEN
+    }
+
+    "return FORBIDDEN where the current user has no enrolments" in {
       when(authConnector.authorise(any[Predicate],any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithoutIrSAAgent))
 
       val response = controller.enrolledForIrSAAgent()(FakeRequest())
