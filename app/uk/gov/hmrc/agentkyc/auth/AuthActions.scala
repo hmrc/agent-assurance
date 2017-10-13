@@ -22,6 +22,7 @@ import uk.gov.hmrc.agentkyc.controllers.ErrorResults.NoPermission
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals._
+import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
@@ -35,15 +36,15 @@ trait AuthActions extends AuthorisedFunctions {
   private def getEnrolmentInfo(enrolment: Set[Enrolment], enrolmentKey: String, identifier: String): Option[String] =
     enrolment.find(_.key equals enrolmentKey).flatMap(_.identifiers.find(_.key equals identifier).map(_.value))
 
-  private type AuthorisedRequest = Request[AnyContent] => Future[Result]
+  private type AuthorisedRequestWithSaRef = Request[AnyContent] => SaAgentReference => Future[Result]
 
-  def AuthorisedIRSAAgent[A](body: AuthorisedRequest): Action[AnyContent] = Action.async {
+  def AuthorisedIRSAAgent[A](body: AuthorisedRequestWithSaRef): Action[AnyContent] = Action.async {
     implicit request =>
       implicit val hc = fromHeadersAndSession(request.headers, None)
       authorised(AuthProviders(GovernmentGateway)).retrieve(allEnrolments) {
         enrol =>
           getEnrolmentInfo(enrol.enrolments, "IR-SA-AGENT", "IRAgentReference") match {
-            case Some(_) => body(request)
+            case Some(saAgentRef) => body(request)(SaAgentReference(saAgentRef))
             case _ => Future successful NoPermission
           }
       } recoverWith {
