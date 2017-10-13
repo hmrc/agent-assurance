@@ -1,3 +1,5 @@
 # microservice specific routes
 
 GET        /irSaAgentEnrolment             @uk.gov.hmrc.agentkyc.controllers.KycController.enrolledForIrSAAgent()
+
+GET        /activeCesaRelationship/nino/:nino    @uk.gov.hmrc.agentkyc.controllers.KycController.activeCesaRelationship(nino: uk.gov.hmrc.domain.Nino)

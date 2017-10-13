@@ -20,13 +20,25 @@ import javax.inject._
 
 import play.api.mvc._
 import uk.gov.hmrc.agentkyc.auth.AuthActions
+import uk.gov.hmrc.agentkyc.connectors.DesConnector
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.Future
 
 @Singleton
-class KycController @Inject()(override val authConnector: AuthConnector) extends Controller with AuthActions {
-	def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
-		Future successful NoContent
-	}
+class KycController @Inject()(override val authConnector: AuthConnector, val desConnector: DesConnector) extends BaseController with AuthActions {
+  def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
+    implicit saAgentRef =>
+      Future successful NoContent
+  }
+
+  def activeCesaRelationship(nino: Nino): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
+    implicit saAgentRef =>
+      desConnector.getActiveCesaAgentRelationships(nino).flatMap { activeAgentIds =>
+        if (activeAgentIds.contains(saAgentRef)) Future successful NoContent else Future successful Forbidden
+      }
+  }
 }

@@ -10,6 +10,7 @@ lazy val compileDeps = Seq(
   "uk.gov.hmrc" %% "play-reactivemongo" % "6.1.0",
   "uk.gov.hmrc" %% "microservice-bootstrap" % "6.9.0",
   "uk.gov.hmrc" %% "domain" % "4.1.0",
+  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "2.4.0",
   "org.typelevel" %% "cats" % "0.9.0"
 )
 
@@ -48,7 +49,8 @@ lazy val root = (project in file("."))
     ),
     libraryDependencies ++= compileDeps ++ testDeps("test") ++ testDeps("it"),
     publishingSettings,
-    scoverageSettings
+    scoverageSettings,
+    routesImport ++= Seq("uk.gov.hmrc.agentkyc.binders.PathBinders._")
   )
   .configs(IntegrationTest)
   .settings(
