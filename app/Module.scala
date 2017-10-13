@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-import java.net.{InetSocketAddress, URL}
+import java.net.InetSocketAddress
 import java.util.concurrent.TimeUnit.{MILLISECONDS, SECONDS}
-import javax.inject.{Inject, Provider, Singleton}
+import javax.inject.{Inject, Singleton}
 
 import com.codahale.metrics.graphite.{Graphite, GraphiteReporter}
 import com.codahale.metrics.{MetricFilter, SharedMetricRegistries}
 import com.google.inject.AbstractModule
-import com.google.inject.name.Names
 import org.slf4j.MDC
 import play.api.inject.ApplicationLifecycle
 import play.api.{Configuration, Environment, Logger, Mode}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.HttpGet
 import uk.gov.hmrc.play.audit.http.config.{AuditingConfig, BaseUri, Consumer}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import wiring.WSVerbs
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class Module(val environment: Environment, val configuration: Configuration) extends AbstractModule with ServicesConfig {
+class Module(environment: Environment, configuration: Configuration) extends AbstractModule {
 
   def configure(): Unit = {
     lazy val appName = configuration.getString("appName").get
@@ -45,24 +42,6 @@ class Module(val environment: Environment, val configuration: Configuration) ext
     bind(classOf[AuditConnector]).to(classOf[MicroserviceAuditConnector])
     bind(classOf[GraphiteStartUp]).asEagerSingleton()
     bind(classOf[AuthConnector]).to(classOf[MicroserviceAuthConnector])
-    bind(classOf[HttpGet]).toInstance(new WSVerbs()(configuration))
-    bindBaseUrl("des")
-    bindProperty("des.environment", "des.environment")
-    bindProperty("des.authorizationToken", "des.authorization-token")
-  }
-
-  private def bindBaseUrl(serviceName: String) =
-    bind(classOf[URL]).annotatedWith(Names.named(s"$serviceName-baseUrl")).toProvider(new BaseUrlProvider(serviceName))
-
-  private class BaseUrlProvider(serviceName: String) extends Provider[URL] {
-    override lazy val get = new URL(baseUrl(serviceName))
-  }
-
-  private def bindProperty(objectName: String, propertyName: String) =
-    bind(classOf[String]).annotatedWith(Names.named(objectName)).toProvider(new PropertyProvider(propertyName))
-
-  private class PropertyProvider(confKey: String) extends Provider[String] {
-    override lazy val get = getConfString(confKey, throw new IllegalStateException(s"No value found for configuration property $confKey"))
   }
 }
 

@@ -16,29 +16,25 @@
 
 package controllers
 
-import org.mockito.ArgumentMatchers.{any, eq => eqs}
-import org.mockito.Mockito.{reset, times, verify, when}
-import org.scalatest.BeforeAndAfterEach
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
-import uk.gov.hmrc.agentkyc.connectors.DesConnector
 import uk.gov.hmrc.agentkyc.controllers.KycController
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
-import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
 
-class KycControllerSpec extends PlaySpec with MockitoSugar with BeforeAndAfterEach {
-  val desConnector = mock[DesConnector]
+class KycControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite {
   val authConnector =  mock[AuthConnector]
-
-  val controller = new KycController(authConnector, desConnector)
+  val controller = new KycController(authConnector)
 
   implicit val hc = new HeaderCarrier
 
@@ -54,96 +50,29 @@ class KycControllerSpec extends PlaySpec with MockitoSugar with BeforeAndAfterEa
   val enrolmentsWithNoIrSAAgent = Enrolments(hmrcAsAgentEnrolment)
   val enrolmentsWithoutIrSAAgent = Enrolments(Set.empty)
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
+  "KycController" should {
+    "return NO_CONTENT where the current user is enrolled in IR-SA-AGENT" in {
+      when(authConnector.authorise(any[Predicate],any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
 
-    reset(desConnector, authConnector)
-  }
+      val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
-  "KycController" when {
-    "enrolledForIrSAAgent is called" should {
-      "return NO_CONTENT where the current user is enrolled in IR-SA-AGENT" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
-
-        val response = controller.enrolledForIrSAAgent()(FakeRequest())
-
-        status(response) mustBe NO_CONTENT
-      }
-
-      "return FORBIDDEN where the current user is not enrolled in IR-SA-AGENT" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithNoIrSAAgent))
-
-        val response = controller.enrolledForIrSAAgent()(FakeRequest())
-
-        status(response) mustBe FORBIDDEN
-      }
-
-      "return FORBIDDEN where the current user has no enrolments" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithoutIrSAAgent))
-
-        val response = controller.enrolledForIrSAAgent()(FakeRequest())
-
-        status(response) mustBe FORBIDDEN
-      }
+      status(response) mustBe NO_CONTENT
     }
 
-    "activeCesaRelationship is called with a valid NINO that exists in CESA with the same IRAgentReference as the logged in user" should {
+    "return FORBIDDEN where the current user is not enrolled in IR-SA-AGENT" in {
+      when(authConnector.authorise(any[Predicate],any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithNoIrSAAgent))
 
-      "return NO_CONTENT where the current user is enrolled in IR-SA-AGENT" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-123"))))
+      val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
-
-        status(response) mustBe NO_CONTENT
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())
-      }
-
-      "return UNAUTHORIZED where the current user is not logged in" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.failed(new MissingBearerToken))
-
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
-
-        status(response) mustBe UNAUTHORIZED
-      }
-
-      "return FORBIDDEN where the current user is not enrolled in IR-SA-AGENT" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithNoIrSAAgent))
-
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
-
-        status(response) mustBe FORBIDDEN
-      }
-
-      "return FORBIDDEN where the current user has no enrolments" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithoutIrSAAgent))
-
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
-
-        status(response) mustBe FORBIDDEN
-      }
+      status(response) mustBe FORBIDDEN
     }
 
-    "activeCesaRelationship is called where the current user is enrolled in IR-SA-AGENT" should {
-      "return FORBIDDEN when called with a valid NINO that is not active in CESA" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())).thenReturn(Future.successful(Seq.empty))
+    "return FORBIDDEN where the current user has no enrolments" in {
+      when(authConnector.authorise(any[Predicate],any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithoutIrSAAgent))
 
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
+      val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
-        status(response) mustBe FORBIDDEN
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())
-      }
-
-      "return FORBIDDEN when called with a valid NINO that is active in CESA but with a different IRAgentReference to the logged in user" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-456"))))
-
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
-
-        status(response) mustBe FORBIDDEN
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())
-      }
+      status(response) mustBe FORBIDDEN
     }
   }
 }
