@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers
+package uk.gov.hmrc.agentassurance.controllers
 
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
@@ -23,8 +23,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
-import uk.gov.hmrc.agentkyc.connectors.DesConnector
-import uk.gov.hmrc.agentkyc.controllers.KycController
+import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
@@ -34,11 +33,11 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.Future
 
 
-class KycControllerSpec extends PlaySpec with MockitoSugar with BeforeAndAfterEach {
+class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with BeforeAndAfterEach {
   val desConnector = mock[DesConnector]
   val authConnector =  mock[AuthConnector]
 
-  val controller = new KycController(authConnector, desConnector)
+  val controller = new AgentAssuranceController(authConnector, desConnector)
 
   implicit val hc = new HeaderCarrier
 
@@ -60,7 +59,7 @@ class KycControllerSpec extends PlaySpec with MockitoSugar with BeforeAndAfterEa
     reset(desConnector, authConnector)
   }
 
-  "KycController" when {
+  "AgentAssuranceController" when {
     "enrolledForIrSAAgent is called" should {
       "return NO_CONTENT where the current user is enrolled in IR-SA-AGENT" in {
         when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))

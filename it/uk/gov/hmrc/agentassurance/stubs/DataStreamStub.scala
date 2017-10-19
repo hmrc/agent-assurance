@@ -1,4 +1,4 @@
-package uk.gov.hmrc.agentkyc.stubs
+package uk.gov.hmrc.agentassurance.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.scalatest.concurrent.Eventually

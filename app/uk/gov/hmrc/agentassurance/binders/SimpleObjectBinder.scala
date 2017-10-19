@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentkyc.controllers
+package uk.gov.hmrc.agentassurance.binders
 
-import play.api.libs.json.Json.toJson
-import play.api.libs.json.{JsValue, Json, Writes}
-import play.api.mvc.Results.Forbidden
+import play.api.mvc.PathBindable
 
-object ErrorResults {
-
-  case class ErrorBody(code: String, message: String)
-
-  implicit val errorBodyWrites = new Writes[ErrorBody] {
-    override def writes(body: ErrorBody): JsValue = Json.obj("code" -> body.code, "message" -> body.message)
+class SimpleObjectBinder[T](bind: String => T, unbind: T => String)(implicit m: Manifest[T]) extends PathBindable[T] {
+  override def bind(key: String, value: String): Either[String, T] = try {
+    Right(bind(value))
+  } catch {
+    case e: Throwable => Left(s"Cannot parse parameter '$key' with value '$value' as '${m.runtimeClass.getSimpleName}'")
   }
 
-  val NoPermission = Forbidden(toJson(ErrorBody("NO_PERMISSION", "The logged in user is not permitted to perform the operation.")))
+  def unbind(key: String, value: T): String = unbind(value)
 }

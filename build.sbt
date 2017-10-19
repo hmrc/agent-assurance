@@ -37,7 +37,7 @@ lazy val scoverageSettings = {
 
 lazy val root = (project in file("."))
   .settings(
-    name := "agent-kyc",
+    name := "agent-assurance",
     organization := "uk.gov.hmrc",
     scalaVersion := "2.11.11",
     PlayKeys.playDefaultPort := 9564,
@@ -50,7 +50,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= compileDeps ++ testDeps("test") ++ testDeps("it"),
     publishingSettings,
     scoverageSettings,
-    routesImport ++= Seq("uk.gov.hmrc.agentkyc.binders.PathBinders._")
+    routesImport ++= Seq("uk.gov.hmrc.agentassurance.binders.PathBinders._")
   )
   .configs(IntegrationTest)
   .settings(

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentkyc.auth
+package uk.gov.hmrc.agentassurance.auth
 
 import play.api.Logger
 import play.api.mvc._
-import uk.gov.hmrc.agentkyc.controllers.ErrorResults.NoPermission
+import uk.gov.hmrc.agentassurance.controllers.ErrorResults.NoPermission
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals._

@@ -14,10 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentkyc.binders
+package uk.gov.hmrc.agentassurance.controllers
 
-import uk.gov.hmrc.domain.Nino
+import play.api.libs.json.Json.toJson
+import play.api.libs.json.{JsValue, Json, Writes}
+import play.api.mvc.Results.Forbidden
 
-object PathBinders {
-  implicit object NinoBinder extends SimpleObjectBinder[Nino](Nino.apply, _.value)
+/**
+  * Created by paulhodgson on 19/10/2017.
+  */
+object ErrorResults {
+
+  case class ErrorBody(code: String, message: String)
+
+  implicit val errorBodyWrites = new Writes[ErrorBody] {
+    override def writes(body: ErrorBody): JsValue = Json.obj("code" -> body.code, "message" -> body.message)
+  }
+
+  val NoPermission = Forbidden(toJson(ErrorBody("NO_PERMISSION", "The logged in user is not permitted to perform the operation.")))
 }

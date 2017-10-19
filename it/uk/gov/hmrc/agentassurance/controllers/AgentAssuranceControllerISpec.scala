@@ -1,11 +1,11 @@
-package uk.gov.hmrc.agentkyc.controllers
+package uk.gov.hmrc.agentassurance.controllers
 
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.{WSClient, WSResponse}
-import uk.gov.hmrc.agentkyc.stubs.DesStubs
-import uk.gov.hmrc.agentkyc.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
+import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -13,7 +13,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 
-class KycControllerISpec extends IntegrationSpec with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with WireMockSupport {
+class AgentAssuranceControllerISpec extends IntegrationSpec with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with WireMockSupport {
   override implicit lazy val app: Application = appBuilder.build()
 
   protected def appBuilder: GuiceApplicationBuilder =
@@ -23,9 +23,9 @@ class KycControllerISpec extends IntegrationSpec with GuiceOneServerPerSuite wit
 
   implicit val hc = new HeaderCarrier
 
-  val irSaAgentEnrolmentUrl = s"http://localhost:$port/agent-kyc/irSaAgentEnrolment"
+  val irSaAgentEnrolmentUrl = s"http://localhost:$port/agent-assurance/irSaAgentEnrolment"
 
-  def irSaAgentEnrolmentUrl(nino: String) = s"http://localhost:$port/agent-kyc/activeCesaRelationship/nino/$nino"
+  def irSaAgentEnrolmentUrl(nino: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/nino/$nino"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 

@@ -1,4 +1,4 @@
-package uk.gov.hmrc.agentkyc.support
+package uk.gov.hmrc.agentassurance.support
 
 import java.net.URL
 

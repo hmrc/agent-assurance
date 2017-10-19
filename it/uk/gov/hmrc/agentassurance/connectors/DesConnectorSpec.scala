@@ -1,12 +1,13 @@
-package uk.gov.hmrc.agentkyc.connectors
+package uk.gov.hmrc.agentassurance.connectors
 
 import com.kenshoo.play.metrics.Metrics
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.bind
-import uk.gov.hmrc.agentkyc.stubs.{DataStreamStub, DesStubs}
-import uk.gov.hmrc.agentkyc.support.{MetricTestSupport, WireMockSupport}
+import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import uk.gov.hmrc.agentassurance.stubs.{DataStreamStub, DesStubs}
+import uk.gov.hmrc.agentassurance.support.{MetricTestSupport, WireMockSupport}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec

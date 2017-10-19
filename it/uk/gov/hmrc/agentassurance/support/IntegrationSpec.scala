@@ -1,4 +1,4 @@
-package uk.gov.hmrc.agentkyc.support
+package uk.gov.hmrc.agentassurance.support
 
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Millis, Seconds, Span}

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentkyc.controllers
+package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject._
 
 import play.api.mvc._
-import uk.gov.hmrc.agentkyc.auth.AuthActions
-import uk.gov.hmrc.agentkyc.connectors.DesConnector
+import uk.gov.hmrc.agentassurance.auth.AuthActions
+import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
@@ -29,7 +29,7 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 import scala.concurrent.Future
 
 @Singleton
-class KycController @Inject()(override val authConnector: AuthConnector, val desConnector: DesConnector) extends BaseController with AuthActions {
+class AgentAssuranceController @Inject()(override val authConnector: AuthConnector, val desConnector: DesConnector) extends BaseController with AuthActions {
   def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
     implicit saAgentRef =>
       Future successful NoContent

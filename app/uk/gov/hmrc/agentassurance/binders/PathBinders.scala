@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentkyc.binders
+package uk.gov.hmrc.agentassurance.binders
 
-import play.api.mvc.PathBindable
+import uk.gov.hmrc.domain.Nino
 
-class SimpleObjectBinder[T](bind: String => T, unbind: T => String)(implicit m: Manifest[T]) extends PathBindable[T] {
-  override def bind(key: String, value: String): Either[String, T] = try {
-    Right(bind(value))
-  } catch {
-    case e: Throwable => Left(s"Cannot parse parameter '$key' with value '$value' as '${m.runtimeClass.getSimpleName}'")
-  }
-
-  def unbind(key: String, value: T): String = unbind(value)
+object PathBinders {
+  implicit object NinoBinder extends SimpleObjectBinder[Nino](Nino.apply, _.value)
 }

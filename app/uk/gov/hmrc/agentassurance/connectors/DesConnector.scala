@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentkyc.connectors
+package uk.gov.hmrc.agentassurance.connectors
 
 import java.net.URL
 import javax.inject.{Inject, Named, Singleton}
