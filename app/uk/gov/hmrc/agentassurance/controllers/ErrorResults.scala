@@ -20,9 +20,6 @@ import play.api.libs.json.Json.toJson
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc.Results.Forbidden
 
-/**
-  * Created by paulhodgson on 19/10/2017.
-  */
 object ErrorResults {
 
   case class ErrorBody(code: String, message: String)
