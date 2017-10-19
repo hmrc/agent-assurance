@@ -11,7 +11,7 @@ To run the application execute
 sbt run
 ```
 
-Running locally, the services will run on http://localhost:9564
+Running locally, the services will run on http://localhost:9565
 
 #### Check for IRSAAgent enrolment for the current logged in user
 ```
@@ -39,12 +39,12 @@ Response Code(s)
 
 Assuming user is logged in locally with Agent affinity and IR-SA-AGENT enrollment with IRAgentReference of SA6012..
 ```
-curl -v -X GET   http://localhost:9564/agent-assurance/activeCesaRelationship/nino/AA123456A   -H 'authorization: Bearer XlLM91CY3hEHqHlrKX9N0QiipuC7OgyTZ/X4lZsBP7LjP1u/FTyg3BP6cBwPlI2mRKgg5SSYGc5YQV4ey85p4+kGWh90x366Iwc5dACuF/ME56mEsOk9zoM3xmXgD34UDcJvR2BEcijUSTzqB3fFrL8GXJCatRwgUb/Zd4VGpwo1TnU/CoN5cH3wc88qbn82'   -H 'cache-control: no-cache'   -H 'postman-token: 97bcf028-5bc5-b080-ac5f-0f7e7a383008'
+curl -v -X GET   http://localhost:9565/agent-assurance/activeCesaRelationship/nino/AA123456A   -H 'authorization: Bearer XlLM91CY3hEHqHlrKX9N0QiipuC7OgyTZ/X4lZsBP7LjP1u/FTyg3BP6cBwPlI2mRKgg5SSYGc5YQV4ey85p4+kGWh90x366Iwc5dACuF/ME56mEsOk9zoM3xmXgD34UDcJvR2BEcijUSTzqB3fFrL8GXJCatRwgUb/Zd4VGpwo1TnU/CoN5cH3wc88qbn82'   -H 'cache-control: no-cache'   -H 'postman-token: 97bcf028-5bc5-b080-ac5f-0f7e7a383008'
 Note: Unnecessary use of -X or --request, GET is already inferred.
 *   Trying 127.0.0.1...
-* Connected to localhost (127.0.0.1) port 9564 (#0)
+* Connected to localhost (127.0.0.1) port 9565 (#0)
 > GET /agent-assurance/activeCesaRelationship/nino/AA123456A HTTP/1.1
-> Host: localhost:9564
+> Host: localhost:9565
 > User-Agent: curl/7.47.0
 > Accept: */*
 > authorization: Bearer XlLM91CY3hEHqHlrKX9N0QiipuC7OgyTZ/X4lZsBP7LjP1u/FTyg3BP6cBwPlI2mRKgg5SSYGc5YQV4ey85p4+kGWh90x366Iwc5dACuF/ME56mEsOk9zoM3xmXgD34UDcJvR2BEcijUSTzqB3fFrL8GXJCatRwgUb/Zd4VGpwo1TnU/CoN5cH3wc88qbn82
@@ -59,12 +59,12 @@ Note: Unnecessary use of -X or --request, GET is already inferred.
 
 Assuming user is logged in locally with Agent affinity and IR-SA-AGENT enrollment with IRAgentReference of SA6012 but there is no active agent/client relationship in CESA:
 ```
-curl -v -X GET   http://localhost:9564/agent-assurance/activeCesaRelationship/nino/AB002913A   -H 'authorization: Bearer XlLM91CY3hEHqHlrKX9N0QiipuC7OgyTZ/X4lZsBP7LjP1u/FTyg3BP6cBwPlI2mRKgg5SSYGc5YQV4ey85p4+kGWh90x366Iwc5dACuF/ME56mEsOk9zoM3xmXgD34UDcJvR2BEcijUSTzqB3fFrL8GXJCatRwgUb/Zd4VGpwo1TnU/CoN5cH3wc88qbn82'   -H 'cache-control: no-cache'   -H 'postman-token: 97bcf028-5bc5-b080-ac5f-0f7e7a383008'
+curl -v -X GET   http://localhost:9565/agent-assurance/activeCesaRelationship/nino/AB002913A   -H 'authorization: Bearer XlLM91CY3hEHqHlrKX9N0QiipuC7OgyTZ/X4lZsBP7LjP1u/FTyg3BP6cBwPlI2mRKgg5SSYGc5YQV4ey85p4+kGWh90x366Iwc5dACuF/ME56mEsOk9zoM3xmXgD34UDcJvR2BEcijUSTzqB3fFrL8GXJCatRwgUb/Zd4VGpwo1TnU/CoN5cH3wc88qbn82'   -H 'cache-control: no-cache'   -H 'postman-token: 97bcf028-5bc5-b080-ac5f-0f7e7a383008'
 Note: Unnecessary use of -X or --request, GET is already inferred.
 *   Trying 127.0.0.1...
-* Connected to localhost (127.0.0.1) port 9564 (#0)
+* Connected to localhost (127.0.0.1) port 9565 (#0)
 > GET /agent-assurance/activeCesaRelationship/nino/AB002913A HTTP/1.1
-> Host: localhost:9564
+> Host: localhost:9565
 > User-Agent: curl/7.47.0
 > Accept: */*
 > authorization: Bearer XlLM91CY3hEHqHlrKX9N0QiipuC7OgyTZ/X4lZsBP7LjP1u/FTyg3BP6cBwPlI2mRKgg5SSYGc5YQV4ey85p4+kGWh90x366Iwc5dACuF/ME56mEsOk9zoM3xmXgD34UDcJvR2BEcijUSTzqB3fFrL8GXJCatRwgUb/Zd4VGpwo1TnU/CoN5cH3wc88qbn82
