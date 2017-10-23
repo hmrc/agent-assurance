@@ -1,6 +1,7 @@
 package uk.gov.hmrc.agentassurance.support
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import uk.gov.hmrc.domain.AgentCode
 
 trait BasicUserAuthStubs { WiremockAware =>
   def isNotLoggedIn = {
@@ -76,6 +77,22 @@ trait AgentAuthStubs extends BasicUserAuthStubs {
          |}
        """.stripMargin
     )))
+    this
+  }
+
+  def isLoggedInWithAgentCode(agentCode: AgentCode) = {
+    stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody(
+      s"""
+         |{
+         |  "agentCode" : "${agentCode.value}"
+         |}
+       """.stripMargin
+    )))
+    this
+  }
+
+  def isLoggedInWithoutAgentCode = {
+    stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody("{}")))
     this
   }
 }

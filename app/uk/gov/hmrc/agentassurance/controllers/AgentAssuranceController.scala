@@ -20,7 +20,7 @@ import javax.inject._
 
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
-import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import uk.gov.hmrc.agentassurance.connectors.{DesConnector, GovernmentGatewayConnector}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
@@ -29,7 +29,13 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 import scala.concurrent.Future
 
 @Singleton
-class AgentAssuranceController @Inject()(override val authConnector: AuthConnector, val desConnector: DesConnector) extends BaseController with AuthActions {
+class AgentAssuranceController @Inject()(
+ override val authConnector: AuthConnector,
+ val desConnector: DesConnector,
+ val governmentGatewayConnector: GovernmentGatewayConnector) extends BaseController with AuthActions {
+
+  val minimumAcceptableNumberOfClients = 6
+
   def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
     implicit saAgentRef =>
       Future successful NoContent
@@ -39,6 +45,17 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
     implicit saAgentRef =>
       desConnector.getActiveCesaAgentRelationships(nino).flatMap { activeAgentIds =>
         if (activeAgentIds.contains(saAgentRef)) Future successful NoContent else Future successful Forbidden
+      }
+  }
+
+  def acceptableNumberOfPayeClients: Action[AnyContent] =
+    AuthorisedWithAgentCode { implicit request =>
+    implicit agentCode =>
+      governmentGatewayConnector.getPayeClientCount(agentCode).flatMap { count =>
+        if (count >= minimumAcceptableNumberOfClients)
+          Future successful NoContent
+        else
+          Future successful Forbidden
       }
   }
 }

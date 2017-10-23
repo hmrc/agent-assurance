@@ -23,7 +23,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
-import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import uk.gov.hmrc.agentassurance.connectors.{DesConnector, GovernmentGatewayConnector}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
@@ -35,9 +35,10 @@ import scala.concurrent.Future
 
 class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with BeforeAndAfterEach {
   val desConnector = mock[DesConnector]
+  val governmentGatewayConnector =  mock[GovernmentGatewayConnector]
   val authConnector =  mock[AuthConnector]
 
-  val controller = new AgentAssuranceController(authConnector, desConnector)
+  val controller = new AgentAssuranceController(authConnector, desConnector, governmentGatewayConnector)
 
   implicit val hc = new HeaderCarrier
 
