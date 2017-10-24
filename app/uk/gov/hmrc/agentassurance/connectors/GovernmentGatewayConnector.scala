@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpReads, HttpResponse}
 import scala.concurrent.{ExecutionContext, Future}
 
 
-case class ClientAllocation(friendlyName: String, empRef: EmpRef)
+case class ClientAllocation(friendlyName: String)
 
 object ClientAllocation {
   implicit val formats = format[ClientAllocation]
