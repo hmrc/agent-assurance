@@ -51,6 +51,7 @@ class Module(val environment: Environment, val configuration: Configuration) ext
     bindProperty("des.environment", "des.environment")
     bindProperty("des.authorizationToken", "des.authorization-token")
     bindIntProperty("minimumIRPAYEClients", "minimumIRPAYEClients")
+    bindIntProperty("minimumIRSAClients", "minimumIRSAClients")
   }
 
   private def bindBaseUrl(serviceName: String) =

@@ -4,4 +4,6 @@ GET        /irSaAgentEnrolment                         @uk.gov.hmrc.agentassuran
 
 GET        /activeCesaRelationship/nino/:nino          @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationship(nino: uk.gov.hmrc.domain.Nino)
 
-GET        /acceptableNumberOfClients/service/IR-PAYE  @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfPayeClients
+GET        /acceptableNumberOfClients/service/IR-PAYE  @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfPAYEClients
+
+GET        /acceptableNumberOfClients/service/IR-SA    @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfIRSAClients

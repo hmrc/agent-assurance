@@ -29,7 +29,9 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 import scala.concurrent.Future
 
 @Singleton
-class AgentAssuranceController @Inject()(@Named("minimumIRPAYEClients") minimumAcceptableNumberOfClients: Int,
+class AgentAssuranceController @Inject()(
+ @Named("minimumIRPAYEClients") minimumIRPAYEClients: Int,
+ @Named("minimumIRSAClients") minimumIRSAClients: Int,
  override val authConnector: AuthConnector,
  val desConnector: DesConnector,
  val governmentGatewayConnector: GovernmentGatewayConnector) extends BaseController with AuthActions {
@@ -46,10 +48,14 @@ class AgentAssuranceController @Inject()(@Named("minimumIRPAYEClients") minimumA
       }
   }
 
-  def acceptableNumberOfPayeClients: Action[AnyContent] =
+  def acceptableNumberOfPAYEClients = acceptableNumberOfClients("IR-PAYE", minimumIRPAYEClients)
+
+  def acceptableNumberOfIRSAClients = acceptableNumberOfClients("IR-SA", minimumIRSAClients)
+
+  private def acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
     AuthorisedWithAgentCode { implicit request =>
     implicit agentCode =>
-      governmentGatewayConnector.getPayeClientCount(agentCode).flatMap { count =>
+      governmentGatewayConnector.getClientCount(service, agentCode).flatMap { count =>
         if (count >= minimumAcceptableNumberOfClients)
           Future successful NoContent
         else

@@ -32,27 +32,28 @@ class GovernmentGatewayConnectorISpec
   private implicit val ec = ExecutionContext.global
 
   private val agentCode1 = AgentCode("foo")
-  private val clientListUrl = s"/agent/${agentCode1.value}/client-list/IR-PAYE/all"
+  private val service = "IR-PAYE"
+  private val clientListUrl = s"/agent/${agentCode1.value}/client-list/$service/all"
 
-  "GovernmentGatewayConnector getPayeClientCount" should {
+  "GovernmentGatewayConnector getClientCount" should {
     "return an empty list when GG returns 202" in {
-      noClientsAreAllocated(agentCode1, 202)
-      await(connector.getPayeClientCount(agentCode1)) shouldBe 0
+      noClientsAreAllocated(service, agentCode1, 202)
+      await(connector.getClientCount(service, agentCode1)) shouldBe 0
     }
 
     "return an empty list when GG returns 204" in {
-      noClientsAreAllocated(agentCode1, 204)
-      await(connector.getPayeClientCount(agentCode1)) shouldBe 0
+      noClientsAreAllocated(service, agentCode1, 204)
+      await(connector.getClientCount(service, agentCode1)) shouldBe 0
     }
 
     "throw an exception when GG returns an unexpected http response code" in {
-      noClientsAreAllocated(agentCode1, 404)
-      an[Exception] should be thrownBy await(connector.getPayeClientCount(agentCode1))
+      noClientsAreAllocated(service, agentCode1, 404)
+      an[Exception] should be thrownBy await(connector.getClientCount(service, agentCode1))
     }
 
     "return an all clients returned by GG" in {
-      sufficientClientsAreAllocated(agentCode1)
-      ( await(connector.getPayeClientCount(agentCode1)) > 0 ) shouldBe true
+      sufficientClientsAreAllocated(service, agentCode1)
+      ( await(connector.getClientCount(service, agentCode1)) > 0 ) shouldBe true
     }
   }
 }

@@ -30,8 +30,12 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   def irSaAgentEnrolmentUrl(nino: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/nino/$nino"
 
   val acceptableNumberOfPayeClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/IR-PAYE"
+  val acceptableNumberOfSAClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/IR-SA"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
+
+  val agentCode1 = AgentCode("agent1")
+
 
   override def irAgentReference: String = "IRSA-123"
 
@@ -137,14 +141,13 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   }
 
   feature("/acceptableNumberOfClients/service/IR-PAYE") {
-    val agentCode1 = AgentCode("agent1")
 
     scenario("Logged in user is an agent with sufficient allocated PAYE clients") {
       Given("User has an agent code")
       isLoggedInWithAgentCode(agentCode1)
 
       And("GG returns sufficient allocated IR-PAYE clients for the agent")
-      sufficientClientsAreAllocated(agentCode1)
+      sufficientClientsAreAllocated("IR-PAYE", agentCode1)
 
       When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
@@ -158,7 +161,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isLoggedInWithAgentCode(agentCode1)
 
       And("GG returns insufficient allocated IR-PAYE clients for the agent")
-      tooFewClientsAreAllocated(agentCode1)
+      tooFewClientsAreAllocated("IR-PAYE", agentCode1)
 
       When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
@@ -172,7 +175,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isLoggedInWithAgentCode(agentCode1)
 
       And("GG returns no allocated IR-PAYE clients for the agent")
-      noClientsAreAllocated(agentCode1)
+      noClientsAreAllocated("IR-PAYE", agentCode1)
 
       When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
@@ -198,6 +201,72 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
+
+      Then("401 UNAUTHORISED is returned")
+      response.status shouldBe 401
+    }
+  }
+  
+  feature("/acceptableNumberOfClients/service/IR-SA") {
+    scenario("Logged in user is an agent with sufficient allocated IR-SA clients") {
+      Given("User has an agent code")
+      isLoggedInWithAgentCode(agentCode1)
+
+      And("GG returns sufficient allocated IR-SA clients for the agent")
+      sufficientClientsAreAllocated("IR-SA", agentCode1)
+
+      When("GET /acceptableNumberOfClients/service/IR-SA is called")
+      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
+
+      Then("204 NO_CONTENT is returned")
+      response.status shouldBe 204
+    }
+
+    scenario("Logged in user is an agent with insufficient allocated PAYE clients") {
+      Given("User has an agent code")
+      isLoggedInWithAgentCode(agentCode1)
+
+      And("GG returns insufficient allocated IR-SA clients for the agent")
+      tooFewClientsAreAllocated("IR-SA", agentCode1)
+
+      When("GET /acceptableNumberOfClients/service/IR-SA is called")
+      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
+
+      Then("403 FORBIDDEN is returned")
+      response.status shouldBe 403
+    }
+
+    scenario("Logged in user is an agent with no allocated PAYE clients") {
+      Given("User has an agent code")
+      isLoggedInWithAgentCode(agentCode1)
+
+      And("GG returns no allocated IR-SA clients for the agent")
+      noClientsAreAllocated("IR-SA", agentCode1)
+
+      When("GET /acceptableNumberOfClients/service/IR-SA is called")
+      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
+
+      Then("403 FORBIDDEN is returned")
+      response.status shouldBe 403
+    }
+
+    scenario("Logged in user is not an agent") {
+      Given("User has no agent code")
+      isLoggedInWithoutAgentCode
+
+      When("GET /acceptableNumberOfClients/service/IR-SA is called")
+      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
+
+      Then("403 FORBIDDEN is returned")
+      response.status shouldBe 403
+    }
+
+    scenario("User is not logged in") {
+      Given("User is not logged in")
+      isNotLoggedIn
+
+      When("GET /acceptableNumberOfClients/service/IR-SA is called")
+      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
 
       Then("401 UNAUTHORISED is returned")
       response.status shouldBe 401

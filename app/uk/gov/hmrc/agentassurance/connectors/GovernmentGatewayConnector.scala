@@ -38,8 +38,8 @@ case class ClientAllocationResponse(clients: Seq[ClientAllocation])
 
 @Singleton
 class  GovernmentGatewayConnector @Inject()(@Named("government-gateway-baseUrl") baseUrl: URL, httpGet: HttpGet, metrics: Metrics) {
-  def getPayeClientCount(agentCode: AgentCode)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
-    val clientListUrl = s"$baseUrl/agent/$agentCode/client-list/IR-PAYE/all"
+  def getClientCount(service: String, agentCode: AgentCode)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
+    val clientListUrl = s"$baseUrl/agent/$agentCode/client-list/$service/all"
 
     implicit val responseHandler = new HttpReads[ClientAllocationResponse] {
       override def read(method: String, url: String, response: HttpResponse) = {
