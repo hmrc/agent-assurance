@@ -29,12 +29,10 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 import scala.concurrent.Future
 
 @Singleton
-class AgentAssuranceController @Inject()(
+class AgentAssuranceController @Inject()(@Named("minimumIRPAYEClients") minimumAcceptableNumberOfClients: Int,
  override val authConnector: AuthConnector,
  val desConnector: DesConnector,
  val governmentGatewayConnector: GovernmentGatewayConnector) extends BaseController with AuthActions {
-
-  val minimumAcceptableNumberOfClients = 6
 
   def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
     implicit saAgentRef =>

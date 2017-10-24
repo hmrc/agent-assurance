@@ -38,7 +38,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
   val governmentGatewayConnector =  mock[GovernmentGatewayConnector]
   val authConnector =  mock[AuthConnector]
 
-  val controller = new AgentAssuranceController(authConnector, desConnector, governmentGatewayConnector)
+  val controller = new AgentAssuranceController(6, authConnector, desConnector, governmentGatewayConnector)
 
   implicit val hc = new HeaderCarrier
 
