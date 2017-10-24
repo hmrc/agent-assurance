@@ -50,6 +50,7 @@ class Module(val environment: Environment, val configuration: Configuration) ext
     bindBaseUrl("government-gateway")
     bindProperty("des.environment", "des.environment")
     bindProperty("des.authorizationToken", "des.authorization-token")
+    bindIntProperty("minimumIRPAYEClients", "minimumIRPAYEClients")
   }
 
   private def bindBaseUrl(serviceName: String) =
@@ -61,6 +62,13 @@ class Module(val environment: Environment, val configuration: Configuration) ext
 
   private def bindProperty(objectName: String, propertyName: String) =
     bind(classOf[String]).annotatedWith(Names.named(objectName)).toProvider(new PropertyProvider(propertyName))
+
+  private def bindIntProperty(objectName: String, propertyName: String) =
+    bind(classOf[Int]).annotatedWith(Names.named(objectName)).toProvider(new PropertyIntProvider(propertyName))
+
+  private class PropertyIntProvider(confKey: String) extends Provider[Int] {
+    override lazy val get = getConfInt(confKey, throw new IllegalStateException(s"No value found for configuration property $confKey"))
+  }
 
   private class PropertyProvider(confKey: String) extends Provider[String] {
     override lazy val get = getConfString(confKey, throw new IllegalStateException(s"No value found for configuration property $confKey"))
