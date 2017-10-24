@@ -47,6 +47,7 @@ class Module(val environment: Environment, val configuration: Configuration) ext
     bind(classOf[AuthConnector]).to(classOf[MicroserviceAuthConnector])
     bind(classOf[HttpGet]).toInstance(new WSVerbs()(configuration))
     bindBaseUrl("des")
+    bindBaseUrl("government-gateway")
     bindProperty("des.environment", "des.environment")
     bindProperty("des.authorizationToken", "des.authorization-token")
   }

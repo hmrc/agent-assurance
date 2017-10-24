@@ -3,9 +3,8 @@ package uk.gov.hmrc.agentassurance.connectors
 import com.kenshoo.play.metrics.Metrics
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.bind
-import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentassurance.stubs.{DataStreamStub, DesStubs}
 import uk.gov.hmrc.agentassurance.support.{MetricTestSupport, WireMockSupport}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}

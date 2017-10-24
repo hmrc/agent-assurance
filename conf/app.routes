@@ -1,5 +1,7 @@
 # microservice specific routes
 
-GET        /irSaAgentEnrolment                   @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.enrolledForIrSAAgent()
+GET        /irSaAgentEnrolment                         @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.enrolledForIrSAAgent()
 
-GET        /activeCesaRelationship/nino/:nino    @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationship(nino: uk.gov.hmrc.domain.Nino)
+GET        /activeCesaRelationship/nino/:nino          @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationship(nino: uk.gov.hmrc.domain.Nino)
+
+GET        /acceptableNumberOfClients/service/IR-PAYE  @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfPayeClients
