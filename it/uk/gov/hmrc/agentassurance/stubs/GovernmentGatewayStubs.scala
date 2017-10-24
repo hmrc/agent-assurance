@@ -39,7 +39,7 @@ trait GovernmentGatewayStubs {
     )
   }
 
-  def noClientsAreAllocated(agentCode: AgentCode) = {
-    stubFor(get(urlPathEqualTo(clientListUrl(agentCode))).willReturn(aResponse().withStatus(204)))
+  def noClientsAreAllocated(agentCode: AgentCode, statusCode: Int = 204) = {
+    stubFor(get(urlPathEqualTo(clientListUrl(agentCode))).willReturn(aResponse().withStatus(statusCode)))
   }
 }
