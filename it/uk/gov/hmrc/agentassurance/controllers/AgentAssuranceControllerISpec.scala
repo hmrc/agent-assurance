@@ -21,7 +21,9 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     new GuiceApplicationBuilder()
       .configure("microservice.services.auth.port" -> wireMockPort,
         "microservice.services.des.port" -> wireMockPort,
-        "microservice.services.government-gateway.port" -> wireMockPort)
+        "microservice.services.government-gateway.port" -> wireMockPort,
+        "minimumIRPAYEClients" -> 6,
+        "minimumIRSAClients" -> 6 )
 
   implicit val hc = new HeaderCarrier
 
