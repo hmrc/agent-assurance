@@ -52,7 +52,7 @@ class AgentAssuranceController @Inject()(
 
   def acceptableNumberOfIRSAClients = acceptableNumberOfClients("IR-SA", minimumIRSAClients)
 
-  private def acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
+  def acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
     AuthorisedWithAgentCode { implicit request =>
     implicit agentCode =>
       governmentGatewayConnector.getClientCount(service, agentCode).flatMap { count =>
