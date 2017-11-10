@@ -12,4 +12,4 @@
 # Add all the application routes to the prod.routes file
 ->         /                          prod.Routes
 
-GET        /acceptableNumberOfClients/service/:service/minimumAcceptableNumberOfClients/:minimumAcceptableNumberOfClients  @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int)
+GET        /test-only/acceptableNumberOfClients/service/:service/minimumAcceptableNumberOfClients/:minimumAcceptableNumberOfClients  @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int)
