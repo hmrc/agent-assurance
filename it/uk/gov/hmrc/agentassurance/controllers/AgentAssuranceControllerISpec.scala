@@ -6,6 +6,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.{WSClient, WSResponse}
 import uk.gov.hmrc.agentassurance.stubs.{DesStubs, GovernmentGatewayStubs}
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{AgentCode, Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -29,7 +30,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
   val irSaAgentEnrolmentUrl = s"http://localhost:$port/agent-assurance/irSaAgentEnrolment"
 
-  def irSaAgentEnrolmentUrl(nino: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/nino/$nino"
+  def irSaAgentEnrolmentNinoUrl(nino: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/nino/$nino/saAgentReference/$irAgentReference"
+  def irSaAgentEnrolmentUtrUrl(utr: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/utr/$utr/saAgentReference/$irAgentReference"
 
   val acceptableNumberOfPayeClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/IR-PAYE"
   val acceptableNumberOfSAClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/IR-SA"
@@ -76,7 +78,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("/activeCesaRelationship/nino/:nino") {
+  feature("/activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference") {
     scenario("User is enrolled in IR_SA_AGENT and provides a NINO which has an active relationship in CESA") {
       Given("User is enrolled in IR_SA_AGENT with an IRAgentReference of IRSA-123")
       isLoggedInAndIsEnrolledToIrSaAgent
@@ -84,19 +86,19 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       And("CESA contains an active agent/client relationship for NINO AA000000A and Agent Reference IRSA-123")
       givenClientHasRelationshipWithAgentInCESA(Nino("AA000000A"), SaAgentReference(irAgentReference))
 
-      When("GET /activeCesaRelationship/nino/AA000000A is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUrl("AA000000A")).get(), 10 seconds)
+      When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A")).get(), 10 seconds)
 
-      Then("204 NO_CONTENT is returned")
-      response.status shouldBe 204
+      Then("200 OK is returned")
+      response.status shouldBe 200
     }
 
     scenario("User is not enrolled in IR_SA_AGENT") {
       Given("User is not enrolled in IR_SA_AGENT")
       isLoggedInAndNotEnrolledInIrSaAgent
 
-      When("GET /activeCesaRelationship/nino/AA000000A is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUrl("AA000000A")).get(), 10 seconds)
+      When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A")).get(), 10 seconds)
 
       Then("403 FORBIDDEN is returned")
       response.status shouldBe 403
@@ -120,8 +122,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       And("CESA contains no active agent/client relationship for NINO AA000000A and Agent Reference IRSA-123")
       givenClientHasNoActiveRelationshipWithAgentInCESA(Nino("AA000000A"))
 
-      When("GET /activeCesaRelationship/nino/AA000000A is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUrl("AA000000A")).get(), 10 seconds)
+      When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A")).get(), 10 seconds)
 
       Then("403 FORBIDDEN is returned")
       response.status shouldBe 403
@@ -134,11 +136,91 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       And("CESA contains no active agent/client relationship for NINO AA000000A and Agent Reference IRSA-456")
       givenClientHasRelationshipWithAgentInCESA(Nino("AA000000A"), SaAgentReference("IRSA-456"))
 
-      When("GET /activeCesaRelationship/nino/AA000000A is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUrl("AA000000A")).get(), 10 seconds)
+      When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A")).get(), 10 seconds)
 
       Then("403 FORBIDDEN is returned")
       response.status shouldBe 403
+    }
+
+    scenario("User is enrolled in IR_SA_AGENT and provides an invalid NINO") {
+      Given("User is enrolled in IR_SA_AGENT with an IRAgentReference of IRSA-123")
+      isLoggedInAndIsEnrolledToIrSaAgent
+
+      When("GET /activeCesaRelationship/nino/AA000000/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("INVALID")).get(), 10 seconds)
+
+      Then("400 BADREQUEST is returned")
+      response.status shouldBe 400
+    }
+  }
+
+  feature("/activeCesaRelationship/utr/:utr//saAgentReference/:saAgentReference") {
+    scenario("User is enrolled in IR_SA_AGENT and provides a UTR which has an active relationship in CESA") {
+      Given("User is enrolled in IR_SA_AGENT with an IRAgentReference of IRSA-123")
+      isLoggedInAndIsEnrolledToIrSaAgent
+
+      And("CESA contains an active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-123")
+      givenClientHasRelationshipWithAgentInCESA(Utr("7000000002"), SaAgentReference(irAgentReference))
+
+      When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002")).get(), 10 seconds)
+
+      Then("200 OK is returned")
+      response.status shouldBe 200
+    }
+
+    scenario("User is not enrolled in IR_SA_AGENT") {
+      Given("User is not enrolled in IR_SA_AGENT")
+      isLoggedInAndNotEnrolledInIrSaAgent
+
+      When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002")).get(), 10 seconds)
+
+      Then("403 FORBIDDEN is returned")
+      response.status shouldBe 403
+    }
+
+    scenario("User is enrolled in IR_SA_AGENT and provides a UTR which has no active relationship in CESA") {
+      Given("User is enrolled in IR_SA_AGENT with an IRAgentReference of IRSA-123")
+      isLoggedInAndIsEnrolledToIrSaAgent
+
+      And("CESA contains no active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-123")
+      givenClientHasNoActiveRelationshipWithAgentInCESA(Utr("7000000002"))
+
+      When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002")).get(), 10 seconds)
+
+      Then("403 FORBIDDEN is returned")
+      response.status shouldBe 403
+    }
+
+    scenario("User is enrolled in IR_SA_AGENT and provides a UTR which has an active relationship in CESA but with a different Agent Reference") {
+      Given("User is enrolled in IR_SA_AGENT with an IRAgentReference of IRSA-123")
+      isLoggedInAndIsEnrolledToIrSaAgent
+
+      And("CESA contains no active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-456")
+      givenClientHasRelationshipWithAgentInCESA(Utr("7000000002"), SaAgentReference("IRSA-456"))
+
+      When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002")).get(), 10 seconds)
+
+      Then("403 FORBIDDEN is returned")
+      response.status shouldBe 403
+    }
+
+    scenario("User is enrolled in IR_SA_AGENT and provides an invalid UTR") {
+      Given("User is enrolled in IR_SA_AGENT with an IRAgentReference of IRSA-123")
+      isLoggedInAndIsEnrolledToIrSaAgent
+
+      And("CESA checks for active relationships with an invalid UTR")
+      givenClientIdentifierIsInvalid(Utr("INVALID"))
+
+      When("GET /activeCesaRelationship/utr/INVALID/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("INVALID")).get(), 10 seconds)
+
+      Then("400 BADREQUEST is returned")
+      response.status shouldBe 400
     }
   }
 

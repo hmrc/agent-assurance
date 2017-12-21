@@ -24,39 +24,37 @@ import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, GovernmentGatewayConnector}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
+import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 
 @Singleton
 class AgentAssuranceController @Inject()(
- @Named("minimumIRPAYEClients") minimumIRPAYEClients: Int,
- @Named("minimumIRSAClients") minimumIRSAClients: Int,
- override val authConnector: AuthConnector,
- val desConnector: DesConnector,
- val governmentGatewayConnector: GovernmentGatewayConnector) extends BaseController with AuthActions {
+                                          @Named("minimumIRPAYEClients") minimumIRPAYEClients: Int,
+                                          @Named("minimumIRSAClients") minimumIRSAClients: Int,
+                                          override val authConnector: AuthConnector,
+                                          val desConnector: DesConnector,
+                                          val governmentGatewayConnector: GovernmentGatewayConnector) extends BaseController with AuthActions {
 
   def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
     implicit saAgentRef =>
       Future successful NoContent
   }
 
-  def activeCesaRelationship(clientType: String, clientId: String): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
-    implicit saAgentRef =>
-      validateClientIdentifier(clientType, clientId) match {
-        case Right(identifier) =>
-          desConnector.getActiveCesaAgentRelationships(identifier).map { activeAgentIds =>
-            if (activeAgentIds.contains(saAgentRef)) Ok else Forbidden
-          }
-        case Left(ex) =>
-          Logger.warn(ex.getMessage)
-          Future.successful(Forbidden)
+  def activeCesaRelationshipWithUtr(utr: Utr, saAgentReference: SaAgentReference): Action[AnyContent] =
+    activeCesaRelationship(utr, saAgentReference)
 
+  def activeCesaRelationshipWithNino(nino: Nino, saAgentReference: SaAgentReference): Action[AnyContent] =
+    activeCesaRelationship(nino, saAgentReference)
+
+  private def activeCesaRelationship(identifier: TaxIdentifier, saAgentReference: SaAgentReference): Action[AnyContent] =
+    AuthorisedIRSAAgentWithSaAgentRef(saAgentReference) { implicit request =>
+      desConnector.getActiveCesaAgentRelationships(identifier).map { agentRefs =>
+        if (agentRefs.contains(saAgentReference)) Ok else Forbidden
       }
-  }
+    }
 
   def acceptableNumberOfPAYEClients = acceptableNumberOfClients("IR-PAYE", minimumIRPAYEClients)
 
@@ -64,27 +62,12 @@ class AgentAssuranceController @Inject()(
 
   def acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
     AuthorisedWithAgentCode { implicit request =>
-    implicit agentCode =>
-      governmentGatewayConnector.getClientCount(service, agentCode).flatMap { count =>
-        if (count >= minimumAcceptableNumberOfClients)
-          Future successful NoContent
-        else
-          Future successful Forbidden
-      }
-  }
-
-  private def validateClientIdentifier(clientType: String, clientId: String): Either[Throwable, TaxIdentifier] = {
-    val identifier = clientId.trim
-    clientType.trim match {
-      case "nino" =>
-        Try(Nino(identifier)).map(Right(_)).recover { case ex => Left(ex) }.get
-      case "utr" =>
-        if (Utr.isValid(identifier))
-          Right(Utr(identifier))
-        else
-          Left(new IllegalArgumentException(s"The utr $identifier is invalid"))
-      case _ =>
-        Left(new IllegalArgumentException(s"The client type $clientType is invalid"))
+      implicit agentCode =>
+        governmentGatewayConnector.getClientCount(service, agentCode).flatMap { count =>
+          if (count >= minimumAcceptableNumberOfClients)
+            Future successful NoContent
+          else
+            Future successful Forbidden
+        }
     }
-  }
 }

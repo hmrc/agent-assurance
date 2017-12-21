@@ -7,6 +7,7 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentassurance.stubs.{DataStreamStub, DesStubs}
 import uk.gov.hmrc.agentassurance.support.{MetricTestSupport, WireMockSupport}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -34,78 +35,11 @@ class DesConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSupport
   private implicit val ec = ExecutionContext.global
 
   "DesConnector getActiveCesaAgentRelationships with a valid NINO" should {
+    behave like aCheckEndpoint(Nino("AB123456C"))
+  }
 
-    val nino = Nino("AB123456C")
-
-    "return one Agent when client has a single active agent" in {
-      val agentId = SaAgentReference("bar")
-      givenClientHasRelationshipWithAgentInCESA(nino, agentId)
-      givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) shouldBe Seq(agentId)
-    }
-
-    "return multiple Agents when client has multiple active agents" in {
-      val agentIds = Seq("001","002","003","004","005","005","007").map(SaAgentReference.apply)
-      givenClientHasRelationshipWithMultipleAgentsInCESA(nino, agentIds)
-      givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) should contain theSameElementsAs agentIds
-    }
-
-    "return empty seq when client has no active relationship with an agent" in {
-      givenClientHasNoActiveRelationshipWithAgentInCESA(nino)
-      givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) shouldBe empty
-    }
-
-    "return empty seq when client has/had no relationship with any agent" in {
-      givenClientHasNoRelationshipWithAnyAgentInCESA(nino)
-      givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) shouldBe empty
-    }
-
-    "return empty seq when client relationship with agent ceased" in {
-      givenClientRelationshipWithAgentCeasedInCESA(nino, "foo")
-      givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) shouldBe empty
-    }
-
-    "return empty seq when all client's relationships with agents ceased" in {
-      givenAllClientRelationshipsWithAgentsCeasedInCESA(nino, Seq("001", "002", "003", "004", "005", "005", "007"))
-      givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) shouldBe empty
-    }
-
-    "fail when client's nino is invalid" in {
-      givenNinoIsInvalid(nino)
-      givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(nino))
-    }
-
-    "fail when client is unknown" in {
-      givenClientIsUnknownInCESAFor(nino)
-      givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(nino))
-    }
-
-    "fail when DES is unavailable" in {
-      givenDesReturnsServiceUnavailable()
-      givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(nino))
-    }
-
-    "fail when DES is throwing errors" in {
-      givenDesReturnsServerError()
-      givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(nino))
-    }
-
-    "record metrics for GetStatusAgentRelationship" in {
-      givenClientHasRelationshipWithAgentInCESA(nino, SaAgentReference("bar"))
-      givenCleanMetricRegistry()
-      givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino))
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-DES-GetStatusAgentRelationship-GET")
-    }
+  "DesConnector getActiveCesaAgentRelationships with a valid UTR" should {
+    behave like aCheckEndpoint(Utr("7000000002"))
   }
 
   private def aCheckEndpoint(identifier: TaxIdentifier) = {
@@ -113,69 +47,69 @@ class DesConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSupport
       val agentId = SaAgentReference("bar")
       givenClientHasRelationshipWithAgentInCESA(identifier, agentId)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) shouldBe Seq(agentId)
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Seq(agentId)
     }
 
     "return multiple Agents when client has multiple active agents" in {
       val agentIds = Seq("001","002","003","004","005","005","007").map(SaAgentReference.apply)
-      givenClientHasRelationshipWithMultipleAgentsInCESA(nino, agentIds)
+      givenClientHasRelationshipWithMultipleAgentsInCESA(identifier, agentIds)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) should contain theSameElementsAs agentIds
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) should contain theSameElementsAs agentIds
     }
 
     "return empty seq when client has no active relationship with an agent" in {
-      givenClientHasNoActiveRelationshipWithAgentInCESA(nino)
+      givenClientHasNoActiveRelationshipWithAgentInCESA(identifier)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe empty
     }
 
     "return empty seq when client has/had no relationship with any agent" in {
-      givenClientHasNoRelationshipWithAnyAgentInCESA(nino)
+      givenClientHasNoRelationshipWithAnyAgentInCESA(identifier)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe empty
     }
 
     "return empty seq when client relationship with agent ceased" in {
-      givenClientRelationshipWithAgentCeasedInCESA(nino, "foo")
+      givenClientRelationshipWithAgentCeasedInCESA(identifier, "foo")
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe empty
     }
 
     "return empty seq when all client's relationships with agents ceased" in {
-      givenAllClientRelationshipsWithAgentsCeasedInCESA(nino, Seq("001", "002", "003", "004", "005", "005", "007"))
+      givenAllClientRelationshipsWithAgentsCeasedInCESA(identifier, Seq("001", "002", "003", "004", "005", "005", "007"))
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino)) shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe empty
     }
 
-    "fail when client's nino is invalid" in {
-      givenNinoIsInvalid(nino)
+    "fail when client id is invalid" in {
+      givenClientIdentifierIsInvalid(identifier)
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(nino))
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
     }
 
     "fail when client is unknown" in {
-      givenClientIsUnknownInCESAFor(nino)
+      givenClientIsUnknownInCESAFor(identifier)
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(nino))
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
     }
 
     "fail when DES is unavailable" in {
       givenDesReturnsServiceUnavailable()
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(nino))
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
     }
 
     "fail when DES is throwing errors" in {
       givenDesReturnsServerError()
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(nino))
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
     }
 
     "record metrics for GetStatusAgentRelationship" in {
-      givenClientHasRelationshipWithAgentInCESA(nino, SaAgentReference("bar"))
+      givenClientHasRelationshipWithAgentInCESA(identifier, SaAgentReference("bar"))
       givenCleanMetricRegistry()
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(nino))
+      await(desConnector.getActiveCesaAgentRelationships(identifier))
       timerShouldExistsAndBeenUpdated("ConsumedAPI-DES-GetStatusAgentRelationship-GET")
     }
 

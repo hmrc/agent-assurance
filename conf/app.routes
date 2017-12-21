@@ -1,9 +1,11 @@
 # microservice specific routes
 
-GET        /irSaAgentEnrolment                         @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.enrolledForIrSAAgent()
+GET        /irSaAgentEnrolment                                                          @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.enrolledForIrSAAgent()
 
-GET        /activeCesaRelationship/clientType/:clientType/clientId/:clientId          @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationship(clientType: String, clientId: String)
+GET        /activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReference          @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationshipWithUtr(utr: uk.gov.hmrc.agentmtdidentifiers.model.Utr, saAgentReference: uk.gov.hmrc.domain.SaAgentReference)
 
-GET        /acceptableNumberOfClients/service/IR-PAYE  @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfPAYEClients
+GET        /activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationshipWithNino(nino: uk.gov.hmrc.domain.Nino, saAgentReference: uk.gov.hmrc.domain.SaAgentReference)
 
-GET        /acceptableNumberOfClients/service/IR-SA    @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfIRSAClients
+GET        /acceptableNumberOfClients/service/IR-PAYE                                   @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfPAYEClients
+
+GET        /acceptableNumberOfClients/service/IR-SA                                     @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfIRSAClients

@@ -6,9 +6,10 @@ import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 
 trait DesStubs {
 
-  def givenNinoIsInvalid(nino: Nino) = {
+  def givenClientIdentifierIsInvalid(identifier: TaxIdentifier) = {
+    val identifierType = clientIdentifierType(identifier)
     stubFor(
-      get(urlMatching(s"/registration/relationship/nino/${nino.value}"))
+      get(urlMatching(s"/registration/relationship/$identifierType/${identifier.value}"))
         .willReturn(aResponse().withStatus(400))
     )
   }
@@ -25,49 +26,55 @@ trait DesStubs {
     )
   }
 
-  def givenClientHasRelationshipWithMultipleAgentsInCESA(nino: Nino, agentIds: Seq[SaAgentReference]) = {
+  def givenClientHasRelationshipWithMultipleAgentsInCESA(identifier: TaxIdentifier, agentIds: Seq[SaAgentReference]) = {
+    val identifierType = clientIdentifierType(identifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{"agents":[${agentIds.map(saRef =>s"""{"hasAgent":true,"agentId":"${saRef.value}"}""").mkString(",")}, $someAlienAgent, $someCeasedAgent ]}"""))
     )
   }
 
-  def givenClientRelationshipWithAgentCeasedInCESA(nino: Nino, agentId: String) = {
+  def givenClientRelationshipWithAgentCeasedInCESA(identifier: TaxIdentifier, agentId: String) = {
+    val identifierType = clientIdentifierType(identifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{"agents":[{"hasAgent":true,"agentId":"$agentId","agentCeasedDate":"2010-01-01"}]}"""))
     )
   }
 
-  def givenAllClientRelationshipsWithAgentsCeasedInCESA(nino: Nino, agentIds: Seq[String]) = {
+  def givenAllClientRelationshipsWithAgentsCeasedInCESA(identifier: TaxIdentifier, agentIds: Seq[String]) = {
+    val identifierType = clientIdentifierType(identifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{"agents":[${agentIds.map(id =>s"""{"hasAgent":true,"agentId":"$id","agentCeasedDate":"2020-12-31"}""").mkString(",")}]}"""))
     )
   }
 
-  def givenClientHasNoActiveRelationshipWithAgentInCESA(nino: Nino) = {
+  def givenClientHasNoActiveRelationshipWithAgentInCESA(identifier: TaxIdentifier) = {
+    val identifierType = clientIdentifierType(identifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{"agents":[$someCeasedAgent, $someAlienAgent]}"""))
     )
   }
 
-  def givenClientHasNoRelationshipWithAnyAgentInCESA(nino: Nino) = {
+  def givenClientHasNoRelationshipWithAnyAgentInCESA(identifier: TaxIdentifier) = {
+    val identifierType = clientIdentifierType(identifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{}"""))
     )
   }
 
-  def givenClientIsUnknownInCESAFor(nino: Nino) = {
+  def givenClientIsUnknownInCESAFor(identifier: TaxIdentifier) = {
+    val identifierType = clientIdentifierType(identifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
         .willReturn(aResponse().withStatus(404))
     )
   }
