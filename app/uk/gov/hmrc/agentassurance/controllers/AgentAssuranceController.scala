@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject._
 
-import play.api.Logger
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, GovernmentGatewayConnector}

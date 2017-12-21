@@ -155,7 +155,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("/activeCesaRelationship/utr/:utr//saAgentReference/:saAgentReference") {
+  feature("/activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReference") {
     scenario("User is enrolled in IR_SA_AGENT and provides a UTR which has an active relationship in CESA") {
       Given("User is enrolled in IR_SA_AGENT with an IRAgentReference of IRSA-123")
       isLoggedInAndIsEnrolledToIrSaAgent
