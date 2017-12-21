@@ -2,7 +2,7 @@
 
 GET        /irSaAgentEnrolment                         @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.enrolledForIrSAAgent()
 
-GET        /activeCesaRelationship/nino/:nino          @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationship(nino: uk.gov.hmrc.domain.Nino)
+GET        /activeCesaRelationship/clientType/:clientType/clientId/:clientId          @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationship(clientType: String, clientId: String)
 
 GET        /acceptableNumberOfClients/service/IR-PAYE  @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfPAYEClients
 

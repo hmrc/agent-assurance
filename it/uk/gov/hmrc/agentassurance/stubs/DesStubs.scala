@@ -1,7 +1,8 @@
 package uk.gov.hmrc.agentassurance.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import uk.gov.hmrc.domain.{Nino, SaAgentReference}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 
 trait DesStubs {
 
@@ -15,9 +16,10 @@ trait DesStubs {
   val someAlienAgent = """{"hasAgent":false,"agentId":"alien"}"""
   val someCeasedAgent = """{"hasAgent":true,"agentId":"ex-agent","agentCeasedDate":"someDate"}"""
 
-  def givenClientHasRelationshipWithAgentInCESA(nino: Nino, agentId: SaAgentReference) = {
+  def givenClientHasRelationshipWithAgentInCESA(identifier: TaxIdentifier, agentId: SaAgentReference) = {
+    val identifierType = clientIdentifierType(identifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{"agents":[$someCeasedAgent,{"hasAgent":true,"agentId":"${agentId.value}"}, $someAlienAgent]}"""))
     )
@@ -83,4 +85,10 @@ trait DesStubs {
         .willReturn(aResponse().withStatus(503))
     )
   }
+
+  private def clientIdentifierType(identifer: TaxIdentifier): String =
+    identifer match {
+      case _: Nino => "nino"
+      case _: Utr => "utr"
+    }
 }

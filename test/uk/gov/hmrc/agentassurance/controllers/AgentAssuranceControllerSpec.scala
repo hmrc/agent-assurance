@@ -24,6 +24,7 @@ import org.scalatestplus.play.PlaySpec
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, GovernmentGatewayConnector}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
@@ -53,6 +54,9 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
   val enrolmentsWithIrSAAgent = Enrolments(irSaAgentEnrolment)
   val enrolmentsWithNoIrSAAgent = Enrolments(hmrcAsAgentEnrolment)
   val enrolmentsWithoutIrSAAgent = Enrolments(Set.empty)
+
+  val nino = Nino("AA000000A")
+  val utr = Utr("7000000002")
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -89,20 +93,20 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
 
     "activeCesaRelationship is called with a valid NINO that exists in CESA with the same IRAgentReference as the logged in user" should {
 
-      "return NO_CONTENT where the current user is enrolled in IR-SA-AGENT" in {
+      "return OK where the current user is enrolled in IR-SA-AGENT" in {
         when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-123"))))
+        when(desConnector.getActiveCesaAgentRelationships(eqs(nino))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-123"))))
 
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
+        val response = controller.activeCesaRelationship(nino.name, nino.value)(FakeRequest())
 
-        status(response) mustBe NO_CONTENT
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())
+        status(response) mustBe OK
+        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(nino))(any(), any())
       }
 
       "return UNAUTHORIZED where the current user is not logged in" in {
         when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.failed(new MissingBearerToken))
 
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
+        val response = controller.activeCesaRelationship(nino.name, nino.value)(FakeRequest())
 
         status(response) mustBe UNAUTHORIZED
       }
@@ -110,7 +114,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
       "return FORBIDDEN where the current user is not enrolled in IR-SA-AGENT" in {
         when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithNoIrSAAgent))
 
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
+        val response = controller.activeCesaRelationship(nino.name, nino.value)(FakeRequest())
 
         status(response) mustBe FORBIDDEN
       }
@@ -118,7 +122,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
       "return FORBIDDEN where the current user has no enrolments" in {
         when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithoutIrSAAgent))
 
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
+        val response = controller.activeCesaRelationship(nino.name, nino.value)(FakeRequest())
 
         status(response) mustBe FORBIDDEN
       }
@@ -129,20 +133,46 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
         when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
         when(desConnector.getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())).thenReturn(Future.successful(Seq.empty))
 
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
+        val response = controller.activeCesaRelationship(nino.name, nino.value)(FakeRequest())
 
         status(response) mustBe FORBIDDEN
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())
+        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(nino))(any(), any())
       }
 
       "return FORBIDDEN when called with a valid NINO that is active in CESA but with a different IRAgentReference to the logged in user" in {
         when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-456"))))
+        when(desConnector.getActiveCesaAgentRelationships(eqs(nino))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-456"))))
 
-        val response = controller.activeCesaRelationship(Nino("AA000000A"))(FakeRequest())
+        val response = controller.activeCesaRelationship(nino.name, nino.value)(FakeRequest())
 
         status(response) mustBe FORBIDDEN
         verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())
+      }
+    }
+
+    "activeCesaRelationship is called with invalid parameters" should {
+      "return FORBIDDEN when the client id is an invalid nino" in {
+        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
+
+        val response = controller.activeCesaRelationship(nino.name, "INVALID")(FakeRequest())
+
+        status(response) mustBe FORBIDDEN
+      }
+
+      "return FORBIDDEN when the client id is an invalid utr" in {
+        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
+
+        val response = controller.activeCesaRelationship("utr", "INVALID")(FakeRequest())
+
+        status(response) mustBe FORBIDDEN
+      }
+
+      "return FORBIDDEN when the client type is invalid" in {
+        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
+
+        val response = controller.activeCesaRelationship("INVALID", "INVALID")(FakeRequest())
+
+        status(response) mustBe FORBIDDEN
       }
     }
   }

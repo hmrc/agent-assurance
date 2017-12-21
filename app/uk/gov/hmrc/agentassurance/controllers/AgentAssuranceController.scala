@@ -18,15 +18,18 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject._
 
+import play.api.Logger
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, GovernmentGatewayConnector}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 @Singleton
 class AgentAssuranceController @Inject()(
@@ -41,10 +44,17 @@ class AgentAssuranceController @Inject()(
       Future successful NoContent
   }
 
-  def activeCesaRelationship(nino: Nino): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
+  def activeCesaRelationship(clientType: String, clientId: String): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
     implicit saAgentRef =>
-      desConnector.getActiveCesaAgentRelationships(nino).flatMap { activeAgentIds =>
-        if (activeAgentIds.contains(saAgentRef)) Future successful NoContent else Future successful Forbidden
+      validateClientIdentifier(clientType, clientId) match {
+        case Right(identifier) =>
+          desConnector.getActiveCesaAgentRelationships(identifier).map { activeAgentIds =>
+            if (activeAgentIds.contains(saAgentRef)) Ok else Forbidden
+          }
+        case Left(ex) =>
+          Logger.warn(ex.getMessage)
+          Future.successful(Forbidden)
+
       }
   }
 
@@ -61,5 +71,20 @@ class AgentAssuranceController @Inject()(
         else
           Future successful Forbidden
       }
+  }
+
+  private def validateClientIdentifier(clientType: String, clientId: String): Either[Throwable, TaxIdentifier] = {
+    val identifier = clientId.trim
+    clientType.trim match {
+      case "nino" =>
+        Try(Nino(identifier)).map(Right(_)).recover { case ex => Left(ex) }.get
+      case "utr" =>
+        if (Utr.isValid(identifier))
+          Right(Utr(identifier))
+        else
+          Left(new IllegalArgumentException(s"The utr $identifier is invalid"))
+      case _ =>
+        Left(new IllegalArgumentException(s"The client type $clientType is invalid"))
+    }
   }
 }

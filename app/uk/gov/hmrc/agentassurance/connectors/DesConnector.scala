@@ -25,7 +25,8 @@ import play.api.libs.json.Reads._
 import play.api.libs.json._
 import play.utils.UriEncoding
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
-import uk.gov.hmrc.domain.{Nino, SaAgentReference}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpReads}
 
@@ -58,9 +59,18 @@ class DesConnector @Inject()(@Named("des-baseUrl") baseUrl: URL,
   extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  def getActiveCesaAgentRelationships(nino: Nino)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
-    val encodedNino = UriEncoding.encodePathSegment(nino.value, "UTF-8")
-    val url = new URL(baseUrl, s"/registration/relationship/nino/$encodedNino")
+  def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
+    val encodedClientId = UriEncoding.encodePathSegment(clientIdentifier.value, "UTF-8")
+    val encodedClientType: String = {
+      val clientType = clientIdentifier match {
+        case nino @ Nino(_) => nino.name
+        case _ @ Utr(_) => "utr"
+      }
+      UriEncoding.encodePathSegment(clientType, "UTF-8")
+    }
+
+    val url = new URL(baseUrl, s"/registration/relationship/$encodedClientType/$encodedClientId")
+
     getWithDesHeaders[ClientRelationship]("GetStatusAgentRelationship", url).map(_.agents
       .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
       .flatMap(_.agentId))
