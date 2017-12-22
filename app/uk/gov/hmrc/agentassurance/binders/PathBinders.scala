@@ -16,8 +16,11 @@
 
 package uk.gov.hmrc.agentassurance.binders
 
-import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 
 object PathBinders {
   implicit object NinoBinder extends SimpleObjectBinder[Nino](Nino.apply, _.value)
+  implicit object UtrBinder extends SimpleObjectBinder[Utr](Utr.apply, _.value)
+  implicit object SaAgentReferenceBinder extends SimpleObjectBinder[SaAgentReference](SaAgentReference.apply, _.value)
 }

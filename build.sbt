@@ -8,8 +8,9 @@ lazy val compileDeps = Seq(
   "uk.gov.hmrc" %% "logback-json-logger" % "3.1.0",
   "de.threedimensions" %% "metrics-play" % "2.5.13",
   "uk.gov.hmrc" %% "play-reactivemongo" % "6.1.0",
-  "uk.gov.hmrc" %% "microservice-bootstrap" % "6.11.0",
+  "uk.gov.hmrc" %% "microservice-bootstrap" % "6.15.0",
   "uk.gov.hmrc" %% "domain" % "4.1.0",
+  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.8.0",
   "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "2.4.0",
   "org.typelevel" %% "cats" % "0.9.0"
 )

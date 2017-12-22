@@ -55,6 +55,25 @@ trait AuthActions extends AuthorisedFunctions {
       }
   }
 
+  def AuthorisedIRSAAgentWithSaAgentRef[A](saAgentReference: SaAgentReference)(body: Request[AnyContent] => Future[Result]): Action[AnyContent] = Action.async {
+    implicit request =>
+      implicit val hc = fromHeadersAndSession(request.headers, None)
+      authorised(AuthProviders(GovernmentGateway)).retrieve(allEnrolments) {
+        enrol =>
+          val saAgentRefExists =
+            getEnrolmentInfo(enrol.enrolments, "IR-SA-AGENT", "IRAgentReference").contains(saAgentReference.value)
+
+          if (saAgentRefExists)
+            body(request)
+          else
+            Future successful NoPermission
+      } recoverWith {
+        case ex: NoActiveSession =>
+          Logger.warn("NoActiveSession while trying to access check IR SA endpoint", ex)
+          Future.successful(Unauthorized)
+      }
+  }
+
   def AuthorisedWithAgentCode[A](body: AuthorisedRequestWithAgentCode): Action[AnyContent] = Action.async {
     implicit request =>
       implicit val hc = fromHeadersAndSession(request.headers, None)
