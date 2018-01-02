@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject._
 
+import play.api.Logger
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, GovernmentGatewayConnector}
@@ -49,9 +50,13 @@ class AgentAssuranceController @Inject()(
     activeCesaRelationship(nino, saAgentReference)
 
   private def activeCesaRelationship(identifier: TaxIdentifier, saAgentReference: SaAgentReference): Action[AnyContent] =
-    AuthorisedIRSAAgentWithSaAgentRef(saAgentReference) { implicit request =>
+    Action.async { implicit request =>
       desConnector.getActiveCesaAgentRelationships(identifier).map { agentRefs =>
         if (agentRefs.contains(saAgentReference)) Ok else Forbidden
+      }.recover {
+        case ex =>
+          Logger.warn(s"Could not fetch active cesa agent relationships", ex)
+          Forbidden
       }
     }
 

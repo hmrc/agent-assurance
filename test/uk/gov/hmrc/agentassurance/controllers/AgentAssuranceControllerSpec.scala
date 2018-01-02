@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
       "return FORBIDDEN where the current user is not enrolled in IR-SA-AGENT" in {
         when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithNoIrSAAgent))
 
-        val response = controller.enrolledForIrSAAgent()(FakeRequest())
+        val response = controller.enrolledForIrSAAgent( )(FakeRequest())
 
         status(response) mustBe FORBIDDEN
       }
@@ -92,10 +92,8 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
       }
     }
 
-    "activeCesaRelationship is called with a valid NINO that exists in CESA with the same IRAgentReference as the logged in user" should {
-
-      "return OK where the current user is enrolled in IR-SA-AGENT" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
+    "activeCesaRelationship is called with NINO" should {
+      "return OK where the user provides a valid NINO and saAgentReference nad has an active relationship in CESA" in {
         when(desConnector.getActiveCesaAgentRelationships(eqs(nino))(any(), any())).thenReturn(Future.successful(Seq(saAgentReference)))
 
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
@@ -104,49 +102,49 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
         verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(nino))(any(), any())
       }
 
-      "return UNAUTHORIZED where the current user is not logged in" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.failed(new MissingBearerToken))
-
-        val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
-
-        status(response) mustBe UNAUTHORIZED
-      }
-
-      "return FORBIDDEN where the current user is not enrolled in IR-SA-AGENT" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithNoIrSAAgent))
-
-        val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
-
-        status(response) mustBe FORBIDDEN
-      }
-
-      "return FORBIDDEN where the current user has no enrolments" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithoutIrSAAgent))
-
-        val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
-
-        status(response) mustBe FORBIDDEN
-      }
-    }
-
-    "activeCesaRelationship is called where the current user is enrolled in IR-SA-AGENT" should {
       "return FORBIDDEN when called with a valid NINO that is not active in CESA" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())).thenReturn(Future.successful(Seq.empty))
+        when(desConnector.getActiveCesaAgentRelationships(eqs(nino))(any(), any())).thenReturn(Future.successful(Seq.empty))
 
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
         status(response) mustBe FORBIDDEN
         verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(nino))(any(), any())
       }
 
-      "return FORBIDDEN when called with a valid NINO that is active in CESA but with a different IRAgentReference to the logged in user" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
+      "return FORBIDDEN when called with a valid NINO that is active in CESA but with a different IRAgentReference" in {
         when(desConnector.getActiveCesaAgentRelationships(eqs(nino))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-456"))))
 
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
 
         status(response) mustBe FORBIDDEN
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(Nino("AA000000A")))(any(), any())
+        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(nino))(any(), any())
+      }
+    }
+
+    "activeCesaRelationship is called with UTR" should {
+      "return OK where the user provides a valid UTR and saAgentReference nad has an active relationship in CESA" in {
+        when(desConnector.getActiveCesaAgentRelationships(eqs(utr))(any(), any())).thenReturn(Future.successful(Seq(saAgentReference)))
+
+        val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
+
+        status(response) mustBe OK
+        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(utr))(any(), any())
+      }
+
+      "return FORBIDDEN when called with a valid UTR that is not active in CESA" in {
+        when(desConnector.getActiveCesaAgentRelationships(eqs(utr))(any(), any())).thenReturn(Future.successful(Seq.empty))
+
+        val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
+        status(response) mustBe FORBIDDEN
+        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(utr))(any(), any())
+      }
+
+      "return FORBIDDEN when called with a valid UTR that is active in CESA but with a different IRAgentReference" in {
+        when(desConnector.getActiveCesaAgentRelationships(eqs(utr))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-456"))))
+
+        val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
+
+        status(response) mustBe FORBIDDEN
+        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(utr))(any(), any())
       }
     }
   }
