@@ -127,8 +127,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
       val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A")).get(), 10 seconds)
 
-      Then("403 FORBIDDEN is returned")
-      response.status shouldBe 403
+      Then("502 BadGateway is returned")
+      response.status shouldBe 502
     }
   }
 
@@ -173,8 +173,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       When("GET /activeCesaRelationship/utr/INVALID/saAgentReference/IRSA-123 is called")
       val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("INVALID")).get(), 10 seconds)
 
-      Then("403 FORBIDDEN is returned")
-      response.status shouldBe 403
+      Then("400 BADREQUEST is returned")
+      response.status shouldBe 400
     }
 
     scenario("DES return 500 server error when user calls the endpoint") {
@@ -184,8 +184,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
       val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002")).get(), 10 seconds)
 
-      Then("403 FORBIDDEN is returned")
-      response.status shouldBe 403
+      Then("502 BadGateway is returned")
+      response.status shouldBe 502
     }
   }
 
