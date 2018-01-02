@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,25 +48,6 @@ trait AuthActions extends AuthorisedFunctions {
             case Some(saAgentRef) => body(request)(SaAgentReference(saAgentRef))
             case _ => Future successful NoPermission
           }
-      } recoverWith {
-        case ex: NoActiveSession =>
-          Logger.warn("NoActiveSession while trying to access check IR SA endpoint", ex)
-          Future.successful(Unauthorized)
-      }
-  }
-
-  def AuthorisedIRSAAgentWithSaAgentRef[A](saAgentReference: SaAgentReference)(body: Request[AnyContent] => Future[Result]): Action[AnyContent] = Action.async {
-    implicit request =>
-      implicit val hc = fromHeadersAndSession(request.headers, None)
-      authorised(AuthProviders(GovernmentGateway)).retrieve(allEnrolments) {
-        enrol =>
-          val saAgentRefExists =
-            getEnrolmentInfo(enrol.enrolments, "IR-SA-AGENT", "IRAgentReference").contains(saAgentReference.value)
-
-          if (saAgentRefExists)
-            body(request)
-          else
-            Future successful NoPermission
       } recoverWith {
         case ex: NoActiveSession =>
           Logger.warn("NoActiveSession while trying to access check IR SA endpoint", ex)
