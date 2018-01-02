@@ -53,10 +53,6 @@ class AgentAssuranceController @Inject()(
     Action.async { implicit request =>
       desConnector.getActiveCesaAgentRelationships(identifier).map { agentRefs =>
         if (agentRefs.contains(saAgentReference)) Ok else Forbidden
-      }.recover {
-        case ex =>
-          Logger.warn(s"Could not fetch active cesa agent relationships", ex)
-          Forbidden
       }
     }
 
