@@ -37,6 +37,7 @@ trait AuthActions extends AuthorisedFunctions {
     enrolment.find(_.key equals enrolmentKey).flatMap(_.identifiers.find(_.key equals identifier).map(_.value))
 
   private type AuthorisedRequestWithSaRef = Request[AnyContent] => SaAgentReference => Future[Result]
+  private type AuthorisedRequestWithSaRef1 = Request[AnyContent] =>  Future[Result]
   private type AuthorisedRequestWithAgentCode = Request[AnyContent] => AgentCode => Future[Result]
 
   def AuthorisedIRSAAgent[A](body: AuthorisedRequestWithSaRef): Action[AnyContent] = Action.async {
@@ -66,5 +67,16 @@ trait AuthActions extends AuthorisedFunctions {
           Logger.warn("NoActiveSession while trying to access check IR SA endpoint", ex)
           Future.successful(Unauthorized)
       }
+  }
+
+  def BasicAuth[A](body: Request[AnyContent] => Future[Result]): Action[AnyContent] = Action.async { implicit request =>
+    implicit val hc = fromHeadersAndSession(request.headers, None)
+    authorised() {
+      body(request)
+    } recoverWith {
+      case ex: NoActiveSession =>
+        Logger.warn("NoActiveSession while trying to access check activeCesaRelationship endpoint", ex)
+        Future.successful(Unauthorized)
+    }
   }
 }

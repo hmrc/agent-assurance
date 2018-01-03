@@ -50,7 +50,7 @@ class AgentAssuranceController @Inject()(
     activeCesaRelationship(nino, saAgentReference)
 
   private def activeCesaRelationship(identifier: TaxIdentifier, saAgentReference: SaAgentReference): Action[AnyContent] =
-    Action.async { implicit request =>
+    BasicAuth { implicit request =>
       desConnector.getActiveCesaAgentRelationships(identifier).map { agentRefs =>
         if (agentRefs.contains(saAgentReference)) Ok else Forbidden
       }

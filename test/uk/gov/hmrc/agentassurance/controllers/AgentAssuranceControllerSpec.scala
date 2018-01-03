@@ -21,6 +21,7 @@ import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
+import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, GovernmentGatewayConnector}
@@ -94,6 +95,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
 
     "activeCesaRelationship is called with NINO" should {
       "return OK where the user provides a valid NINO and saAgentReference nad has an active relationship in CESA" in {
+        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful())
         when(desConnector.getActiveCesaAgentRelationships(eqs(nino))(any(), any())).thenReturn(Future.successful(Seq(saAgentReference)))
 
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
@@ -103,6 +105,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
       }
 
       "return FORBIDDEN when called with a valid NINO that is not active in CESA" in {
+        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful())
         when(desConnector.getActiveCesaAgentRelationships(eqs(nino))(any(), any())).thenReturn(Future.successful(Seq.empty))
 
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
@@ -111,6 +114,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
       }
 
       "return FORBIDDEN when called with a valid NINO that is active in CESA but with a different IRAgentReference" in {
+        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful())
         when(desConnector.getActiveCesaAgentRelationships(eqs(nino))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-456"))))
 
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
@@ -122,6 +126,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
 
     "activeCesaRelationship is called with UTR" should {
       "return OK where the user provides a valid UTR and saAgentReference nad has an active relationship in CESA" in {
+        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful())
         when(desConnector.getActiveCesaAgentRelationships(eqs(utr))(any(), any())).thenReturn(Future.successful(Seq(saAgentReference)))
 
         val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
@@ -131,6 +136,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
       }
 
       "return FORBIDDEN when called with a valid UTR that is not active in CESA" in {
+        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful())
         when(desConnector.getActiveCesaAgentRelationships(eqs(utr))(any(), any())).thenReturn(Future.successful(Seq.empty))
 
         val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
@@ -139,6 +145,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
       }
 
       "return FORBIDDEN when called with a valid UTR that is active in CESA but with a different IRAgentReference" in {
+        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful())
         when(desConnector.getActiveCesaAgentRelationships(eqs(utr))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-456"))))
 
         val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
