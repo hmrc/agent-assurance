@@ -80,7 +80,10 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
   feature("/activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference") {
     scenario("User provides a NINO which has an active relationship in CESA") {
-      Given("CESA contains an active agent/client relationship for NINO AA000000A and Agent Reference IRSA-123")
+      Given("User is logged in")
+      isLoggedInWithoutAgentCode
+
+      And("CESA contains an active agent/client relationship for NINO AA000000A and Agent Reference IRSA-123")
       givenClientHasRelationshipWithAgentInCESA(Nino("AA000000A"), SaAgentReference(irAgentReference))
 
       When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
@@ -91,7 +94,10 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("User provides a NINO which has no active relationship in CESA") {
-      Given("CESA contains no active agent/client relationship for NINO AA000000A and Agent Reference IRSA-123")
+      Given("User is logged in")
+      isLoggedInWithoutAgentCode
+
+      And("CESA contains no active agent/client relationship for NINO AA000000A and Agent Reference IRSA-123")
       givenClientHasNoActiveRelationshipWithAgentInCESA(Nino("AA000000A"))
 
       When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
@@ -102,7 +108,10 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("User provides a NINO which has an active relationship in CESA but with a different Agent Reference") {
-      Given("CESA contains no active agent/client relationship for NINO AA000000A and Agent Reference IRSA-456")
+      Given("User is logged in")
+      isLoggedInWithoutAgentCode
+
+      And("CESA contains no active agent/client relationship for NINO AA000000A and Agent Reference IRSA-456")
       givenClientHasRelationshipWithAgentInCESA(Nino("AA000000A"), SaAgentReference("IRSA-456"))
 
       When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
@@ -121,7 +130,10 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("DES return 500 server error when user calls the endpoint") {
-      Given("DES return 500 server error")
+      Given("User is logged in")
+      isLoggedInWithoutAgentCode
+
+      And("DES return 500 server error")
       givenDesReturnsServerError()
 
       When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
@@ -130,11 +142,25 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       Then("502 BadGateway is returned")
       response.status shouldBe 502
     }
+
+    scenario("User is not logged in") {
+      Given("User is not logged in")
+      isNotLoggedIn
+
+      When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A")).get(), 10 seconds)
+
+      Then("401 Unauthorised is returned")
+      response.status shouldBe 401
+    }
   }
 
   feature("/activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReference") {
     scenario("User provides a UTR which has an active relationship in CESA") {
-      Given("CESA contains an active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-123")
+      Given("User is logged in")
+      isLoggedInWithoutAgentCode
+
+      And("CESA contains an active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-123")
       givenClientHasRelationshipWithAgentInCESA(Utr("7000000002"), SaAgentReference(irAgentReference))
 
       When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
@@ -145,7 +171,10 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("User provides a UTR which has no active relationship in CESA") {
-      Given("CESA contains no active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-123")
+      Given("User is logged in")
+      isLoggedInWithoutAgentCode
+
+      And("CESA contains no active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-123")
       givenClientHasNoActiveRelationshipWithAgentInCESA(Utr("7000000002"))
 
       When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
@@ -156,7 +185,10 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("User provides a UTR which has an active relationship in CESA but with a different Agent Reference") {
-      Given("CESA contains no active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-456")
+      Given("User is logged in")
+      isLoggedInWithoutAgentCode
+
+      And("CESA contains no active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-456")
       givenClientHasRelationshipWithAgentInCESA(Utr("7000000002"), SaAgentReference("IRSA-456"))
 
       When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
@@ -167,7 +199,10 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("User provides an invalid UTR") {
-      Given("CESA checks for active relationships with an invalid UTR")
+      Given("User is logged in")
+      isLoggedInWithoutAgentCode
+
+      And("CESA checks for active relationships with an invalid UTR")
       givenClientIdentifierIsInvalid(Utr("INVALID"))
 
       When("GET /activeCesaRelationship/utr/INVALID/saAgentReference/IRSA-123 is called")
@@ -178,7 +213,10 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("DES return 500 server error when user calls the endpoint") {
-      Given("DES return 500 server error")
+      Given("User is logged in")
+      isLoggedInWithoutAgentCode
+
+      And("DES return 500 server error")
       givenDesReturnsServerError()
 
       When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
@@ -186,6 +224,17 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       Then("502 BadGateway is returned")
       response.status shouldBe 502
+    }
+
+    scenario("User is not logged") {
+      Given("User is logged in")
+      isNotLoggedIn
+
+      When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002")).get(), 10 seconds)
+
+      Then("401 Unauthorised is returned")
+      response.status shouldBe 401
     }
   }
 

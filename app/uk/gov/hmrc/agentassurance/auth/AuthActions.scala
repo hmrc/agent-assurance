@@ -67,4 +67,15 @@ trait AuthActions extends AuthorisedFunctions {
           Future.successful(Unauthorized)
       }
   }
+
+  def BasicAuth[A](body: Request[AnyContent] => Future[Result]): Action[AnyContent] = Action.async { implicit request =>
+    implicit val hc = fromHeadersAndSession(request.headers, None)
+    authorised() {
+      body(request)
+    } recoverWith {
+      case ex: NoActiveSession =>
+        Logger.warn("NoActiveSession while trying to access check activeCesaRelationship endpoint", ex)
+        Future.successful(Unauthorized)
+    }
+  }
 }
