@@ -24,7 +24,7 @@ Response Code(s)
 | 204 | The current user is enrolled for IR-SA-AGENT |
 | 403 | The current user is not enrolled for IR-SA-AGENT |
 
-#### Check if the current user has an active client/agent relationship in CESA with NINO
+#### Check if there is an active client/agent relationship in CESA with NINO
 ```
 GET   	/activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference
 ```
@@ -32,12 +32,13 @@ Response Code(s)
 
 | Status Code | Description |
 |---|---|
-| 200 | The current user provides a valid NINO and an IRAgentReference identifier that matches an active agent/client relationship in CESA |
-| 403 | The current user does not have any active agent/client relationship in CESA between the user and the client|
+| 200 | The user provides a valid NINO and an IRAgentReference identifier that matches an active agent/client relationship in CESA |
+| 403 | There is no active agent/client relationship in CESA between the NINO and an IRAgentReference|
+| 401 | The user is not authenticated|
 
 ##### Example
 
-Assuming the user has an active CESA agent relationship with IRAgentReference of SA6012.
+Assuming there is an active CESA agent relationship with IRAgentReference of SA6012.
 ```
 curl -v -X GET   http://localhost:9565/agent-assurance/activeCesaRelationship/nino/AA123456A/saAgentReference/SA1062   -H 'authorization: Bearer XlLM91CY3hEHqHlrKX9N0QiipuC7OgyTZ/X4lZsBP7LjP1u/FTyg3BP6cBwPlI2mRKgg5SSYGc5YQV4ey85p4+kGWh90x366Iwc5dACuF/ME56mEsOk9zoM3xmXgD34UDcJvR2BEcijUSTzqB3fFrL8GXJCatRwgUb/Zd4VGpwo1TnU/CoN5cH3wc88qbn82'   -H 'cache-control: no-cache'   -H 'postman-token: 97bcf028-5bc5-b080-ac5f-0f7e7a383008'
 Note: Unnecessary use of -X or --request, GET is already inferred.
@@ -78,7 +79,7 @@ Note: Unnecessary use of -X or --request, GET is already inferred.
 * Connection #0 to host localhost left intact
 ```
 
-#### Check if the current user has an active client/agent relationship in CESA with UTR
+#### Check if there is an active client/agent relationship in CESA with UTR
 ```
 GET   	/activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReference
 ```
@@ -86,8 +87,9 @@ Response Code(s)
 
 | Status Code | Description |
 |---|---|
-| 200 | The current user provides a valid UTR and an IRAgentReference identifier that matches an active agent/client relationship in CESA |
-| 403 | The current user does not have any active agent/client relationship in CESA between the user and the client|
+| 200 | The user provides a valid UTR and an IRAgentReference identifier that matches an active agent/client relationship in CESA |
+| 403 | There is no active agent/client relationship in CESA between the UTR and IRAgentReference|
+| 401 | The user is not authenticated|
 
 ##### Example
 
