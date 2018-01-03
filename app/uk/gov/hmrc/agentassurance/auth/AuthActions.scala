@@ -37,7 +37,6 @@ trait AuthActions extends AuthorisedFunctions {
     enrolment.find(_.key equals enrolmentKey).flatMap(_.identifiers.find(_.key equals identifier).map(_.value))
 
   private type AuthorisedRequestWithSaRef = Request[AnyContent] => SaAgentReference => Future[Result]
-  private type AuthorisedRequestWithSaRef1 = Request[AnyContent] =>  Future[Result]
   private type AuthorisedRequestWithAgentCode = Request[AnyContent] => AgentCode => Future[Result]
 
   def AuthorisedIRSAAgent[A](body: AuthorisedRequestWithSaRef): Action[AnyContent] = Action.async {
