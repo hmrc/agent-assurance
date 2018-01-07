@@ -19,10 +19,12 @@ package uk.gov.hmrc.agentassurance.connectors
 import java.net.URL
 import javax.inject.{Inject, Named, Singleton}
 
+import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.{format, fromJson}
-import uk.gov.hmrc.domain.{AgentCode, EmpRef}
+import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
+import uk.gov.hmrc.domain.AgentCode
 import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpReads, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,7 +39,10 @@ object ClientAllocation {
 case class ClientAllocationResponse(clients: Seq[ClientAllocation])
 
 @Singleton
-class  GovernmentGatewayConnector @Inject()(@Named("government-gateway-baseUrl") baseUrl: URL, httpGet: HttpGet, metrics: Metrics) {
+class GovernmentGatewayConnector @Inject()(@Named("government-gateway-baseUrl") baseUrl: URL, httpGet: HttpGet, metrics: Metrics)
+  extends HttpAPIMonitor {
+  override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+
   def getClientCount(service: String, agentCode: AgentCode)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
     val clientListUrl = s"$baseUrl/agent/$agentCode/client-list/$service/all"
 
@@ -45,19 +50,20 @@ class  GovernmentGatewayConnector @Inject()(@Named("government-gateway-baseUrl")
       override def read(method: String, url: String, response: HttpResponse) = {
         response.status match {
           case 200 => ClientAllocationResponse(parseClients(response.json))
-          case 204 =>  ClientAllocationResponse(Seq.empty)
+          case 204 => ClientAllocationResponse(Seq.empty)
           case 202 => ClientAllocationResponse(Seq.empty)
           case _ => throw new RuntimeException(s"Error retrieving client list from $url: status ${response.status} body ${response.body}")
         }
       }
     }
-
-    httpGet.GET[ClientAllocationResponse](clientListUrl).map(
-      response =>
-        response.clients.size)
+    monitor(s"ConsumedAPI-GGW-GetAgentClientList-$service-GET") {
+      httpGet.GET[ClientAllocationResponse](clientListUrl).map(
+        response =>
+          response.clients.size)
+    }
   }
 
-  private def parseClients(jsonResponse: JsValue): Seq[ClientAllocation]  = {
+  private def parseClients(jsonResponse: JsValue): Seq[ClientAllocation] = {
     fromJson[Seq[ClientAllocation]](jsonResponse).getOrElse {
       throw new RuntimeException(s"Invalid payload received from government gateway: $jsonResponse")
     }

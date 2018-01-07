@@ -52,8 +52,10 @@ class GovernmentGatewayConnectorISpec
     }
 
     "return an all clients returned by GG" in {
+      givenCleanMetricRegistry()
       sufficientClientsAreAllocated(service, agentCode1)
       ( await(connector.getClientCount(service, agentCode1)) > 0 ) shouldBe true
+      timerShouldExistsAndBeenUpdated("ConsumedAPI-GGW-GetAgentClientList-IR-PAYE-GET")
     }
   }
 }
