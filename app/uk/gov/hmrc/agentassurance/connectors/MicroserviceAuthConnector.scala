@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package wiring
+package uk.gov.hmrc.agentassurance.connectors
 
-import javax.inject.Inject
+import java.net.URL
+import javax.inject.{ Inject, Named, Singleton }
 
-import play.api.Configuration
-import uk.gov.hmrc.http.hooks.HttpHooks
-import uk.gov.hmrc.http.{HttpDelete, HttpGet, HttpPost, HttpPut}
-import uk.gov.hmrc.play.http.ws._
+import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.http.HttpPost
+import uk.gov.hmrc.play.http.ws.WSPost
 
-trait Hooks extends HttpHooks {
-  override val hooks = NoneRequired
+@Singleton
+class MicroserviceAuthConnector @Inject() (@Named("auth-baseUrl") baseUrl: URL)
+  extends PlayAuthConnector {
+
+  override val serviceUrl = baseUrl.toString
+
+  override def http = new HttpPost with WSPost {
+    override val hooks = NoneRequired
+  }
 }
-
-class WSVerbs @Inject()(implicit configuration: Configuration) extends HttpGet with WSGet with HttpPut
-  with WSPut with HttpPost with WSPost with HttpDelete with WSDelete with Hooks
