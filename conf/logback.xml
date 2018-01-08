@@ -51,9 +51,9 @@
 
     <logger name="play.core" level="INFO"/>
 
-    <logger name="application" level="DEBUG"/>
+    <logger name="application" level="INFO"/>
 
-    <logger name="connector" level="TRACE">
+    <logger name="connector" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
 

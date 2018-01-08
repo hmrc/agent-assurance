@@ -54,6 +54,7 @@ class GovernmentGatewayConnectorISpec
       sufficientClientsAreAllocated(service, agentCode1)
       ( await(connector.getClientCount(service, agentCode1)) > 0 ) shouldBe true
       timerShouldExistsAndBeenUpdated("ConsumedAPI-GGW-GetAgentClientList-IR-PAYE-GET")
+      histogramShouldExistsAndBeenUpdated("Size-GGW-AgentClientList-IR-PAYE",6)
     }
   }
 }
