@@ -40,26 +40,28 @@ case class ClientAllocationResponse(clients: Seq[ClientAllocation])
 
 @Singleton
 class GovernmentGatewayConnector @Inject()(@Named("government-gateway-baseUrl") baseUrl: URL, httpGet: HttpGet, metrics: Metrics)
-  extends HttpAPIMonitor {
+  extends HttpAPIMonitor with HistogramMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+
+  implicit val responseHandler = new HttpReads[ClientAllocationResponse] {
+    override def read(method: String, url: String, response: HttpResponse) = {
+      response.status match {
+        case 200 => ClientAllocationResponse(parseClients(response.json))
+        case 204 => ClientAllocationResponse(Seq.empty)
+        case 202 => ClientAllocationResponse(Seq.empty)
+        case _ => throw new RuntimeException(s"Error retrieving client list from $url: status ${response.status} body ${response.body}")
+      }
+    }
+  }
 
   def getClientCount(service: String, agentCode: AgentCode)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
     val clientListUrl = s"$baseUrl/agent/$agentCode/client-list/$service/all"
-
-    implicit val responseHandler = new HttpReads[ClientAllocationResponse] {
-      override def read(method: String, url: String, response: HttpResponse) = {
-        response.status match {
-          case 200 => ClientAllocationResponse(parseClients(response.json))
-          case 204 => ClientAllocationResponse(Seq.empty)
-          case 202 => ClientAllocationResponse(Seq.empty)
-          case _ => throw new RuntimeException(s"Error retrieving client list from $url: status ${response.status} body ${response.body}")
-        }
+    reportHistogramValue(s"Size-GGW-AgentClientList-$service") {
+      monitor(s"ConsumedAPI-GGW-GetAgentClientList-$service-GET") {
+        httpGet.GET[ClientAllocationResponse](clientListUrl).map(
+          response =>
+            response.clients.size)
       }
-    }
-    monitor(s"ConsumedAPI-GGW-GetAgentClientList-$service-GET") {
-      httpGet.GET[ClientAllocationResponse](clientListUrl).map(
-        response =>
-          response.clients.size)
     }
   }
 

@@ -29,4 +29,11 @@ trait MetricTestSupport {
     metrics.getCount should be >= 1L
   }
 
+  def histogramShouldExistsAndBeenUpdated(metric: String, max: Long): Unit = {
+    val histogram = metricsRegistry.getHistograms
+    val metrics = histogram.get(s"Histogram-$metric")
+    if (metrics == null) throw new Exception(s"Metric [$metric] not found, try one of ${histogram.keySet()}")
+    metrics.getSnapshot.getMax shouldBe max
+  }
+
 }
