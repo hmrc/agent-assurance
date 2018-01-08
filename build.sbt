@@ -4,22 +4,21 @@ import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 scalaVersion := "2.11.11"
 
 lazy val compileDeps = Seq(
-  "uk.gov.hmrc" %% "auth-client" % "2.3.0",
+  "uk.gov.hmrc" %% "auth-client" % "2.5.0",
   "uk.gov.hmrc" %% "logback-json-logger" % "3.1.0",
   "de.threedimensions" %% "metrics-play" % "2.5.13",
-  "uk.gov.hmrc" %% "play-reactivemongo" % "6.1.0",
-  "uk.gov.hmrc" %% "microservice-bootstrap" % "6.15.0",
-  "uk.gov.hmrc" %% "domain" % "4.1.0",
+  "uk.gov.hmrc" %% "bootstrap-play-25" % "1.2.0",
+  "uk.gov.hmrc" %% "domain" % "5.1.0",
   "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.8.0",
   "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "2.4.0",
   "org.typelevel" %% "cats" % "0.9.0"
 )
 
 def testDeps(scope: String) = Seq(
-  "org.scalatest" %% "scalatest" % "2.2.6" % scope,
-  "org.mockito" % "mockito-core" % "2.8.9" % scope,
+  "org.scalatest" %% "scalatest" % "3.0.4" % scope,
+  "org.mockito" % "mockito-core" % "2.13.0" % scope,
   "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % scope,
-  "uk.gov.hmrc" %% "hmrctest" % "2.4.0" % scope,
+  "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % scope,
   "com.github.tomakehurst" % "wiremock" % "2.8.0" % scope,
   "uk.gov.hmrc" %% "reactivemongo-test" % "3.0.0" % scope
 )

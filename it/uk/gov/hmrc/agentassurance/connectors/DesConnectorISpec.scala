@@ -9,18 +9,17 @@ import uk.gov.hmrc.agentassurance.stubs.{DataStreamStub, DesStubs}
 import uk.gov.hmrc.agentassurance.support.{MetricTestSupport, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet}
 import uk.gov.hmrc.play.test.UnitSpec
-import wiring.WSVerbs
 
 import scala.concurrent.ExecutionContext
 
-class DesConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSupport with DesStubs with DataStreamStub with MetricTestSupport {
+class DesConnectorISpec extends UnitSpec with OneAppPerSuite with WireMockSupport with DesStubs with DataStreamStub with MetricTestSupport {
 
   override implicit lazy val app: Application = appBuilder
     .build()
 
-  val desConnector = new DesConnector(wireMockBaseUrl, "token", "stub", new WSVerbs()(app.configuration), app.injector.instanceOf[Metrics])
+  val desConnector = new DesConnector(wireMockBaseUrl, "token", "stub", app.injector.instanceOf[HttpGet], app.injector.instanceOf[Metrics])
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()

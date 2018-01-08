@@ -8,9 +8,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentassurance.stubs.GovernmentGatewayStubs
 import uk.gov.hmrc.agentassurance.support.{MetricTestSupport, WireMockSupport}
 import uk.gov.hmrc.domain.AgentCode
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet}
 import uk.gov.hmrc.play.test.UnitSpec
-import wiring.WSVerbs
 
 import scala.concurrent.ExecutionContext
 
@@ -21,7 +20,7 @@ class GovernmentGatewayConnectorISpec
   override implicit lazy val app: Application = appBuilder.build()
 
   val connector =
-    new GovernmentGatewayConnector(wireMockBaseUrl, new WSVerbs()(app.configuration), app.injector.instanceOf[Metrics])
+    new GovernmentGatewayConnector(wireMockBaseUrl,app.injector.instanceOf[HttpGet], app.injector.instanceOf[Metrics])
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -33,7 +32,6 @@ class GovernmentGatewayConnectorISpec
 
   private val agentCode1 = AgentCode("foo")
   private val service = "IR-PAYE"
-  private val clientListUrl = s"/agent/${agentCode1.value}/client-list/$service/all"
 
   "GovernmentGatewayConnector getClientCount" should {
     "return an empty list when GG returns 202" in {
