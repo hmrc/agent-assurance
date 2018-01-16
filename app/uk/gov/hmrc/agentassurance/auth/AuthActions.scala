@@ -61,11 +61,11 @@ trait AuthActions extends AuthorisedFunctions {
       implicit val hc = fromHeadersAndSession(request.headers, None)
       authorised(AuthProviders(GovernmentGateway)).retrieve(Retrievals.credentials) {
         case Credentials(providerId, _) => body(request)(providerId)
-        case _ => Future successful NoPermission
       } recoverWith {
         case ex: NoActiveSession =>
           Logger.warn("NoActiveSession while trying to access check IR SA endpoint", ex)
           Future.successful(Unauthorized)
+        case _ => Future successful NoPermission
       }
   }
 

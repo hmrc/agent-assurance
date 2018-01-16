@@ -80,18 +80,21 @@ trait AgentAuthStubs extends BasicUserAuthStubs {
     this
   }
 
-  def isLoggedInWithAgentCode(agentCode: AgentCode) = {
+  def isLoggedInWithUserId(userId: String) = {
     stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody(
       s"""
          |{
-         |  "agentCode" : "${agentCode.value}"
+         |  "credentials" : {
+         |    "providerId" : "$userId",
+         |    "providerType" : "GovernmentGateway"
+         |    }
          |}
        """.stripMargin
     )))
     this
   }
 
-  def isLoggedInWithoutAgentCode = {
+  def isLoggedInWithoutUserId = {
     stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody("{}")))
     this
   }

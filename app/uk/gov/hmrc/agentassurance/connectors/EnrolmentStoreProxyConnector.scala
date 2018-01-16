@@ -27,6 +27,7 @@ import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpReads, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 case class ClientAllocation(friendlyName: String, state: String)
 
@@ -46,19 +47,18 @@ class EnrolmentStoreProxyConnector @Inject()(@Named("enrolment-store-proxy-baseU
 
   implicit val responseHandler = new HttpReads[ClientAllocationResponse] {
     override def read(method: String, url: String, response: HttpResponse) = {
-      response.status match {
-        case 200 => ClientAllocationResponse(parseClients(response.json))
+      Try(response.status match {
+        case 200 => ClientAllocationResponse(parseClients((response.json \ "enrolments").get))
         case 204 => ClientAllocationResponse(Seq.empty)
-        case _ => throw new RuntimeException(s"Error retrieving client list from $url: status ${response.status} body ${response.body}")
-      }
+      }).getOrElse(throw new RuntimeException(s"Error retrieving client list from $url: status ${response.status} body ${response.body}"))
     }
   }
 
   def getClientCount(service: String, userId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
-    val clientListUrl = s"$emacBaseUrl/users/$userId/enrolments/enrolments?type=delegated&service=$service"
+    val clientListUrl = s"$emacBaseUrl/users/$userId/enrolments?type=delegated&service=$service"
 
     reportHistogramValue(s"Size-ESP-ES2-GetAgentClientList-$service") {
-      monitor(s"ConsumedAPI-SP-ES2-GetAgentClientList-$service-GET") {
+      monitor(s"ConsumedAPI-ESP-ES2-GetAgentClientList-$service-GET") {
         httpGet.GET[ClientAllocationResponse](clientListUrl).map(_.clients).map { clients =>
           clients.count(_.state == "Unknown")
         }

@@ -46,7 +46,6 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
     bindProperty("appName")
     bindBaseUrl("des")
     bindBaseUrl("auth")
-    bindBaseUrl("government-gateway")
     bindBaseUrl("enrolment-store-proxy")
     bindIntProperty("minimumIRPAYEClients")
     bindIntProperty("minimumIRSAClients")

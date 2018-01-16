@@ -4,10 +4,10 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.{WSClient, WSResponse}
-import uk.gov.hmrc.agentassurance.stubs.{DesStubs, GovernmentGatewayStubs}
+import uk.gov.hmrc.agentassurance.stubs.{DesStubs, EnrolmentStoreProxyStubs}
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.domain.{AgentCode, Nino, SaAgentReference}
+import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Await
@@ -15,14 +15,14 @@ import scala.concurrent.duration._
 
 
 class AgentAssuranceControllerISpec extends IntegrationSpec
-  with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with WireMockSupport with GovernmentGatewayStubs {
+  with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with WireMockSupport with EnrolmentStoreProxyStubs {
   override implicit lazy val app: Application = appBuilder.build()
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure("microservice.services.auth.port" -> wireMockPort,
         "microservice.services.des.port" -> wireMockPort,
-        "microservice.services.government-gateway.port" -> wireMockPort,
+        "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "minimumIRPAYEClients" -> 6,
         "minimumIRSAClients" -> 6 )
 
@@ -38,7 +38,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  val agentCode1 = AgentCode("agent1")
+  val userId = "0000001531072644"
 
 
   override def irAgentReference: String = "IRSA-123"
@@ -81,7 +81,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   feature("/activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference") {
     scenario("User provides a NINO which has an active relationship in CESA") {
       Given("User is logged in")
-      isLoggedInWithoutAgentCode
+      isLoggedInWithoutUserId
 
       And("CESA contains an active agent/client relationship for NINO AA000000A and Agent Reference IRSA-123")
       givenClientHasRelationshipWithAgentInCESA(Nino("AA000000A"), SaAgentReference(irAgentReference))
@@ -95,7 +95,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     scenario("User provides a NINO which has no active relationship in CESA") {
       Given("User is logged in")
-      isLoggedInWithoutAgentCode
+      isLoggedInWithoutUserId
 
       And("CESA contains no active agent/client relationship for NINO AA000000A and Agent Reference IRSA-123")
       givenClientHasNoActiveRelationshipWithAgentInCESA(Nino("AA000000A"))
@@ -109,7 +109,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     scenario("User provides a NINO which has an active relationship in CESA but with a different Agent Reference") {
       Given("User is logged in")
-      isLoggedInWithoutAgentCode
+      isLoggedInWithoutUserId
 
       And("CESA contains no active agent/client relationship for NINO AA000000A and Agent Reference IRSA-456")
       givenClientHasRelationshipWithAgentInCESA(Nino("AA000000A"), SaAgentReference("IRSA-456"))
@@ -131,7 +131,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     scenario("DES return 500 server error when user calls the endpoint") {
       Given("User is logged in")
-      isLoggedInWithoutAgentCode
+      isLoggedInWithoutUserId
 
       And("DES return 500 server error")
       givenDesReturnsServerError()
@@ -158,7 +158,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   feature("/activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReference") {
     scenario("User provides a UTR which has an active relationship in CESA") {
       Given("User is logged in")
-      isLoggedInWithoutAgentCode
+      isLoggedInWithoutUserId
 
       And("CESA contains an active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-123")
       givenClientHasRelationshipWithAgentInCESA(Utr("7000000002"), SaAgentReference(irAgentReference))
@@ -172,7 +172,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     scenario("User provides a UTR which has no active relationship in CESA") {
       Given("User is logged in")
-      isLoggedInWithoutAgentCode
+      isLoggedInWithoutUserId
 
       And("CESA contains no active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-123")
       givenClientHasNoActiveRelationshipWithAgentInCESA(Utr("7000000002"))
@@ -186,7 +186,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     scenario("User provides a UTR which has an active relationship in CESA but with a different Agent Reference") {
       Given("User is logged in")
-      isLoggedInWithoutAgentCode
+      isLoggedInWithoutUserId
 
       And("CESA contains no active agent/client relationship for UTR 7000000002 and Agent Reference IRSA-456")
       givenClientHasRelationshipWithAgentInCESA(Utr("7000000002"), SaAgentReference("IRSA-456"))
@@ -200,7 +200,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     scenario("User provides an invalid UTR") {
       Given("User is logged in")
-      isLoggedInWithoutAgentCode
+      isLoggedInWithoutUserId
 
       And("CESA checks for active relationships with an invalid UTR")
       givenClientIdentifierIsInvalid(Utr("INVALID"))
@@ -214,7 +214,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     scenario("DES return 500 server error when user calls the endpoint") {
       Given("User is logged in")
-      isLoggedInWithoutAgentCode
+      isLoggedInWithoutUserId
 
       And("DES return 500 server error")
       givenDesReturnsServerError()
@@ -241,11 +241,11 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   feature("/acceptableNumberOfClients/service/IR-PAYE") {
 
     scenario("Logged in user is an agent with sufficient allocated PAYE clients") {
-      Given("User has an agent code")
-      isLoggedInWithAgentCode(agentCode1)
+      Given("User has an user id")
+      isLoggedInWithUserId(userId)
 
-      And("GG returns sufficient allocated IR-PAYE clients for the agent")
-      sufficientClientsAreAllocated("IR-PAYE", agentCode1)
+      And("Enrolment store returns sufficient allocated IR-PAYE clients for the agent")
+      sufficientClientsAreAllocated("IR-PAYE", userId)
 
       When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
@@ -255,11 +255,11 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("Logged in user is an agent with insufficient allocated PAYE clients") {
-      Given("User has an agent code")
-      isLoggedInWithAgentCode(agentCode1)
+      Given("User has an user id")
+      isLoggedInWithUserId(userId)
 
-      And("GG returns insufficient allocated IR-PAYE clients for the agent")
-      tooFewClientsAreAllocated("IR-PAYE", agentCode1)
+      And("Enrolment store returns insufficient allocated IR-PAYE clients for the agent")
+      tooFewClientsAreAllocated("IR-PAYE", userId)
 
       When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
@@ -269,11 +269,11 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("Logged in user is an agent with no allocated PAYE clients") {
-      Given("User has an agent code")
-      isLoggedInWithAgentCode(agentCode1)
+      Given("User has an user id")
+      isLoggedInWithUserId(userId)
 
-      And("GG returns no allocated IR-PAYE clients for the agent")
-      noClientsAreAllocated("IR-PAYE", agentCode1)
+      And("Enrolment store returns no allocated IR-PAYE clients for the agent")
+      noClientsAreAllocated("IR-PAYE", userId)
 
       When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
@@ -283,8 +283,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("Logged in user is not an agent") {
-      Given("User has no agent code")
-      isLoggedInWithoutAgentCode
+      Given("User has no user id")
+      isLoggedInWithoutUserId
 
       When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
@@ -304,14 +304,14 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 401
     }
   }
-  
+
   feature("/acceptableNumberOfClients/service/IR-SA") {
     scenario("Logged in user is an agent with sufficient allocated IR-SA clients") {
-      Given("User has an agent code")
-      isLoggedInWithAgentCode(agentCode1)
+      Given("User has an user id")
+      isLoggedInWithUserId(userId)
 
-      And("GG returns sufficient allocated IR-SA clients for the agent")
-      sufficientClientsAreAllocated("IR-SA", agentCode1)
+      And("Enrolment store returns sufficient allocated IR-SA clients for the agent")
+      sufficientClientsAreAllocated("IR-SA", userId)
 
       When("GET /acceptableNumberOfClients/service/IR-SA is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
@@ -321,11 +321,11 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("Logged in user is an agent with insufficient allocated PAYE clients") {
-      Given("User has an agent code")
-      isLoggedInWithAgentCode(agentCode1)
+      Given("User has an user id")
+      isLoggedInWithUserId(userId)
 
-      And("GG returns insufficient allocated IR-SA clients for the agent")
-      tooFewClientsAreAllocated("IR-SA", agentCode1)
+      And("Enrolment store returns insufficient allocated IR-SA clients for the agent")
+      tooFewClientsAreAllocated("IR-SA", userId)
 
       When("GET /acceptableNumberOfClients/service/IR-SA is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
@@ -335,11 +335,11 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("Logged in user is an agent with no allocated PAYE clients") {
-      Given("User has an agent code")
-      isLoggedInWithAgentCode(agentCode1)
+      Given("User has an user id")
+      isLoggedInWithUserId(userId)
 
-      And("GG returns no allocated IR-SA clients for the agent")
-      noClientsAreAllocated("IR-SA", agentCode1)
+      And("Enrolment store returns no allocated IR-SA clients for the agent")
+      noClientsAreAllocated("IR-SA", userId)
 
       When("GET /acceptableNumberOfClients/service/IR-SA is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
@@ -349,8 +349,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
 
     scenario("Logged in user is not an agent") {
-      Given("User has no agent code")
-      isLoggedInWithoutAgentCode
+      Given("User has no user id")
+      isLoggedInWithoutUserId
 
       When("GET /acceptableNumberOfClients/service/IR-SA is called")
       val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
