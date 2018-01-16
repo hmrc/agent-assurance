@@ -15,7 +15,7 @@ import scala.concurrent.ExecutionContext
 
 case class PayeClient(govGwClientName: String, empRef: String, agentCanViewLandP: Boolean = true)
 
-class GovernmentGatewayConnectorISpec
+/*class GovernmentGatewayConnectorISpec
   extends UnitSpec with OneAppPerSuite with WireMockSupport with MetricTestSupport with GovernmentGatewayStubs{
   override implicit lazy val app: Application = appBuilder.build()
 
@@ -57,4 +57,4 @@ class GovernmentGatewayConnectorISpec
       histogramShouldExistsAndBeenUpdated("Size-GGW-AgentClientList-IR-PAYE",6)
     }
   }
-}
+}*/
