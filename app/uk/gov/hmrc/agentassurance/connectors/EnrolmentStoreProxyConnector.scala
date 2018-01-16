@@ -24,13 +24,12 @@ import com.kenshoo.play.metrics.Metrics
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.{format, fromJson}
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
-import uk.gov.hmrc.domain.AgentCode
 import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpReads, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
-
-case class ClientAllocation(friendlyName: String)
+case class ClientAllocation(friendlyName: String, state: String)
 
 object ClientAllocation {
   implicit val formats = format[ClientAllocation]
@@ -39,35 +38,38 @@ object ClientAllocation {
 case class ClientAllocationResponse(clients: Seq[ClientAllocation])
 
 @Singleton
-class GovernmentGatewayConnector @Inject()(@Named("government-gateway-baseUrl") baseUrl: URL, httpGet: HttpGet, metrics: Metrics)
-  extends HttpAPIMonitor with HistogramMonitor {
+class EnrolmentStoreProxyConnector @Inject()(@Named("enrolment-store-proxy-baseUrl") baseUrl: URL, httpGet: HttpGet, metrics: Metrics) extends
+  HttpAPIMonitor with HistogramMonitor {
+
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+
+  private val emacBaseUrl = s"$baseUrl/enrolment-store-proxy/enrolment-store"
 
   implicit val responseHandler = new HttpReads[ClientAllocationResponse] {
     override def read(method: String, url: String, response: HttpResponse) = {
-      response.status match {
-        case 200 => ClientAllocationResponse(parseClients(response.json))
+      Try(response.status match {
+        case 200 => ClientAllocationResponse(parseClients((response.json \ "enrolments").get))
         case 204 => ClientAllocationResponse(Seq.empty)
-        case 202 => ClientAllocationResponse(Seq.empty)
-        case _ => throw new RuntimeException(s"Error retrieving client list from $url: status ${response.status} body ${response.body}")
-      }
+      }).getOrElse(throw new RuntimeException(s"Error retrieving client list from $url: status ${response.status} body ${response.body}"))
     }
   }
 
-  def getClientCount(service: String, agentCode: AgentCode)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
-    val clientListUrl = s"$baseUrl/agent/$agentCode/client-list/$service/all"
-    reportHistogramValue(s"Size-GGW-AgentClientList-$service") {
-      monitor(s"ConsumedAPI-GGW-GetAgentClientList-$service-GET") {
-        httpGet.GET[ClientAllocationResponse](clientListUrl).map(
-          response =>
-            response.clients.size)
+  def getClientCount(service: String, userId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
+    val clientListUrl = s"$emacBaseUrl/users/$userId/enrolments?type=delegated&service=$service"
+
+    reportHistogramValue(s"Size-ESP-ES2-GetAgentClientList-$service") {
+      monitor(s"ConsumedAPI-ESP-ES2-GetAgentClientList-$service-GET") {
+        httpGet.GET[ClientAllocationResponse](clientListUrl).map(_.clients).map { clients =>
+          clients.count(_.state == "Unknown")
+        }
       }
     }
   }
 
   private def parseClients(jsonResponse: JsValue): Seq[ClientAllocation] = {
     fromJson[Seq[ClientAllocation]](jsonResponse).getOrElse {
-      throw new RuntimeException(s"Invalid payload received from government gateway: $jsonResponse")
+      throw new RuntimeException(s"Invalid payload received from enrolment store proxy: $jsonResponse")
     }
   }
+
 }

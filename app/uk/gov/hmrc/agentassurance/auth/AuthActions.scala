@@ -22,7 +22,8 @@ import uk.gov.hmrc.agentassurance.controllers.ErrorResults.NoPermission
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals._
-import uk.gov.hmrc.domain.{AgentCode, SaAgentReference}
+import uk.gov.hmrc.auth.core.retrieve._
+import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
@@ -37,7 +38,7 @@ trait AuthActions extends AuthorisedFunctions {
     enrolment.find(_.key equals enrolmentKey).flatMap(_.identifiers.find(_.key equals identifier).map(_.value))
 
   private type AuthorisedRequestWithSaRef = Request[AnyContent] => SaAgentReference => Future[Result]
-  private type AuthorisedRequestWithAgentCode = Request[AnyContent] => AgentCode => Future[Result]
+  private type AuthorisedRequestWithUserId = Request[AnyContent] => String => Future[Result]
 
   def AuthorisedIRSAAgent[A](body: AuthorisedRequestWithSaRef): Action[AnyContent] = Action.async {
     implicit request =>
@@ -55,16 +56,16 @@ trait AuthActions extends AuthorisedFunctions {
       }
   }
 
-  def AuthorisedWithAgentCode[A](body: AuthorisedRequestWithAgentCode): Action[AnyContent] = Action.async {
+  def AuthorisedWithUserId[A](body: AuthorisedRequestWithUserId): Action[AnyContent] = Action.async {
     implicit request =>
       implicit val hc = fromHeadersAndSession(request.headers, None)
-      authorised(AuthProviders(GovernmentGateway)).retrieve(agentCode) {
-        case Some(agentCode) => body(request)(AgentCode(agentCode))
-        case _ => Future successful NoPermission
+      authorised(AuthProviders(GovernmentGateway)).retrieve(Retrievals.credentials) {
+        case Credentials(providerId, _) => body(request)(providerId)
       } recoverWith {
         case ex: NoActiveSession =>
           Logger.warn("NoActiveSession while trying to access check IR SA endpoint", ex)
           Future.successful(Unauthorized)
+        case _ => Future successful NoPermission
       }
   }
 

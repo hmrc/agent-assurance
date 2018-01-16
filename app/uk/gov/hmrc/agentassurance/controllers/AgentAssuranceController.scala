@@ -21,7 +21,7 @@ import javax.inject._
 import play.api.Logger
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
-import uk.gov.hmrc.agentassurance.connectors.{DesConnector, GovernmentGatewayConnector}
+import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
@@ -36,7 +36,7 @@ class AgentAssuranceController @Inject()(
                                           @Named("minimumIRSAClients") minimumIRSAClients: Int,
                                           override val authConnector: AuthConnector,
                                           val desConnector: DesConnector,
-                                          val governmentGatewayConnector: GovernmentGatewayConnector) extends BaseController with AuthActions {
+                                          val espConnector: EnrolmentStoreProxyConnector) extends BaseController with AuthActions {
 
   def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
     implicit saAgentRef =>
@@ -61,9 +61,9 @@ class AgentAssuranceController @Inject()(
   def acceptableNumberOfIRSAClients = acceptableNumberOfClients("IR-SA", minimumIRSAClients)
 
   def acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
-    AuthorisedWithAgentCode { implicit request =>
+    AuthorisedWithUserId { implicit request =>
       implicit agentCode =>
-        governmentGatewayConnector.getClientCount(service, agentCode).flatMap { count =>
+        espConnector.getClientCount(service, agentCode).flatMap { count =>
           if (count >= minimumAcceptableNumberOfClients)
             Future successful NoContent
           else
