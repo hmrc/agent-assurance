@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentassurance.auth
 
 import play.api.Logger
+import play.api.libs.json.JsResultException
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.controllers.ErrorResults.NoPermission
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
@@ -61,11 +62,12 @@ trait AuthActions extends AuthorisedFunctions {
       implicit val hc = fromHeadersAndSession(request.headers, None)
       authorised(AuthProviders(GovernmentGateway)).retrieve(Retrievals.credentials) {
         case Credentials(providerId, _) => body(request)(providerId)
-      } recoverWith {
+      } recover {
         case ex: NoActiveSession =>
           Logger.warn("NoActiveSession while trying to access check IR SA endpoint", ex)
-          Future.successful(Unauthorized)
-        case _ => Future successful NoPermission
+          Unauthorized
+        case _: JsResultException =>
+          NoPermission
       }
   }
 
