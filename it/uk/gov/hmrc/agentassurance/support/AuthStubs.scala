@@ -81,7 +81,13 @@ trait AgentAuthStubs extends BasicUserAuthStubs {
   }
 
   def isLoggedInWithUserId(userId: String) = {
-    stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody(
+    stubFor(post(urlPathEqualTo(s"/auth/authorise"))
+        .withRequestBody(equalToJson(
+          """{
+            |	"authorise": [{"authProviders": ["GovernmentGateway"]}],
+            |	"retrieve": ["credentials"]
+            |}""".stripMargin))
+      .willReturn(aResponse().withStatus(200).withBody(
       s"""
          |{
          |  "credentials" : {
