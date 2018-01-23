@@ -64,7 +64,7 @@ trait AuthActions extends AuthorisedFunctions {
         case Credentials(providerId, _) => body(request)(providerId)
       } recover {
         case ex: NoActiveSession =>
-          Logger.warn("NoActiveSession while trying to access check IR SA endpoint", ex)
+          Logger.warn("NoActiveSession while trying to access check acceptable number of clients endpoint", ex)
           Unauthorized
         case _: JsResultException =>
           NoPermission

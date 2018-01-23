@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject._
 
-import play.api.Logger
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
@@ -62,8 +61,8 @@ class AgentAssuranceController @Inject()(
 
   def acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
     AuthorisedWithUserId { implicit request =>
-      implicit agentCode =>
-        espConnector.getClientCount(service, agentCode).flatMap { count =>
+      implicit userId =>
+        espConnector.getClientCount(service, userId).flatMap { count =>
           if (count >= minimumAcceptableNumberOfClients)
             Future successful NoContent
           else
