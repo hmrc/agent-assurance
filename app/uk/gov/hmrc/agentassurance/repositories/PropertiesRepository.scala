@@ -21,6 +21,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Format
 import play.api.libs.json.Json.format
 import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.api.indexes.{Index, IndexType}
 import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
 import uk.gov.hmrc.agentassurance.model._
 
@@ -59,4 +60,5 @@ class PropertiesRepository @Inject()(mongoComponent: ReactiveMongoComponent)
   //false as we always want to update using the atomicUpdate function
   override def isInsertion(newRecordId: BSONObjectID, oldRecord: Property): Boolean = false
 
+  override def indexes: Seq[Index] = Seq(Index(Seq("key" -> IndexType.Ascending)))
 }

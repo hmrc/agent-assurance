@@ -38,7 +38,7 @@ class PropertiesController @Inject()(repository: PropertiesRepository) extends B
         if (op.isEmpty) {
           repository.createProperty(property).map(_ => Created)
         } else {
-          Future successful BadRequest(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists")))
+          Future successful Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists")))
         }
       }
     }
