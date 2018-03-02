@@ -9,3 +9,9 @@ GET        /activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference
 GET        /acceptableNumberOfClients/service/IR-PAYE                                   @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfPAYEClients
 
 GET        /acceptableNumberOfClients/service/IR-SA                                     @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfIRSAClients
+
+
+GET        /properties/:key                                                             @uk.gov.hmrc.agentassurance.controllers.PropertiesController.getProperty(key: String)
+POST       /properties                                                                  @uk.gov.hmrc.agentassurance.controllers.PropertiesController.createProperty()
+PUT        /properties/:key                                                             @uk.gov.hmrc.agentassurance.controllers.PropertiesController.updateProperty(key: String)
+DELETE     /properties/:key                                                             @uk.gov.hmrc.agentassurance.controllers.PropertiesController.deleteProperty(key: String)
