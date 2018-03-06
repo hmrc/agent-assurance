@@ -16,51 +16,66 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import javax.inject.{Inject, Singleton}
 
 import play.api.libs.json.Json
-import play.api.mvc.Action
+import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.agentassurance.model._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.concurrent.Future
 
-@Singleton
-class PropertiesController @Inject()(repository: PropertiesRepository) extends BaseController {
+abstract class PropertiesController (repository: PropertiesRepository) extends BaseController {
 
 
-  def createProperty = Action.async(parse.json) { implicit request =>
-    withJsonBody[Property] { property =>
-      repository.findProperty(property.key).flatMap { op =>
-        if (op.isEmpty) {
-          repository.createProperty(property).map(_ => Created)
-        } else {
-          Future successful Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists")))
-        }
+  protected def baseCreateProperty(property: Property)(implicit request: Request[Any]) = {
+    repository.findProperty(property.key).flatMap { op =>
+      if (op.isEmpty) {
+        repository.createProperty(property).map(_ => Created)
+      } else {
+        Future successful Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists")))
       }
     }
   }
 
-  def updateProperty(key: String) = Action.async(parse.json) { implicit request =>
-    withJsonBody[Value] { value =>
-      repository.updateProperty(value.toProperty(key)).map { updated =>
-        if (updated) NoContent else NotFound
+  protected def baseUpdateProperty(key: String, value: Value)(implicit request: Request[Any]) = {
+    //fetch property and append new value to avoid overriding
+    repository.findProperty(key).flatMap{ maybeProperty =>
+      if(maybeProperty.isDefined){
+        repository.updateProperty(Value(s"${maybeProperty.get.value},${value.value}").toProperty(key)).map ( updated =>
+          if (updated) NoContent else InternalServerError
+        )
+      }
+      else{
+        Future successful NotFound
       }
     }
   }
 
-  def getProperty(key: String) = Action.async { implicit request =>
+  protected def basePropertyExists(key: String, identifier: String)(implicit request: Request[Any]) = {
     repository.findProperty(key).map { mayBeProperty =>
-      if (mayBeProperty.nonEmpty) Ok(Json.toJson(mayBeProperty.get)) else NotFound
+      if (mayBeProperty.isDefined && mayBeProperty.get.value.contains(identifier)) Ok else NotFound
     }
   }
 
-  def deleteProperty(key: String) = Action.async { implicit request =>
+  protected def baseDeleteEntireProperty(key: String)(implicit request: Request[Any]) = {
     repository.deleteProperty(key).map { deleted =>
       if (deleted) NoContent else NotFound
+    }
+  }
+
+  protected def baseDeleteIdentifierInProperty(key: String, identifier: String)(implicit request: Request[Any]) = {
+    repository.findProperty(key).flatMap{ maybeProperty =>
+      if(maybeProperty.isDefined){
+        val modifiedIdentifiers = maybeProperty.get.value.split(",").filterNot(_.equals(identifier))
+        repository.updateProperty(Property(key, modifiedIdentifiers.mkString(","))).map ( updated =>
+          if (updated) NoContent else InternalServerError
+        )
+      }
+      else{
+        Future successful NotFound
+      }
     }
   }
 }

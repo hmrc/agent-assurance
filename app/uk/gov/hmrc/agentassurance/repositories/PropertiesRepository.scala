@@ -27,9 +27,8 @@ import uk.gov.hmrc.agentassurance.model._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-@Singleton
-class PropertiesRepository @Inject()(mongoComponent: ReactiveMongoComponent)
-  extends ReactiveRepository[Property, String]("agent-assurance", mongoComponent.mongoConnector.db, format[Property],
+abstract class PropertiesRepository (mongoComponent: ReactiveMongoComponent, collectionName: String)
+  extends ReactiveRepository[Property, String](collectionName, mongoComponent.mongoConnector.db, format[Property],
     implicitly[Format[String]]) with AtomicUpdate[Property] {
 
   import reactivemongo.bson._
