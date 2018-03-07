@@ -28,11 +28,12 @@ import scala.concurrent.Future
 
 abstract class PropertiesController (repository: PropertiesRepository) extends BaseController {
 
+  def key: String
 
-  protected def baseCreateProperty(property: Property)(implicit request: Request[Any]) = {
-    repository.findProperty(property.key).flatMap { op =>
+  protected def baseCreateProperty(value: Value)(implicit request: Request[Any]) = {
+    repository.findProperty(key).flatMap { op =>
       if (op.isEmpty) {
-        repository.createProperty(property).map(_ => Created)
+        repository.createProperty(value.toProperty(key)).map(_ => Created)
       } else {
         Future successful Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists")))
       }
@@ -50,12 +51,6 @@ abstract class PropertiesController (repository: PropertiesRepository) extends B
       else{
         Future successful NotFound
       }
-    }
-  }
-
-  protected def basePropertyExists(key: String, identifier: String)(implicit request: Request[Any]) = {
-    repository.findProperty(key).map { mayBeProperty =>
-      if (mayBeProperty.isDefined && mayBeProperty.get.value.contains(identifier)) Ok else NotFound
     }
   }
 

@@ -29,16 +29,18 @@ class PropertiesControllerISpec extends UnitSpec
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
 
-  def updateProperty(key: String, value: String, configType: String) = wsClient.url(s"$url/$configType/$key").put(Json.obj("value" -> value))
+  def updateProperty(key: String, value: String) = wsClient.url(s"$url/$key").put(Json.obj("value" -> value))
 
-  def createProperty(key: String, value: String, configType: String) =
-    wsClient.url(s"$url/$configType").post(Json.obj("key" -> key, "value" -> value))
+  def createProperty(key: String, value: String) =
+    wsClient.url(s"$url/$key").post(Json.obj("value" -> value))
 
-  def propertyExists(key: String, identifier: String, configType: String): Future[WSResponse] = wsClient.url(s"$url/$configType/$key/$identifier").get()
+  def isAssured(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/$identifier").get()
 
-  def deleteEntireProperty(key: String, configType: String): Future[WSResponse] = wsClient.url(s"$url/$configType/$key").delete()
+  def deleteEntireProperty(key: String): Future[WSResponse] = {
+    wsClient.url(s"$url/$key").delete()
+  }
 
-  def deleteIdentifierInProperty(key: String, identifier: String, configType: String): Future[WSResponse] = wsClient.url(s"$url/$configType/$key/$identifier").delete()
+  def deleteIdentifierInProperty(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/$identifier").delete()
 
   override def beforeEach(): Unit = dropMongoDb()
 
@@ -58,7 +60,7 @@ class PropertiesControllerISpec extends UnitSpec
   }
 
   "a getProperty endpoint for manually-assured" should {
-    behave like propertyExistsTests("manually-assured")
+    behave like propertyExistsTests("manually-assured", false)
   }
 
   "a deleteEntireProperty endpoint for refusal-to-deal-with" should {
@@ -66,7 +68,7 @@ class PropertiesControllerISpec extends UnitSpec
   }
 
   "a deleteEntireProperty endpoint for manually-assured" should {
-    behave like deleteEntirePropertyTests("manually-assured")
+    behave like deleteEntirePropertyTests("manually-assured", false)
   }
 
   "a deleteIdentifierInProperty endpoint for refusal-to-deal-with" should {
@@ -74,7 +76,7 @@ class PropertiesControllerISpec extends UnitSpec
   }
 
   "a deleteIdentifierInProperty endpoint for manually-assured" should {
-    behave like deleteIdentifierInPropertyTests("manually-assured")
+    behave like deleteIdentifierInPropertyTests("manually-assured", false)
   }
 
   "a updateProperty endpoint for refusal-to-deal-with" should {
@@ -82,32 +84,31 @@ class PropertiesControllerISpec extends UnitSpec
   }
 
   "a updateProperty endpoint for manually-assured" should {
-    behave like updatePropertyTests("manually-assured")
+    behave like updatePropertyTests("manually-assured", false)
   }
 
-  def createPropertyTests(configType: String) = {
+  def createPropertyTests(key: String) = {
 
     "return 201 when property is not already present" in {
-      val response: WSResponse = Await.result(createProperty("myKey", "myValue", configType), 10 seconds)
+      val response: WSResponse = Await.result(createProperty(key, "myValue"), 10 seconds)
       response.status shouldBe CREATED
     }
     "return 409 (with appropriate reason) when property is already present" in {
-      val response: WSResponse = Await.result(createProperty("myKey", "myValue", configType), 10 seconds)
+      val response: WSResponse = Await.result(createProperty(key, "myValue"), 10 seconds)
       response.status shouldBe CREATED
 
-      val response2: WSResponse = Await.result(createProperty("myKey", "myValue", configType), 10 seconds)
+      val response2: WSResponse = Await.result(createProperty(key, "myValue"), 10 seconds)
       response2.status shouldBe CONFLICT
       (Json.parse(response2.body) \ "message").as[String] shouldBe "Property already exists"
     }
     "return 400 (with appropriate reason) json is not well formed" in {
       val badlyFormedJson = s"""
                                |{
-                               |   "key": "NINO"
                                |   "value": "t
                                |}
                  """.stripMargin
 
-      val response: WSResponse = Await.result(wsClient.url(s"$url/$configType")
+      val response: WSResponse = Await.result(wsClient.url(s"$url/$key")
         .withHeaders("Content-Type" -> "application/json").post(badlyFormedJson), 10 seconds)
       response.status shouldBe BAD_REQUEST
       response.body.contains("bad request") shouldBe true
@@ -116,71 +117,80 @@ class PropertiesControllerISpec extends UnitSpec
     "return 400 (with appropriate reason) json does not conform to the api" in {
       val payload = Json.obj("foo" -> "ewrewr", "bar" -> "retrwt")
 
-      val response: WSResponse = Await.result(wsClient.url(s"$url/$configType").post(payload), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(s"$url/$key").post(payload), 10 seconds)
       response.status shouldBe BAD_REQUEST
-      response.body.contains("Invalid Property") shouldBe true
+      response.body.contains("Invalid Value") shouldBe true
     }
   }
 
-  def propertyExistsTests(configType: String) = {
+  def propertyExistsTests(key: String, isR2dw: Boolean = true) = {
     "return 200 OK when property is present" in {
-      Await.result(createProperty("myKey", "myValue", configType), 10 seconds)
+      Await.result(createProperty(key, "myValue"), 10 seconds)
 
-      val response = Await.result(propertyExists("myKey", "myValue", configType), 10 seconds)
-
-      response.status shouldBe OK
+      val response = Await.result(isAssured(key, "myValue"), 10 seconds)
+      if(isR2dw)
+        response.status shouldBe FORBIDDEN
+      else response.status shouldBe OK
     }
     "return 404 when property is not present" in {
-      val response = Await.result(propertyExists("myProperty", "myValue", configType), 10 seconds)
-      response.status shouldBe NOT_FOUND
+      val response = Await.result(isAssured(key, "myValue"), 10 seconds)
+      if(isR2dw)
+        response.status shouldBe OK
+      else response.status shouldBe FORBIDDEN
     }
   }
 
-  def deleteEntirePropertyTests(configType: String) = {
+  def deleteEntirePropertyTests(key: String, isR2dw: Boolean = true) = {
     "return 204 when property is present" in {
-      Await.result(createProperty("myKey", "myValue", configType), 10 seconds)
+      Await.result(createProperty(key, "myValue"), 10 seconds).status shouldBe CREATED
 
-      val response = Await.result(deleteEntireProperty("myKey", configType), 10 seconds)
+      val response = Await.result(deleteEntireProperty(key), 10 seconds)
       response.status shouldBe NO_CONTENT
 
-      val response2 = Await.result(propertyExists("myKey", "myValue", configType), 10 seconds)
-      response2.status shouldBe NOT_FOUND
+      val response2 = Await.result(isAssured(key, "myValue"), 10 seconds)
+      if(isR2dw)
+        response2.status shouldBe OK
+      else response2.status shouldBe FORBIDDEN
     }
     "return 404 when property is not present" in {
-      val response = Await.result(deleteEntireProperty("myProperty", configType), 10 seconds)
+      val response = Await.result(deleteEntireProperty(key), 10 seconds)
       response.status shouldBe NOT_FOUND
     }
   }
 
-  def deleteIdentifierInPropertyTests(configType: String) = {
+  def deleteIdentifierInPropertyTests(key: String, isR2dw: Boolean = true) = {
     "return 204 when property is present" in {
-      Await.result(createProperty("myKey", "myValue,someValue,anotherValue", configType), 10 seconds)
+      Await.result(createProperty(key, "myValue,someValue,anotherValue"), 10 seconds)
 
-      val response = Await.result(deleteIdentifierInProperty("myKey", "someValue", configType), 10 seconds)
+      val response = Await.result(deleteIdentifierInProperty(key, "someValue"), 10 seconds)
       response.status shouldBe NO_CONTENT
 
-      val response2 = Await.result(propertyExists("myKey", "someValue", configType), 10 seconds)
-      response2.status shouldBe NOT_FOUND
+      val response2 = Await.result(isAssured(key, "someValue"), 10 seconds)
+      if(isR2dw)
+        response2.status shouldBe OK
+      else response2.status shouldBe FORBIDDEN
     }
     "return 404 when property is not present" in {
-      val response = Await.result(deleteIdentifierInProperty("myProperty",  "someValue", configType), 10 seconds)
+      val response = Await.result(deleteIdentifierInProperty(key,  "someValue"), 10 seconds)
       response.status shouldBe NOT_FOUND
     }
   }
 
-  def updatePropertyTests(configType: String) = {
+  def updatePropertyTests(key: String, isR2dw: Boolean = true) = {
     "return 204 when property is correctly updated" in {
-      val response: WSResponse = Await.result(createProperty("myKey", "oneValue,anotherValue", configType), 10 seconds)
+      val response: WSResponse = Await.result(createProperty(key, "oneValue,anotherValue"), 10 seconds)
       response.status shouldBe CREATED
 
-      val response2: WSResponse = Await.result(updateProperty("myKey", "addedValue", configType), 10 seconds)
+      val response2: WSResponse = Await.result(updateProperty(key, "addedValue"), 10 seconds)
       response2.status shouldBe NO_CONTENT
 
-      val response3: WSResponse = Await.result(propertyExists("myKey", "addedValue", configType), 10 seconds)
-      response3.status shouldBe OK
+      val response3: WSResponse = Await.result(isAssured(key, "addedValue"), 10 seconds)
+      if(isR2dw)
+        response3.status shouldBe FORBIDDEN
+      else response3.status shouldBe OK
     }
     "return 404 when updating a property that is not present" in {
-      val response = Await.result(updateProperty("notPresentKey", "newValue", configType), 10 seconds)
+      val response = Await.result(updateProperty(key, "newValue"), 10 seconds)
       response.status shouldBe NOT_FOUND
     }
   }

@@ -17,15 +17,7 @@
 package uk.gov.hmrc.agentassurance.repositories
 
 import javax.inject.{Inject, Singleton}
-
-import play.api.libs.json.Format
-import play.api.libs.json.Json.format
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.indexes.{Index, IndexType}
-import uk.gov.hmrc.agentassurance.model._
-import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
-
-import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class R2dwRepository @Inject()(mongoComponent: ReactiveMongoComponent)
