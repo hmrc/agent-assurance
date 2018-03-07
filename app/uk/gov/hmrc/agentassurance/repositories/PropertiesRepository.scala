@@ -16,20 +16,16 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.Format
 import play.api.libs.json.Json.format
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.indexes.{Index, IndexType}
 import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
 import uk.gov.hmrc.agentassurance.model._
-
 import scala.concurrent.{ExecutionContext, Future}
 
-@Singleton
-class PropertiesRepository @Inject()(mongoComponent: ReactiveMongoComponent)
-  extends ReactiveRepository[Property, String]("agent-assurance", mongoComponent.mongoConnector.db, format[Property],
+abstract class PropertiesRepository (mongoComponent: ReactiveMongoComponent, collectionName: String)
+  extends ReactiveRepository[Property, String](collectionName, mongoComponent.mongoConnector.db, format[Property],
     implicitly[Format[String]]) with AtomicUpdate[Property] {
 
   import reactivemongo.bson._

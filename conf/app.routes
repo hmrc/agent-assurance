@@ -10,13 +10,14 @@ GET        /acceptableNumberOfClients/service/IR-PAYE                           
 
 GET        /acceptableNumberOfClients/service/IR-SA                                     @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfIRSAClients
 
+GET        /refusal-to-deal-with/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.R2dwController.isAssured(identifier: String)
+POST       /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.createProperty()
+PUT        /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.updateProperty()
+DELETE     /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.deleteEntireProperty
+DELETE     /refusal-to-deal-with/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.R2dwController.deleteIdentifierInProperty(identifier: String)
 
-GET        /refusal-to-deal-with/:key                                                   @uk.gov.hmrc.agentassurance.controllers.PropertiesController.getProperty(key: String)
-POST       /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.PropertiesController.createProperty()
-PUT        /refusal-to-deal-with/:key                                                   @uk.gov.hmrc.agentassurance.controllers.PropertiesController.updateProperty(key: String)
-DELETE     /refusal-to-deal-with/:key                                                   @uk.gov.hmrc.agentassurance.controllers.PropertiesController.deleteProperty(key: String)
-
-GET        /manually-assured/:key                                                       @uk.gov.hmrc.agentassurance.controllers.PropertiesController.getProperty(key: String)
-POST       /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.PropertiesController.createProperty()
-PUT        /manually-assured/:key                                                       @uk.gov.hmrc.agentassurance.controllers.PropertiesController.updateProperty(key: String)
-DELETE     /manually-assured/:key                                                       @uk.gov.hmrc.agentassurance.controllers.PropertiesController.deleteProperty(key: String)
+GET        /manually-assured/:identifier                                                @uk.gov.hmrc.agentassurance.controllers.MaaController.isManuallyAssured(identifier: String)
+POST       /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.createProperty()
+PUT        /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.updateProperty()
+DELETE     /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.deleteEntireProperty()
+DELETE     /manually-assured/:identifier                                                @uk.gov.hmrc.agentassurance.controllers.MaaController.deleteIdentifierInProperty(identifier: String)
