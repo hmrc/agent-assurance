@@ -31,5 +31,4 @@ package object model {
   implicit val propertyFormat = Json.format[Property]
   implicit val valueFormat = Json.format[Value]
   implicit val errorBodyFormat = Json.format[ErrorBody]
-
 }
