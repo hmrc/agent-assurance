@@ -34,18 +34,27 @@ class PropertiesControllerISpec extends UnitSpec
   def createProperty(key: String, value: String) =
     wsClient.url(s"$url/$key").post(Json.obj("value" -> value))
 
-  def isAssured(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/$identifier").get()
+  def isAssured(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").get()
+
+  def getEntireList(key: String): Future[WSResponse] = {wsClient.url(s"$url/$key").get()}
 
   def deleteEntireProperty(key: String): Future[WSResponse] = {
     wsClient.url(s"$url/$key").delete()
   }
 
-  def deleteIdentifierInProperty(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/$identifier").delete()
+  def deleteIdentifierInProperty(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").delete()
 
   override def beforeEach(): Unit = dropMongoDb()
 
   def dropMongoDb()(implicit ec: ExecutionContext = global): Unit = Await.result(mongo().drop(), 10 seconds)
 
+  "a getProperty entire List for refusal-to-deal-with" should {
+    behave like getPropertyList("refusal-to-deal-with")
+  }
+
+  "a getProperty entire List for manually-assured" should {
+    behave like getPropertyList("manually-assured")
+  }
 
   "a createProperty endpoint for refusal-to-deal-with" should {
       behave like createPropertyTests("refusal-to-deal-with")
@@ -55,12 +64,12 @@ class PropertiesControllerISpec extends UnitSpec
       behave like createPropertyTests("manually-assured")
   }
 
-  "a getProperty endpoint for refusal-to-deal-with" should {
-    behave like propertyExistsTests("refusal-to-deal-with")
+  "a identifier exists in  getProperty endpoint for refusal-to-deal-with" should {
+    behave like identifierExistsTests("refusal-to-deal-with")
   }
 
-  "a getProperty endpoint for manually-assured" should {
-    behave like propertyExistsTests("manually-assured", false)
+  "a identifier exists in getProperty endpoint for manually-assured" should {
+    behave like identifierExistsTests("manually-assured", false)
   }
 
   "a deleteEntireProperty endpoint for refusal-to-deal-with" should {
@@ -123,7 +132,7 @@ class PropertiesControllerISpec extends UnitSpec
     }
   }
 
-  def propertyExistsTests(key: String, isR2dw: Boolean = true) = {
+  def identifierExistsTests(key: String, isR2dw: Boolean = true) = {
     "return 200 OK when property is present" in {
       Await.result(createProperty(key, "myValue"), 10 seconds)
 
@@ -137,6 +146,20 @@ class PropertiesControllerISpec extends UnitSpec
       if(isR2dw)
         response.status shouldBe OK
       else response.status shouldBe FORBIDDEN
+    }
+  }
+
+  def getPropertyList(key: String) = {
+    "return 200 OK when property is present" in {
+      Await.result(createProperty(key, "myValue,value2,value3,value4"), 10 seconds)
+
+      val response = Await.result(getEntireList(key), 10 seconds)
+        response.status shouldBe OK
+        response.body shouldBe "myValue,value2,value3,value4"
+    }
+    "return 404 when property is not present" in {
+      val response = Await.result(getEntireList(key), 10 seconds)
+        response.status shouldBe NO_CONTENT
     }
   }
 

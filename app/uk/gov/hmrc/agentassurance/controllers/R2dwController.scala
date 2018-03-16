@@ -40,9 +40,15 @@ class R2dwController @Inject()(repository: R2dwRepository) extends PropertiesCon
     }
   }
 
-  def isAssured(identifier: String) = Action.async { implicit request =>
+  def isOnR2dwList(identifier: String) = Action.async { implicit request =>
     repository.findProperty(key).map { mayBeProperty =>
       if (mayBeProperty.isDefined && mayBeProperty.get.value.contains(identifier)) Forbidden else Ok
+    }
+  }
+
+  def getFullR2dwList = Action.async { implicit request =>
+    repository.findProperty(key).map { maybeProperty =>
+      if (maybeProperty.isDefined && maybeProperty.get.value.length > 0) Ok(maybeProperty.get.value) else NoContent
     }
   }
 

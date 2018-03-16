@@ -46,6 +46,12 @@ class MaaController @Inject()(repository: MaaRepository) extends PropertiesContr
     }
   }
 
+  def getFullMaaList = Action.async { implicit request =>
+    repository.findProperty(key).map { maybeProperty =>
+      if(maybeProperty.isDefined && maybeProperty.get.value.length > 0) Ok(maybeProperty.get.value) else NoContent
+    }
+  }
+
   def deleteEntireProperty = Action.async { implicit request =>
     baseDeleteEntireProperty(key)
   }
