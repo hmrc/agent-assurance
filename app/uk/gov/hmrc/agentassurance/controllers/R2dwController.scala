@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentassurance.controllers
 import javax.inject.{Inject, Singleton}
 
 import play.api.mvc.{Action, Request}
-import uk.gov.hmrc.agentassurance.model.{Property, Value}
+import uk.gov.hmrc.agentassurance.model.Value
 import uk.gov.hmrc.agentassurance.repositories.R2dwRepository
 import scala.concurrent.ExecutionContext.Implicits.global
 

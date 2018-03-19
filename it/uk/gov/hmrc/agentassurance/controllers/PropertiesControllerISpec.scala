@@ -136,7 +136,7 @@ class PropertiesControllerISpec extends UnitSpec
     "return 200 OK when property is present" in {
       Await.result(createProperty(key, "myValue"), 10 seconds)
 
-      val response = Await.result(isAssured(key, "myValue"), 10 seconds)
+      val response = Await.result(isAssured(key, "myValue   "), 10 seconds)
       if(isR2dw)
         response.status shouldBe FORBIDDEN
       else response.status shouldBe OK
@@ -151,7 +151,7 @@ class PropertiesControllerISpec extends UnitSpec
 
   def getPropertyList(key: String) = {
     "return 200 OK when property is present" in {
-      Await.result(createProperty(key, "myValue,value2,value3,value4"), 10 seconds)
+      Await.result(createProperty(key, "myValue,    value2,value3,value4"), 10 seconds)
 
       val response = Await.result(getEntireList(key), 10 seconds)
         response.status shouldBe OK
@@ -165,12 +165,12 @@ class PropertiesControllerISpec extends UnitSpec
 
   def deleteEntirePropertyTests(key: String, isR2dw: Boolean = true) = {
     "return 204 when property is present" in {
-      Await.result(createProperty(key, "myValue"), 10 seconds).status shouldBe CREATED
+      Await.result(createProperty(key, "    myValue"), 10 seconds).status shouldBe CREATED
 
       val response = Await.result(deleteEntireProperty(key), 10 seconds)
       response.status shouldBe NO_CONTENT
 
-      val response2 = Await.result(isAssured(key, "myValue"), 10 seconds)
+      val response2 = Await.result(isAssured(key, "     myValue"), 10 seconds)
       if(isR2dw)
         response2.status shouldBe OK
       else response2.status shouldBe FORBIDDEN
@@ -183,12 +183,12 @@ class PropertiesControllerISpec extends UnitSpec
 
   def deleteIdentifierInPropertyTests(key: String, isR2dw: Boolean = true) = {
     "return 204 when property is present" in {
-      Await.result(createProperty(key, "myValue,someValue,anotherValue"), 10 seconds)
+      Await.result(createProperty(key, "myValue,    someValue,   anotherValue"), 10 seconds)
 
-      val response = Await.result(deleteIdentifierInProperty(key, "someValue"), 10 seconds)
+      val response = Await.result(deleteIdentifierInProperty(key, "   someValue"), 10 seconds)
       response.status shouldBe NO_CONTENT
 
-      val response2 = Await.result(isAssured(key, "someValue"), 10 seconds)
+      val response2 = Await.result(isAssured(key, "someValue    "), 10 seconds)
       if(isR2dw)
         response2.status shouldBe OK
       else response2.status shouldBe FORBIDDEN
@@ -201,10 +201,10 @@ class PropertiesControllerISpec extends UnitSpec
 
   def updatePropertyTests(key: String, isR2dw: Boolean = true) = {
     "return 204 when property is correctly updated" in {
-      val response: WSResponse = Await.result(createProperty(key, "oneValue,anotherValue"), 10 seconds)
+      val response: WSResponse = Await.result(createProperty(key, "oneValue   ,        anotherValue"), 10 seconds)
       response.status shouldBe CREATED
 
-      val response2: WSResponse = Await.result(updateProperty(key, "addedValue"), 10 seconds)
+      val response2: WSResponse = Await.result(updateProperty(key, "addedValue      "), 10 seconds)
       response2.status shouldBe NO_CONTENT
 
       val response3: WSResponse = Await.result(isAssured(key, "addedValue"), 10 seconds)
@@ -217,5 +217,4 @@ class PropertiesControllerISpec extends UnitSpec
       response.status shouldBe NOT_FOUND
     }
   }
-
 }

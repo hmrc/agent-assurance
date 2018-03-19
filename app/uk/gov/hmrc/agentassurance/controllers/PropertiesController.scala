@@ -44,7 +44,7 @@ abstract class PropertiesController (repository: PropertiesRepository) extends B
     //fetch property and append new value to avoid overriding
     repository.findProperty(key).flatMap{ maybeProperty =>
       if(maybeProperty.isDefined){
-        repository.updateProperty(Value(s"${maybeProperty.get.value},${value.value}").toProperty(key)).map ( updated =>
+        repository.updateProperty(Value(s"${maybeProperty.get.value},${value.value.replace(" ", "")}").toProperty(key)).map ( updated =>
           if (updated) NoContent else InternalServerError
         )
       }
@@ -63,7 +63,7 @@ abstract class PropertiesController (repository: PropertiesRepository) extends B
   protected def baseDeleteIdentifierInProperty(key: String, identifier: String)(implicit request: Request[Any]) = {
     repository.findProperty(key).flatMap{ maybeProperty =>
       if(maybeProperty.isDefined){
-        val modifiedIdentifiers = maybeProperty.get.value.split(",").filterNot(_.equals(identifier))
+        val modifiedIdentifiers = maybeProperty.get.value.split(",").filterNot(_.equals(identifier.replace(" ", "")))
         repository.updateProperty(Property(key, modifiedIdentifiers.mkString(","))).map ( updated =>
           if (updated) NoContent else InternalServerError
         )

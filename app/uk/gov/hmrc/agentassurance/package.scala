@@ -23,7 +23,7 @@ package object model {
   case class Property(key: String, value: String)
 
   case class Value(value: String) {
-    def toProperty(key: String) = Property(key, this.value)
+    def toProperty(key: String) = Property(key, this.value.replace(" ", ""))
   }
 
   case class ErrorBody(code: String, message: String)
