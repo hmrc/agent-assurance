@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.controllers
 
 
 import play.api.libs.json.Json
-import play.api.mvc.Request
+import play.api.mvc.{Request, Result}
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.agentassurance.model._
@@ -40,17 +40,13 @@ abstract class PropertiesController (repository: PropertiesRepository) extends B
     }
   }
 
-  protected def baseUpdateProperty(key: String, value: Value)(implicit request: Request[Any]) = {
+  protected def baseUpdateProperty(key: String, value: Value)(implicit request: Request[Any]): Future[Result] = {
     //fetch property and append new value to avoid overriding
-    repository.findProperty(key).flatMap{ maybeProperty =>
-      if(maybeProperty.isDefined){
-        repository.updateProperty(Value(s"${maybeProperty.get.value},${value.value.replace(" ", "")}").toProperty(key)).map ( updated =>
-          if (updated) NoContent else InternalServerError
-        )
-      }
-      else{
-        Future successful NotFound
-      }
+    repository.findProperty(key).flatMap {
+      case Some(property) if property.value.contains(value.value) => Future.successful(Conflict)
+      case Some(property) => repository.updateProperty(Value(s"${property.value},${value.value.replace(" ", "")}").toProperty(key)).map( updated =>
+        if (updated) NoContent else InternalServerError)
+      case _ => Future.successful(NotFound)
     }
   }
 
