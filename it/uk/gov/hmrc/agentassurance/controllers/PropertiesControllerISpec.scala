@@ -207,10 +207,8 @@ class PropertiesControllerISpec extends UnitSpec
       val response2: WSResponse = Await.result(updateProperty(key, "addedValue      "), 10 seconds)
       response2.status shouldBe NO_CONTENT
 
-      val response3: WSResponse = Await.result(isAssured(key, "addedValue"), 10 seconds)
-      if(isR2dw)
-        response3.status shouldBe FORBIDDEN
-      else response3.status shouldBe OK
+      val response3: WSResponse = Await.result(updateProperty(key, "addedValue"), 10 seconds)
+      response3.status shouldBe CONFLICT
     }
     "return 404 when updating a property that is not present" in {
       val response = Await.result(updateProperty(key, "newValue"), 10 seconds)
