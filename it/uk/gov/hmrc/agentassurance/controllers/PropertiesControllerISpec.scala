@@ -210,6 +210,18 @@ class PropertiesControllerISpec extends UnitSpec
       val response3: WSResponse = Await.result(updateProperty(key, "addedValue"), 10 seconds)
       response3.status shouldBe CONFLICT
     }
+
+    "when adding value to property which currently has empty value, comma is not added at the front" in {
+      val response: WSResponse = Await.result(createProperty(key, ""), 10 seconds)
+      response.status shouldBe CREATED
+
+      val response2: WSResponse = Await.result(updateProperty(key, "addedValue"), 10 seconds)
+      response2.status shouldBe NO_CONTENT
+
+      val response3 = Await.result(getEntireList(key), 10 seconds)
+      response3.status shouldBe OK
+      response3.body shouldBe "addedValue"
+    }
     "return 404 when updating a property that is not present" in {
       val response = Await.result(updateProperty(key, "newValue"), 10 seconds)
       response.status shouldBe NOT_FOUND

@@ -44,7 +44,7 @@ abstract class PropertiesController (repository: PropertiesRepository) extends B
     //fetch property and append new value to avoid overriding
     repository.findProperty(key).flatMap {
       case Some(property) if property.value.contains(value.value) => Future.successful(Conflict)
-      case Some(property) => repository.updateProperty(Value(s"${property.value},${value.value.replace(" ", "")}").toProperty(key)).map( updated =>
+      case Some(property) => repository.updateProperty(Value(s"${property.value}${if(property.value.length > 1)","else ""}${value.value.replace(" ", "")}").toProperty(key)).map( updated =>
         if (updated) NoContent else InternalServerError)
       case _ => Future.successful(NotFound)
     }
