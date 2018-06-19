@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import play.api.libs.json.Format
+import play.api.libs.json.{Format, Json}
 import play.api.libs.json.Json.format
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.indexes.{Index, IndexType}
+import reactivemongo.play.json.ImplicitBSONHandlers
 import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
 import uk.gov.hmrc.agentassurance.model._
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,28 +30,27 @@ abstract class PropertiesRepository (mongoComponent: ReactiveMongoComponent, col
     implicitly[Format[String]]) with AtomicUpdate[Property] {
 
   import reactivemongo.bson._
+  import ImplicitBSONHandlers._
 
-  def findProperty(key: String)(implicit ec: ExecutionContext): Future[Option[Property]] =
-    find("key" -> key).map(_.headOption)
 
-  def updateProperty(newProperty: Property)(implicit ec: ExecutionContext): Future[Boolean] = {
-    findProperty(newProperty.key).flatMap { currentPropertyOption =>
-      if (currentPropertyOption.isDefined) {
-        atomicUpdate(
-          BSONDocument("key" -> newProperty.key),
-          BSONDocument("$set" -> BSONDocument("value" -> newProperty.value))).map(_ => true)
-      } else Future successful (false)
-    }
+  def getUtrsForKey(key: String)(implicit ec: ExecutionContext): Future[List[String]] = {
+    collection.find(Json.obj("key" -> key)).one[UtrsForKey].map{response => response.map(_.utrs).getOrElse(List.empty)}
   }
 
-  def createProperty(property: Property)(implicit ec: ExecutionContext): Future[Unit] = insert(property).map(_ => ())
+  def findProperty(key: String, utr: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    val query2 = Json.obj("key" -> key, "utrs" -> utr)
+    collection.find(query2, Json.obj("$exists" -> true)).one[BSONDocument].map{result =>
+      result.isDefined}
+  }
 
-  def deleteProperty(key: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    find("key" -> key).flatMap { p =>
-      if (p.headOption.isDefined) {
-        remove("key" -> key).map(_ => true)
-      } else Future successful (false)
-    }
+  //utr validation on frontend, whatever string you pass will work
+  def updateProperty(newProperty: Property)(implicit ec: ExecutionContext): Future[Boolean] = {
+    collection.update(Json.obj("key" -> newProperty.key), addToSet(BSONDocument("utrs" -> newProperty.value)), upsert = true)
+      .map{response => response.ok}
+  }
+
+  def deleteUtr(key: String, utr: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    collection.update(Json.obj("key" -> key),Json.obj("$pull" -> Json.obj("utrs"-> utr))).map(_.ok)
   }
 
   //false as we always want to update using the atomicUpdate function

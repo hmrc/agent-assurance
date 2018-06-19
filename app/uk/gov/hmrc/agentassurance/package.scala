@@ -31,4 +31,11 @@ package object model {
   implicit val propertyFormat = Json.format[Property]
   implicit val valueFormat = Json.format[Value]
   implicit val errorBodyFormat = Json.format[ErrorBody]
+
+
+  case class UtrsForKey(key :String, utrs :List[String])
+
+  object UtrsForKey{
+    implicit val utrsForKeyFormat = Json.format[UtrsForKey]
+  }
 }

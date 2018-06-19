@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import play.api.mvc.{Action, Request}
+import play.api.mvc.Action
 import uk.gov.hmrc.agentassurance.model.Value
 import uk.gov.hmrc.agentassurance.repositories.R2dwRepository
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -28,35 +28,20 @@ class R2dwController @Inject()(repository: R2dwRepository) extends PropertiesCon
 
   override def key = "refusal-to-deal-with"
 
-  def createProperty = Action.async(parse.json) { implicit request =>
-    withJsonBody[Value] { value =>
-      baseCreateProperty(value)
-    }
-  }
-
   def updateProperty = Action.async(parse.json) { implicit request =>
-    withJsonBody[Value] { value =>
-      baseUpdateProperty(key, value)
+    withJsonBody[Value] { value => baseUpdateProperty(key, value)
     }
   }
 
   def isOnR2dwList(identifier: String) = Action.async { implicit request =>
-    repository.findProperty(key).map { mayBeProperty =>
-      if (mayBeProperty.isDefined && mayBeProperty.get.value.contains(identifier)) Forbidden else Ok
-    }
+    repository.findProperty(key, identifier.replace(" ", "")).map {response => if (response) Forbidden else Ok}
   }
 
   def getFullR2dwList = Action.async { implicit request =>
-    repository.findProperty(key).map { maybeProperty =>
-      if (maybeProperty.isDefined && maybeProperty.get.value.length > 0) Ok(maybeProperty.get.value) else NoContent
-    }
-  }
-
-  def deleteEntireProperty = Action.async { implicit request =>
-    baseDeleteEntireProperty(key)
+    getCollectionUtrs(key)
   }
 
   def deleteIdentifierInProperty(identifier: String) = Action.async { implicit request =>
-    baseDeleteIdentifierInProperty(key, identifier)
+    baseDeleteIdentifierInProperty(key, identifier.replace(" ", ""))
   }
 }
