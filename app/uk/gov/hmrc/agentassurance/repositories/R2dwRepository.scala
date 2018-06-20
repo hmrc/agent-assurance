@@ -21,4 +21,4 @@ import play.modules.reactivemongo.ReactiveMongoComponent
 
 @Singleton
 class R2dwRepository @Inject()(mongoComponent: ReactiveMongoComponent)
-  extends PropertiesRepository(mongoComponent, "r2dw")
+  extends PropertiesRepository(mongoComponent, "agent-assurance-access")

@@ -22,4 +22,4 @@ import play.modules.reactivemongo.ReactiveMongoComponent
 
 @Singleton
 class MaaRepository @Inject()(mongoComponent: ReactiveMongoComponent)
-  extends PropertiesRepository(mongoComponent, "manually-assured")
+  extends PropertiesRepository(mongoComponent, "agent-assurance-access")
