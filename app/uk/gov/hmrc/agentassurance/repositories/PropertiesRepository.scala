@@ -23,6 +23,7 @@ import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.play.json.ImplicitBSONHandlers
 import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
 import uk.gov.hmrc.agentassurance.model._
+
 import scala.concurrent.{ExecutionContext, Future}
 
 abstract class PropertiesRepository (mongoComponent: ReactiveMongoComponent, collectionName: String)
@@ -51,6 +52,38 @@ abstract class PropertiesRepository (mongoComponent: ReactiveMongoComponent, col
 
   def deleteUtr(key: String, utr: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     collection.update(Json.obj("key" -> key),Json.obj("$pull" -> Json.obj("utrs"-> utr))).map(_.ok)
+  }
+
+  def getUtrsPagination(key: String, recordsPerPage: Int, pageNumber: Int = 1)(implicit ec: ExecutionContext): Future[Option[List[String]]] = {
+    val validatedPageNumber = if(pageNumber < 2) 0 else pageNumber
+    val validatedRecordsPerPage = if(recordsPerPage < 1) 1 else recordsPerPage
+    val skipRecords = validatedRecordsPerPage * validatedPageNumber
+//    collection.find("key" -> key)
+
+    collection.find(Json.obj("key" -> key),
+      Json.obj("utrs" -> Json.obj("$slice" -> BSONArray(BSONInteger(skipRecords), BSONInteger(validatedRecordsPerPage)))))
+      .one[UtrsForKey].map(optResult => optResult.map(_.utrs))
+  }
+  
+
+  def getUtrsPaginationWithTotalUtrAmount(key: String, recordsPerPage: Int, pageNumber: Int = 1)(implicit ec: ExecutionContext): Future[Option[UtrsForKeyUpdated]] = {
+    import play.api.libs.json._
+    import reactivemongo.play.json.collection.JSONCollection
+    import play.api.libs.json.{Json}
+    import scala.concurrent.Future
+
+    def getUtrsForKey(col: JSONCollection, key: String) : Future[Option[UtrsForKeyUpdated]] ={
+      import col.BatchCommands.AggregationFramework.{Match, Project}
+
+      col.aggregate(Match(Json.obj("key" -> key)),
+        List(Project(Json.obj("key" -> "$key",
+          "utrs" -> Json.obj("$slice" -> JsArray(Seq(JsString("$utrs"),
+            JsNumber(0), JsNumber(5)))), "totalUtrs" -> Json.obj("$size" -> "$utrs"))))).map(_.firstBatch.headOption match {
+        case Some(results) => results.asOpt[UtrsForKeyUpdated]
+        case None => None
+      })
+    }
+    getUtrsForKey(collection, key)
   }
 
   //false as we always want to update using the atomicUpdate function

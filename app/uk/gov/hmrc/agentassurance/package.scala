@@ -38,4 +38,10 @@ package object model {
   object UtrsForKey{
     implicit val utrsForKeyFormat = Json.format[UtrsForKey]
   }
+
+  case class UtrsForKeyUpdated(key :String, utrs :List[String], totalUtrs: Int)
+
+  object UtrsForKeyUpdated{
+    implicit val utrsForKeyFormat = Json.format[UtrsForKeyUpdated]
+  }
 }

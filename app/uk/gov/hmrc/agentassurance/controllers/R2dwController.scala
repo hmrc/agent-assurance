@@ -44,4 +44,8 @@ class R2dwController @Inject()(repository: R2dwRepository) extends PropertiesCon
   def deleteIdentifierInProperty(identifier: String) = Action.async { implicit request =>
     baseDeleteIdentifierInProperty(key, identifier.replace(" ", ""))
   }
+
+  def getLimitedUtrs(pageSize: Int, pageNumber: Int) = Action.async { implicit request =>
+    baseGetLimitedUtrs(key, pageSize, pageNumber)
+  }
 }

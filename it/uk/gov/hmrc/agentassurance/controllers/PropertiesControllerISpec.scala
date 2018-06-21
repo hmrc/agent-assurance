@@ -37,6 +37,8 @@ class PropertiesControllerISpec extends UnitSpec
 
   def getEntireList(key: String): Future[WSResponse] = {wsClient.url(s"$url/$key").get()}
 
+  def getUtrsPagination(key: String, pageSize: Int, pageNumber:Int): Future[WSResponse] = {wsClient.url(s"$url/$key/pageSize/$pageSize/page/$pageNumber").get()}
+
   def deleteEntireProperty(key: String): Future[WSResponse] = {
     wsClient.url(s"$url/$key").delete()
   }
@@ -77,6 +79,33 @@ class PropertiesControllerISpec extends UnitSpec
 
   "a updateProperty endpoint for manually-assured" should {
     behave like updatePropertyTests("manually-assured", false)
+  }
+
+  "a updateProperty endpoint for manually-assured" should {
+    behave like checkPagination("manually-assured", false)
+  }
+
+  "a updateProperty endpoint for manually-assured" should {
+    behave like checkPagination("refusal-to-deal-with")
+  }
+
+  def checkPagination(key: String, isR2dw: Boolean = true) = {
+    "skips first 1 UTR" in {
+      Await.result(createProperty(key, "myValue"), 10 seconds)
+      Await.result(createProperty(key, "myValue1"), 10 seconds)
+      Await.result(createProperty(key, "myValue2"), 10 seconds)
+      Await.result(createProperty(key, "myValue3"), 10 seconds)
+
+      val response = Await.result(getUtrsPagination(key, 2, 1), 10 seconds)
+        response.body should contain("myValue,myValue1")
+    }
+
+    "NotFound => Check utr found for assurance collection" in {
+      val response = Await.result(isAssured(key, "myValue"), 10 seconds)
+      if(isR2dw)
+        response.status shouldBe OK
+      else response.status shouldBe FORBIDDEN
+    }
   }
 
   def identifierExistsTests(key: String, isR2dw: Boolean = true) = {
