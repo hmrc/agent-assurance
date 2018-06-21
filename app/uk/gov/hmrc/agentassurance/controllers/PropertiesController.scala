@@ -47,8 +47,13 @@ abstract class PropertiesController(repository: PropertiesRepository) extends Ba
 
   protected def baseGetLimitedUtrs(key: String, pageSize: Int, skipUtrSetsAmount: Int)(implicit request: Request[Any]) = {
     repository.getUtrsPaginationWithTotalUtrAmount(key, pageSize, skipUtrSetsAmount).map {
-//      case Some(utrList) => if(utrList.nonEmpty) Ok(utrList.mkString(",")) else NoContent
-      case Some(utrList) => if(utrList.utrs.nonEmpty) Ok(utrList.utrs.mkString(",") + utrList.totalUtrs) else NoContent
+      case Some(utrList) => {
+
+        if(utrList.values.nonEmpty) Ok(utrList.values.mkString(",") +" totalUtrs is:"+ utrList.totalUtrs) else NoContent
+      }
+
+
+
       case None => NoContent
     }
   }

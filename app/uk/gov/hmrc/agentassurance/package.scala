@@ -33,13 +33,13 @@ package object model {
   implicit val errorBodyFormat = Json.format[ErrorBody]
 
 
-  case class UtrsForKey(key :String, utrs :List[String])
+  case class UtrsForKey(key :String, values :List[String])
 
   object UtrsForKey{
     implicit val utrsForKeyFormat = Json.format[UtrsForKey]
   }
 
-  case class UtrsForKeyUpdated(key :String, utrs :List[String], totalUtrs: Int)
+  case class UtrsForKeyUpdated(key :String, values :List[String], totalUtrs: Int)
 
   object UtrsForKeyUpdated{
     implicit val utrsForKeyFormat = Json.format[UtrsForKeyUpdated]

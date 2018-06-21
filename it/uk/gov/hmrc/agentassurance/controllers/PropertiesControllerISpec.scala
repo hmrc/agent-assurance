@@ -81,11 +81,11 @@ class PropertiesControllerISpec extends UnitSpec
     behave like updatePropertyTests("manually-assured", false)
   }
 
-  "a updateProperty endpoint for manually-assured" should {
+  "a checkPagination endpoint for manually-assured" should {
     behave like checkPagination("manually-assured", false)
   }
 
-  "a updateProperty endpoint for manually-assured" should {
+  "a checkPagination endpoint for refusal-to-deal-with" should {
     behave like checkPagination("refusal-to-deal-with")
   }
 
