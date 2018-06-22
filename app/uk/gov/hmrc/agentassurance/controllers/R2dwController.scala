@@ -51,14 +51,14 @@ class R2dwController @Inject()(repository: PropertiesRepository) extends BaseCon
     }
   }
 
-  def getFullR2dwList(pagination: PaginationParameters) = Action.async { implicit request =>
+  def getR2dwList(pagination: PaginationParameters) = Action.async { implicit request =>
 
     repository.findProperties(key, pagination.page, pagination.pageSize).map { case (total, properties) =>
       if (properties.nonEmpty) {
         val response = PaginatedResources(
           PaginationLinks.apply(paginationParams = pagination,
             total = total,
-            paginatedLinkBuilder = pp => routes.R2dwController.getFullR2dwList(pp).absoluteURL()),
+            paginatedLinkBuilder = pp => routes.R2dwController.getR2dwList(pp).absoluteURL()),
           pagination.page,
           pagination.pageSize,
           total,
@@ -70,7 +70,7 @@ class R2dwController @Inject()(repository: PropertiesRepository) extends BaseCon
     }
   }
 
-  def deleteIdentifierInProperty(identifier: String) = Action.async { implicit request =>
+  def deleteProperty(identifier: String) = Action.async { implicit request =>
     val property = Value(identifier).toProperty(key)
 
     repository.propertyExists(property).flatMap {

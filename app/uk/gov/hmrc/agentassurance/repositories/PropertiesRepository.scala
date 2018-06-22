@@ -46,7 +46,6 @@ class PropertiesRepository @Inject() (mongoComponent: ReactiveMongoComponent)
     } yield (total, properties)
   }
 
-
   def propertyExists(property: Property)(implicit ec: ExecutionContext): Future[Boolean] =
     find("key" -> property.key, "value" -> property.value).map(_.headOption.nonEmpty)
 

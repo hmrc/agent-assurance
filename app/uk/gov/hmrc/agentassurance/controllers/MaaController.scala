@@ -51,14 +51,14 @@ class MaaController @Inject()(repository: PropertiesRepository) extends BaseCont
     }
   }
 
-  def getFullMaaList(pagination: PaginationParameters) = Action.async { implicit request =>
+  def getMaaList(pagination: PaginationParameters) = Action.async { implicit request =>
 
     repository.findProperties(key, pagination.page, pagination.pageSize).map { case (total, properties) =>
       if (properties.nonEmpty) {
         val response = PaginatedResources(
           PaginationLinks.apply(paginationParams = pagination,
             total = total,
-            paginatedLinkBuilder = pp => routes.MaaController.getFullMaaList(pp).absoluteURL()),
+            paginatedLinkBuilder = pp => routes.MaaController.getMaaList(pp).absoluteURL()),
           pagination.page,
           pagination.pageSize,
           total,
@@ -70,7 +70,7 @@ class MaaController @Inject()(repository: PropertiesRepository) extends BaseCont
     }
   }
 
-  def deleteIdentifierInProperty(identifier: String) = Action.async { implicit request =>
+  def deleteProperty(identifier: String) = Action.async { implicit request =>
     val property = Value(identifier).toProperty(key)
 
     repository.propertyExists(property).flatMap {

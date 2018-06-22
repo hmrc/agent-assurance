@@ -35,11 +35,7 @@ class PropertiesControllerISpec extends UnitSpec
 
   def getEntirePaginatedList(key: String, page: Int, pageSize: Int): Future[WSResponse] = {wsClient.url(s"$url/$key?page=$page&pageSize=$pageSize").get()}
 
-  def deleteEntireProperty(key: String): Future[WSResponse] = {
-    wsClient.url(s"$url/$key").delete()
-  }
-
-  def deleteIdentifierInProperty(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").delete()
+  def deleteProperty(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").delete()
 
   override def beforeEach(): Unit = dropMongoDb()
 
@@ -70,11 +66,11 @@ class PropertiesControllerISpec extends UnitSpec
   }
 
   "a deleteIdentifierInProperty endpoint for refusal-to-deal-with" should {
-    behave like deleteIdentifierInPropertyTests("refusal-to-deal-with")
+    behave like deletePropertyTests("refusal-to-deal-with")
   }
 
   "a deleteIdentifierInProperty endpoint for manually-assured" should {
-    behave like deleteIdentifierInPropertyTests("manually-assured", false)
+    behave like deletePropertyTests("manually-assured", false)
   }
 
 
@@ -146,7 +142,7 @@ class PropertiesControllerISpec extends UnitSpec
       (response.json \ "_links" \ "first" \ "href").as[String] should include(s"/agent-assurance/$key?page=1&pageSize=3")
       (response.json \ "_links" \ "next" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=3")
       (response.json \ "_links" \ "last" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=3")
-      (response.json \ "_links" \ "previous" \ "href").validateOpt[String].isSuccess shouldBe true
+      (response.json \ "_links" \ "previous" \ "href").toOption.isDefined shouldBe false
     }
 
     "return 200 OK when properties are present in second page" in {
@@ -181,7 +177,7 @@ class PropertiesControllerISpec extends UnitSpec
       (response.json \ "_links" \ "first" \ "href").as[String] should include(s"/agent-assurance/$key?page=1&pageSize=3")
       (response.json \ "_links" \ "previous" \ "href").as[String] should include(s"/agent-assurance/$key?page=1&pageSize=3")
       (response.json \ "_links" \ "last" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=3")
-      (response.json \ "_links" \ "next" \ "href").validateOpt[String].isSuccess shouldBe true
+      (response.json \ "_links" \ "next" \ "href").toOption.isDefined shouldBe false
     }
 
     "return 404 when property is not present" in {
@@ -190,12 +186,11 @@ class PropertiesControllerISpec extends UnitSpec
     }
   }
 
-  def deleteIdentifierInPropertyTests(key: String, isR2dw: Boolean = true) = {
+  def deletePropertyTests(key: String, isR2dw: Boolean = true) = {
     "return 204 when property is present" in {
-      Await.result(createProperty(key, "myValue"), 10 seconds)
       Await.result(createProperty(key, "someValue"), 10 seconds)
 
-      val response = Await.result(deleteIdentifierInProperty(key, "   someValue"), 10 seconds)
+      val response = Await.result(deleteProperty(key, "   someValue"), 10 seconds)
       response.status shouldBe NO_CONTENT
 
       val response2 = Await.result(isAssured(key, "someValue    "), 10 seconds)
@@ -204,7 +199,7 @@ class PropertiesControllerISpec extends UnitSpec
       else response2.status shouldBe FORBIDDEN
     }
     "return 404 when property is not present" in {
-      val response = Await.result(deleteIdentifierInProperty(key,  "someValue"), 10 seconds)
+      val response = Await.result(deleteProperty(key,  "someValue"), 10 seconds)
       response.status shouldBe NOT_FOUND
     }
   }
