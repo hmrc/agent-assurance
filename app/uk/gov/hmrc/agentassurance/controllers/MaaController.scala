@@ -31,15 +31,15 @@ import scala.concurrent.Future
 @Singleton
 class MaaController @Inject()(repository: PropertiesRepository) extends BaseController {
 
-  def key = "manually-assured"
+  val key = "manually-assured"
 
   def createProperty = Action.async(parse.json) { implicit request =>
     withJsonBody[Value] { value =>
       val newProperty = value.toProperty(key)
 
       repository.propertyExists(newProperty).flatMap {
-        case true => repository.createProperty(newProperty).map(_ => Created)
-        case false => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
+        case false => repository.createProperty(newProperty).map(_ => Created)
+        case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
       }
     }
   }
@@ -47,31 +47,35 @@ class MaaController @Inject()(repository: PropertiesRepository) extends BaseCont
   def isManuallyAssured(identifier: String) = Action.async { implicit request =>
     repository.propertyExists(Value(identifier).toProperty(key)).map {
       case true => Ok
-      case false => NotFound
+      case false => Forbidden
     }
   }
 
   def getFullMaaList(pagination: PaginationParameters) = Action.async { implicit request =>
 
     repository.findProperties(key, pagination.page, pagination.pageSize).map { case (total, properties) =>
-      val response = PaginatedResources(
-        PaginationLinks.apply(paginationParams = pagination,
-          total = total,
-          paginatedLinkBuilder =  pp => routes.MaaController.getFullMaaList(pp).absoluteURL()),
-        pagination.page,
-        pagination.pageSize,
-        total,
-        properties.map(_.value)
-      )
+      if (properties.nonEmpty) {
+        val response = PaginatedResources(
+          PaginationLinks.apply(paginationParams = pagination,
+            total = total,
+            paginatedLinkBuilder = pp => routes.MaaController.getFullMaaList(pp).absoluteURL()),
+          pagination.page,
+          pagination.pageSize,
+          total,
+          properties.map(_.value)
+        )
 
-      Ok(Json.toJson(response))
+        Ok(Json.toJson(response))
+      } else NoContent
     }
   }
 
   def deleteIdentifierInProperty(identifier: String) = Action.async { implicit request =>
-    repository.deleteProperty(Value(identifier).toProperty(key)).map {
-      case true => Ok
-      case false => NotFound
+    val property = Value(identifier).toProperty(key)
+
+    repository.propertyExists(property).flatMap {
+      case true => repository.deleteProperty(property).map(_ => NoContent)
+      case false => Future.successful(NotFound)
     }
   }
 }

@@ -21,7 +21,7 @@ import play.api.mvc.QueryStringBindable
 import scala.util.Try
 
 case class PaginationParameters(page: Int, pageSize: Int) {
-  require(pageSize > 0, s"the values are $pageSize and $page")
+  require(pageSize > 0, "The pageSize should be greater than zero")
 
   def lastPage(total: Int): Int = 1 + ((total - 1) / pageSize)
 }

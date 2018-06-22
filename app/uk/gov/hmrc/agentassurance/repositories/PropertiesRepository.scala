@@ -50,23 +50,10 @@ class PropertiesRepository @Inject() (mongoComponent: ReactiveMongoComponent)
   def propertyExists(property: Property)(implicit ec: ExecutionContext): Future[Boolean] =
     find("key" -> property.key, "value" -> property.value).map(_.headOption.nonEmpty)
 
-  def updateProperty(oldProperty: Property, value: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    atomicUpdate(BSONDocument("key" -> oldProperty.key, "value" -> oldProperty.value),
-      BSONDocument("$set" -> BSONDocument("value" -> value)))
-      .map {
-        case Some(result) => result.writeResult.ok
-        case None => false
-      }
-      .recover {
-        case _ => false
-    }
-  }
-
   def createProperty(property: Property)(implicit ec: ExecutionContext): Future[Unit] = insert(property).map(_ => ())
 
-  def deleteProperty(property: Property)(implicit ec: ExecutionContext): Future[Boolean] =
-    remove("key" -> property.key, "value" -> property.value)
-      .map(_.ok)
+  def deleteProperty(property: Property)(implicit ec: ExecutionContext): Future[Unit] =
+    remove("key" -> property.key, "value" -> property.value).map(_ => ())
 
   //false as we always want to update using the atomicUpdate function
   override def isInsertion(newRecordId: BSONObjectID, oldRecord: Property): Boolean = false
