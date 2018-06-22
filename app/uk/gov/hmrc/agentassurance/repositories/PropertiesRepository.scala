@@ -16,42 +16,57 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import play.api.libs.json.Format
+import javax.inject.{Inject, Singleton}
+import play.api.libs.json.{Format, Json}
 import play.api.libs.json.Json.format
 import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.api.ReadPreference
 import reactivemongo.api.indexes.{Index, IndexType}
 import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
 import uk.gov.hmrc.agentassurance.model._
+import reactivemongo.play.json.ImplicitBSONHandlers._
+
 import scala.concurrent.{ExecutionContext, Future}
 
-abstract class PropertiesRepository (mongoComponent: ReactiveMongoComponent, collectionName: String)
-  extends ReactiveRepository[Property, String](collectionName, mongoComponent.mongoConnector.db, format[Property],
+@Singleton
+class PropertiesRepository @Inject() (mongoComponent: ReactiveMongoComponent)
+  extends ReactiveRepository[Property, String]("agent-assurance", mongoComponent.mongoConnector.db, format[Property],
     implicitly[Format[String]]) with AtomicUpdate[Property] {
 
   import reactivemongo.bson._
 
-  def findProperty(key: String)(implicit ec: ExecutionContext): Future[Option[Property]] =
-    find("key" -> key).map(_.headOption)
+  def findProperties(key: String, page:Int, pageSize: Int)(implicit ec: ExecutionContext): Future[(Int, Seq[Property])] = {
 
-  def updateProperty(newProperty: Property)(implicit ec: ExecutionContext): Future[Boolean] = {
-    findProperty(newProperty.key).flatMap { currentPropertyOption =>
-      if (currentPropertyOption.isDefined) {
-        atomicUpdate(
-          BSONDocument("key" -> newProperty.key),
-          BSONDocument("$set" -> BSONDocument("value" -> newProperty.value))).map(_ => true)
-      } else Future successful (false)
+    for {
+      total <- collection.count(Some(Json.obj("key" ->  key)))
+      properties <- collection.find(Json.obj("key" ->  key))
+        .skip(pageSize * (page - 1))
+        .cursor[Property](ReadPreference.primaryPreferred)
+        .collect[Seq](pageSize)
+    } yield (total, properties)
+  }
+
+
+  def propertyExists(property: Property)(implicit ec: ExecutionContext): Future[Boolean] =
+    find("key" -> property.key, "value" -> property.value).map(_.headOption.nonEmpty)
+
+  def updateProperty(oldProperty: Property, value: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    atomicUpdate(BSONDocument("key" -> oldProperty.key, "value" -> oldProperty.value),
+      BSONDocument("$set" -> BSONDocument("value" -> value)))
+      .map {
+        case Some(result) => result.writeResult.ok
+        case None => false
+      }
+      .recover {
+        case _ => false
     }
   }
 
   def createProperty(property: Property)(implicit ec: ExecutionContext): Future[Unit] = insert(property).map(_ => ())
 
-  def deleteProperty(key: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    find("key" -> key).flatMap { p =>
-      if (p.headOption.isDefined) {
-        remove("key" -> key).map(_ => true)
-      } else Future successful (false)
-    }
-  }
+  def deleteProperty(property: Property)(implicit ec: ExecutionContext): Future[Boolean] =
+    remove("key" -> property.key, "value" -> property.value)
+      .map(_.ok)
 
   //false as we always want to update using the atomicUpdate function
   override def isInsertion(newRecordId: BSONObjectID, oldRecord: Property): Boolean = false
