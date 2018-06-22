@@ -17,46 +17,65 @@
 package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject.{Inject, Singleton}
+import play.api.libs.json.Json
+import play.api.mvc._
+import uk.gov.hmrc.agentassurance.binders.PaginationParameters
+import uk.gov.hmrc.agentassurance.model.{ErrorBody, Value}
+import uk.gov.hmrc.agentassurance.models.pagination.{PaginatedResources, PaginationLinks}
+import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-import play.api.mvc.{Action, Request}
-import uk.gov.hmrc.agentassurance.model.Value
-import uk.gov.hmrc.agentassurance.repositories.R2dwRepository
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 @Singleton
-class R2dwController @Inject()(repository: R2dwRepository) extends PropertiesController(repository) {
+class R2dwController @Inject()(repository: PropertiesRepository) extends BaseController {
 
-  override def key = "refusal-to-deal-with"
+  val key = "refusal-to-deal-with"
 
   def createProperty = Action.async(parse.json) { implicit request =>
     withJsonBody[Value] { value =>
-      baseCreateProperty(value)
-    }
-  }
+      val newProperty = value.toProperty(key)
 
-  def updateProperty = Action.async(parse.json) { implicit request =>
-    withJsonBody[Value] { value =>
-      baseUpdateProperty(key, value)
+      repository.propertyExists(newProperty).flatMap {
+        case false => repository.createProperty(newProperty).map(_ => Created)
+        case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
+      }
     }
   }
 
   def isOnR2dwList(identifier: String) = Action.async { implicit request =>
-    repository.findProperty(key).map { mayBeProperty =>
-      if (mayBeProperty.isDefined && mayBeProperty.get.value.contains(identifier)) Forbidden else Ok
+    repository.propertyExists(Value(identifier).toProperty(key)).map {
+      case true => Forbidden
+      case false => Ok
     }
   }
 
-  def getFullR2dwList = Action.async { implicit request =>
-    repository.findProperty(key).map { maybeProperty =>
-      if (maybeProperty.isDefined && maybeProperty.get.value.length > 0) Ok(maybeProperty.get.value) else NoContent
+  def getR2dwList(pagination: PaginationParameters) = Action.async { implicit request =>
+
+    repository.findProperties(key, pagination.page, pagination.pageSize).map { case (total, properties) =>
+      if (properties.nonEmpty) {
+        val response = PaginatedResources(
+          PaginationLinks.apply(paginationParams = pagination,
+            total = total,
+            paginatedLinkBuilder = pp => routes.R2dwController.getR2dwList(pp).absoluteURL()),
+          pagination.page,
+          pagination.pageSize,
+          total,
+          properties.map(_.value)
+        )
+
+        Ok(Json.toJson(response))
+      } else NoContent
     }
   }
 
-  def deleteEntireProperty = Action.async { implicit request =>
-    baseDeleteEntireProperty(key)
-  }
+  def deleteProperty(identifier: String) = Action.async { implicit request =>
+    val property = Value(identifier).toProperty(key)
 
-  def deleteIdentifierInProperty(identifier: String) = Action.async { implicit request =>
-    baseDeleteIdentifierInProperty(key, identifier)
+    repository.propertyExists(property).flatMap {
+      case true => repository.deleteProperty(property).map(_ => NoContent)
+      case false => Future.successful(NotFound)
+    }
   }
 }

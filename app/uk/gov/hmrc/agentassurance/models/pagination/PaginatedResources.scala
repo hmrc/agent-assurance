@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.repositories
+package uk.gov.hmrc.agentassurance.models.pagination
 
-import javax.inject.{Inject, Singleton}
-import play.modules.reactivemongo.ReactiveMongoComponent
+import play.api.libs.json.Json
 
-@Singleton
-class R2dwRepository @Inject()(mongoComponent: ReactiveMongoComponent)
-  extends PropertiesRepository(mongoComponent, "r2dw") {
+case class PaginatedResources(
+                             _links: PaginationLinks,
+                             page: Int,
+                             pageSize: Int,
+                             total: Int,
+                             resources: Seq[String])
 
+object PaginatedResources {
+
+  implicit val format = Json.format[PaginatedResources]
 }

@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.repositories
+package uk.gov.hmrc.agentassurance.controllers.testOnly
 
 import javax.inject.{Inject, Singleton}
-
-import play.modules.reactivemongo.ReactiveMongoComponent
+import play.api.mvc.{Action, AnyContent}
+import uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController
 
 @Singleton
-class MaaRepository @Inject()(mongoComponent: ReactiveMongoComponent)
-  extends PropertiesRepository(mongoComponent, "manually-assured") {
+class TestOnlyController @Inject()(ctrl: AgentAssuranceController) {
+
+  def acceptableNumberOfClientsForAny(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
+    ctrl.acceptableNumberOfClients(service, minimumAcceptableNumberOfClients)
+
 
 }

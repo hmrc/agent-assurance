@@ -28,21 +28,14 @@ class PropertiesControllerISpec extends UnitSpec
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-
-  def updateProperty(key: String, value: String) = wsClient.url(s"$url/$key").put(Json.obj("value" -> value))
-
   def createProperty(key: String, value: String) =
     wsClient.url(s"$url/$key").post(Json.obj("value" -> value))
 
   def isAssured(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").get()
 
-  def getEntireList(key: String): Future[WSResponse] = {wsClient.url(s"$url/$key").get()}
+  def getEntirePaginatedList(key: String, page: Int, pageSize: Int): Future[WSResponse] = {wsClient.url(s"$url/$key?page=$page&pageSize=$pageSize").get()}
 
-  def deleteEntireProperty(key: String): Future[WSResponse] = {
-    wsClient.url(s"$url/$key").delete()
-  }
-
-  def deleteIdentifierInProperty(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").delete()
+  def deleteProperty(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").delete()
 
   override def beforeEach(): Unit = dropMongoDb()
 
@@ -72,29 +65,14 @@ class PropertiesControllerISpec extends UnitSpec
     behave like identifierExistsTests("manually-assured", false)
   }
 
-  "a deleteEntireProperty endpoint for refusal-to-deal-with" should {
-    behave like deleteEntirePropertyTests("refusal-to-deal-with")
-  }
-
-  "a deleteEntireProperty endpoint for manually-assured" should {
-    behave like deleteEntirePropertyTests("manually-assured", false)
-  }
-
   "a deleteIdentifierInProperty endpoint for refusal-to-deal-with" should {
-    behave like deleteIdentifierInPropertyTests("refusal-to-deal-with")
+    behave like deletePropertyTests("refusal-to-deal-with")
   }
 
   "a deleteIdentifierInProperty endpoint for manually-assured" should {
-    behave like deleteIdentifierInPropertyTests("manually-assured", false)
+    behave like deletePropertyTests("manually-assured", false)
   }
 
-  "a updateProperty endpoint for refusal-to-deal-with" should {
-    behave like updatePropertyTests("refusal-to-deal-with")
-  }
-
-  "a updateProperty endpoint for manually-assured" should {
-    behave like updatePropertyTests("manually-assured", false)
-  }
 
   def createPropertyTests(key: String) = {
 
@@ -150,42 +128,69 @@ class PropertiesControllerISpec extends UnitSpec
   }
 
   def getPropertyList(key: String) = {
-    "return 200 OK when property is present" in {
-      Await.result(createProperty(key, "myValue,    value2,value3,value4"), 10 seconds)
+    "return 200 OK when properties are present in first page" in {
+      Await.result(createProperty(key, "myValue"), 10 seconds)
+      Await.result(createProperty(key, "myValue1"), 10 seconds)
+      Await.result(createProperty(key, "myValue2"), 10 seconds)
+      Await.result(createProperty(key, "myValue3"), 10 seconds)
 
-      val response = Await.result(getEntireList(key), 10 seconds)
-        response.status shouldBe OK
-        response.body shouldBe "myValue,value2,value3,value4"
+      val response = Await.result(getEntirePaginatedList(key, 1, 3), 10 seconds)
+      response.status shouldBe OK
+      (response.json \ "resources").as[Seq[String]] shouldBe Seq("myValue", "myValue1", "myValue2")
+      (response.json \ "total").as[Int] shouldBe 4
+      (response.json \ "_links" \ "self" \ "href").as[String] should include(s"/agent-assurance/$key?page=1&pageSize=3")
+      (response.json \ "_links" \ "first" \ "href").as[String] should include(s"/agent-assurance/$key?page=1&pageSize=3")
+      (response.json \ "_links" \ "next" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=3")
+      (response.json \ "_links" \ "last" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=3")
+      (response.json \ "_links" \ "previous" \ "href").toOption.isDefined shouldBe false
     }
+
+    "return 200 OK when properties are present in second page" in {
+      Await.result(createProperty(key, "myValue"), 10 seconds)
+      Await.result(createProperty(key, "myValue1"), 10 seconds)
+      Await.result(createProperty(key, "myValue2"), 10 seconds)
+      Await.result(createProperty(key, "myValue3"), 10 seconds)
+      Await.result(createProperty(key, "myValue4"), 10 seconds)
+
+      val response = Await.result(getEntirePaginatedList(key, 2, 2), 10 seconds)
+      response.status shouldBe OK
+      (response.json \ "resources").as[Seq[String]] shouldBe Seq("myValue2", "myValue3")
+      (response.json \ "total").as[Int] shouldBe 5
+      (response.json \ "_links" \ "self" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=2")
+      (response.json \ "_links" \ "first" \ "href").as[String] should include(s"/agent-assurance/$key?page=1&pageSize=2")
+      (response.json \ "_links" \ "previous" \ "href").as[String] should include(s"/agent-assurance/$key?page=1&pageSize=2")
+      (response.json \ "_links" \ "last" \ "href").as[String] should include(s"/agent-assurance/$key?page=3&pageSize=2")
+      (response.json \ "_links" \ "next" \ "href").as[String] should include(s"/agent-assurance/$key?page=3&pageSize=2")
+    }
+
+    "return 200 OK when properties are present in last page" in {
+      Await.result(createProperty(key, "myValue"), 10 seconds)
+      Await.result(createProperty(key, "myValue1"), 10 seconds)
+      Await.result(createProperty(key, "myValue2"), 10 seconds)
+      Await.result(createProperty(key, "myValue3"), 10 seconds)
+
+      val response = Await.result(getEntirePaginatedList(key, 2, 3), 10 seconds)
+      response.status shouldBe OK
+      (response.json \ "resources").as[Seq[String]] shouldBe Seq("myValue3")
+      (response.json \ "total").as[Int] shouldBe 4
+      (response.json \ "_links" \ "self" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=3")
+      (response.json \ "_links" \ "first" \ "href").as[String] should include(s"/agent-assurance/$key?page=1&pageSize=3")
+      (response.json \ "_links" \ "previous" \ "href").as[String] should include(s"/agent-assurance/$key?page=1&pageSize=3")
+      (response.json \ "_links" \ "last" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=3")
+      (response.json \ "_links" \ "next" \ "href").toOption.isDefined shouldBe false
+    }
+
     "return 404 when property is not present" in {
-      val response = Await.result(getEntireList(key), 10 seconds)
+      val response = Await.result(getEntirePaginatedList(key, 10, 3), 10 seconds)
         response.status shouldBe NO_CONTENT
     }
   }
 
-  def deleteEntirePropertyTests(key: String, isR2dw: Boolean = true) = {
+  def deletePropertyTests(key: String, isR2dw: Boolean = true) = {
     "return 204 when property is present" in {
-      Await.result(createProperty(key, "    myValue"), 10 seconds).status shouldBe CREATED
+      Await.result(createProperty(key, "someValue"), 10 seconds)
 
-      val response = Await.result(deleteEntireProperty(key), 10 seconds)
-      response.status shouldBe NO_CONTENT
-
-      val response2 = Await.result(isAssured(key, "     myValue"), 10 seconds)
-      if(isR2dw)
-        response2.status shouldBe OK
-      else response2.status shouldBe FORBIDDEN
-    }
-    "return 404 when property is not present" in {
-      val response = Await.result(deleteEntireProperty(key), 10 seconds)
-      response.status shouldBe NOT_FOUND
-    }
-  }
-
-  def deleteIdentifierInPropertyTests(key: String, isR2dw: Boolean = true) = {
-    "return 204 when property is present" in {
-      Await.result(createProperty(key, "myValue,    someValue,   anotherValue"), 10 seconds)
-
-      val response = Await.result(deleteIdentifierInProperty(key, "   someValue"), 10 seconds)
+      val response = Await.result(deleteProperty(key, "   someValue"), 10 seconds)
       response.status shouldBe NO_CONTENT
 
       val response2 = Await.result(isAssured(key, "someValue    "), 10 seconds)
@@ -194,36 +199,7 @@ class PropertiesControllerISpec extends UnitSpec
       else response2.status shouldBe FORBIDDEN
     }
     "return 404 when property is not present" in {
-      val response = Await.result(deleteIdentifierInProperty(key,  "someValue"), 10 seconds)
-      response.status shouldBe NOT_FOUND
-    }
-  }
-
-  def updatePropertyTests(key: String, isR2dw: Boolean = true) = {
-    "return 204 when property is correctly updated" in {
-      val response: WSResponse = Await.result(createProperty(key, "oneValue   ,        anotherValue"), 10 seconds)
-      response.status shouldBe CREATED
-
-      val response2: WSResponse = Await.result(updateProperty(key, "addedValue      "), 10 seconds)
-      response2.status shouldBe NO_CONTENT
-
-      val response3: WSResponse = Await.result(updateProperty(key, "addedValue"), 10 seconds)
-      response3.status shouldBe CONFLICT
-    }
-
-    "when adding value to property which currently has empty value, comma is not added at the front" in {
-      val response: WSResponse = Await.result(createProperty(key, ""), 10 seconds)
-      response.status shouldBe CREATED
-
-      val response2: WSResponse = Await.result(updateProperty(key, "addedValue"), 10 seconds)
-      response2.status shouldBe NO_CONTENT
-
-      val response3 = Await.result(getEntireList(key), 10 seconds)
-      response3.status shouldBe OK
-      response3.body shouldBe "addedValue"
-    }
-    "return 404 when updating a property that is not present" in {
-      val response = Await.result(updateProperty(key, "newValue"), 10 seconds)
+      val response = Await.result(deleteProperty(key,  "someValue"), 10 seconds)
       response.status shouldBe NOT_FOUND
     }
   }
