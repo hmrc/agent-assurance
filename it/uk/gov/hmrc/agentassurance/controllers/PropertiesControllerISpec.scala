@@ -180,9 +180,11 @@ class PropertiesControllerISpec extends UnitSpec
       (response.json \ "_links" \ "next" \ "href").toOption.isDefined shouldBe false
     }
 
-    "return 404 when property is not present" in {
+    "return empty results when property is not present" in {
       val response = Await.result(getEntirePaginatedList(key, 10, 3), 10 seconds)
-        response.status shouldBe NO_CONTENT
+        response.status shouldBe OK
+      (response.json \ "resources").as[Seq[String]] shouldBe Seq.empty
+      (response.json \ "total").as[Int] shouldBe 0
     }
   }
 

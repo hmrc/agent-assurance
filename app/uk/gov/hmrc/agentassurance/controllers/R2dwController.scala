@@ -52,21 +52,18 @@ class R2dwController @Inject()(repository: PropertiesRepository) extends BaseCon
   }
 
   def getR2dwList(pagination: PaginationParameters) = Action.async { implicit request =>
-
     repository.findProperties(key, pagination.page, pagination.pageSize).map { case (total, properties) =>
-      if (properties.nonEmpty) {
-        val response = PaginatedResources(
-          PaginationLinks.apply(paginationParams = pagination,
-            total = total,
-            paginatedLinkBuilder = pp => routes.R2dwController.getR2dwList(pp).absoluteURL()),
-          pagination.page,
-          pagination.pageSize,
-          total,
-          properties.map(_.value)
-        )
+      val response = PaginatedResources(
+        PaginationLinks.apply(paginationParams = pagination,
+          total = total,
+          paginatedLinkBuilder = pp => routes.R2dwController.getR2dwList(pp).absoluteURL()),
+        pagination.page,
+        pagination.pageSize,
+        total,
+        properties.map(_.value)
+      )
 
-        Ok(Json.toJson(response))
-      } else NoContent
+      Ok(Json.toJson(response))
     }
   }
 
