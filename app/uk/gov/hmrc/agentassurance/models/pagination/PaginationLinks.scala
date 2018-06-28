@@ -53,8 +53,10 @@ object PaginationLinks {
                             paginationParams: PaginationParameters,
                             total: Int,
                             f: PaginationParameters => String): Option[LinkHref] =
-    Some(LinkHref(f(paginationParams.copy(page = paginationParams.page - 1))))
-      .filter(_ => Range.inclusive(2, paginationParams.lastPage(total)).contains(paginationParams.page))
+    if (paginationParams.page > 1) {
+      Some(LinkHref(f(paginationParams.copy(page = paginationParams.page - 1))))
+        .filter(_ => Range.inclusive(2, paginationParams.lastPage(total)).contains(paginationParams.page))
+    } else None
 
   private def nextLink(
                         paginationParams: PaginationParameters,

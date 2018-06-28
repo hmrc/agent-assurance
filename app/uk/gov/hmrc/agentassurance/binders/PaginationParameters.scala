@@ -22,6 +22,7 @@ import scala.util.Try
 
 case class PaginationParameters(page: Int, pageSize: Int) {
   require(pageSize > 0, "The pageSize should be greater than zero")
+  require(page > 0, s"The page should be greater than zero")
 
   def lastPage(total: Int): Int = 1 + ((total - 1) / pageSize)
 }

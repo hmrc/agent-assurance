@@ -52,21 +52,18 @@ class MaaController @Inject()(repository: PropertiesRepository) extends BaseCont
   }
 
   def getMaaList(pagination: PaginationParameters) = Action.async { implicit request =>
-
     repository.findProperties(key, pagination.page, pagination.pageSize).map { case (total, properties) =>
-      if (properties.nonEmpty) {
-        val response = PaginatedResources(
-          PaginationLinks.apply(paginationParams = pagination,
-            total = total,
-            paginatedLinkBuilder = pp => routes.MaaController.getMaaList(pp).absoluteURL()),
-          pagination.page,
-          pagination.pageSize,
-          total,
-          properties.map(_.value)
-        )
+      val response = PaginatedResources(
+        PaginationLinks.apply(paginationParams = pagination,
+          total = total,
+          paginatedLinkBuilder = pp => routes.MaaController.getMaaList(pp).absoluteURL()),
+        pagination.page,
+        pagination.pageSize,
+        total,
+        properties.map(_.value)
+      )
 
-        Ok(Json.toJson(response))
-      } else NoContent
+      Ok(Json.toJson(response))
     }
   }
 
