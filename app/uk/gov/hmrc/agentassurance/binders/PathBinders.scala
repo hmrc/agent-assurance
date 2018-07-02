@@ -16,11 +16,19 @@
 
 package uk.gov.hmrc.agentassurance.binders
 
+import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 
 object PathBinders {
   implicit object NinoBinder extends SimpleObjectBinder[Nino](Nino.apply, _.value)
-  implicit object UtrBinder extends SimpleObjectBinder[Utr](Utr.apply, _.value)
   implicit object SaAgentReferenceBinder extends SimpleObjectBinder[SaAgentReference](SaAgentReference.apply, _.value)
+
+  implicit def utrBinder(implicit stringBinder: PathBindable[String]) = new PathBindable[Utr] {
+    override def bind(key: String, value: String): Either[String, Utr] = {
+      if(Utr.isValid(value)) Right(Utr(value)) else Left("Invalid OS!")
+    }
+
+    override def unbind(key: String, utr: Utr): String = utr.value
+  }
 }
