@@ -26,7 +26,7 @@ object PathBinders {
 
   implicit def utrBinder(implicit stringBinder: PathBindable[String]) = new PathBindable[Utr] {
     override def bind(key: String, value: String): Either[String, Utr] = {
-      if(Utr.isValid(value)) Right(Utr(value)) else Left("Invalid OS!")
+      if(Utr.isValid(value)) Right(Utr(value)) else Left("Invalid UTR")
     }
 
     override def unbind(key: String, utr: Utr): String = utr.value
