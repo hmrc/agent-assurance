@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentassurance.controllers
 import javax.inject.{Inject, Singleton}
 
 import play.api.libs.json.Json
+import play.api.mvc.Action
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
 import uk.gov.hmrc.agentassurance.model.{ErrorBody, Value}
@@ -72,7 +73,7 @@ class R2dwController @Inject()(repository: PropertiesRepository,
         pagination.page,
         pagination.pageSize,
         total,
-        properties.map(_.value)
+        properties
       )
 
       Ok(Json.toJson(response))

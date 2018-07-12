@@ -73,14 +73,14 @@ class MaaController @Inject()(repository: PropertiesRepository,
         pagination.page,
         pagination.pageSize,
         total,
-        properties.map(_.value)
+        properties
       )
 
       Ok(Json.toJson(response))
     }
   }
 
-  def deleteProperty(identifier: Utr) = Action.async { implicit request =>
+  def deleteProperty(identifier: Utr) = BasicAuth { implicit request =>
     val newProperty = Value(identifier.value).toProperty(key)
     repository.propertyExists(newProperty).flatMap {
       case true => repository.deleteProperty(newProperty).map(_ => NoContent)

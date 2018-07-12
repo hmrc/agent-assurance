@@ -28,7 +28,10 @@ package object model {
 
   case class ErrorBody(code: String, message: String)
 
+  case class PaginationResult(utrsForPage: Seq[String], collectionTotalForKey: Int)
+
   implicit val propertyFormat = Json.format[Property]
   implicit val valueFormat = Json.format[Value]
   implicit val errorBodyFormat = Json.format[ErrorBody]
+  implicit val paginationResultFormat = Json.format[PaginationResult]
 }

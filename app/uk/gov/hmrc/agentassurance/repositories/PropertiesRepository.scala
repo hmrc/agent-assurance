@@ -17,10 +17,10 @@
 package uk.gov.hmrc.agentassurance.repositories
 
 import javax.inject.{Inject, Singleton}
-import play.api.libs.json.{Format, Json}
+
+import play.api.libs.json._
 import play.api.libs.json.Json.format
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.ReadPreference
 import reactivemongo.api.indexes.{Index, IndexType}
 import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
 import uk.gov.hmrc.agentassurance.model._
@@ -34,16 +34,26 @@ class PropertiesRepository @Inject() (mongoComponent: ReactiveMongoComponent)
     implicitly[Format[String]]) with AtomicUpdate[Property] {
 
   import reactivemongo.bson._
+  import collection.BatchCommands.AggregationFramework.{Match, Project, Group, SumValue, PushField}
 
-  def findProperties(key: String, page:Int, pageSize: Int)(implicit ec: ExecutionContext): Future[(Int, Seq[Property])] = {
+  def findProperties(key: String, page:Int, pageSize: Int)(implicit ec: ExecutionContext): Future[(Int, Seq[String])] = {
 
-    for {
-      total <- collection.count(Some(Json.obj("key" ->  key)))
-      properties <- collection.find(Json.obj("key" ->  key))
-        .skip(pageSize * (page - 1))
-        .cursor[Property](ReadPreference.primaryPreferred)
-        .collect[Seq](pageSize)
-    } yield (total, properties)
+    val skipDuePageNumber = pageSize * (page - 1)
+    val sliceForPagination = Json.obj("$slice" -> JsArray(Seq(JsString("$utrs"), JsNumber(skipDuePageNumber), JsNumber(pageSize))))
+
+    val groupUtrsByKey = Group(JsString("$key"))("totalUtrsForKey" -> SumValue(1), "utrs" -> PushField("value"))
+    val project = Project(Json.obj("collectionTotalForKey" -> "$totalUtrsForKey",
+      "utrsForPage" -> sliceForPagination))
+
+    collection.aggregate(Match(Json.obj("key" -> key)), List(groupUtrsByKey, project)).map(
+      response => response.firstBatch.headOption match {
+        case Some(jsonResponse) => {
+          val paginatedResult = jsonResponse.asOpt[PaginationResult].getOrElse(throw new Exception("bad json"))
+          (paginatedResult.collectionTotalForKey, paginatedResult.utrsForPage)
+        }
+        case None => (0, Seq.empty)
+      }
+    )
   }
 
   def propertyExists(property: Property)(implicit ec: ExecutionContext): Future[Boolean] =
