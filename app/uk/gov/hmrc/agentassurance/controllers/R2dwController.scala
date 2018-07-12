@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentassurance.controllers
 import javax.inject.{Inject, Singleton}
 
 import play.api.libs.json.Json
+import play.api.mvc.Action
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
 import uk.gov.hmrc.agentassurance.model.{ErrorBody, Value}
@@ -63,7 +64,7 @@ class R2dwController @Inject()(repository: PropertiesRepository,
     }
   }
 
-  def getR2dwList(pagination: PaginationParameters) = BasicAuth { implicit request =>
+  def getR2dwList(pagination: PaginationParameters) = Action.async { implicit request =>
     repository.findProperties(key, pagination.page, pagination.pageSize).map { case (total, properties) =>
       val response = PaginatedResources(
         PaginationLinks.apply(paginationParams = pagination,
@@ -72,7 +73,7 @@ class R2dwController @Inject()(repository: PropertiesRepository,
         pagination.page,
         pagination.pageSize,
         total,
-        properties.map(_.value)
+        properties
       )
 
       Ok(Json.toJson(response))

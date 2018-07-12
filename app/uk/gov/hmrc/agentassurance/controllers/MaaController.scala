@@ -64,7 +64,7 @@ class MaaController @Inject()(repository: PropertiesRepository,
     }
   }
 
-  def getMaaList(pagination: PaginationParameters) = BasicAuth { implicit request =>
+  def getMaaList(pagination: PaginationParameters) = Action.async { implicit request =>
     repository.findProperties(key, pagination.page, pagination.pageSize).map { case (total, properties) =>
       val response = PaginatedResources(
         PaginationLinks.apply(paginationParams = pagination,
@@ -73,7 +73,7 @@ class MaaController @Inject()(repository: PropertiesRepository,
         pagination.page,
         pagination.pageSize,
         total,
-        properties.map(_.value)
+        properties
       )
 
       Ok(Json.toJson(response))
