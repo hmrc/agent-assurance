@@ -39,7 +39,7 @@ class PropertiesRepository @Inject() (mongoComponent: ReactiveMongoComponent)
   def findProperties(key: String, page:Int, pageSize: Int)(implicit ec: ExecutionContext): Future[(Int, Seq[String])] = {
 
     val skipDuePageNumber = pageSize * (page - 1)
-    val sliceForPagination = Json.obj("$slice" -> Json.arr(Seq(JsString("$utrs"), JsNumber(skipDuePageNumber), JsNumber(pageSize))))
+    val sliceForPagination = Json.obj("$slice" -> JsArray(Seq(JsString("$utrs"), JsNumber(skipDuePageNumber), JsNumber(pageSize))))
 
     val groupUtrsByKey = Group(JsString("$key"))("totalUtrsForKey" -> SumValue(1), "utrs" -> PushField("value"))
     val project = Project(Json.obj("collectionTotalForKey" -> "$totalUtrsForKey",
@@ -47,8 +47,8 @@ class PropertiesRepository @Inject() (mongoComponent: ReactiveMongoComponent)
 
     collection.aggregate(Match(Json.obj("key" -> key)), List(groupUtrsByKey, project)).map(
       response => response.firstBatch.headOption match {
-        case Some(jsObject) => {
-          val paginatedResult = jsObject.asOpt[PaginationResult].getOrElse(throw new Exception("bad json"))
+        case Some(jsonResponse) => {
+          val paginatedResult = jsonResponse.asOpt[PaginationResult].getOrElse(throw new Exception("bad json"))
           (paginatedResult.collectionTotalForKey, paginatedResult.utrsForPage)
         }
         case None => (0, Seq.empty)
