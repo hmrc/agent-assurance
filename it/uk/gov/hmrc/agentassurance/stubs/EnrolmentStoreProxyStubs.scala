@@ -7,7 +7,7 @@ trait EnrolmentStoreProxyStubs {
     s"/enrolment-store-proxy/enrolment-store/users/$userId/enrolments?type=delegated&service=$service"
   }
 
-  def sufficientClientsAreAllocated(service: String, userId: String) = {
+  def sufficientClientsAreAllocated(service: String, userId: String, state: String = "Unknown") = {
     val responseBody =
       s"""
         |{
@@ -25,7 +25,7 @@ trait EnrolmentStoreProxyStubs {
         |                }
         |            ],
         |            "service": "$service",
-        |            "state": "Unknown"
+        |            "state" : "$state"
         |        },
         |        {
         |            "friendlyName": "",
@@ -40,7 +40,7 @@ trait EnrolmentStoreProxyStubs {
         |                }
         |            ],
         |            "service": "$service",
-        |            "state": "Unknown"
+        |            "state" : "$state"
         |        },
         |        {
         |            "friendlyName": "",
@@ -55,7 +55,7 @@ trait EnrolmentStoreProxyStubs {
         |                }
         |            ],
         |            "service": "$service",
-        |            "state": "Unknown"
+        |            "state" : "$state"
         |        },
         |        {
         |            "friendlyName": "",
@@ -70,7 +70,7 @@ trait EnrolmentStoreProxyStubs {
         |                }
         |            ],
         |            "service": "$service",
-        |            "state": "Unknown"
+        |            "state" : "$state"
         |        },
         |        {
         |            "friendlyName": "",
@@ -85,7 +85,7 @@ trait EnrolmentStoreProxyStubs {
         |                }
         |            ],
         |            "service": "$service",
-        |            "state": "Unknown"
+        |            "state" : "$state"
         |        },
         |        {
         |            "friendlyName": "",
@@ -100,7 +100,7 @@ trait EnrolmentStoreProxyStubs {
         |                }
         |            ],
         |            "service": "$service",
-        |            "state": "Unknown"
+        |            "state" : "$state"
         |        }
         |    ],
         |    "startRecord": 1,
