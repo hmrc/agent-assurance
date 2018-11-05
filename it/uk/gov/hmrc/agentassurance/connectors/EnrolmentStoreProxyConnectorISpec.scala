@@ -29,24 +29,47 @@ class EnrolmentStoreProxyConnectorISpec extends UnitSpec with OneAppPerSuite wit
   private val service = "IR-PAYE"
   private val userId = "0000001531072644"
 
-  "EnrolmentStoreProxyConnector getClientCount" should {
+  "EnrolmentStoreProxyConnector getClientCount via EACD's ES2" should {
 
-    "return an empty list when Emac returns 204" in {
+    "return an empty list when ES2 returns 204" in {
       noClientsAreAllocated(service, userId, 204)
       await(connector.getClientCount(service, userId)) shouldBe 0
     }
 
-    "throw an exception when Emac returns an unexpected http response code" in {
+    "throw an exception when ES2 returns an unexpected http response code" in {
       noClientsAreAllocated(service, userId, 404)
       an[Exception] should be thrownBy await(connector.getClientCount(service, userId))
     }
 
-    "return an all clients returned by Emac" in {
-      givenCleanMetricRegistry()
-      sufficientClientsAreAllocated(service, userId)
-      ( await(connector.getClientCount(service, userId)) > 0 ) shouldBe true
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-ESP-ES2-GetAgentClientList-IR-PAYE-GET")
-      histogramShouldExistsAndBeenUpdated("Size-ESP-ES2-GetAgentClientList-IR-PAYE",6)
+    "return only clients from ES2 whose enrolments are in the 'Activated' or 'Unknown' state" when {
+      def checkClientCount(withEnrolmentState: String, expectedClientListSize: Int)= {
+        givenCleanMetricRegistry()
+        sufficientClientsAreAllocated(service, userId, state = withEnrolmentState)
+
+        await(connector.getClientCount(service, userId)) shouldBe expectedClientListSize
+
+        timerShouldExistsAndBeenUpdated("ConsumedAPI-ESP-ES2-GetAgentClientList-IR-PAYE-GET")
+        histogramShouldExistsAndBeenUpdated("Size-ESP-ES2-GetAgentClientList-IR-PAYE", max = expectedClientListSize)
+      }
+
+      "enrolment state is 'Unknown'" in { // during the interim period before migration of data from GG to MDTP
+        checkClientCount(
+          withEnrolmentState = "Unknown",
+          expectedClientListSize = 6
+        )
+      }
+      "enrolment state is 'Activated'" in {
+        checkClientCount(
+          withEnrolmentState = "Activated",
+          expectedClientListSize = 6
+        )
+      }
+      "enrolment state is 'NotYetActivated'" in {
+        checkClientCount(
+          withEnrolmentState = "NotYetActivated",
+          expectedClientListSize = 0
+        )
+      }
     }
   }
 

@@ -59,7 +59,15 @@ class EnrolmentStoreProxyConnector @Inject()(@Named("enrolment-store-proxy-baseU
 
     reportHistogramValue(s"Size-ESP-ES2-GetAgentClientList-$service") {
       monitor(s"ConsumedAPI-ESP-ES2-GetAgentClientList-$service-GET") {
-        httpGet.GET[ClientAllocationResponse](clientListUrl).map(_.clients.size)
+        httpGet.GET[ClientAllocationResponse](clientListUrl).map{
+          _.clients.count{
+            _.state.toLowerCase match {
+              case "activated" => true
+              case "unknown" => true
+              case _ => false
+            }
+          }
+        }
       }
     }
   }
