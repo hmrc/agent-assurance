@@ -19,7 +19,7 @@ class DesConnectorISpec extends UnitSpec with OneAppPerSuite with WireMockSuppor
   override implicit lazy val app: Application = appBuilder
     .build()
 
-  val desConnector = new DesConnector(wireMockBaseUrl, "token", "stub", app.injector.instanceOf[HttpGet], app.injector.instanceOf[Metrics])
+  val desConnector = new DesConnectorImpl(wireMockBaseUrl, "token", "stub", app.injector.instanceOf[HttpGet], app.injector.instanceOf[Metrics])
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()

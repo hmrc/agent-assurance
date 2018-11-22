@@ -16,31 +16,37 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import org.mockito.ArgumentMatchers.{any, eq => eqs}
-import org.mockito.Mockito.{reset, times, verify, when}
+import java.time.LocalDate
+
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
+import uk.gov.hmrc.agentassurance.model.toFuture
+import uk.gov.hmrc.agentassurance.models.AmlsDetails
+import uk.gov.hmrc.agentassurance.repositories.AmlsDBError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.repositories.{AmlsDBError, AmlsRepository}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.Retrieval
-import uk.gov.hmrc.domain.{Nino, SaAgentReference}
+import uk.gov.hmrc.auth.core.authorise.{EmptyPredicate, Predicate}
+import uk.gov.hmrc.auth.core.retrieve.Retrievals.credentials
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval, Retrieval, Retrievals}
+import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-
-class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with BeforeAndAfterEach {
+class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with BeforeAndAfterEach {
   val desConnector = mock[DesConnector]
-  val espConnector =  mock[EnrolmentStoreProxyConnector]
-  val authConnector =  mock[AuthConnector]
+  val espConnector = mock[EnrolmentStoreProxyConnector]
+  val authConnector = mock[AuthConnector]
+  val amlsRepository = mock[AmlsRepository]
 
-  val controller = new AgentAssuranceController(6, 6, authConnector, desConnector, espConnector)
+  val controller = new AgentAssuranceController(6, 6, authConnector, desConnector, espConnector, amlsRepository)
 
   implicit val hc = new HeaderCarrier
 
@@ -60,16 +66,28 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
   private val utr = Utr("7000000002")
   private val saAgentReference = SaAgentReference("IRSA-123")
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
+  def mockAuth()(response: Either[String, Enrolments]) = {
+    (authConnector.authorise(_: Predicate, _: Retrieval[Enrolments])(_: HeaderCarrier, _: ExecutionContext))
+      .expects(AuthProviders(GovernmentGateway), Retrievals.allEnrolments, *, *)
+      .returning(response.fold[Future[Enrolments]](e => Future.failed(new Exception(e)), r => toFuture(r)))
+  }
 
-    reset(desConnector, authConnector)
+  def mockAuthWithNoRetrievals[A](retrieval: Retrieval[A])(result: A) = {
+    (authConnector.authorise[A](_: Predicate, _: Retrieval[A])(_: HeaderCarrier, _: ExecutionContext))
+      .expects(EmptyPredicate, retrieval, *, *)
+      .returning(toFuture(result))
+  }
+
+  def mockDes(ti: TaxIdentifier)(response: Either[String, Seq[SaAgentReference]]) = {
+    (desConnector.getActiveCesaAgentRelationships(_: TaxIdentifier)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(ti, *, *)
+      .returning(response.fold[Future[Seq[SaAgentReference]]](e => Future.failed(new Exception(e)), r => toFuture(r)))
   }
 
   "AgentAssuranceController" when {
     "enrolledForIrSAAgent is called" should {
       "return NO_CONTENT where the current user is enrolled in IR-SA-AGENT" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithIrSAAgent))
+        mockAuth()(Right(enrolmentsWithIrSAAgent))
 
         val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
@@ -77,16 +95,14 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
       }
 
       "return FORBIDDEN where the current user is not enrolled in IR-SA-AGENT" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithNoIrSAAgent))
-
-        val response = controller.enrolledForIrSAAgent( )(FakeRequest())
+        mockAuth()(Right(enrolmentsWithNoIrSAAgent))
+        val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
         status(response) mustBe FORBIDDEN
       }
 
       "return FORBIDDEN where the current user has no enrolments" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Enrolments]])(any(), any())).thenReturn(Future.successful(enrolmentsWithoutIrSAAgent))
-
+        mockAuth()(Right(enrolmentsWithoutIrSAAgent))
         val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
         status(response) mustBe FORBIDDEN
@@ -95,64 +111,123 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockitoSugar with Befor
 
     "activeCesaRelationship is called with NINO" should {
       "return OK where the user provides a valid NINO and saAgentReference nad has an active relationship in CESA" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful(()))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(nino))(any(), any())).thenReturn(Future.successful(Seq(saAgentReference)))
+        inSequence {
+          mockAuthWithNoRetrievals(EmptyRetrieval)(())
+          mockDes(nino)(Right(Seq(saAgentReference)))
+        }
 
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
-
         status(response) mustBe OK
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(nino))(any(), any())
       }
 
       "return FORBIDDEN when called with a valid NINO that is not active in CESA" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful(()))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(nino))(any(), any())).thenReturn(Future.successful(Seq.empty))
+        inSequence {
+          mockAuthWithNoRetrievals(EmptyRetrieval)(())
+          mockDes(nino)(Right(Seq.empty))
+        }
 
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
         status(response) mustBe FORBIDDEN
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(nino))(any(), any())
       }
 
       "return FORBIDDEN when called with a valid NINO that is active in CESA but with a different IRAgentReference" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful(()))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(nino))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-456"))))
-
+        inSequence {
+          mockAuthWithNoRetrievals(EmptyRetrieval)(())
+          mockDes(nino)(Right(Seq(SaAgentReference("IRSA-456"))))
+        }
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
 
         status(response) mustBe FORBIDDEN
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(nino))(any(), any())
       }
     }
 
     "activeCesaRelationship is called with UTR" should {
       "return OK where the user provides a valid UTR and saAgentReference nad has an active relationship in CESA" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful(()))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(utr))(any(), any())).thenReturn(Future.successful(Seq(saAgentReference)))
-
+        inSequence {
+          mockAuthWithNoRetrievals(EmptyRetrieval)(())
+          mockDes(utr)(Right(Seq(saAgentReference)))
+        }
         val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
 
         status(response) mustBe OK
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(utr))(any(), any())
       }
 
       "return FORBIDDEN when called with a valid UTR that is not active in CESA" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful(()))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(utr))(any(), any())).thenReturn(Future.successful(Seq.empty))
-
+        inSequence {
+          mockAuthWithNoRetrievals(EmptyRetrieval)(())
+          mockDes(utr)(Right(Seq.empty))
+        }
         val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
         status(response) mustBe FORBIDDEN
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(utr))(any(), any())
       }
 
       "return FORBIDDEN when called with a valid UTR that is active in CESA but with a different IRAgentReference" in {
-        when(authConnector.authorise(any[Predicate], any[Retrieval[Any]])(any(), any())).thenReturn(Future.successful(()))
-        when(desConnector.getActiveCesaAgentRelationships(eqs(utr))(any(), any())).thenReturn(Future.successful(Seq(SaAgentReference("IRSA-456"))))
-
+        inSequence {
+          mockAuthWithNoRetrievals(EmptyRetrieval)(())
+          mockDes(utr)(Right(Seq(SaAgentReference("IRSA-456"))))
+        }
         val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
 
         status(response) mustBe FORBIDDEN
-        verify(desConnector, times(1)).getActiveCesaAgentRelationships(eqs(utr))(any(), any())
       }
+    }
+
+    "storeAmlsDetails" should {
+
+      val amlsDetails = AmlsDetails(Utr("utr"), "supervisoryBody", "0123456789", LocalDate.now(), None)
+
+      def mockAuthWithCredentials()(response: Either[String, Unit]) = {
+        (authConnector.authorise(_: Predicate, _: EmptyRetrieval.type )(_: HeaderCarrier, _: ExecutionContext))
+          .expects(AuthProviders(GovernmentGateway) and AffinityGroup.Agent, EmptyRetrieval, *, *)
+          .returning(response.fold[Future[Unit]](e => Future.failed(new Exception(e)), r => toFuture(r)))
+      }
+
+      def mockCreateAmls(amlsDetails: AmlsDetails)(response: Either[AmlsDBError, Unit]) = {
+        (amlsRepository.createOrUpdate(_: AmlsDetails)(_: ExecutionContext))
+          .expects(amlsDetails, *)
+          .returning(toFuture(response))
+      }
+
+      "store amlsDetails successfully in mongo" in {
+
+        inSequence {
+          mockAuthWithCredentials()(Right(()))
+          mockCreateAmls(amlsDetails)(Right(()))
+        }
+        val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson(amlsDetails)).withHeaders(CONTENT_TYPE -> "application/json"))
+
+        status(response) mustBe CREATED
+      }
+
+      "handle mongo errors during storing amlsDetails" in {
+
+        inSequence {
+          mockAuthWithCredentials()(Right(Credentials("", "")))
+          mockCreateAmls(amlsDetails)(Left(AmlsUnexpectedMongoError))
+        }
+        val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson(amlsDetails)).withHeaders(CONTENT_TYPE -> "application/json"))
+
+        status(response) mustBe INTERNAL_SERVER_ERROR
+      }
+
+      "handle invalid amlsDetails json case in the request" in {
+
+          mockAuthWithCredentials()(Right(()))
+
+        val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
+
+        status(response) mustBe BAD_REQUEST
+      }
+
+      "handle no json case in the request" in {
+
+        mockAuthWithCredentials()(Right(()))
+
+        val response = controller.storeAmlsDetails()(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
+
+        status(response) mustBe BAD_REQUEST
+      }
+
     }
   }
 }

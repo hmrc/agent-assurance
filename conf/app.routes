@@ -19,3 +19,5 @@ GET           /manually-assured                                                 
 GET           /manually-assured/utr/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.isManuallyAssured(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
 POST          /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.createProperty()
 DELETE        /manually-assured/utr/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.deleteProperty(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
+
+POST          /amls                                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.storeAmlsDetails()

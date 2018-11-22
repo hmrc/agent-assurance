@@ -1,17 +1,23 @@
 package uk.gov.hmrc.agentassurance.controllers
 
+import java.time.LocalDate
+
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
 import play.api.libs.ws.{WSClient, WSResponse}
+import play.api.test.Helpers.CONTENT_TYPE
+import uk.gov.hmrc.agentassurance.models.AmlsDetails
 import uk.gov.hmrc.agentassurance.stubs.{DesStubs, EnrolmentStoreProxyStubs}
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.util.Random
 
 
 class AgentAssuranceControllerISpec extends IntegrationSpec
@@ -24,13 +30,14 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         "microservice.services.des.port" -> wireMockPort,
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "minimumIRPAYEClients" -> 6,
-        "minimumIRSAClients" -> 6 )
+        "minimumIRSAClients" -> 6)
 
   implicit val hc = new HeaderCarrier
 
   val irSaAgentEnrolmentUrl = s"http://localhost:$port/agent-assurance/irSaAgentEnrolment"
 
   def irSaAgentEnrolmentNinoUrl(nino: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/nino/$nino/saAgentReference/$irAgentReference"
+
   def irSaAgentEnrolmentUtrUrl(utr: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/utr/$utr/saAgentReference/$irAgentReference"
 
   val acceptableNumberOfPayeClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/IR-PAYE"
@@ -368,6 +375,89 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       Then("401 UNAUTHORISED is returned")
       response.status shouldBe 401
+    }
+  }
+
+  feature("/amls/create") {
+
+    val amlsCreateUrl = s"http://localhost:$port/agent-assurance/amls"
+
+    def doRequest(payload: String) =
+      Await.result(
+        wsClient.url(amlsCreateUrl)
+          .withHeaders(CONTENT_TYPE -> "application/json")
+          .post(payload), 10 seconds
+      )
+
+    def payload(maybeUtr: Option[Utr] = None,
+                supervisory: String = "supervisoryBody",
+                arn: Option[Arn] = None) = {
+      val utr = maybeUtr.getOrElse(Utr(Random.alphanumeric.take(10).mkString("")))
+      val amlsDetails = AmlsDetails(utr, supervisory, "0123456789", LocalDate.now(), arn)
+      Json.toJson(amlsDetails).toString()
+    }
+
+    scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
+      Given("User is logged in and is an agent")
+      withAffinityGroupAgent
+
+      When("POST /amls/create is called")
+      val response: WSResponse = doRequest(payload())
+
+      Then("201 CREATED is returned")
+      response.status shouldBe 201
+    }
+
+    scenario("User is not logged in") {
+      Given("User is not logged in")
+      isNotLoggedIn
+
+      When("POST /amls/create is called")
+      val response: WSResponse = doRequest(payload())
+
+      Then("401 UnAuthorized is returned")
+      response.status shouldBe 401
+    }
+
+    scenario("update existing amls record but with no ARN should return success") {
+
+      Given("User is logged in and is an agent")
+      withAffinityGroupAgent
+
+      val utr = Some(Utr(Random.alphanumeric.take(10).mkString("")))
+
+      When("POST /amls/create is called")
+      val response: WSResponse = doRequest(payload(utr))
+
+      Then("201 CREATED is returned")
+      response.status shouldBe 201
+
+      When("POST /amls/create is called second time with the same UTR")
+      val newResponse: WSResponse = doRequest(payload(utr,"updated-supervisory"))
+
+      Then("201 CREATED is returned")
+      newResponse.status shouldBe 201
+    }
+
+    scenario("updates to an already existing amls record with an ARN should return error") {
+
+      Given("User is logged in and is an agent")
+      withAffinityGroupAgent
+
+      val arn = Some(Arn("12345"))
+      val utr = Some(Utr(Random.alphanumeric.take(10).mkString("")))
+
+      When("POST /amls/create is called")
+      val response: WSResponse = doRequest(payload(utr, arn = arn))
+
+      Then("201 CREATED is returned")
+      response.status shouldBe 201
+
+      When("POST /amls/create is called second time with the same UTR")
+      val newResponse: WSResponse = doRequest(payload(utr, supervisory = "updated-supervisory", arn = arn))
+
+      Then("500 INTERNAL_SERVER_ERROR is returned")
+      newResponse.status shouldBe 500
     }
   }
 }
