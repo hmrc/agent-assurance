@@ -8,18 +8,18 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.CONTENT_TYPE
-import uk.gov.hmrc.agentassurance.models.AmlsDetails
-import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, AmlsRepositoryImpl}
+import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity}
+import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
 import uk.gov.hmrc.agentassurance.stubs.{DesStubs, EnrolmentStoreProxyStubs}
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
-import scala.util.Random
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.Random
 
 class AgentAssuranceControllerISpec extends IntegrationSpec
   with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with WireMockSupport with EnrolmentStoreProxyStubs {
@@ -51,6 +51,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   private lazy val repo = app.injector.instanceOf[AmlsRepositoryImpl]
 
   implicit val defaultTimeout = 5 seconds
+
   def await[A](future: Future[A])(implicit timeout: Duration) = Await.result(future, timeout)
 
   override def beforeEach() {
@@ -450,7 +451,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 201
 
       When("POST /amls/create is called second time with the same UTR")
-      val newResponse: WSResponse = doRequest(payload(Some(utr),"updated-supervisory"))
+      val newResponse: WSResponse = doRequest(payload(Some(utr), "updated-supervisory"))
 
       Then("201 CREATED is returned")
       newResponse.status shouldBe 201
@@ -476,45 +477,31 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("/amls/utr") {
+  feature("/amls/utr/:utr") {
 
     val utr = Utr("7000000002")
     val arn = Arn("AARN0000002")
 
-    val amlsCreateUrl = s"http://localhost:$port/agent-assurance/amls"
     val amlsUpdateUrl = s"http://localhost:$port/agent-assurance/amls/utr/${utr.value}"
 
     val amlsDetails = AmlsDetails(utr, "supervisory", "0123456789", LocalDate.now(), None)
-    val createPayload = Json.toJson(amlsDetails).toString()
 
-    val updatePayload = Json.toJson(arn).toString()
-
-    def doCreate(payload: String) =
-      Await.result(
-        wsClient.url(amlsCreateUrl)
-          .withHeaders(CONTENT_TYPE -> "application/json")
-          .post(payload), 10 seconds
-      )
-
-    def doUpdate(payload: String) =
+    def doUpdate =
       Await.result(
         wsClient.url(amlsUpdateUrl)
           .withHeaders(CONTENT_TYPE -> "application/json")
-          .put(payload), 10 seconds
+          .put(Json.toJson(arn).toString()), 10 seconds
       )
 
     scenario("user logged in and is an agent should be able to update existing amls record with ARN") {
+
+      await(repo.insert(AmlsEntity(amlsDetails, LocalDate.now())))
+
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
 
-      When("POST /amls/create is called")
-      val createResponse: WSResponse = doCreate(createPayload)
-
-      Then("201 CREATED is returned")
-      createResponse.status shouldBe 201
-
       When("PUT /amls/utr/:identifier is called")
-      val updateResponse: WSResponse = doUpdate(updatePayload)
+      val updateResponse: WSResponse = doUpdate
 
       Then("204 No_Content is returned")
       updateResponse.status shouldBe 204
@@ -529,7 +516,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isNotLoggedIn
 
       When("PUT /amls/utr/:identifier is called")
-      val response: WSResponse = doUpdate(updatePayload)
+      val response: WSResponse = doUpdate
 
       Then("401 UnAuthorized is returned")
       response.status shouldBe 401
@@ -537,23 +524,13 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     scenario("updates to an existing amls record with a ARN should NOT be allowed") {
 
+      await(repo.insert(AmlsEntity(amlsDetails.copy(arn = Some(arn)), LocalDate.now())))
+
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
 
-      When("POST /amls/create is called")
-      val createResponse: WSResponse = doCreate(createPayload)
-
-      Then("201 CREATED is returned")
-      createResponse.status shouldBe 201
-
-      When("PUT /amls/utr/:identifier is called")
-      val updateResponse: WSResponse = doUpdate(updatePayload)
-
-      Then("204 No_Content is returned")
-      updateResponse.status shouldBe 204
-
       When("PUT /amls/utr/:identifier is called second time with the same ARN")
-      val newResponse: WSResponse = doUpdate(updatePayload)
+      val newResponse: WSResponse = doUpdate
 
       Then("403 Forbidden is returned")
       newResponse.status shouldBe 403
@@ -565,7 +542,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       withAffinityGroupAgent
 
       When("PUT /amls/utr/:identifier is called")
-      val updateResponse: WSResponse = doUpdate(updatePayload)
+      val updateResponse: WSResponse = doUpdate
 
       Then("400 Bad_Request is returned")
       updateResponse.status shouldBe 400

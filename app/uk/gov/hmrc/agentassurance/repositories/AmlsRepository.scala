@@ -27,8 +27,8 @@ import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.BSONObjectID
 import reactivemongo.play.json._
 import uk.gov.hmrc.agentassurance.model._
-import uk.gov.hmrc.agentassurance.models.AmlsEntity
-import uk.gov.hmrc.agentassurance.repositories.AmlsDBError.{CreateAmlsWithARNNotAllowed, AmlsUnexpectedMongoError, DuplicateAmlsError, NoExistingAmlsError}
+import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity}
+import uk.gov.hmrc.agentassurance.repositories.AmlsDBError.{AmlsUnexpectedMongoError, CreateAmlsWithARNNotAllowed, DuplicateAmlsError, NoExistingAmlsError}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -53,7 +53,7 @@ object AmlsDBError {
 @ImplementedBy(classOf[AmlsRepositoryImpl])
 trait AmlsRepository {
 
-  def createOrUpdate(amlsEntity: AmlsEntity)(implicit ec: ExecutionContext): Future[Either[AmlsDBError, Unit]]
+  def createOrUpdate(amlsDetails: AmlsDetails)(implicit ec: ExecutionContext): Future[Either[AmlsDBError, Unit]]
 
   def updateArn(utr: Utr, arn: Arn)(implicit ec: ExecutionContext): Future[Either[AmlsDBError, Unit]]
 }
@@ -73,19 +73,19 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
       unique = true))
 
 
-  def createOrUpdate(amlsEntity: AmlsEntity)(implicit ec: ExecutionContext): Future[Either[AmlsDBError, Unit]] = {
-    val utr = amlsEntity.amlsDetails.utr.value
+  def createOrUpdate(amlsDetails: AmlsDetails)(implicit ec: ExecutionContext): Future[Either[AmlsDBError, Unit]] = {
+    val utr = amlsDetails.utr.value
     val selector = "amlsDetails.utr" -> toJsFieldJsValueWrapper(utr)
     find(selector).map(_.headOption).flatMap {
       case Some(existingEntity) if existingEntity.amlsDetails.arn.isDefined => toFuture(Left(DuplicateAmlsError))
       case _ =>
-        amlsEntity.amlsDetails.arn match {
+        amlsDetails.arn match {
           case Some(_) =>
             Left(CreateAmlsWithARNNotAllowed)
           case None =>
             val selector = Json.obj("amlsDetails.utr" -> JsString(utr))
             collection
-              .update(selector, amlsEntity, upsert = true)
+              .update(selector, AmlsEntity(amlsDetails, LocalDate.now()), upsert = true)
               .map { updateResult =>
                 if (updateResult.writeErrors.isEmpty) {
                   Right(())

@@ -90,9 +90,9 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       .returning(response.fold[Future[Unit]](e => Future.failed(new Exception(e)), r => toFuture(r)))
   }
 
-  def mockCreateAmls(amlsEntity: AmlsEntity)(response: Either[AmlsDBError, Unit]) = {
-    (amlsRepository.createOrUpdate(_: AmlsEntity)(_: ExecutionContext))
-      .expects(amlsEntity, *)
+  def mockCreateAmls(amlsDetails: AmlsDetails)(response: Either[AmlsDBError, Unit]) = {
+    (amlsRepository.createOrUpdate(_: AmlsDetails)(_: ExecutionContext))
+      .expects(amlsDetails, *)
       .returning(toFuture(response))
   }
 
@@ -193,7 +193,6 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
     "storeAmlsDetails" should {
 
       val amlsDetails = AmlsDetails(Utr("utr"), "supervisoryBody", "0123456789", LocalDate.now(), None)
-      val amlsEntity = AmlsEntity(amlsDetails, LocalDate.now())
 
       def doRequest =
         controller.storeAmlsDetails()(FakeRequest()
@@ -205,7 +204,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         inSequence {
           mockAgentAuth()(Right(()))
-          mockCreateAmls(amlsEntity)(Right(()))
+          mockCreateAmls(amlsDetails)(Right(()))
         }
         val response = doRequest
         status(response) mustBe CREATED
@@ -215,7 +214,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         inSequence {
           mockAgentAuth()(Right(Credentials("", "")))
-          mockCreateAmls(amlsEntity)(Left(AmlsUnexpectedMongoError))
+          mockCreateAmls(amlsDetails)(Left(AmlsUnexpectedMongoError))
         }
         val response = doRequest
         status(response) mustBe INTERNAL_SERVER_ERROR
