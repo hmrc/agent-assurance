@@ -9,16 +9,17 @@ import play.api.libs.json.Json
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.CONTENT_TYPE
 import uk.gov.hmrc.agentassurance.models.AmlsDetails
+import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, AmlsRepositoryImpl}
 import uk.gov.hmrc.agentassurance.stubs.{DesStubs, EnrolmentStoreProxyStubs}
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.Random
-
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class AgentAssuranceControllerISpec extends IntegrationSpec
   with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with WireMockSupport with EnrolmentStoreProxyStubs {
@@ -46,6 +47,16 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
   val userId = "0000001531072644"
+
+  private lazy val repo = app.injector.instanceOf[AmlsRepositoryImpl]
+
+  implicit val defaultTimeout = 5 seconds
+  def await[A](future: Future[A])(implicit timeout: Duration) = Await.result(future, timeout)
+
+  override def beforeEach() {
+    super.beforeEach()
+    await(repo.drop)
+  }
 
 
   override def irAgentReference: String = "IRSA-123"
@@ -378,7 +389,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("/amls/create") {
+  feature("/amls") {
 
     val amlsCreateUrl = s"http://localhost:$port/agent-assurance/amls"
 
@@ -401,11 +412,17 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
 
+      val utr = Utr("12345")
+
       When("POST /amls/create is called")
-      val response: WSResponse = doRequest(payload())
+      val response: WSResponse = doRequest(payload(Some(utr)))
 
       Then("201 CREATED is returned")
       response.status shouldBe 201
+
+      val dbRecord = await(repo.find()).head
+      dbRecord.amlsDetails.utr shouldBe utr
+      dbRecord.createdOn shouldBe LocalDate.now()
     }
 
     scenario("User is not logged in") {
@@ -419,45 +436,139 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 401
     }
 
-    scenario("update existing amls record but with no ARN should return success") {
+    scenario("update existing amls record no ARN should be allowed") {
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
 
-      val utr = Some(Utr(Random.alphanumeric.take(10).mkString("")))
+      val utr = Utr(Random.alphanumeric.take(10).mkString(""))
 
       When("POST /amls/create is called")
-      val response: WSResponse = doRequest(payload(utr))
+      val response: WSResponse = doRequest(payload(Some(utr)))
 
       Then("201 CREATED is returned")
       response.status shouldBe 201
 
       When("POST /amls/create is called second time with the same UTR")
-      val newResponse: WSResponse = doRequest(payload(utr,"updated-supervisory"))
+      val newResponse: WSResponse = doRequest(payload(Some(utr),"updated-supervisory"))
 
       Then("201 CREATED is returned")
       newResponse.status shouldBe 201
+
+      val dbRecord = await(repo.find()).head
+      dbRecord.amlsDetails.utr shouldBe utr
+      dbRecord.amlsDetails.supervisoryBody shouldBe "updated-supervisory"
     }
 
-    scenario("updates to an already existing amls record with an ARN should return error") {
+    scenario("creating amls record for the first time with a arn should NOT be allowed ") {
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
 
       val arn = Some(Arn("12345"))
-      val utr = Some(Utr(Random.alphanumeric.take(10).mkString("")))
+      val utr = Some(Utr("12345"))
 
       When("POST /amls/create is called")
       val response: WSResponse = doRequest(payload(utr, arn = arn))
 
+      Then("400 BAD_REQUEST is returned")
+      response.status shouldBe 400
+    }
+  }
+
+  feature("/amls/utr") {
+
+    val utr = Utr("7000000002")
+    val arn = Arn("AARN0000002")
+
+    val amlsCreateUrl = s"http://localhost:$port/agent-assurance/amls"
+    val amlsUpdateUrl = s"http://localhost:$port/agent-assurance/amls/utr/${utr.value}"
+
+    val amlsDetails = AmlsDetails(utr, "supervisory", "0123456789", LocalDate.now(), None)
+    val createPayload = Json.toJson(amlsDetails).toString()
+
+    val updatePayload = Json.toJson(arn).toString()
+
+    def doCreate(payload: String) =
+      Await.result(
+        wsClient.url(amlsCreateUrl)
+          .withHeaders(CONTENT_TYPE -> "application/json")
+          .post(payload), 10 seconds
+      )
+
+    def doUpdate(payload: String) =
+      Await.result(
+        wsClient.url(amlsUpdateUrl)
+          .withHeaders(CONTENT_TYPE -> "application/json")
+          .put(payload), 10 seconds
+      )
+
+    scenario("user logged in and is an agent should be able to update existing amls record with ARN") {
+      Given("User is logged in and is an agent")
+      withAffinityGroupAgent
+
+      When("POST /amls/create is called")
+      val createResponse: WSResponse = doCreate(createPayload)
+
       Then("201 CREATED is returned")
-      response.status shouldBe 201
+      createResponse.status shouldBe 201
 
-      When("POST /amls/create is called second time with the same UTR")
-      val newResponse: WSResponse = doRequest(payload(utr, supervisory = "updated-supervisory", arn = arn))
+      When("PUT /amls/utr/:identifier is called")
+      val updateResponse: WSResponse = doUpdate(updatePayload)
 
-      Then("500 INTERNAL_SERVER_ERROR is returned")
-      newResponse.status shouldBe 500
+      Then("204 No_Content is returned")
+      updateResponse.status shouldBe 204
+
+      val dbRecord = await(repo.find()).head
+      dbRecord.amlsDetails.utr shouldBe utr
+      dbRecord.amlsDetails.arn shouldBe Some(arn)
+    }
+
+    scenario("User is not logged in") {
+      Given("User is not logged in")
+      isNotLoggedIn
+
+      When("PUT /amls/utr/:identifier is called")
+      val response: WSResponse = doUpdate(updatePayload)
+
+      Then("401 UnAuthorized is returned")
+      response.status shouldBe 401
+    }
+
+    scenario("updates to an existing amls record with a ARN should NOT be allowed") {
+
+      Given("User is logged in and is an agent")
+      withAffinityGroupAgent
+
+      When("POST /amls/create is called")
+      val createResponse: WSResponse = doCreate(createPayload)
+
+      Then("201 CREATED is returned")
+      createResponse.status shouldBe 201
+
+      When("PUT /amls/utr/:identifier is called")
+      val updateResponse: WSResponse = doUpdate(updatePayload)
+
+      Then("204 No_Content is returned")
+      updateResponse.status shouldBe 204
+
+      When("PUT /amls/utr/:identifier is called second time with the same ARN")
+      val newResponse: WSResponse = doUpdate(updatePayload)
+
+      Then("403 Forbidden is returned")
+      newResponse.status shouldBe 403
+    }
+
+    scenario("updating ARN for a non-existing amls record should return a bad_request") {
+
+      Given("User is logged in and is an agent")
+      withAffinityGroupAgent
+
+      When("PUT /amls/utr/:identifier is called")
+      val updateResponse: WSResponse = doUpdate(updatePayload)
+
+      Then("400 Bad_Request is returned")
+      updateResponse.status shouldBe 400
     }
   }
 }

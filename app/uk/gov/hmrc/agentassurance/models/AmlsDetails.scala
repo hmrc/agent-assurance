@@ -31,3 +31,9 @@ case class AmlsDetails(utr: Utr,
 object AmlsDetails {
   implicit val amlsDetailsFormat: OFormat[AmlsDetails] = Json.format[AmlsDetails]
 }
+
+case class AmlsEntity(amlsDetails: AmlsDetails, createdOn: LocalDate, updatedArnOn: Option[LocalDate] = None)
+
+object AmlsEntity {
+  implicit val amlsEntityFormat: OFormat[AmlsEntity] = Json.format[AmlsEntity]
+}
