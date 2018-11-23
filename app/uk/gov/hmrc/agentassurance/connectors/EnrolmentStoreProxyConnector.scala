@@ -17,9 +17,10 @@
 package uk.gov.hmrc.agentassurance.connectors
 
 import java.net.URL
-import javax.inject.{Inject, Named, Singleton}
 
+import javax.inject.{Inject, Named, Singleton}
 import com.codahale.metrics.MetricRegistry
+import com.google.inject.ImplementedBy
 import com.kenshoo.play.metrics.Metrics
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.{format, fromJson}
@@ -37,9 +38,14 @@ object ClientAllocation {
 
 case class ClientAllocationResponse(clients: Seq[ClientAllocation])
 
+@ImplementedBy(classOf[EnrolmentStoreProxyConnectorImpl])
+trait EnrolmentStoreProxyConnector {
+  def getClientCount(service: String, userId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int]
+}
+
 @Singleton
-class EnrolmentStoreProxyConnector @Inject()(@Named("enrolment-store-proxy-baseUrl") baseUrl: URL, httpGet: HttpGet, metrics: Metrics) extends
-  HttpAPIMonitor with HistogramMonitor {
+class EnrolmentStoreProxyConnectorImpl @Inject()(@Named("enrolment-store-proxy-baseUrl") baseUrl: URL, httpGet: HttpGet, metrics: Metrics) extends
+  EnrolmentStoreProxyConnector with HttpAPIMonitor with HistogramMonitor {
 
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 

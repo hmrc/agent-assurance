@@ -16,7 +16,7 @@ class EnrolmentStoreProxyConnectorISpec extends UnitSpec with OneAppPerSuite wit
   override implicit lazy val app: Application = appBuilder.build()
 
   val connector =
-    new EnrolmentStoreProxyConnector(wireMockBaseUrl,app.injector.instanceOf[HttpGet], app.injector.instanceOf[Metrics])
+    new EnrolmentStoreProxyConnectorImpl(wireMockBaseUrl,app.injector.instanceOf[HttpGet], app.injector.instanceOf[Metrics])
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()

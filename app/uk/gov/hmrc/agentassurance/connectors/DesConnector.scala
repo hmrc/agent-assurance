@@ -17,9 +17,10 @@
 package uk.gov.hmrc.agentassurance.connectors
 
 import java.net.URL
-import javax.inject.{Inject, Named, Singleton}
 
+import javax.inject.{Inject, Named, Singleton}
 import com.codahale.metrics.MetricRegistry
+import com.google.inject.ImplementedBy
 import com.kenshoo.play.metrics.Metrics
 import play.api.libs.json.Reads._
 import play.api.libs.json._
@@ -50,13 +51,18 @@ object RegistrationRelationshipResponse {
   implicit val reads = Json.reads[RegistrationRelationshipResponse]
 }
 
+@ImplementedBy(classOf[DesConnectorImpl])
+trait DesConnector {
+  def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]]
+}
+
 @Singleton
-class DesConnector @Inject()(@Named("des-baseUrl") baseUrl: URL,
+class DesConnectorImpl @Inject()(@Named("des-baseUrl") baseUrl: URL,
                              @Named("des.authorizationToken") authorizationToken: String,
                              @Named("des.environment") environment: String,
                              httpGet: HttpGet,
                              metrics: Metrics)
-  extends HttpAPIMonitor {
+  extends DesConnector with HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
   def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {

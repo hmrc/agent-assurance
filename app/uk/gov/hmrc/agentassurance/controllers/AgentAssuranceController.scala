@@ -16,11 +16,18 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import java.time.LocalDate
+
 import javax.inject._
+import play.api.libs.json.{JsError, JsSuccess}
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.model.toFuture
+import uk.gov.hmrc.agentassurance.models._
+import uk.gov.hmrc.agentassurance.repositories.AmlsDBError._
+import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -34,7 +41,8 @@ class AgentAssuranceController @Inject()(
                                           @Named("minimumIRSAClients") minimumIRSAClients: Int,
                                           override val authConnector: AuthConnector,
                                           val desConnector: DesConnector,
-                                          val espConnector: EnrolmentStoreProxyConnector) extends BaseController with AuthActions {
+                                          val espConnector: EnrolmentStoreProxyConnector,
+                                          val amlsRepository: AmlsRepository) extends BaseController with AuthActions {
 
   def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
     implicit saAgentRef =>
@@ -68,4 +76,48 @@ class AgentAssuranceController @Inject()(
             Future successful Forbidden
         }
     }
+
+  def storeAmlsDetails: Action[AnyContent] = withAffinityGroupAgent { implicit request =>
+    request.body.asJson.map(_.validate[AmlsDetails]) match {
+      case Some(JsSuccess(amlsDetails, _)) ⇒
+        amlsRepository.createOrUpdate(amlsDetails).map {
+          case Right(_) => Created
+          case Left(error) =>
+            error match {
+              case DuplicateAmlsError => Forbidden
+              case CreateAmlsWithARNNotAllowed => BadRequest
+              case _ => InternalServerError
+            }
+        }
+
+      case Some(JsError(_)) ⇒
+        BadRequest("Could not parse AmlsDetails JSON in request")
+      case None ⇒
+        BadRequest("No JSON found in request body")
+    }
+  }
+
+  def updateAmlsDetails(utr: Utr): Action[AnyContent] =  withAffinityGroupAgent { implicit request =>
+    request.body.asJson.map(_.validate[Arn]) match {
+      case Some(JsSuccess(arn, _)) ⇒
+        if(Arn.isValid(arn.value)) {
+          amlsRepository.updateArn(utr, arn).map {
+            case Right(_) => NoContent
+            case Left(error) =>
+              error match {
+                case DuplicateAmlsError => Forbidden
+                case NoExistingAmlsError => BadRequest
+                case _ => InternalServerError
+              }
+          }
+        }else {
+          BadRequest("invalid Arn value")
+        }
+
+      case Some(JsError(_)) ⇒
+        BadRequest("Could not parse Arn JSON in request")
+      case None ⇒
+        BadRequest("No JSON found in request body")
+    }
+  }
 }

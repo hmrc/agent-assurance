@@ -103,4 +103,14 @@ trait AgentAuthStubs extends BasicUserAuthStubs {
     stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody("{}")))
     this
   }
+
+  def withAffinityGroupAgent = {
+    stubFor(post(urlPathEqualTo(s"/auth/authorise"))
+      .withRequestBody(equalToJson(
+        """{
+          |	"authorise": [{"authProviders": ["GovernmentGateway"]}, {"affinityGroup": "Agent"}]
+          |}""".stripMargin))
+      .willReturn(aResponse().withStatus(200).withBody("{}")))
+    this
+  }
 }

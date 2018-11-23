@@ -17,18 +17,21 @@
 package uk.gov.hmrc.agentassurance.auth
 
 import play.api.Logger
-import play.api.libs.json.JsResultException
+import play.api.libs.json.{JsResultException, JsValue}
 import play.api.mvc._
+import play.api.mvc.BodyParsers.parse
 import uk.gov.hmrc.agentassurance.controllers.ErrorResults.NoPermission
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals._
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.domain.SaAgentReference
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait AuthActions extends AuthorisedFunctions {
   me: Results =>
@@ -43,7 +46,7 @@ trait AuthActions extends AuthorisedFunctions {
 
   def AuthorisedIRSAAgent[A](body: AuthorisedRequestWithSaRef): Action[AnyContent] = Action.async {
     implicit request =>
-      implicit val hc = fromHeadersAndSession(request.headers, None)
+      implicit val hc: HeaderCarrier = fromHeadersAndSession(request.headers, None)
       authorised(AuthProviders(GovernmentGateway)).retrieve(allEnrolments) {
         enrol =>
           getEnrolmentInfo(enrol.enrolments, "IR-SA-AGENT", "IRAgentReference") match {
@@ -59,7 +62,7 @@ trait AuthActions extends AuthorisedFunctions {
 
   def AuthorisedWithUserId[A](body: AuthorisedRequestWithUserId): Action[AnyContent] = Action.async {
     implicit request =>
-      implicit val hc = fromHeadersAndSession(request.headers, None)
+      implicit val hc: HeaderCarrier = fromHeadersAndSession(request.headers, None)
       authorised(AuthProviders(GovernmentGateway)).retrieve(Retrievals.credentials) {
         case Credentials(providerId, _) => body(request)(providerId)
       } recover {
@@ -72,7 +75,7 @@ trait AuthActions extends AuthorisedFunctions {
   }
 
   def BasicAuth[A](body: Request[AnyContent] => Future[Result]): Action[AnyContent] = Action.async { implicit request =>
-    implicit val hc = fromHeadersAndSession(request.headers, None)
+    implicit val hc: HeaderCarrier = fromHeadersAndSession(request.headers, None)
     authorised() {
       body(request)
     } recoverWith {
@@ -80,5 +83,19 @@ trait AuthActions extends AuthorisedFunctions {
         Logger.warn("NoActiveSession while trying to access check activeCesaRelationship endpoint", ex)
         Future.successful(Unauthorized)
     }
+  }
+
+  def withAffinityGroupAgent(action: Request[AnyContent] => Future[Result]) = Action.async {
+    implicit request =>
+      implicit val hc: HeaderCarrier = fromHeadersAndSession(request.headers, None)
+      authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent) {
+        action(request)
+      }.recover {
+          case _: NoActiveSession =>
+            Unauthorized
+          case _: UnsupportedAffinityGroup =>
+            Logger.warn("user doesn't belong to Agent affinityGroup")
+            Forbidden
+        }
   }
 }
