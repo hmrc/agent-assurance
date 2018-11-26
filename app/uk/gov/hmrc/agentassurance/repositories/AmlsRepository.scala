@@ -28,7 +28,7 @@ import reactivemongo.bson.BSONObjectID
 import reactivemongo.play.json._
 import uk.gov.hmrc.agentassurance.model._
 import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity}
-import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsUnexpectedMongoError, AmlsCreateWithArnError, DuplicateUrnError, UrnNotFoundError}
+import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsUnexpectedMongoError, AmlsCreateWithArnError, ArnAlreadySetError, NoExistingAmlsError}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -40,9 +40,9 @@ sealed trait AmlsError
 
 object AmlsError {
 
-  case object DuplicateUrnError extends AmlsError
+  case object ArnAlreadySetError extends AmlsError
 
-  case object UrnNotFoundError extends AmlsError
+  case object NoExistingAmlsError extends AmlsError
 
   case object AmlsCreateWithArnError extends AmlsError
 
@@ -77,7 +77,7 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
     val utr = amlsDetails.utr.value
     val selector = "amlsDetails.utr" -> toJsFieldJsValueWrapper(utr)
     find(selector).map(_.headOption).flatMap {
-      case Some(existingEntity) if existingEntity.amlsDetails.arn.isDefined => toFuture(Left(DuplicateUrnError))
+      case Some(existingEntity) if existingEntity.amlsDetails.arn.isDefined => toFuture(Left(ArnAlreadySetError))
       case _ =>
         amlsDetails.arn match {
           case Some(_) =>
@@ -102,7 +102,7 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
     find(selector).map(_.headOption).flatMap {
       case Some(existingEntity) =>
         existingEntity.amlsDetails.arn match {
-          case Some(_) => toFuture(Left(DuplicateUrnError))
+          case Some(_) => toFuture(Left(ArnAlreadySetError))
           case None =>
             val selector = Json.obj("amlsDetails.utr" -> JsString(utr.value))
             val toUpdate = existingEntity
@@ -120,7 +120,7 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
               }
         }
 
-      case None => Left(UrnNotFoundError)
+      case None => Left(NoExistingAmlsError)
     }
   }
 }

@@ -82,7 +82,7 @@ class AgentAssuranceController @Inject()(
           case Right(_) => Created
           case Left(error) =>
             error match {
-              case DuplicateUrnError => Forbidden
+              case ArnAlreadySetError => Forbidden
               case AmlsCreateWithArnError => BadRequest
               case _ => InternalServerError
             }
@@ -103,8 +103,8 @@ class AgentAssuranceController @Inject()(
             case Right(updated) => Ok(Json.toJson(updated))
             case Left(error) =>
               error match {
-                case DuplicateUrnError => Forbidden
-                case UrnNotFoundError => NotFound
+                case ArnAlreadySetError => Forbidden
+                case NoExistingAmlsError => NotFound
                 case _ => InternalServerError
               }
           }
