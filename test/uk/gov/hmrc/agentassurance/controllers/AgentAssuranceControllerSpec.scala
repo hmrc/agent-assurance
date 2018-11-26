@@ -21,14 +21,15 @@ import java.time.LocalDate
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
+import play.api.http.ContentTypeOf
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentassurance.model.toFuture
 import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity}
-import uk.gov.hmrc.agentassurance.repositories.AmlsDBError.AmlsUnexpectedMongoError
-import uk.gov.hmrc.agentassurance.repositories.{AmlsDBError, AmlsRepository}
+import uk.gov.hmrc.agentassurance.repositories.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.repositories.{AmlsError, AmlsRepository}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
@@ -90,13 +91,13 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       .returning(response.fold[Future[Unit]](e => Future.failed(new Exception(e)), r => toFuture(r)))
   }
 
-  def mockCreateAmls(amlsDetails: AmlsDetails)(response: Either[AmlsDBError, Unit]) = {
+  def mockCreateAmls(amlsDetails: AmlsDetails)(response: Either[AmlsError, Unit]) = {
     (amlsRepository.createOrUpdate(_: AmlsDetails)(_: ExecutionContext))
       .expects(amlsDetails, *)
       .returning(toFuture(response))
   }
 
-  def mockUpdateAmls(utr: Utr, arn: Arn)(response: Either[AmlsDBError, Unit]) = {
+  def mockUpdateAmls(utr: Utr, arn: Arn)(response: Either[AmlsError, AmlsDetails]) = {
     (amlsRepository.updateArn(_: Utr, _: Arn)(_: ExecutionContext))
       .expects(utr, arn, *)
       .returning(toFuture(response))
@@ -255,10 +256,11 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         inSequence {
           mockAgentAuth()(Right(()))
-          mockUpdateAmls(utr, arn)(Right(()))
+          mockUpdateAmls(utr, arn)(Right(AmlsDetails(utr, "supervisory", "123", LocalDate.now(), Some(arn))))
         }
         val response = doRequest
-        status(response) mustBe NO_CONTENT
+        status(response) mustBe OK
+        contentAsString(response) must include(arn.value)
       }
 
       "handle mongo errors during updating amls with Arn" in {

@@ -28,7 +28,7 @@ import reactivemongo.bson.BSONObjectID
 import reactivemongo.play.json._
 import uk.gov.hmrc.agentassurance.model._
 import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity}
-import uk.gov.hmrc.agentassurance.repositories.AmlsDBError.{AmlsUnexpectedMongoError, CreateAmlsWithARNNotAllowed, DuplicateAmlsError, NoExistingAmlsError}
+import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsUnexpectedMongoError, AmlsCreateWithArnError, ArnAlreadySetError, NoExistingAmlsError}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -36,26 +36,26 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import scala.collection.Seq
 import scala.concurrent.{ExecutionContext, Future}
 
-sealed trait AmlsDBError
+sealed trait AmlsError
 
-object AmlsDBError {
+object AmlsError {
 
-  case object DuplicateAmlsError extends AmlsDBError
+  case object ArnAlreadySetError extends AmlsError
 
-  case object NoExistingAmlsError extends AmlsDBError
+  case object NoExistingAmlsError extends AmlsError
 
-  case object CreateAmlsWithARNNotAllowed extends AmlsDBError
+  case object AmlsCreateWithArnError extends AmlsError
 
-  case object AmlsUnexpectedMongoError extends AmlsDBError
+  case object AmlsUnexpectedMongoError extends AmlsError
 
 }
 
 @ImplementedBy(classOf[AmlsRepositoryImpl])
 trait AmlsRepository {
 
-  def createOrUpdate(amlsDetails: AmlsDetails)(implicit ec: ExecutionContext): Future[Either[AmlsDBError, Unit]]
+  def createOrUpdate(amlsDetails: AmlsDetails)(implicit ec: ExecutionContext): Future[Either[AmlsError, Unit]]
 
-  def updateArn(utr: Utr, arn: Arn)(implicit ec: ExecutionContext): Future[Either[AmlsDBError, Unit]]
+  def updateArn(utr: Utr, arn: Arn)(implicit ec: ExecutionContext): Future[Either[AmlsError, AmlsDetails]]
 }
 
 @Singleton
@@ -73,15 +73,15 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
       unique = true))
 
 
-  def createOrUpdate(amlsDetails: AmlsDetails)(implicit ec: ExecutionContext): Future[Either[AmlsDBError, Unit]] = {
+  def createOrUpdate(amlsDetails: AmlsDetails)(implicit ec: ExecutionContext): Future[Either[AmlsError, Unit]] = {
     val utr = amlsDetails.utr.value
     val selector = "amlsDetails.utr" -> toJsFieldJsValueWrapper(utr)
     find(selector).map(_.headOption).flatMap {
-      case Some(existingEntity) if existingEntity.amlsDetails.arn.isDefined => toFuture(Left(DuplicateAmlsError))
+      case Some(existingEntity) if existingEntity.amlsDetails.arn.isDefined => toFuture(Left(ArnAlreadySetError))
       case _ =>
         amlsDetails.arn match {
           case Some(_) =>
-            Left(CreateAmlsWithARNNotAllowed)
+            Left(AmlsCreateWithArnError)
           case None =>
             val selector = Json.obj("amlsDetails.utr" -> JsString(utr))
             collection
@@ -97,12 +97,12 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
     }
   }
 
-  def updateArn(utr: Utr, arn: Arn)(implicit ec: ExecutionContext): Future[Either[AmlsDBError, Unit]] = {
+  def updateArn(utr: Utr, arn: Arn)(implicit ec: ExecutionContext): Future[Either[AmlsError, AmlsDetails]] = {
     val selector = "amlsDetails.utr" -> toJsFieldJsValueWrapper(utr.value)
     find(selector).map(_.headOption).flatMap {
       case Some(existingEntity) =>
         existingEntity.amlsDetails.arn match {
-          case Some(_) => toFuture(Left(DuplicateAmlsError))
+          case Some(_) => toFuture(Left(ArnAlreadySetError))
           case None =>
             val selector = Json.obj("amlsDetails.utr" -> JsString(utr.value))
             val toUpdate = existingEntity
@@ -113,7 +113,7 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
               .update(selector, toUpdate)
               .map { updateResult =>
                 if (updateResult.writeErrors.isEmpty) {
-                  Right(())
+                  Right(toUpdate.amlsDetails)
                 } else {
                   Left(AmlsUnexpectedMongoError)
                 }

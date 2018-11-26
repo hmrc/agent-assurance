@@ -16,16 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import java.time.LocalDate
-
 import javax.inject._
-import play.api.libs.json.{JsError, JsSuccess}
+import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentassurance.model.toFuture
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.repositories.AmlsDBError._
+import uk.gov.hmrc.agentassurance.repositories.AmlsError._
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -84,8 +82,8 @@ class AgentAssuranceController @Inject()(
           case Right(_) => Created
           case Left(error) =>
             error match {
-              case DuplicateAmlsError => Forbidden
-              case CreateAmlsWithARNNotAllowed => BadRequest
+              case ArnAlreadySetError => Forbidden
+              case AmlsCreateWithArnError => BadRequest
               case _ => InternalServerError
             }
         }
@@ -102,11 +100,11 @@ class AgentAssuranceController @Inject()(
       case Some(JsSuccess(arn, _)) ⇒
         if(Arn.isValid(arn.value)) {
           amlsRepository.updateArn(utr, arn).map {
-            case Right(_) => NoContent
+            case Right(updated) => Ok(Json.toJson(updated))
             case Left(error) =>
               error match {
-                case DuplicateAmlsError => Forbidden
-                case NoExistingAmlsError => BadRequest
+                case ArnAlreadySetError => Forbidden
+                case NoExistingAmlsError => NotFound
                 case _ => InternalServerError
               }
           }
