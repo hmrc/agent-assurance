@@ -520,7 +520,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 401
     }
 
-    scenario("idempotent updates should result in Conflict") {
+    scenario("updating an existing amls record(with ARN) with the same ARN should result in Conflict") {
 
       await(repo.insert(AmlsEntity(amlsDetails.copy(arn = Some(arn)), LocalDate.now())))
 

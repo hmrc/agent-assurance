@@ -388,7 +388,7 @@ Response Code(s)
 | Status Code | Description |
 |---|---|
 | 200 | Existing AMLS record has been updated with given ARN|
-| 409 | Idempotent update AMLS request for the same ARN |
+| 409 | Update AMLS request for the same ARN |
 | 403 | Can't update existing AMLS record (with a ARN) with a new ARN |
 | 404 | Couldn't find existing AMLS record in the db for the given UTR |
 | 500 | Unexpected server error during updating AMLS record |
