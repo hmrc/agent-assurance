@@ -343,6 +343,80 @@ curl -v -X DELETE http://localhost:9565/agent-assurance/refusal-to-deal-with
 * Connection #0 to host localhost left intact
 ```
 
+#### Stores AMLS Details of an Agent
+```
+POST   	/agent-assurance/amls
+```
+Response Code(s)
+
+| Status Code | Description |
+|---|---|
+| 201 | AMLS Details has been stored for the Agent|
+| 400 | Can't accept ARN during creating AMLS Details for the first time |
+| 403 | AMLS Details already exist with an ARN |
+| 500 | Unexpected server error during AMLS record creation |
+
+##### Example
+```
+curl -v -X POST http://localhost:9565/agent-assurance/amls -H 'Content-Type: application/json' --data '{"utr":"7000000002","supervisoryBody":"supervisory","membershipNumber":"0123456789","membershipExpiresOn":"2018-11-26"}'
+Note: Unnecessary use of -X or --request, POST is already inferred.
+*   Trying 127.0.0.1...
+* TCP_NODELAY set
+* Connected to localhost (127.0.0.1) port 9565 (#0)
+> POST /agent-assurance/amls HTTP/1.1
+> Host: localhost:9565
+> User-Agent: curl/7.54.0
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 112
+> 
+* upload completely sent off: 112 out of 112 bytes
+< HTTP/1.1 201 Created
+< Cache-Control: no-cache,no-store,max-age=0
+< Content-Length: 0
+< Date: Mon, 26 Nov 2018 16:06:19 GMT
+< 
+* Connection #0 to host localhost left intact
+```
+
+#### Update AMLS Details of an ARN
+```
+PUT   	/agent-assurance/amls/utr/:identifier
+```
+Response Code(s)
+
+| Status Code | Description |
+|---|---|
+| 200 | Existing AMLS record has been updated with given ARN|
+| 409 | Idempotent update AMLS request for the same ARN |
+| 403 | Can't update existing AMLS record (with a ARN) with a new ARN |
+| 404 | Couldn't find existing AMLS record in the db for the given UTR |
+| 500 | Unexpected server error during updating AMLS record |
+
+##### Example
+```
+curl -v -X PUT http://localhost:9565/agent-assurance/amls/utr/7000000002 -H 'Content-Type: application/json' --data '{"value":"AARN0000002"}'
+*   Trying 127.0.0.1...
+* TCP_NODELAY set
+* Connected to localhost (127.0.0.1) port 9565 (#0)
+> PUT /agent-assurance/amls/utr/7000000002 HTTP/1.1
+> Host: localhost:9565
+> User-Agent: curl/7.54.0
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 23
+> 
+* upload completely sent off: 23 out of 23 bytes
+< HTTP/1.1 200 OK
+< Cache-Control: no-cache,no-store,max-age=0
+< Content-Length: 139
+< Content-Type: application/json
+< Date: Mon, 26 Nov 2018 16:24:00 GMT
+< 
+* Connection #0 to host localhost left intact
+{"utr":"7000000002","supervisoryBody":"supervisory","membershipNumber":"0123456789","membershipExpiresOn":"2018-11-26","arn":"AARN0000002"}
+```
+
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
