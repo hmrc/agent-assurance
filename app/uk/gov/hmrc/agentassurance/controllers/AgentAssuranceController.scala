@@ -98,17 +98,18 @@ class AgentAssuranceController @Inject()(
   def updateAmlsDetails(utr: Utr): Action[AnyContent] =  withAffinityGroupAgent { implicit request =>
     request.body.asJson.map(_.validate[Arn]) match {
       case Some(JsSuccess(arn, _)) ⇒
-        if(Arn.isValid(arn.value)) {
+        if (Arn.isValid(arn.value)) {
           amlsRepository.updateArn(utr, arn).map {
             case Right(updated) => Ok(Json.toJson(updated))
             case Left(error) =>
               error match {
+                case DuplicateArnError => Conflict
                 case ArnAlreadySetError => Forbidden
                 case NoExistingAmlsError => NotFound
                 case _ => InternalServerError
               }
           }
-        }else {
+        } else {
           BadRequest("invalid Arn value")
         }
 

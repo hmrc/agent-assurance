@@ -28,7 +28,7 @@ import reactivemongo.bson.BSONObjectID
 import reactivemongo.play.json._
 import uk.gov.hmrc.agentassurance.model._
 import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity}
-import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsUnexpectedMongoError, AmlsCreateWithArnError, ArnAlreadySetError, NoExistingAmlsError}
+import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsCreateWithArnError, AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -41,6 +41,8 @@ sealed trait AmlsError
 object AmlsError {
 
   case object ArnAlreadySetError extends AmlsError
+
+  case object DuplicateArnError extends AmlsError
 
   case object NoExistingAmlsError extends AmlsError
 
@@ -102,7 +104,12 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
     find(selector).map(_.headOption).flatMap {
       case Some(existingEntity) =>
         existingEntity.amlsDetails.arn match {
-          case Some(_) => toFuture(Left(ArnAlreadySetError))
+          case Some(existingArn) =>
+            if (arn.value == existingArn.value) {
+              toFuture(Left(DuplicateArnError))
+            } else {
+              toFuture(Left(ArnAlreadySetError))
+            }
           case None =>
             val selector = Json.obj("amlsDetails.utr" -> JsString(utr.value))
             val toUpdate = existingEntity
