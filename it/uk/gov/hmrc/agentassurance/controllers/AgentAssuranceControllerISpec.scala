@@ -503,12 +503,10 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       When("PUT /amls/utr/:identifier is called")
       val updateResponse: WSResponse = doUpdate
 
-      Then("204 No_Content is returned")
-      updateResponse.status shouldBe 204
+      Then("200 Ok is returned")
+      updateResponse.status shouldBe 200
 
-      val dbRecord = await(repo.find()).head
-      dbRecord.amlsDetails.utr shouldBe utr
-      dbRecord.amlsDetails.arn shouldBe Some(arn)
+      updateResponse.json shouldBe Json.toJson(amlsDetails.copy(arn = Some(arn)))
     }
 
     scenario("User is not logged in") {
@@ -544,8 +542,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       When("PUT /amls/utr/:identifier is called")
       val updateResponse: WSResponse = doUpdate
 
-      Then("400 Bad_Request is returned")
-      updateResponse.status shouldBe 400
+      Then("404 NOT_FOUND is returned")
+      updateResponse.status shouldBe 404
     }
   }
 }
