@@ -35,7 +35,7 @@ lazy val scoverageSettings = {
   )
 }
 
-lazy val root = (project in file("."))
+lazy val root = Project("agent-assurance", file("."))
   .settings(
     name := "agent-assurance",
     organization := "uk.gov.hmrc",
