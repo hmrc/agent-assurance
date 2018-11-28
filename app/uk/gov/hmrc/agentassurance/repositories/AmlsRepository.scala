@@ -42,8 +42,6 @@ object AmlsError {
 
   case object ArnAlreadySetError extends AmlsError
 
-  case object DuplicateArnError extends AmlsError
-
   case object NoExistingAmlsError extends AmlsError
 
   case object AmlsCreateWithArnError extends AmlsError
@@ -106,7 +104,7 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
         existingEntity.amlsDetails.arn match {
           case Some(existingArn) =>
             if (arn.value == existingArn.value) {
-              toFuture(Left(DuplicateArnError))
+              toFuture(Right(existingEntity.amlsDetails))
             } else {
               toFuture(Left(ArnAlreadySetError))
             }
