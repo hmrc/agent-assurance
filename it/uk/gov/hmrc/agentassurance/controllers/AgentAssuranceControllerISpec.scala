@@ -520,7 +520,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 401
     }
 
-    scenario("updating an existing amls record(with ARN) with the same ARN should result in Conflict") {
+    scenario("updating an existing amls record(with ARN) with the same ARN again should return existing amls record") {
 
       await(repo.insert(AmlsEntity(amlsDetails.copy(arn = Some(arn)), LocalDate.now())))
 
@@ -530,8 +530,9 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       When("PUT /amls/utr/:identifier is called second time with the same ARN")
       val newResponse: WSResponse = doUpdate
 
-      Then("409 Conflict is returned")
-      newResponse.status shouldBe 409
+      Then("200 Ok is returned")
+      newResponse.status shouldBe 200
+      newResponse.json shouldBe Json.toJson(amlsDetails.copy(arn = Some(arn)))
     }
 
     scenario("updates to an existing amls record(with ARN) with a different ARN should be Forbidden") {

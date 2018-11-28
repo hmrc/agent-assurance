@@ -103,7 +103,6 @@ class AgentAssuranceController @Inject()(
             case Right(updated) => Ok(Json.toJson(updated))
             case Left(error) =>
               error match {
-                case DuplicateArnError => Conflict
                 case ArnAlreadySetError => Forbidden
                 case NoExistingAmlsError => NotFound
                 case _ => InternalServerError
