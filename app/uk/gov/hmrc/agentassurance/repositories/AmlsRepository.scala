@@ -67,11 +67,7 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
     ReactiveMongoFormats.objectIdFormats) with AmlsRepository {
 
   override def indexes: Seq[Index] = Seq(
-    Index(
-      key = Seq("utr" -> IndexType.Ascending),
-      name = Some("utrIndex"),
-      unique = true))
-
+    Index(key = Seq("utr" -> IndexType.Ascending), name = Some("utrIndex")))
 
   def createOrUpdate(amlsDetails: AmlsDetails)(implicit ec: ExecutionContext): Future[Either[AmlsError, Unit]] = {
     val utr = amlsDetails.utr.value
