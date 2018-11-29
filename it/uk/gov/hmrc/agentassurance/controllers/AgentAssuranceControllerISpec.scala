@@ -413,7 +413,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
 
-      val utr = Utr("12345")
+      val utr = Utr("7000000002")
 
       When("POST /amls/create is called")
       val response: WSResponse = doRequest(payload(Some(utr)))
@@ -442,7 +442,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
 
-      val utr = Utr(Random.alphanumeric.take(10).mkString(""))
+      val utr = Utr("7000000002")
 
       When("POST /amls/create is called")
       val response: WSResponse = doRequest(payload(Some(utr)))
@@ -461,13 +461,27 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       dbRecord.amlsDetails.supervisoryBody shouldBe "updated-supervisory"
     }
 
+    scenario("return bad_request if UTR is not valid") {
+
+      Given("User is logged in and is an agent")
+      withAffinityGroupAgent
+
+      val utr = Utr("61122334455")
+
+      When("POST /amls/create is called with invalid utr")
+      val response: WSResponse = doRequest(payload(Some(utr)))
+
+      Then("400 BAD_REQUEST is returned")
+      response.status shouldBe 400
+    }
+
     scenario("creating amls record for the first time with a arn should NOT be allowed ") {
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
 
       val arn = Some(Arn("12345"))
-      val utr = Some(Utr("12345"))
+      val utr = Some(Utr("7000000002"))
 
       When("POST /amls/create is called")
       val response: WSResponse = doRequest(payload(utr, arn = arn))
