@@ -21,20 +21,18 @@ import java.time.LocalDate
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
-import play.api.http.ContentTypeOf
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentassurance.model.toFuture
-import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity}
+import uk.gov.hmrc.agentassurance.models.AmlsDetails
 import uk.gov.hmrc.agentassurance.repositories.AmlsError.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.repositories.{AmlsError, AmlsRepository}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.{EmptyPredicate, Predicate}
-import uk.gov.hmrc.auth.core.retrieve.Retrievals.credentials
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval, Retrieval, Retrievals}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -86,7 +84,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   }
 
   def mockAgentAuth()(response: Either[String, Unit]) = {
-    (authConnector.authorise(_: Predicate, _: EmptyRetrieval.type )(_: HeaderCarrier, _: ExecutionContext))
+    (authConnector.authorise(_: Predicate, _: EmptyRetrieval.type)(_: HeaderCarrier, _: ExecutionContext))
       .expects(AuthProviders(GovernmentGateway) and AffinityGroup.Agent, EmptyRetrieval, *, *)
       .returning(response.fold[Future[Unit]](e => Future.failed(new Exception(e)), r => toFuture(r)))
   }
@@ -193,9 +191,9 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
     "storeAmlsDetails" should {
 
-      val amlsDetails = AmlsDetails(Utr("utr"), "supervisoryBody", "0123456789", LocalDate.now(), None)
+      val amlsDetails = AmlsDetails(Utr("7000000002"), "supervisoryBody", "0123456789", LocalDate.now(), None)
 
-      def doRequest =
+      def doRequest(amlsDetails: AmlsDetails = amlsDetails) =
         controller.storeAmlsDetails()(FakeRequest()
           .withJsonBody(Json.toJson(amlsDetails))
           .withHeaders(CONTENT_TYPE -> "application/json")
@@ -207,8 +205,18 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
           mockAgentAuth()(Right(()))
           mockCreateAmls(amlsDetails)(Right(()))
         }
-        val response = doRequest
+        val response = doRequest()
         status(response) mustBe CREATED
+      }
+
+      "return bad_request if the utr is not valid" in {
+
+        val amlsDetailsWithInvalidUtr = amlsDetails.copy(utr = Utr("61122334455"))
+
+        mockAgentAuth()(Right(()))
+
+        val response = doRequest(amlsDetailsWithInvalidUtr)
+        status(response) mustBe BAD_REQUEST
       }
 
       "handle mongo errors during storing amlsDetails" in {
@@ -217,13 +225,13 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
           mockAgentAuth()(Right(Credentials("", "")))
           mockCreateAmls(amlsDetails)(Left(AmlsUnexpectedMongoError))
         }
-        val response = doRequest
+        val response = doRequest()
         status(response) mustBe INTERNAL_SERVER_ERROR
       }
 
       "handle invalid amlsDetails json case in the request" in {
 
-          mockAgentAuth()(Right(()))
+        mockAgentAuth()(Right(()))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
 

@@ -78,16 +78,19 @@ class AgentAssuranceController @Inject()(
   def storeAmlsDetails: Action[AnyContent] = withAffinityGroupAgent { implicit request =>
     request.body.asJson.map(_.validate[AmlsDetails]) match {
       case Some(JsSuccess(amlsDetails, _)) ⇒
-        amlsRepository.createOrUpdate(amlsDetails).map {
-          case Right(_) => Created
-          case Left(error) =>
-            error match {
-              case ArnAlreadySetError => Forbidden
-              case AmlsCreateWithArnError => BadRequest
-              case _ => InternalServerError
-            }
+        if (Utr.isValid(amlsDetails.utr.value)) {
+          amlsRepository.createOrUpdate(amlsDetails).map {
+            case Right(_) => Created
+            case Left(error) =>
+              error match {
+                case ArnAlreadySetError => Forbidden
+                case AmlsCreateWithArnError => BadRequest
+                case _ => InternalServerError
+              }
+          }
+        } else {
+          BadRequest("utr is not valid")
         }
-
       case Some(JsError(_)) ⇒
         BadRequest("Could not parse AmlsDetails JSON in request")
       case None ⇒
