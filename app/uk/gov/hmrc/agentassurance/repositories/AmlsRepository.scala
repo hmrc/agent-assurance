@@ -27,8 +27,8 @@ import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.BSONObjectID
 import reactivemongo.play.json._
 import uk.gov.hmrc.agentassurance.model._
-import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity}
-import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsCreateWithArnError, AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError, _}
+import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity, CreateAmlsRequest}
+import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -44,8 +44,6 @@ object AmlsError {
 
   case object NoExistingAmlsError extends AmlsError
 
-  case object AmlsCreateWithArnError extends AmlsError
-
   case object AmlsUnexpectedMongoError extends AmlsError
 
 }
@@ -53,7 +51,7 @@ object AmlsError {
 @ImplementedBy(classOf[AmlsRepositoryImpl])
 trait AmlsRepository {
 
-  def createOrUpdate(amlsDetails: AmlsDetails)(implicit ec: ExecutionContext): Future[Either[AmlsError, Unit]]
+  def createOrUpdate(createAmlsRequest: CreateAmlsRequest)(implicit ec: ExecutionContext): Future[Either[AmlsError, Unit]]
 
   def updateArn(utr: Utr, arn: Arn)(implicit ec: ExecutionContext): Future[Either[AmlsError, AmlsDetails]]
 }
@@ -69,35 +67,30 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
   override def indexes: Seq[Index] = Seq(
     Index(key = Seq("utr" -> IndexType.Ascending), name = Some("utrIndex")))
 
-  def createOrUpdate(amlsDetails: AmlsDetails)(implicit ec: ExecutionContext): Future[Either[AmlsError, Unit]] = {
-    val utr = amlsDetails.utr.value
-    val selector = "amlsDetails.utr" -> toJsFieldJsValueWrapper(utr)
+  def createOrUpdate(createAmlsRequest: CreateAmlsRequest)(implicit ec: ExecutionContext): Future[Either[AmlsError, Unit]] = {
+    val utr = createAmlsRequest.utr.value
+    val selector = "utr" -> toJsFieldJsValueWrapper(utr)
     find(selector).map(_.headOption).flatMap {
-      case Some(existingEntity) if existingEntity.amlsDetails.arn.isDefined => toFuture(Left(ArnAlreadySetError))
+      case Some(existingEntity) if existingEntity.arn.isDefined => toFuture(Left(ArnAlreadySetError))
       case _ =>
-        amlsDetails.arn match {
-          case Some(_) =>
-            Left(AmlsCreateWithArnError)
-          case None =>
-            val selector = Json.obj("amlsDetails.utr" -> JsString(utr))
-            collection
-              .update(selector, AmlsEntity(amlsDetails, LocalDate.now()), upsert = true)
-              .map { updateResult =>
-                if (updateResult.writeErrors.isEmpty) {
-                  Right(())
-                } else {
-                  Left(AmlsUnexpectedMongoError)
-                }
-              }
-        }
+        val selector = Json.obj("utr" -> JsString(utr))
+        collection
+          .update(selector, AmlsEntity(Utr(utr), createAmlsRequest.amlsDetails, None, LocalDate.now()), upsert = true)
+          .map { updateResult =>
+            if (updateResult.writeErrors.isEmpty) {
+              Right(())
+            } else {
+              Left(AmlsUnexpectedMongoError)
+            }
+          }
     }
   }
 
   def updateArn(utr: Utr, arn: Arn)(implicit ec: ExecutionContext): Future[Either[AmlsError, AmlsDetails]] = {
-    val selector = "amlsDetails.utr" -> toJsFieldJsValueWrapper(utr.value)
+    val selector = "utr" -> toJsFieldJsValueWrapper(utr.value)
     find(selector).map(_.headOption).flatMap {
       case Some(existingEntity) =>
-        existingEntity.amlsDetails.arn match {
+        existingEntity.arn match {
           case Some(existingArn) =>
             if (arn.value == existingArn.value) {
               toFuture(Right(existingEntity.amlsDetails))
@@ -105,11 +98,8 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
               toFuture(Left(ArnAlreadySetError))
             }
           case None =>
-            val selector = Json.obj("amlsDetails.utr" -> JsString(utr.value))
-            val toUpdate = existingEntity
-              .copy(amlsDetails = existingEntity.amlsDetails.copy(arn = Some(arn)))
-              .copy(updatedArnOn = Some(LocalDate.now()))
-
+            val selector = Json.obj("utr" -> JsString(utr.value))
+            val toUpdate = existingEntity.copy(arn = Some(arn)).copy(updatedArnOn = Some(LocalDate.now()))
             collection
               .update(selector, toUpdate)
               .map { updateResult =>

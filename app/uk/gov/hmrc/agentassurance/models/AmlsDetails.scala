@@ -18,21 +18,25 @@ package uk.gov.hmrc.agentassurance.models
 
 import java.time.LocalDate
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, Json, OFormat}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 
-case class AmlsDetails(utr: Utr,
-                       supervisoryBody: String,
+case class AmlsDetails(supervisoryBody: String,
                        membershipNumber: String,
-                       membershipExpiresOn: LocalDate,
-                       arn: Option[Arn]
+                       membershipExpiresOn: LocalDate
                       )
 
 object AmlsDetails {
   implicit val amlsDetailsFormat: OFormat[AmlsDetails] = Json.format[AmlsDetails]
 }
 
-case class AmlsEntity(amlsDetails: AmlsDetails, createdOn: LocalDate, updatedArnOn: Option[LocalDate] = None)
+case class CreateAmlsRequest(utr: Utr, amlsDetails: AmlsDetails)
+
+object CreateAmlsRequest {
+  implicit val format: Format[CreateAmlsRequest] = Json.format[CreateAmlsRequest]
+}
+
+case class AmlsEntity(utr: Utr, amlsDetails: AmlsDetails, arn: Option[Arn] = None, createdOn: LocalDate, updatedArnOn: Option[LocalDate] = None)
 
 object AmlsEntity {
   implicit val amlsEntityFormat: OFormat[AmlsEntity] = Json.format[AmlsEntity]
