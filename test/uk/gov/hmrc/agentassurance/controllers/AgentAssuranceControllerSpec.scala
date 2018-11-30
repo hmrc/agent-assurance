@@ -45,7 +45,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   val authConnector = mock[AuthConnector]
   val amlsRepository = mock[AmlsRepository]
 
-  val controller = new AgentAssuranceController(6, 6, authConnector, desConnector, espConnector, amlsRepository)
+  val controller = new AgentAssuranceController(6, 6, 6, authConnector, desConnector, espConnector, amlsRepository)
 
   implicit val hc = new HeaderCarrier
 

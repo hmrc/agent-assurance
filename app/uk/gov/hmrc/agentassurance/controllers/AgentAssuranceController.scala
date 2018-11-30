@@ -37,6 +37,7 @@ import scala.concurrent.Future
 class AgentAssuranceController @Inject()(
                                           @Named("minimumIRPAYEClients") minimumIRPAYEClients: Int,
                                           @Named("minimumIRSAClients") minimumIRSAClients: Int,
+                                          @Named("minimumVatDecOrgClients") minimumVatDecOrgClients: Int,
                                           override val authConnector: AuthConnector,
                                           val desConnector: DesConnector,
                                           val espConnector: EnrolmentStoreProxyConnector,
@@ -63,6 +64,8 @@ class AgentAssuranceController @Inject()(
   def acceptableNumberOfPAYEClients = acceptableNumberOfClients("IR-PAYE", minimumIRPAYEClients)
 
   def acceptableNumberOfIRSAClients = acceptableNumberOfClients("IR-SA", minimumIRSAClients)
+
+  def acceptableNumberOfVatDecOrgClients: Action[AnyContent] = acceptableNumberOfClients("HMCE-VATDEC-ORG", minimumVatDecOrgClients)
 
   def acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
     AuthorisedWithUserId { implicit request =>
