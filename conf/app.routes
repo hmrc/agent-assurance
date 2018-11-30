@@ -7,8 +7,8 @@ GET           /activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReferenc
 GET           /activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationshipWithNino(nino: uk.gov.hmrc.domain.Nino, saAgentReference: uk.gov.hmrc.domain.SaAgentReference)
 
 GET           /acceptableNumberOfClients/service/IR-PAYE                                   @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfPAYEClients
-
 GET           /acceptableNumberOfClients/service/IR-SA                                     @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfIRSAClients
+GET           /acceptableNumberOfClients/service/HMCE-VATDEC-ORG                           @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfVatDecOrgClients
 
 GET           /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.getR2dwList(pagination: uk.gov.hmrc.agentassurance.binders.PaginationParameters)
 GET           /refusal-to-deal-with/utr/:identifier                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.isOnR2dwList(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)

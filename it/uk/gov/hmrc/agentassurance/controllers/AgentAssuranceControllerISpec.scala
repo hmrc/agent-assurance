@@ -31,7 +31,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         "microservice.services.des.port" -> wireMockPort,
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "minimumIRPAYEClients" -> 6,
-        "minimumIRSAClients" -> 6)
+        "minimumIRSAClients" -> 6,
+        "minimumVatDecOrgClients" -> 6)
 
   implicit val hc = new HeaderCarrier
 
@@ -41,8 +42,13 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
   def irSaAgentEnrolmentUtrUrl(utr: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/utr/$utr/saAgentReference/$irAgentReference"
 
-  val acceptableNumberOfPayeClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/IR-PAYE"
-  val acceptableNumberOfSAClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/IR-SA"
+
+  val irPayeKey = "IR-PAYE"
+  val irSaKey = "IR-SA"
+  val vatDecOrgKey = "HMCE-VATDEC-ORG"
+  val acceptableNumberOfPayeClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$irPayeKey"
+  val acceptableNumberOfSAClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$irSaKey"
+  val acceptableNumberOfVatDevOrgClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$vatDecOrgKey"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
@@ -257,138 +263,10 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("/acceptableNumberOfClients/service/IR-PAYE") {
-
-    scenario("Logged in user is an agent with sufficient allocated PAYE clients") {
-      Given("User has an user id")
-      isLoggedInWithUserId(userId)
-
-      And("Enrolment store returns sufficient allocated IR-PAYE clients for the agent")
-      sufficientClientsAreAllocated("IR-PAYE", userId)
-
-      When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
-      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
-
-      Then("204 NO_CONTENT is returned")
-      response.status shouldBe 204
-    }
-
-    scenario("Logged in user is an agent with insufficient allocated PAYE clients") {
-      Given("User has an user id")
-      isLoggedInWithUserId(userId)
-
-      And("Enrolment store returns insufficient allocated IR-PAYE clients for the agent")
-      tooFewClientsAreAllocated("IR-PAYE", userId)
-
-      When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
-      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
-
-      Then("403 FORBIDDEN is returned")
-      response.status shouldBe 403
-    }
-
-    scenario("Logged in user is an agent with no allocated PAYE clients") {
-      Given("User has an user id")
-      isLoggedInWithUserId(userId)
-
-      And("Enrolment store returns no allocated IR-PAYE clients for the agent")
-      noClientsAreAllocated("IR-PAYE", userId)
-
-      When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
-      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
-
-      Then("403 FORBIDDEN is returned")
-      response.status shouldBe 403
-    }
-
-    scenario("Logged in user is not an agent") {
-      Given("User has no user id")
-      isLoggedInWithoutUserId
-
-      When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
-      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
-
-      Then("403 FORBIDDEN is returned")
-      response.status shouldBe 403
-    }
-
-    scenario("User is not logged in") {
-      Given("User is not logged in")
-      isNotLoggedIn
-
-      When("GET /acceptableNumberOfClients/service/IR-PAYE is called")
-      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfPayeClientsUrl).get(), 10 seconds)
-
-      Then("401 UNAUTHORISED is returned")
-      response.status shouldBe 401
-    }
-  }
-
-  feature("/acceptableNumberOfClients/service/IR-SA") {
-    scenario("Logged in user is an agent with sufficient allocated IR-SA clients") {
-      Given("User has an user id")
-      isLoggedInWithUserId(userId)
-
-      And("Enrolment store returns sufficient allocated IR-SA clients for the agent")
-      sufficientClientsAreAllocated("IR-SA", userId)
-
-      When("GET /acceptableNumberOfClients/service/IR-SA is called")
-      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
-
-      Then("204 NO_CONTENT is returned")
-      response.status shouldBe 204
-    }
-
-    scenario("Logged in user is an agent with insufficient allocated PAYE clients") {
-      Given("User has an user id")
-      isLoggedInWithUserId(userId)
-
-      And("Enrolment store returns insufficient allocated IR-SA clients for the agent")
-      tooFewClientsAreAllocated("IR-SA", userId)
-
-      When("GET /acceptableNumberOfClients/service/IR-SA is called")
-      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
-
-      Then("403 FORBIDDEN is returned")
-      response.status shouldBe 403
-    }
-
-    scenario("Logged in user is an agent with no allocated PAYE clients") {
-      Given("User has an user id")
-      isLoggedInWithUserId(userId)
-
-      And("Enrolment store returns no allocated IR-SA clients for the agent")
-      noClientsAreAllocated("IR-SA", userId)
-
-      When("GET /acceptableNumberOfClients/service/IR-SA is called")
-      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
-
-      Then("403 FORBIDDEN is returned")
-      response.status shouldBe 403
-    }
-
-    scenario("Logged in user is not an agent") {
-      Given("User has no user id")
-      isLoggedInWithoutUserId
-
-      When("GET /acceptableNumberOfClients/service/IR-SA is called")
-      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
-
-      Then("403 FORBIDDEN is returned")
-      response.status shouldBe 403
-    }
-
-    scenario("User is not logged in") {
-      Given("User is not logged in")
-      isNotLoggedIn
-
-      When("GET /acceptableNumberOfClients/service/IR-SA is called")
-      val response: WSResponse = Await.result(wsClient.url(acceptableNumberOfSAClientsUrl).get(), 10 seconds)
-
-      Then("401 UNAUTHORISED is returned")
-      response.status shouldBe 401
-    }
-  }
+  // "acceptableNumberOfClients endpoints tests"
+  delegatedEnrolmentClientCheck(irPayeKey, acceptableNumberOfPayeClientsUrl)
+  delegatedEnrolmentClientCheck(irSaKey, acceptableNumberOfSAClientsUrl)
+  delegatedEnrolmentClientCheck(vatDecOrgKey, acceptableNumberOfVatDevOrgClientsUrl)
 
   feature("/amls") {
 
@@ -575,4 +453,74 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       updateResponse.status shouldBe 404
     }
   }
+
+  def delegatedEnrolmentClientCheck(enrolment: String, acceptableClientUrl: String): Unit = {
+    feature(s"/acceptableNumberOfClients/service/$enrolment") {
+
+      scenario(s"Logged in user is an agent with sufficient allocated $enrolment clients") {
+        Given("User has an user id")
+        isLoggedInWithUserId(userId)
+
+        And(s"Enrolment store returns sufficient allocated $enrolment clients for the agent")
+        sufficientClientsAreAllocated(enrolment, userId)
+
+        When(s"GET /acceptableNumberOfClients/service/$enrolment is called")
+        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl).get(), 10 seconds)
+
+        Then("204 NO_CONTENT is returned")
+        response.status shouldBe 204
+      }
+
+      scenario(s"Logged in user is an agent with insufficient allocated $enrolment clients") {
+        Given("User has an user id")
+        isLoggedInWithUserId(userId)
+
+        And(s"Enrolment store returns insufficient allocated $enrolment clients for the agent")
+        tooFewClientsAreAllocated(enrolment, userId)
+
+        When(s"GET /acceptableNumberOfClients/service/$enrolment is called")
+        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl).get(), 10 seconds)
+
+        Then("403 FORBIDDEN is returned")
+        response.status shouldBe 403
+      }
+
+      scenario(s"Logged in user is an agent with no allocated $enrolment clients") {
+        Given("User has an user id")
+        isLoggedInWithUserId(userId)
+
+        And(s"Enrolment store returns no allocated $enrolment clients for the agent")
+        noClientsAreAllocated(enrolment, userId)
+
+        When(s"GET /acceptableNumberOfClients/service/$enrolment is called")
+        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl).get(), 10 seconds)
+
+        Then("403 FORBIDDEN is returned")
+        response.status shouldBe 403
+      }
+
+      scenario("Logged in user is not an agent") {
+        Given("User has no user id")
+        isLoggedInWithoutUserId
+
+        When(s"GET /acceptableNumberOfClients/service/$enrolment is called")
+        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl).get(), 10 seconds)
+
+        Then("403 FORBIDDEN is returned")
+        response.status shouldBe 403
+      }
+
+      scenario(s"User is not logged in when $enrolment") {
+        Given("User is not logged in")
+        isNotLoggedIn
+
+        When(s"GET /acceptableNumberOfClients/service/$enrolment is called")
+        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl).get(), 10 seconds)
+
+        Then("401 UNAUTHORISED is returned")
+        response.status shouldBe 401
+      }
+    }
+  }
+
 }
