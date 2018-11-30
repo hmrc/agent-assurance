@@ -79,15 +79,14 @@ class AgentAssuranceController @Inject()(
     }
 
   def storeAmlsDetails: Action[AnyContent] = withAffinityGroupAgent { implicit request =>
-    request.body.asJson.map(_.validate[AmlsDetails]) match {
-      case Some(JsSuccess(amlsDetails, _)) ⇒
-        if (Utr.isValid(amlsDetails.utr.value)) {
-          amlsRepository.createOrUpdate(amlsDetails).map {
+    request.body.asJson.map(_.validate[CreateAmlsRequest]) match {
+      case Some(JsSuccess(createAmlsRequest, _)) ⇒
+        if (Utr.isValid(createAmlsRequest.utr.value)) {
+          amlsRepository.createOrUpdate(createAmlsRequest).map {
             case Right(_) => Created
             case Left(error) =>
               error match {
                 case ArnAlreadySetError => Forbidden
-                case AmlsCreateWithArnError => BadRequest
                 case _ => InternalServerError
               }
           }

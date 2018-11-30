@@ -26,7 +26,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentassurance.model.toFuture
-import uk.gov.hmrc.agentassurance.models.AmlsDetails
+import uk.gov.hmrc.agentassurance.models.{AmlsDetails, CreateAmlsRequest}
 import uk.gov.hmrc.agentassurance.repositories.AmlsError.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.repositories.{AmlsError, AmlsRepository}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
@@ -89,9 +89,9 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       .returning(response.fold[Future[Unit]](e => Future.failed(new Exception(e)), r => toFuture(r)))
   }
 
-  def mockCreateAmls(amlsDetails: AmlsDetails)(response: Either[AmlsError, Unit]) = {
-    (amlsRepository.createOrUpdate(_: AmlsDetails)(_: ExecutionContext))
-      .expects(amlsDetails, *)
+  def mockCreateAmls(createAmlsRequest: CreateAmlsRequest)(response: Either[AmlsError, Unit]) = {
+    (amlsRepository.createOrUpdate(_: CreateAmlsRequest)(_: ExecutionContext))
+      .expects(createAmlsRequest, *)
       .returning(toFuture(response))
   }
 
@@ -191,11 +191,12 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
     "storeAmlsDetails" should {
 
-      val amlsDetails = AmlsDetails(Utr("7000000002"), "supervisoryBody", "0123456789", LocalDate.now(), None)
+      val amlsDetails = AmlsDetails("supervisoryBody", "0123456789", LocalDate.now())
+      val createAmlsRequest = CreateAmlsRequest(utr, amlsDetails)
 
-      def doRequest(amlsDetails: AmlsDetails = amlsDetails) =
+      def doRequest(createAmlsRequest: CreateAmlsRequest = createAmlsRequest) =
         controller.storeAmlsDetails()(FakeRequest()
-          .withJsonBody(Json.toJson(amlsDetails))
+          .withJsonBody(Json.toJson(createAmlsRequest))
           .withHeaders(CONTENT_TYPE -> "application/json")
         )
 
@@ -203,7 +204,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         inSequence {
           mockAgentAuth()(Right(()))
-          mockCreateAmls(amlsDetails)(Right(()))
+          mockCreateAmls(createAmlsRequest)(Right(()))
         }
         val response = doRequest()
         status(response) mustBe CREATED
@@ -211,11 +212,11 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "return bad_request if the utr is not valid" in {
 
-        val amlsDetailsWithInvalidUtr = amlsDetails.copy(utr = Utr("61122334455"))
+        val amlsRequestWithInvalidUtr = createAmlsRequest.copy(utr = Utr("61122334455"))
 
         mockAgentAuth()(Right(()))
 
-        val response = doRequest(amlsDetailsWithInvalidUtr)
+        val response = doRequest(amlsRequestWithInvalidUtr)
         status(response) mustBe BAD_REQUEST
       }
 
@@ -223,7 +224,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         inSequence {
           mockAgentAuth()(Right(Credentials("", "")))
-          mockCreateAmls(amlsDetails)(Left(AmlsUnexpectedMongoError))
+          mockCreateAmls(createAmlsRequest)(Left(AmlsUnexpectedMongoError))
         }
         val response = doRequest()
         status(response) mustBe INTERNAL_SERVER_ERROR
@@ -264,11 +265,11 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         inSequence {
           mockAgentAuth()(Right(()))
-          mockUpdateAmls(utr, arn)(Right(AmlsDetails(utr, "supervisory", "123", LocalDate.now(), Some(arn))))
+          mockUpdateAmls(utr, arn)(Right(AmlsDetails("supervisory", "123", LocalDate.now())))
         }
         val response = doRequest
         status(response) mustBe OK
-        contentAsString(response) must include(arn.value)
+        contentAsString(response) must include("supervisory")
       }
 
       "handle mongo errors during updating amls with Arn" in {
@@ -281,7 +282,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
         status(response) mustBe INTERNAL_SERVER_ERROR
       }
 
-      "handle Arns which dont match the ARN pattern json case in the request" in {
+      "handle Arns which don't match the ARN pattern json case in the request" in {
 
         mockAgentAuth()(Right(()))
 
