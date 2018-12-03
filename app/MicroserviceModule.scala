@@ -50,6 +50,7 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
     bindIntProperty("minimumIRPAYEClients")
     bindIntProperty("minimumIRSAClients")
     bindIntProperty("minimumVatDecOrgClients")
+    bindIntProperty("minimumIRCTClients")
     bindServiceProperty("des.environment", "des.environment")
     bindServiceProperty("des.authorizationToken", "des.authorization-token")
   }

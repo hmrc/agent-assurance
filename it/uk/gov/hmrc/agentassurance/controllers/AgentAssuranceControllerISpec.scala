@@ -32,7 +32,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "minimumIRPAYEClients" -> 6,
         "minimumIRSAClients" -> 6,
-        "minimumVatDecOrgClients" -> 6)
+        "minimumVatDecOrgClients" -> 6,
+        "minimumIRCTClients" -> 6)
 
   implicit val hc = new HeaderCarrier
 
@@ -46,9 +47,11 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   val irPayeKey = "IR-PAYE"
   val irSaKey = "IR-SA"
   val vatDecOrgKey = "HMCE-VATDEC-ORG"
+  val irCtKey = "IR-CT"
   val acceptableNumberOfPayeClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$irPayeKey"
   val acceptableNumberOfSAClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$irSaKey"
   val acceptableNumberOfVatDevOrgClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$vatDecOrgKey"
+  val acceptableNumberOfIRCTClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$irCtKey"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
@@ -267,6 +270,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   delegatedEnrolmentClientCheck(irPayeKey, acceptableNumberOfPayeClientsUrl)
   delegatedEnrolmentClientCheck(irSaKey, acceptableNumberOfSAClientsUrl)
   delegatedEnrolmentClientCheck(vatDecOrgKey, acceptableNumberOfVatDevOrgClientsUrl)
+  delegatedEnrolmentClientCheck(irCtKey, acceptableNumberOfIRCTClientsUrl)
 
   feature("/amls") {
 

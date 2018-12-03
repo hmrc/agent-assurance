@@ -38,6 +38,7 @@ class AgentAssuranceController @Inject()(
                                           @Named("minimumIRPAYEClients") minimumIRPAYEClients: Int,
                                           @Named("minimumIRSAClients") minimumIRSAClients: Int,
                                           @Named("minimumVatDecOrgClients") minimumVatDecOrgClients: Int,
+                                          @Named("minimumIRCTClients") minimumIRCTClients: Int,
                                           override val authConnector: AuthConnector,
                                           val desConnector: DesConnector,
                                           val espConnector: EnrolmentStoreProxyConnector,
@@ -66,6 +67,8 @@ class AgentAssuranceController @Inject()(
   def acceptableNumberOfIRSAClients = acceptableNumberOfClients("IR-SA", minimumIRSAClients)
 
   def acceptableNumberOfVatDecOrgClients: Action[AnyContent] = acceptableNumberOfClients("HMCE-VATDEC-ORG", minimumVatDecOrgClients)
+
+  def acceptableNumberOfIRCTClients: Action[AnyContent] = acceptableNumberOfClients("IR-CT", minimumIRCTClients)
 
   def acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
     AuthorisedWithUserId { implicit request =>
