@@ -113,6 +113,7 @@ class AgentAssuranceController @Inject()(
               error match {
                 case ArnAlreadySetError => Forbidden
                 case NoExistingAmlsError => NotFound
+                case UniqueKeyViolationError => BadRequest
                 case _ => InternalServerError
               }
           }

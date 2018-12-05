@@ -27,7 +27,7 @@ import play.api.test.Helpers.{status, _}
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentassurance.model.toFuture
 import uk.gov.hmrc.agentassurance.models.{AmlsDetails, CreateAmlsRequest}
-import uk.gov.hmrc.agentassurance.repositories.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsUnexpectedMongoError, UniqueKeyViolationError}
 import uk.gov.hmrc.agentassurance.repositories.{AmlsError, AmlsRepository}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
@@ -280,6 +280,15 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
         }
         val response = doRequest
         status(response) mustBe INTERNAL_SERVER_ERROR
+      }
+
+      "handle allow duplicate ARN errors from mongo" in {
+        inSequence {
+          mockAgentAuth()(Right())
+          mockUpdateAmls(utr, arn)(Left(UniqueKeyViolationError))
+        }
+        val response = doRequest
+        status(response) mustBe BAD_REQUEST
       }
 
       "handle Arns which don't match the ARN pattern json case in the request" in {
