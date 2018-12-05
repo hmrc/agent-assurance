@@ -21,7 +21,7 @@ import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
-import uk.gov.hmrc.agentassurance.model.toFuture
+import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.AmlsError._
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository

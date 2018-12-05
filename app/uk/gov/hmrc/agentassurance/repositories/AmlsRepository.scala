@@ -27,9 +27,8 @@ import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.commands.LastError
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONObjectID}
-import reactivemongo.core.errors.GenericDatabaseException
 import reactivemongo.play.json._
-import uk.gov.hmrc.agentassurance.model._
+import uk.gov.hmrc.agentassurance.util._
 import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity, CreateAmlsRequest}
 import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError, UniqueKeyViolationError}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}

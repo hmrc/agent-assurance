@@ -17,12 +17,11 @@
 package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.Json
-import play.api.mvc.Action
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
-import uk.gov.hmrc.agentassurance.model.{ErrorBody, Value}
+import uk.gov.hmrc.agentassurance.models.{ErrorBody, Value}
 import uk.gov.hmrc.agentassurance.models.pagination.{PaginatedResources, PaginationLinks}
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -45,19 +44,18 @@ class R2dwController @Inject()(repository: PropertiesRepository,
       .validate[Value].getOrElse(throw new BadRequestException("json failed validation"))
 
     Utr.isValid(newValue.value) match {
-      case true => {
+      case true =>
         val propertyConverted = newValue.toProperty(key)
         repository.propertyExists(propertyConverted).flatMap {
           case false => repository.createProperty(propertyConverted).map(_ => Created)
           case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
         }
-      }
       case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
     }
   }
 
 
-  def isOnR2dwList(identifier: Utr) = BasicAuth { implicit request =>
+  def isOnR2dwList(identifier: Utr): Action[AnyContent] = BasicAuth { implicit request =>
     repository.propertyExists(Value(identifier.value).toProperty(key)).map {
       case true => Forbidden
       case false => Ok

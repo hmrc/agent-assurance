@@ -16,26 +16,8 @@
 
 package uk.gov.hmrc.agentassurance
 
-import play.api.libs.json.Json
-
 import scala.concurrent.Future
 
-package object model {
-
-  case class Property(key: String, value: String)
-
-  case class Value(value: String) {
-    def toProperty(key: String) = Property(key, this.value.replace(" ", ""))
-  }
-
-  case class ErrorBody(code: String, message: String)
-
-  case class PaginationResult(utrsForPage: Seq[String], collectionTotalForKey: Int)
-
-  implicit val propertyFormat = Json.format[Property]
-  implicit val valueFormat = Json.format[Value]
-  implicit val errorBodyFormat = Json.format[ErrorBody]
-  implicit val paginationResultFormat = Json.format[PaginationResult]
-
+package object util {
   implicit def toFuture[T](a: T): Future[T] = Future.successful(a)
 }

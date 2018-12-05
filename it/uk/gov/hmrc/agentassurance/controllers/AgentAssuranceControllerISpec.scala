@@ -361,13 +361,13 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     val utr = Utr("7000000002")
     val arn = Arn("AARN0000002")
 
-    val amlsUpdateUrl = s"http://localhost:$port/agent-assurance/amls/utr/${utr.value}"
+    def amlsUpdateUrl(utr: Utr) = s"http://localhost:$port/agent-assurance/amls/utr/${utr.value}"
 
     val amlsDetails = AmlsDetails("supervisory", "0123456789", LocalDate.now())
 
-    def doUpdate =
+    def callPut(utr: Utr, arn: Arn) =
       Await.result(
-        wsClient.url(amlsUpdateUrl)
+        wsClient.url(amlsUpdateUrl(utr))
           .withHeaders(CONTENT_TYPE -> "application/json")
           .put(Json.toJson(arn).toString()), 10 seconds
       )
@@ -380,7 +380,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       withAffinityGroupAgent
 
       When("PUT /amls/utr/:identifier is called")
-      val updateResponse: WSResponse = doUpdate
+      val updateResponse: WSResponse = callPut(utr, arn)
 
       Then("200 Ok is returned")
       updateResponse.status shouldBe 200
@@ -393,7 +393,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isNotLoggedIn
 
       When("PUT /amls/utr/:identifier is called")
-      val response: WSResponse = doUpdate
+      val response: WSResponse = callPut(utr, arn)
 
       Then("401 UnAuthorized is returned")
       response.status shouldBe 401
@@ -407,7 +407,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       withAffinityGroupAgent
 
       When("PUT /amls/utr/:identifier is called second time with the same ARN")
-      val newResponse: WSResponse = doUpdate
+      val newResponse: WSResponse = callPut(utr, arn)
 
       Then("200 Ok is returned")
       newResponse.status shouldBe 200
@@ -422,7 +422,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       withAffinityGroupAgent
 
       When("PUT /amls/utr/:identifier is called second time with a different ARN")
-      val newResponse: WSResponse = doUpdate
+      val newResponse: WSResponse = callPut(utr, arn)
 
       Then("403 Forbidden is returned")
       newResponse.status shouldBe 403
@@ -434,7 +434,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       withAffinityGroupAgent
 
       When("PUT /amls/utr/:identifier is called")
-      val updateResponse: WSResponse = doUpdate
+      val updateResponse: WSResponse = callPut(utr, arn)
 
       Then("404 NOT_FOUND is returned")
       updateResponse.status shouldBe 404
@@ -442,16 +442,16 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     scenario("ARN to be unique to each UTR in the MDTP database") {
 
+      val newUtr = Utr("8588532862")
       await(repo.ensureIndexes)
-
-      await(repo.insert(AmlsEntity(utr, amlsDetails, None, LocalDate.now())))
-      await(repo.insert(AmlsEntity(Utr("8588532862"), amlsDetails, Some(arn), LocalDate.now())))
+      await(repo.insert(AmlsEntity(utr, amlsDetails, Some(arn), LocalDate.now())))
+      await(repo.insert(AmlsEntity(newUtr, amlsDetails, None, LocalDate.now())))
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
 
-      When("PUT /amls/utr/:identifier is called")
-      val updateResponse: WSResponse = doUpdate
+      When("PUT /amls/utr/:identifier is called with the same ARN but for a different UTR")
+      val updateResponse: WSResponse = callPut(newUtr, arn)
 
       Then("400 BAD_REQUEST is returned")
       updateResponse.status shouldBe 400
