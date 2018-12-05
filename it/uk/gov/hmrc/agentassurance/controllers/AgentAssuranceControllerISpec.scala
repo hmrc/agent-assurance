@@ -440,20 +440,22 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       updateResponse.status shouldBe 404
     }
 
-//    scenario("ARN to be unique to each UTR in the MDTP database") {
-//
-//      await(repo.insert(AmlsEntity(utr, amlsDetails, None, LocalDate.now())))
-//      await(repo.insert(AmlsEntity(Utr("8588532862"), amlsDetails, Some(arn), LocalDate.now())))
-//
-//      Given("User is logged in and is an agent")
-//      withAffinityGroupAgent
-//
-//      When("PUT /amls/utr/:identifier is called")
-//      val updateResponse: WSResponse = doUpdate
-//
-//      Then("400 BAD_REQUEST is returned")
-//      updateResponse.status shouldBe 400
-//    }
+    scenario("ARN to be unique to each UTR in the MDTP database") {
+
+      await(repo.ensureIndexes)
+
+      await(repo.insert(AmlsEntity(utr, amlsDetails, None, LocalDate.now())))
+      await(repo.insert(AmlsEntity(Utr("8588532862"), amlsDetails, Some(arn), LocalDate.now())))
+
+      Given("User is logged in and is an agent")
+      withAffinityGroupAgent
+
+      When("PUT /amls/utr/:identifier is called")
+      val updateResponse: WSResponse = doUpdate
+
+      Then("400 BAD_REQUEST is returned")
+      updateResponse.status shouldBe 400
+    }
   }
 
   def delegatedEnrolmentClientCheck(enrolment: String, acceptableClientUrl: String): Unit = {
