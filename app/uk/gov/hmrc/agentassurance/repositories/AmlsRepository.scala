@@ -20,15 +20,18 @@ import java.time.LocalDate
 
 import com.google.inject.ImplementedBy
 import javax.inject.{Inject, Singleton}
+import play.api.Logger
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsString, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.api.commands.LastError
 import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.BSONObjectID
+import reactivemongo.bson.{BSONDocument, BSONObjectID}
+import reactivemongo.core.errors.GenericDatabaseException
 import reactivemongo.play.json._
 import uk.gov.hmrc.agentassurance.model._
 import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity, CreateAmlsRequest}
-import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError}
+import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError, UniqueKeyViolationError}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -43,6 +46,8 @@ object AmlsError {
   case object ArnAlreadySetError extends AmlsError
 
   case object NoExistingAmlsError extends AmlsError
+
+  case object UniqueKeyViolationError extends AmlsError
 
   case object AmlsUnexpectedMongoError extends AmlsError
 
@@ -65,7 +70,8 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
     ReactiveMongoFormats.objectIdFormats) with AmlsRepository {
 
   override def indexes: Seq[Index] = Seq(
-    Index(key = Seq("utr" -> IndexType.Ascending), name = Some("utrIndex")))
+    Index(key = Seq("utr" -> IndexType.Ascending), name = Some("utrIndex"), unique = true),
+    Index(key = Seq("arn" -> IndexType.Ascending), name = Some("arnIndex"), unique = true, partialFilter = Some(BSONDocument("arn" -> BSONDocument("$exists" -> true)))))
 
   def createOrUpdate(createAmlsRequest: CreateAmlsRequest)(implicit ec: ExecutionContext): Future[Either[AmlsError, Unit]] = {
     val utr = createAmlsRequest.utr.value
@@ -108,7 +114,16 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
                 } else {
                   Left(AmlsUnexpectedMongoError)
                 }
+              }.recover[Either[AmlsError, AmlsDetails]] {
+              case e: LastError => {
+                e.code match {
+                  case Some(11000) => Logger.warn(s"ARN should be unique for each UTR")
+                    Left(UniqueKeyViolationError)
+                  case _ =>
+                    Left(AmlsUnexpectedMongoError)
+                }
               }
+            }
         }
 
       case None => Left(NoExistingAmlsError)
