@@ -358,7 +358,7 @@ Response Code(s)
 
 ##### Example
 ```
-curl -v -X POST http://localhost:9565/agent-assurance/amls -H 'Content-Type: application/json' --data '{"utr":"7000000002","supervisoryBody":"supervisory","membershipNumber":"0123456789","membershipExpiresOn":"2018-11-26"}'
+curl -v -X POST http://localhost:9565/agent-assurance/amls -H 'Content-Type: application/json' --data '{"utr":"12345678","amlsDetails":{"supervisoryBody":"supervisory","membershipNumber":"123456","membershipExpiresOn":"2018-11-30"}}'
 Note: Unnecessary use of -X or --request, POST is already inferred.
 *   Trying 127.0.0.1...
 * TCP_NODELAY set
@@ -388,6 +388,7 @@ Response Code(s)
 | Status Code | Description |
 |---|---|
 | 200 | Existing AMLS record has been updated with given ARN|
+| 400 | ARN should be unique for each UTR |
 | 409 | Update AMLS request for the same ARN |
 | 403 | Can't update existing AMLS record (with a ARN) with a new ARN |
 | 404 | Couldn't find existing AMLS record in the db for the given UTR |

@@ -22,7 +22,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
-import uk.gov.hmrc.agentassurance.model.{ErrorBody, Value}
+import uk.gov.hmrc.agentassurance.models.{ErrorBody, Value}
 import uk.gov.hmrc.agentassurance.models.pagination.{PaginatedResources, PaginationLinks}
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
