@@ -81,10 +81,10 @@ class MonitoringKeyMatcherSpec extends UnitSpec {
         override val keyToPatternMapping: Seq[(String, String)] = KeyToPatternMappingFromRoutes(app.injector.instanceOf[Routes], Set("service"))
       }
 
-      tested.findMatchingKey("http://agent-assurance.protected.mdtp/activeCesaRelationship/utr/1234/saAgentReference/000") shouldBe Some("|activeCesaRelationship|utr|:|saAgentReference|:")
-      tested.findMatchingKey("http://agent-assurance.protected.mdtp/activeCesaRelationship/nino/1234/saAgentReference/000") shouldBe Some("|activeCesaRelationship|nino|:|saAgentReference|:")
-      tested.findMatchingKey("http://agent-assurance.protected.mdtp/acceptableNumberOfClients/service/IR-PAYE") shouldBe Some("|acceptableNumberOfClients|service|IR-PAYE")
-      tested.findMatchingKey("http://agent-assurance.protected.mdtp/acceptableNumberOfClients/service/IR-SA") shouldBe Some("|acceptableNumberOfClients|service|IR-SA")
+      tested.findMatchingKey("http://agent-assurance.protected.mdtp/activeCesaRelationship/utr/1234/saAgentReference/000") shouldBe Some("__activeCesaRelationship__utr__:__saAgentReference__:")
+      tested.findMatchingKey("http://agent-assurance.protected.mdtp/activeCesaRelationship/nino/1234/saAgentReference/000") shouldBe Some("__activeCesaRelationship__nino__:__saAgentReference__:")
+      tested.findMatchingKey("http://agent-assurance.protected.mdtp/acceptableNumberOfClients/service/IR-PAYE") shouldBe Some("__acceptableNumberOfClients__service__IR-PAYE")
+      tested.findMatchingKey("http://agent-assurance.protected.mdtp/acceptableNumberOfClients/service/IR-SA") shouldBe Some("__acceptableNumberOfClients__service__IR-SA")
     }
 
   }
