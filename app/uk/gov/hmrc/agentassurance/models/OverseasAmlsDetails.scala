@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.binders
+package uk.gov.hmrc.agentassurance.models
 
-import play.api.mvc.PathBindable
+import play.api.libs.json.{Json, OFormat}
 
-class SimpleObjectBinder[T](bind: String => T, unbind: T => String)(implicit m: Manifest[T]) extends PathBindable[T] {
-  override def bind(key: String, value: String): Either[String, T] = try {
-    Right(bind(value))
-  } catch {
-    case e: Throwable => Left(s"Cannot parse parameter '$key' with value '$value' as '${m.runtimeClass.getSimpleName}'")
-  }
+case class OverseasAmlsDetails(supervisoryBody: String, membershipNumber: String)
 
-  def unbind(key: String, value: T): String = unbind(value)
+object OverseasAmlsDetails {
+  implicit val format: OFormat[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]
 }

@@ -8,8 +8,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.CONTENT_TYPE
-import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity, CreateAmlsRequest}
-import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
+import uk.gov.hmrc.agentassurance.models._
+import uk.gov.hmrc.agentassurance.repositories.{AmlsRepositoryImpl, OverseasAmlsRepositoryImpl}
 import uk.gov.hmrc.agentassurance.stubs.{DesStubs, EnrolmentStoreProxyStubs}
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
@@ -58,6 +58,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   val userId = "0000001531072644"
 
   private lazy val repo = app.injector.instanceOf[AmlsRepositoryImpl]
+  private lazy val overseasAmlsRepo = app.injector.instanceOf[OverseasAmlsRepositoryImpl]
 
   implicit val defaultTimeout = 5 seconds
 
@@ -66,6 +67,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   override def beforeEach() {
     super.beforeEach()
     await(repo.drop)
+    await(overseasAmlsRepo.drop)
   }
 
 
@@ -455,6 +457,77 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       Then("400 BAD_REQUEST is returned")
       updateResponse.status shouldBe 400
+    }
+  }
+
+  feature("/overseas-agents/amls") {
+    val amlsCreateUrl = s"http://localhost:$port/agent-assurance/overseas-agents/amls"
+
+    val arn = Arn("AARN0000002")
+
+    val amlsDetails = OverseasAmlsDetails("supervisory", "0123456789")
+    val createOverseasAmlsRequest = OverseasAmlsEntity(arn, amlsDetails)
+
+    def doRequest(request: OverseasAmlsEntity) =
+      Await.result(
+        wsClient.url(amlsCreateUrl)
+          .withHeaders(CONTENT_TYPE -> "application/json")
+          .post(Json.toJson(request)), 10 seconds
+      )
+
+    scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
+      Given("User is logged in and is an overseas agent")
+      withAffinityGroupAgent
+
+      When("POST /overseas-agents/amls is called")
+      val response: WSResponse = doRequest(createOverseasAmlsRequest)
+
+      Then("201 CREATED is returned")
+      response.status shouldBe 201
+
+      val dbRecord = await(overseasAmlsRepo.find()).head
+      dbRecord.arn shouldBe arn
+    }
+
+    scenario("User is not logged in") {
+      Given("User is not logged in")
+      isNotLoggedIn
+
+      When("POST /overseas-agents/amls is called")
+      val response: WSResponse = doRequest(createOverseasAmlsRequest)
+
+      Then("401 UnAuthorized is returned")
+      response.status shouldBe 401
+    }
+
+    scenario("return bad_request if Arn is not valid") {
+      Given("User is logged in and is an agent")
+      withAffinityGroupAgent
+
+      When("POST /overseas-agents/amls is called with invalid arn")
+      val response: WSResponse = doRequest(createOverseasAmlsRequest.copy(arn = Arn("61122334455")))
+
+      Then("400 BAD_REQUEST is returned")
+      response.status shouldBe 400
+    }
+
+    scenario("return conflict if the amls record exists") {
+      Given("User is logged in and is an overseas agent")
+      withAffinityGroupAgent
+
+      When("POST /overseas-agents/amls is called")
+      val response: WSResponse = doRequest(createOverseasAmlsRequest)
+
+      Then("201 CREATED is returned")
+      response.status shouldBe 201
+
+      When("POST /overseas-agents/amls is called again")
+      val response2: WSResponse = doRequest(createOverseasAmlsRequest)
+
+      Then("409 CONFLICT is returned")
+      response2.status shouldBe 409
+
+      await(overseasAmlsRepo.find()).size shouldBe 1
     }
   }
 
