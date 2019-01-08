@@ -332,7 +332,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
     "storeOverseasAmlsDetails" should {
       val arn = Arn("AARN0000002")
 
-      val amlsDetails = OverseasAmlsDetails("supervisoryBody", "0123456789")
+      val amlsDetails = OverseasAmlsDetails("supervisoryBody", Some("0123456789"))
       val overseasAmlsEntity = OverseasAmlsEntity(arn, amlsDetails)
 
       def doRequest(request: OverseasAmlsEntity = overseasAmlsEntity) =

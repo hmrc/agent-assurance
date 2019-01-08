@@ -379,6 +379,44 @@ Note: Unnecessary use of -X or --request, POST is already inferred.
 * Connection #0 to host localhost left intact
 ```
 
+#### Stores AMLS Details of an Overseas Agent
+```
+POST   	/agent-assurance/overseas-agents/amls
+```
+Response Code(s)
+
+| Status Code | Description |
+|---|---|
+| 201 | AMLS Details has been stored for the Agent|
+| 400 | Invalid arn in the request body |
+| 409 | AMLS Details already exists for the ARN|
+| 500 | Unexpected server error during AMLS record creation |
+
+##### Example
+```
+curl -v -X POST http://localhost:9565/agent-assurance/overseas-agents/amls -H 'Content-Type: application/json' --data '{"arn":"AARN0000002",
+"amlsDetails":{"supervisoryBody":"supervisory",
+               "membershipNumber":"123456" //optional }}'
+Note: Unnecessary use of -X or --request, POST is already inferred.
+*   Trying 127.0.0.1...
+* TCP_NODELAY set
+* Connected to localhost (127.0.0.1) port 9565 (#0)
+> POST /agent-assurance/overseas-agents/amls HTTP/1.1
+> Host: localhost:9565
+> User-Agent: curl/7.54.0
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 112
+>
+* upload completely sent off: 112 out of 112 bytes
+< HTTP/1.1 201 Created
+< Cache-Control: no-cache,no-store,max-age=0
+< Content-Length: 0
+< Date: Mon, 26 Nov 2018 16:06:19 GMT
+<
+* Connection #0 to host localhost left intact
+```
+
 #### Update AMLS Details of an ARN
 ```
 PUT   	/agent-assurance/amls/utr/:identifier

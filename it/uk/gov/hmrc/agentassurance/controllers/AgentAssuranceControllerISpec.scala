@@ -465,7 +465,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     val arn = Arn("AARN0000002")
 
-    val amlsDetails = OverseasAmlsDetails("supervisory", "0123456789")
+    val amlsDetails = OverseasAmlsDetails("supervisory", Some("0123456789"))
     val createOverseasAmlsRequest = OverseasAmlsEntity(arn, amlsDetails)
 
     def doRequest(request: OverseasAmlsEntity) =
@@ -487,6 +487,21 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       val dbRecord = await(overseasAmlsRepo.find()).head
       dbRecord.arn shouldBe arn
+    }
+
+    scenario("user logged in and is an agent should be able to create a new Amls record without membershipId") {
+      Given("User is logged in and is an overseas agent")
+      withAffinityGroupAgent
+
+      When("POST /overseas-agents/amls is called")
+      val response: WSResponse = doRequest(createOverseasAmlsRequest.copy(amlsDetails = OverseasAmlsDetails("AOSS", None)))
+
+      Then("201 CREATED is returned")
+      response.status shouldBe 201
+
+      val dbRecord = await(overseasAmlsRepo.find()).head
+      dbRecord.arn shouldBe arn
+      dbRecord.amlsDetails.membershipNumber shouldBe None
     }
 
     scenario("User is not logged in") {
