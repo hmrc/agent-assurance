@@ -476,13 +476,11 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       )
 
     scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
-      println(await(overseasAmlsRepo.find()))
       Given("User is logged in and is an overseas agent")
       withAffinityGroupAgent
 
       When("POST /overseas-agents/amls is called")
       val response: WSResponse = doRequest(createOverseasAmlsRequest)
-      println(await(overseasAmlsRepo.find()))
 
       Then("201 CREATED is returned")
       response.status shouldBe 201

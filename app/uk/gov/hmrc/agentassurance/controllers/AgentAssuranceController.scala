@@ -117,7 +117,7 @@ class AgentAssuranceController @Inject()(
               InternalServerError
           }
         } else {
-          BadRequest("invalid Arn value")
+          BadRequest("Invalid Arn")
         }
       case Some(JsError(_)) ⇒
         BadRequest("Could not parse JSON in request")
