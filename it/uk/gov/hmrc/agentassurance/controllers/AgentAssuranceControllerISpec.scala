@@ -8,7 +8,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.CONTENT_TYPE
-import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity, CreateAmlsRequest, OverseasAmlsEntity}
+import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.{AmlsRepositoryImpl, OverseasAmlsRepositoryImpl}
 import uk.gov.hmrc.agentassurance.stubs.{DesStubs, EnrolmentStoreProxyStubs}
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
@@ -465,7 +465,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     val arn = Arn("AARN0000002")
 
-    val amlsDetails = AmlsDetails("supervisory", "0123456789", LocalDate.now())
+    val amlsDetails = OverseasAmlsDetails("supervisory", "0123456789")
     val createOverseasAmlsRequest = OverseasAmlsEntity(arn, amlsDetails)
 
     def doRequest(request: OverseasAmlsEntity) =

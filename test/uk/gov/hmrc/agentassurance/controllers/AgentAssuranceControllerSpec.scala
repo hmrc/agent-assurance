@@ -27,7 +27,7 @@ import play.api.test.Helpers.{status, _}
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentassurance.models
 import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsRecordExists, AmlsUnexpectedMongoError, UniqueKeyViolationError}
-import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsError, CreateAmlsRequest, OverseasAmlsEntity}
+import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, OverseasAmlsRepository}
 import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
@@ -332,7 +332,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
     "storeOverseasAmlsDetails" should {
       val arn = Arn("AARN0000002")
 
-      val amlsDetails = AmlsDetails("supervisoryBody", "0123456789", LocalDate.now())
+      val amlsDetails = OverseasAmlsDetails("supervisoryBody", "0123456789")
       val overseasAmlsEntity = OverseasAmlsEntity(arn, amlsDetails)
 
       def doRequest(request: OverseasAmlsEntity = overseasAmlsEntity) =

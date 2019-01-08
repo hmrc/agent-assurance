@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import play.api.libs.json.{Json, OFormat}
 
-case class OverseasAmlsEntity(arn: Arn, amlsDetails: OverseasAmlsDetails)
+case class OverseasAmlsDetails(supervisoryBody: String, membershipNumber: String)
 
-object OverseasAmlsEntity {
-  implicit val format = Json.format[OverseasAmlsEntity]
+object OverseasAmlsDetails {
+  implicit val format: OFormat[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]
 }
