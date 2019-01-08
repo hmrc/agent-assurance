@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.models
 
 import play.api.libs.json.{Json, OFormat}
 
-case class OverseasAmlsDetails(supervisoryBody: String, membershipNumber: String)
+case class OverseasAmlsDetails(supervisoryBody: String, membershipNumber: Option[String] = None)
 
 object OverseasAmlsDetails {
   implicit val format: OFormat[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]
