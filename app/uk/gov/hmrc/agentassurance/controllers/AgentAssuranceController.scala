@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,15 @@
 package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject._
-import play.api.libs.json.{JsError, JsSuccess, Json}
+import play.api.Logger
+import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.repositories.AmlsError._
-import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
+import uk.gov.hmrc.agentassurance.models.AmlsError._
+import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, OverseasAmlsRepository}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
@@ -42,6 +43,7 @@ class AgentAssuranceController @Inject()(
                                           override val authConnector: AuthConnector,
                                           val desConnector: DesConnector,
                                           val espConnector: EnrolmentStoreProxyConnector,
+                                          val overseasAmlsRepository: OverseasAmlsRepository,
                                           val amlsRepository: AmlsRepository) extends BaseController with AuthActions {
 
   def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
@@ -98,6 +100,27 @@ class AgentAssuranceController @Inject()(
         }
       case Some(JsError(_)) ⇒
         BadRequest("Could not parse AmlsDetails JSON in request")
+      case None ⇒
+        BadRequest("No JSON found in request body")
+    }
+  }
+
+  def storeOverseasAmlsDetails: Action[AnyContent] =  withAffinityGroupAgent { implicit request =>
+    request.body.asJson.map(_.validate[OverseasAmlsEntity]) match {
+      case Some(JsSuccess(amlsEntity, _)) ⇒
+        if (Arn.isValid(amlsEntity.arn.value)) {
+          overseasAmlsRepository.create(amlsEntity).map {
+            case Right(_) => Created
+            case Left(AmlsRecordExists) => Conflict
+            case Left(error) =>
+              Logger.warn(s"Creating overseas amls details failed with error: $error")
+              InternalServerError
+          }
+        } else {
+          BadRequest("invalid Arn value")
+        }
+      case Some(JsError(_)) ⇒
+        BadRequest("Could not parse JSON in request")
       case None ⇒
         BadRequest("No JSON found in request body")
     }

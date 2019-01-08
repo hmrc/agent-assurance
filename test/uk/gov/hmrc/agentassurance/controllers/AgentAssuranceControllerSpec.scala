@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,11 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
+import uk.gov.hmrc.agentassurance.models
+import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsRecordExists, AmlsUnexpectedMongoError, UniqueKeyViolationError}
+import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsError, CreateAmlsRequest, OverseasAmlsEntity}
+import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, OverseasAmlsRepository}
 import uk.gov.hmrc.agentassurance.util.toFuture
-import uk.gov.hmrc.agentassurance.models.{AmlsDetails, CreateAmlsRequest}
-import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsUnexpectedMongoError, UniqueKeyViolationError}
-import uk.gov.hmrc.agentassurance.repositories.{AmlsError, AmlsRepository}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
@@ -44,8 +45,10 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   val espConnector = mock[EnrolmentStoreProxyConnector]
   val authConnector = mock[AuthConnector]
   val amlsRepository = mock[AmlsRepository]
+  val overseasAmlsRepository = mock[OverseasAmlsRepository]
 
-  val controller = new AgentAssuranceController(6, 6, 6, 6, authConnector, desConnector, espConnector, amlsRepository)
+  val controller = new AgentAssuranceController(6, 6, 6, 6,
+    authConnector, desConnector, espConnector, overseasAmlsRepository, amlsRepository)
 
   implicit val hc = new HeaderCarrier
 
@@ -98,6 +101,12 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   def mockUpdateAmls(utr: Utr, arn: Arn)(response: Either[AmlsError, AmlsDetails]) = {
     (amlsRepository.updateArn(_: Utr, _: Arn)(_: ExecutionContext))
       .expects(utr, arn, *)
+      .returning(toFuture(response))
+  }
+
+  def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError, Unit]) = {
+    (overseasAmlsRepository.create(_: OverseasAmlsEntity)(_: ExecutionContext))
+      .expects(amlsEntity, *)
       .returning(toFuture(response))
   }
 
@@ -314,6 +323,80 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
         mockAgentAuth()(Right(()))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
+
+        status(response) mustBe BAD_REQUEST
+      }
+
+    }
+
+    "storeOverseasAmlsDetails" should {
+      val arn = Arn("AARN0000002")
+
+      val amlsDetails = AmlsDetails("supervisoryBody", "0123456789", LocalDate.now())
+      val overseasAmlsEntity = OverseasAmlsEntity(arn, amlsDetails)
+
+      def doRequest(request: OverseasAmlsEntity = overseasAmlsEntity) =
+        controller.storeOverseasAmlsDetails(FakeRequest()
+          .withJsonBody(Json.toJson(request))
+          .withHeaders(CONTENT_TYPE -> "application/json")
+        )
+
+      "store amlsDetails successfully in mongo" in {
+
+        inSequence {
+          mockAgentAuth()(Right(()))
+          mockCreateOverseasAmls(overseasAmlsEntity)(Right(()))
+        }
+        val response = doRequest()
+        status(response) mustBe CREATED
+      }
+
+      "return bad_request if the ARN is not valid" in {
+
+        val amlsRequestWithInvalidArn = overseasAmlsEntity.copy(arn = Arn("61122334455"))
+
+        mockAgentAuth()(Right(()))
+
+        val response = doRequest(amlsRequestWithInvalidArn)
+        status(response) mustBe BAD_REQUEST
+      }
+
+      "return conflict if the record already available in the database" in {
+
+        inSequence {
+          mockAgentAuth()(Right(()))
+          mockCreateOverseasAmls(overseasAmlsEntity)(Left(AmlsRecordExists))
+        }
+
+        val response = doRequest()
+        status(response) mustBe CONFLICT
+      }
+
+      "handle mongo errors during storing amlsDetails" in {
+
+        inSequence {
+          mockAgentAuth()(Right(Credentials("", "")))
+          mockCreateOverseasAmls(overseasAmlsEntity)(Left(AmlsUnexpectedMongoError))
+        }
+        val response = doRequest()
+        status(response) mustBe INTERNAL_SERVER_ERROR
+      }
+
+      "handle invalid amlsDetails json case in the request" in {
+
+        mockAgentAuth()(Right(()))
+
+        val response = controller.storeOverseasAmlsDetails(FakeRequest()
+          .withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
+
+        status(response) mustBe BAD_REQUEST
+      }
+
+      "handle no json case in the request" in {
+
+        mockAgentAuth()(Right(()))
+
+        val response = controller.storeOverseasAmlsDetails(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
         status(response) mustBe BAD_REQUEST
       }

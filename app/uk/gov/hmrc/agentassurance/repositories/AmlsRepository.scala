@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,28 +29,14 @@ import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONObjectID}
 import reactivemongo.play.json._
 import uk.gov.hmrc.agentassurance.util._
-import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity, CreateAmlsRequest}
-import uk.gov.hmrc.agentassurance.repositories.AmlsError.{AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError, UniqueKeyViolationError}
+import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity, CreateAmlsRequest, AmlsError}
+import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError, UniqueKeyViolationError}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.collection.Seq
 import scala.concurrent.{ExecutionContext, Future}
-
-sealed trait AmlsError
-
-object AmlsError {
-
-  case object ArnAlreadySetError extends AmlsError
-
-  case object NoExistingAmlsError extends AmlsError
-
-  case object UniqueKeyViolationError extends AmlsError
-
-  case object AmlsUnexpectedMongoError extends AmlsError
-
-}
 
 @ImplementedBy(classOf[AmlsRepositoryImpl])
 trait AmlsRepository {
