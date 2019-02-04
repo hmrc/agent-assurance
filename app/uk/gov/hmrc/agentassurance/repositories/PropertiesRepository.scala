@@ -21,6 +21,7 @@ import play.api.libs.json._
 import play.api.libs.json.Json.format
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.indexes.{Index, IndexType}
+import reactivemongo.api.Cursor
 import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
 import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.agentassurance.models.Property
@@ -45,15 +46,13 @@ class PropertiesRepository @Inject() (mongoComponent: ReactiveMongoComponent)
     val project = Project(Json.obj("collectionTotalForKey" -> "$totalUtrsForKey",
       "utrsForPage" -> sliceForPagination))
 
-    collection.aggregate(Match(Json.obj("key" -> key)), List(groupUtrsByKey, project)).map(
-      response => response.firstBatch.headOption match {
-        case Some(jsonResponse) => {
-          val paginatedResult = jsonResponse.asOpt[PaginationResult].getOrElse(throw new Exception("bad json"))
-          (paginatedResult.collectionTotalForKey, paginatedResult.utrsForPage)
-        }
-        case None => (0, Seq.empty)
-      }
-    )
+    val pipeline = (Match(Json.obj("key" -> key)), List(groupUtrsByKey, project))
+    val results: Cursor[PaginationResult] = collection.aggregateWith[PaginationResult]()(_ => pipeline)
+
+    results.headOption.map {
+      case Some(paginatedResult) => (paginatedResult.collectionTotalForKey, paginatedResult.utrsForPage)
+      case None => (0, Seq.empty)
+    }
   }
 
   def propertyExists(property: Property)(implicit ec: ExecutionContext): Future[Boolean] =
