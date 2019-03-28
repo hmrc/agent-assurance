@@ -1,6 +1,7 @@
 package uk.gov.hmrc.agentassurance.controllers
 
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
@@ -8,9 +9,10 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.CONTENT_TYPE
+import uk.gov.hmrc.agentassurance.connectors.CitizenDetailsConnectorImpl
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.{AmlsRepositoryImpl, OverseasAmlsRepositoryImpl}
-import uk.gov.hmrc.agentassurance.stubs.{DesStubs, EnrolmentStoreProxyStubs}
+import uk.gov.hmrc.agentassurance.stubs.{CitizenDetailsStubs, DesStubs, EnrolmentStoreProxyStubs}
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
@@ -22,7 +24,7 @@ import scala.concurrent.{Await, Future}
 import scala.util.Random
 
 class AgentAssuranceControllerISpec extends IntegrationSpec
-  with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with WireMockSupport with EnrolmentStoreProxyStubs {
+  with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with CitizenDetailsStubs with WireMockSupport with EnrolmentStoreProxyStubs {
   override implicit lazy val app: Application = appBuilder.build()
 
   protected def appBuilder: GuiceApplicationBuilder =
@@ -30,6 +32,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       .configure("microservice.services.auth.port" -> wireMockPort,
         "microservice.services.des.port" -> wireMockPort,
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
+        "microservice.services.citizen-details.port" -> wireMockPort,
         "minimumIRPAYEClients" -> 6,
         "minimumIRSAClients" -> 6,
         "minimumVatDecOrgClients" -> 6,
@@ -59,6 +62,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
   private lazy val repo = app.injector.instanceOf[AmlsRepositoryImpl]
   private lazy val overseasAmlsRepo = app.injector.instanceOf[OverseasAmlsRepositoryImpl]
+  private lazy val citizenDetailsConnector = app.injector.instanceOf[CitizenDetailsConnectorImpl]
 
   implicit val defaultTimeout = 5 seconds
 
@@ -543,6 +547,47 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response2.status shouldBe 409
 
       await(overseasAmlsRepo.find()).size shouldBe 1
+    }
+  }
+
+  feature(s"/citizen-details"){
+
+      val checkCitizenDetailsUrl = s"http://localhost:$port/agent-assurance/citizen-details"
+
+      val nino = Nino("XX121212B")
+      val dobString = "12121900"
+      val dtf = DateTimeFormatter.ofPattern("ddMMyyyy")
+      val dob = DateOfBirth(LocalDate.parse(dobString, dtf))
+      val assuranceCheckCitizenDetails = AssuranceCheckCitizenDetails(nino,dob)
+
+      def doRequest(request: AssuranceCheckCitizenDetails) =
+        Await.result(
+          wsClient.url(checkCitizenDetailsUrl)
+            .withHeaders(CONTENT_TYPE -> "application/json")
+            .post(Json.toJson(request)), 10 seconds)
+
+    scenario(s"the nino provided is valid and matches the result from citizen details"){
+      Given("User is logged in as an agent and has provided a matching Nino")
+      withAffinityGroupAgent
+      givencitizenDetailsFoundForNino(nino.value, dobString)
+
+      When("POST /agent-assurance/citizen-details is called")
+      val response: WSResponse = doRequest(assuranceCheckCitizenDetails)
+
+      Then("200 OK is returned")
+      response.status shouldBe 200
+    }
+
+    scenario(s"the nino provided is not valid and so no match is returned by citizen details"){
+      Given("User is logged in and has provided an invalid Nino")
+      withAffinityGroupAgent
+      givenCitizenDetailsNotFoundForNino(nino.value)
+
+      When("POST /agent-assurance/citizen-details is called")
+      val response: WSResponse = doRequest(assuranceCheckCitizenDetails)
+
+      Then("400 BADREQUEST is returned")
+      response.status shouldBe 400
     }
   }
 

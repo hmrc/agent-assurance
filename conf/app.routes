@@ -25,3 +25,5 @@ POST          /amls                                                             
 PUT           /amls/utr/:identifier                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.updateAmlsDetails(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
 
 POST          /overseas-agents/amls                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.storeOverseasAmlsDetails
+
+POST          /citizen-details                                                              @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.checkCitizenDetails()

@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentassurance.controllers
 
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterEach
@@ -24,7 +25,7 @@ import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
-import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
+import uk.gov.hmrc.agentassurance.connectors.{CitizenDetailsConnector, DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentassurance.models
 import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsRecordExists, AmlsUnexpectedMongoError, UniqueKeyViolationError}
 import uk.gov.hmrc.agentassurance.models._
@@ -46,9 +47,10 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   val authConnector = mock[AuthConnector]
   val amlsRepository = mock[AmlsRepository]
   val overseasAmlsRepository = mock[OverseasAmlsRepository]
+  val citizenDetailsConnector = mock[CitizenDetailsConnector]
 
   val controller = new AgentAssuranceController(6, 6, 6, 6,
-    authConnector, desConnector, espConnector, overseasAmlsRepository, amlsRepository)
+    authConnector, desConnector, espConnector, overseasAmlsRepository, amlsRepository, citizenDetailsConnector)
 
   implicit val hc = new HeaderCarrier
 
@@ -107,6 +109,12 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError, Unit]) = {
     (overseasAmlsRepository.create(_: OverseasAmlsEntity)(_: ExecutionContext))
       .expects(amlsEntity, *)
+      .returning(toFuture(response))
+  }
+
+  def mockCitizenDetails(nino: Nino)(response: Option[DateOfBirth]) = {
+    (citizenDetailsConnector.getDateOfBirth(_: Nino)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(nino, *, *)
       .returning(toFuture(response))
   }
 
@@ -401,6 +409,41 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
         status(response) mustBe BAD_REQUEST
       }
 
+    }
+
+    "checkCitizenDetails" should {
+      val nino = Nino("XX121212B")
+      val dobString = "12121990"
+      val dtf = DateTimeFormatter.ofPattern("ddMMyyyy")
+      val dob = DateOfBirth(LocalDate.parse(dobString, dtf))
+
+      val assuranceCheckCitizenDetails = AssuranceCheckCitizenDetails(nino,dob)
+
+      def doRequest(request: AssuranceCheckCitizenDetails = assuranceCheckCitizenDetails) =
+        controller.checkCitizenDetails(FakeRequest()
+          .withJsonBody(Json.toJson(request))
+          .withHeaders(CONTENT_TYPE -> "application/json")
+        )
+
+      "check the nino and dob in request match those from citizen details" in {
+
+        inSequence {
+          mockAgentAuth()(Right(()))
+          mockCitizenDetails(nino)(Some(dob))
+        }
+        val response = doRequest()
+        status(response) mustBe OK
+      }
+
+      "return bad_request if nino or date of birth does not match" in {
+
+        inSequence {
+          mockAgentAuth()(Right())
+          mockCitizenDetails(nino)(None)
+        }
+        val response = doRequest()
+        status(response) mustBe BAD_REQUEST
+      }
     }
   }
 }

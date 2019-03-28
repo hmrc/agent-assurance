@@ -46,6 +46,7 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
     bindBaseUrl("des")
     bindBaseUrl("auth")
     bindBaseUrl("enrolment-store-proxy")
+    bindBaseUrl("citizen-details")
     bindIntProperty("minimumIRPAYEClients")
     bindIntProperty("minimumIRSAClients")
     bindIntProperty("minimumVatDecOrgClients")
