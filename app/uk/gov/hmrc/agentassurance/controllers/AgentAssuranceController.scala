@@ -21,7 +21,7 @@ import play.api.Logger
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
-import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
+import uk.gov.hmrc.agentassurance.connectors.{CitizenDetailsConnector, DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.models.AmlsError._
@@ -44,7 +44,8 @@ class AgentAssuranceController @Inject()(
                                           val desConnector: DesConnector,
                                           val espConnector: EnrolmentStoreProxyConnector,
                                           val overseasAmlsRepository: OverseasAmlsRepository,
-                                          val amlsRepository: AmlsRepository) extends BaseController with AuthActions {
+                                          val amlsRepository: AmlsRepository,
+                                          val cdConnector: CitizenDetailsConnector) extends BaseController with AuthActions {
 
   def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
     implicit saAgentRef =>
@@ -148,6 +149,17 @@ class AgentAssuranceController @Inject()(
         BadRequest("Could not parse Arn JSON in request")
       case None ⇒
         BadRequest("No JSON found in request body")
+    }
+  }
+
+  def checkCitizenDetails: Action[AnyContent] = withAffinityGroupAgent { implicit request =>
+    request.body.asJson.map(_.validate[AssuranceCheckCitizenDetails]) match {
+      case Some(JsSuccess(cd, _)) =>
+          cdConnector.getDateOfBirth(cd.nino).flatMap{
+            dob => dob.fold(BadRequest){date => if(date.value equals cd.dob.value) Ok else BadRequest}
+          }
+      case Some(JsError(_)) => BadRequest("could not parse nino and dob JSON request")
+      case None => BadRequest("No JSON found in request body")
     }
   }
 }
