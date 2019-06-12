@@ -21,9 +21,12 @@ import java.time.LocalDate
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
+import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.libs.json.Json
+import play.api.mvc.{RequestHeader, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
+import play.mvc.Http
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentassurance.models
 import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsRecordExists, AmlsUnexpectedMongoError, UniqueKeyViolationError}
@@ -67,6 +70,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   private val nino = Nino("AA000000A")
   private val utr = Utr("7000000002")
   private val saAgentReference = SaAgentReference("IRSA-123")
+
 
   def mockAuth()(response: Either[String, Enrolments]) = {
     (authConnector.authorise(_: Predicate, _: Retrieval[Enrolments])(_: HeaderCarrier, _: ExecutionContext))
@@ -200,7 +204,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
     "storeAmlsDetails" should {
 
-      val amlsDetails = AmlsDetails("supervisoryBody", "0123456789", LocalDate.now())
+      val amlsDetails = AmlsDetails("supervisoryBody", Right(RegisteredDetails("0123456789", LocalDate.now())))
       val createAmlsRequest = CreateAmlsRequest(utr, amlsDetails)
 
       def doRequest(createAmlsRequest: CreateAmlsRequest = createAmlsRequest) =
@@ -274,7 +278,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         inSequence {
           mockAgentAuth()(Right(()))
-          mockUpdateAmls(utr, arn)(Right(AmlsDetails("supervisory", "123", LocalDate.now())))
+          mockUpdateAmls(utr, arn)(Right(AmlsDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now())))))
         }
         val response = doRequest
         status(response) mustBe OK
