@@ -279,8 +279,9 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     val amlsCreateUrl = s"http://localhost:$port/agent-assurance/amls"
 
     val utr = Utr("7000000002")
-    val amlsDetails = AmlsDetails("supervisory", "0123456789", LocalDate.now())
+    val amlsDetails = AmlsDetails("supervisory", Right(RegisteredDetails("0123456789", LocalDate.now())))
     val createAmlsRequest = CreateAmlsRequest(utr, amlsDetails)
+    val pendingAmlsDetailsRequest =  CreateAmlsRequest(utr, AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(10)))))
 
     def doRequest(createAmlsRequest: CreateAmlsRequest) =
       Await.result(
@@ -293,7 +294,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
                 supervisory: String = "supervisoryBody",
                 arn: Option[Arn] = None) = {
       val utr = maybeUtr.getOrElse(Utr(Random.alphanumeric.take(10).mkString("")))
-      val amlsDetails = AmlsDetails(supervisory, "0123456789", LocalDate.now())
+      val amlsDetails = AmlsDetails(supervisory, Right(RegisteredDetails("0123456789", LocalDate.now())))
       Json.toJson(amlsDetails).toString()
     }
 
@@ -310,6 +311,22 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       val dbRecord = await(repo.find()).head
       dbRecord.utr shouldBe utr
       dbRecord.createdOn shouldBe LocalDate.now()
+    }
+
+    scenario("user logged in and is an agent should be able to create a new Amls Pending Details record for the first time") {
+      Given("User is logged in and is an agent")
+      withAffinityGroupAgent
+
+      When("POST /amls/create is called with PendingAmlsDetails")
+      val response: WSResponse = doRequest(pendingAmlsDetailsRequest)
+
+      Then("201 CREATED is returned")
+      response.status shouldBe 201
+
+      val dbRecord = await(repo.find()).head
+      dbRecord.utr shouldBe utr
+      dbRecord.createdOn shouldBe LocalDate.now()
+      dbRecord.amlsDetails.details shouldBe Left(PendingDetails(LocalDate.now().minusDays(10)))
     }
 
     scenario("User is not logged in") {
@@ -365,7 +382,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     def amlsUpdateUrl(utr: Utr) = s"http://localhost:$port/agent-assurance/amls/utr/${utr.value}"
 
-    val amlsDetails = AmlsDetails("supervisory", "0123456789", LocalDate.now())
+    val amlsDetails = AmlsDetails("supervisory", Right(RegisteredDetails("0123456789", LocalDate.now())))
 
     def callPut(utr: Utr, arn: Arn) =
       Await.result(
