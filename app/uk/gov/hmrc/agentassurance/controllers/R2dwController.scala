@@ -28,13 +28,12 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class R2dwController @Inject()(repository: PropertiesRepository,
-                               val authConnector: AuthConnector) extends BaseController with AuthActions {
+                               val authConnector: AuthConnector)(implicit ec: ExecutionContext) extends BaseController with AuthActions {
 
   val key = "refusal-to-deal-with"
 

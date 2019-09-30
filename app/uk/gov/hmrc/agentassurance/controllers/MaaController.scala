@@ -17,25 +17,22 @@
 package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.Json
-import play.api.mvc.Action
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
-import uk.gov.hmrc.agentassurance.models.{ErrorBody, Value}
 import uk.gov.hmrc.agentassurance.models.pagination.{PaginatedResources, PaginationLinks}
+import uk.gov.hmrc.agentassurance.models.{ErrorBody, Value}
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class MaaController @Inject()(repository: PropertiesRepository,
-                              val authConnector: AuthConnector) extends BaseController with AuthActions {
+                              val authConnector: AuthConnector)(implicit ec: ExecutionContext) extends BaseController with AuthActions {
 
   val key = "manually-assured"
 
@@ -45,13 +42,13 @@ class MaaController @Inject()(repository: PropertiesRepository,
       .validate[Value].getOrElse(throw new BadRequestException("json failed validation"))
 
     Utr.isValid(newValue.value) match {
-      case true => {
+      case true =>
         val propertyConverted = newValue.toProperty(key)
         repository.propertyExists(propertyConverted).flatMap {
           case false => repository.createProperty(propertyConverted).map(_ => Created)
           case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
         }
-      }
+
       case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
     }
   }

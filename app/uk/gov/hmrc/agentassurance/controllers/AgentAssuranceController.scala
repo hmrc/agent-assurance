@@ -30,9 +30,8 @@ import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AgentAssuranceController @Inject()(
@@ -44,7 +43,7 @@ class AgentAssuranceController @Inject()(
                                           val desConnector: DesConnector,
                                           val espConnector: EnrolmentStoreProxyConnector,
                                           val overseasAmlsRepository: OverseasAmlsRepository,
-                                          val amlsRepository: AmlsRepository) extends BaseController with AuthActions {
+                                          val amlsRepository: AmlsRepository)(implicit val ec: ExecutionContext) extends BaseController with AuthActions {
 
   def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
     implicit saAgentRef =>

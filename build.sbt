@@ -28,7 +28,7 @@ lazy val scoverageSettings = {
     // Semicolon-separated list of regexs matching classes to exclude
     ScoverageKeys.coverageExcludedPackages := """uk\.gov\.hmrc\.BuildInfo;.*\.Routes;.*\.RoutesPrefix;.*Filters?;MicroserviceAuditConnector;Module;GraphiteStartUp;ErrorHandler;.*\.Reverse[^.]*""",
     ScoverageKeys.coverageMinimum := 80.00,
-    ScoverageKeys.coverageFailOnMinimum := false,
+    ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true,
     parallelExecution in Test := false
   )
@@ -46,6 +46,16 @@ lazy val root = Project("agent-assurance", file("."))
       Resolver.typesafeRepo("releases"),
       Resolver.jcenterRepo
     ),
+    scalacOptions ++= Seq(
+      "-Xfatal-warnings",
+      "-Xlint:-missing-interpolator,_",
+      "-Yno-adapted-args",
+      "-Ywarn-value-discard",
+      "-Ywarn-dead-code",
+      "-deprecation",
+      "-feature",
+      "-unchecked",
+      "-language:implicitConversions"),
     libraryDependencies ++= compileDeps ++ testDeps("test") ++ testDeps("it"),
     publishingSettings,
     scoverageSettings,
@@ -57,13 +67,6 @@ lazy val root = Project("agent-assurance", file("."))
     Keys.fork in IntegrationTest := false,
     Defaults.itSettings,
     unmanagedSourceDirectories in IntegrationTest += baseDirectory(_ / "it").value,
-    parallelExecution in IntegrationTest := false,
-    testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value)
+    parallelExecution in IntegrationTest := false
   )
   .enablePlugins(Seq(PlayScala,SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory) : _*)
-
-def oneForkedJvmPerTest(tests: Seq[TestDefinition]) = {
-  tests.map { test =>
-    new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq(s"-Dtest.name=${test.name}"))))
-  }
-}

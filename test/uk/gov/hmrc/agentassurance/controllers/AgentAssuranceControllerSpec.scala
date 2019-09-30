@@ -21,14 +21,10 @@ import java.time.LocalDate
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
-import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.libs.json.Json
-import play.api.mvc.{RequestHeader, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
-import play.mvc.Http
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
-import uk.gov.hmrc.agentassurance.models
 import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsRecordExists, AmlsUnexpectedMongoError, UniqueKeyViolationError}
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, OverseasAmlsRepository}
@@ -37,10 +33,12 @@ import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.{EmptyPredicate, Predicate}
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval, Retrieval, Retrievals}
+import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with BeforeAndAfterEach {
@@ -90,7 +88,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       .returning(response.fold[Future[Seq[SaAgentReference]]](e => Future.failed(new Exception(e)), r => toFuture(r)))
   }
 
-  def mockAgentAuth()(response: Either[String, Unit]) = {
+  def mockAgentAuth(response: Either[String, Unit]) = {
     (authConnector.authorise(_: Predicate, _: EmptyRetrieval.type)(_: HeaderCarrier, _: ExecutionContext))
       .expects(AuthProviders(GovernmentGateway) and AffinityGroup.Agent, EmptyRetrieval, *, *)
       .returning(response.fold[Future[Unit]](e => Future.failed(new Exception(e)), r => toFuture(r)))
@@ -216,7 +214,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "store amlsDetails successfully in mongo" in {
 
         inSequence {
-          mockAgentAuth()(Right(()))
+          mockAgentAuth(Right(()))
           mockCreateAmls(createAmlsRequest)(Right(()))
         }
         val response = doRequest()
@@ -227,7 +225,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         val amlsRequestWithInvalidUtr = createAmlsRequest.copy(utr = Utr("61122334455"))
 
-        mockAgentAuth()(Right(()))
+        mockAgentAuth(Right(()))
 
         val response = doRequest(amlsRequestWithInvalidUtr)
         status(response) mustBe BAD_REQUEST
@@ -236,7 +234,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "handle mongo errors during storing amlsDetails" in {
 
         inSequence {
-          mockAgentAuth()(Right(Credentials("", "")))
+          mockAgentAuth(Right(()))
           mockCreateAmls(createAmlsRequest)(Left(AmlsUnexpectedMongoError))
         }
         val response = doRequest()
@@ -245,7 +243,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle invalid amlsDetails json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAgentAuth(Right(()))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
 
@@ -254,7 +252,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle no json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAgentAuth(Right(()))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
@@ -277,7 +275,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "update existing amlsDetails successfully in mongo" in {
 
         inSequence {
-          mockAgentAuth()(Right(()))
+          mockAgentAuth(Right(()))
           mockUpdateAmls(utr, arn)(Right(AmlsDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now())))))
         }
         val response = doRequest
@@ -288,7 +286,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "handle mongo errors during updating amls with Arn" in {
 
         inSequence {
-          mockAgentAuth()(Right(()))
+          mockAgentAuth(Right(()))
           mockUpdateAmls(utr, arn)(Left(AmlsUnexpectedMongoError))
         }
         val response = doRequest
@@ -297,7 +295,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle allow duplicate ARN errors from mongo" in {
         inSequence {
-          mockAgentAuth()(Right(()))
+          mockAgentAuth(Right(()))
           mockUpdateAmls(utr, arn)(Left(UniqueKeyViolationError))
         }
         val response = doRequest
@@ -306,7 +304,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle Arns which don't match the ARN pattern json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAgentAuth(Right(()))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
 
@@ -315,7 +313,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle invalid Arn json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAgentAuth(Right(()))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
 
@@ -324,7 +322,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle no json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAgentAuth(Right(()))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
@@ -348,7 +346,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "store amlsDetails successfully in mongo" in {
 
         inSequence {
-          mockAgentAuth()(Right(()))
+          mockAgentAuth(Right(()))
           mockCreateOverseasAmls(overseasAmlsEntity)(Right(()))
         }
         val response = doRequest()
@@ -359,7 +357,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         val amlsRequestWithInvalidArn = overseasAmlsEntity.copy(arn = Arn("61122334455"))
 
-        mockAgentAuth()(Right(()))
+        mockAgentAuth(Right(()))
 
         val response = doRequest(amlsRequestWithInvalidArn)
         status(response) mustBe BAD_REQUEST
@@ -368,7 +366,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "return conflict if the record already available in the database" in {
 
         inSequence {
-          mockAgentAuth()(Right(()))
+          mockAgentAuth(Right(()))
           mockCreateOverseasAmls(overseasAmlsEntity)(Left(AmlsRecordExists))
         }
 
@@ -379,7 +377,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "handle mongo errors during storing amlsDetails" in {
 
         inSequence {
-          mockAgentAuth()(Right(Credentials("", "")))
+          mockAgentAuth(Right(()))
           mockCreateOverseasAmls(overseasAmlsEntity)(Left(AmlsUnexpectedMongoError))
         }
         val response = doRequest()
@@ -388,7 +386,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle invalid amlsDetails json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAgentAuth(Right(()))
 
         val response = controller.storeOverseasAmlsDetails(FakeRequest()
           .withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
@@ -398,7 +396,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle no json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAgentAuth(Right(()))
 
         val response = controller.storeOverseasAmlsDetails(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
