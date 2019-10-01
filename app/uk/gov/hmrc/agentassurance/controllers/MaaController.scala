@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class MaaController @Inject()(repository: PropertiesRepository,
-                              val authConnector: AuthConnector)(implicit ec: ExecutionContext) extends BaseController with AuthActions {
+                              val authConnector: AuthConnector)(implicit val ec: ExecutionContext) extends BaseController with AuthActions {
 
   val key = "manually-assured"
 
@@ -41,16 +41,14 @@ class MaaController @Inject()(repository: PropertiesRepository,
       .getOrElse(throw new BadRequestException("could not find or recognise json"))
       .validate[Value].getOrElse(throw new BadRequestException("json failed validation"))
 
-    Utr.isValid(newValue.value) match {
-      case true =>
+    if(Utr.isValid(newValue.value)) {
         val propertyConverted = newValue.toProperty(key)
         repository.propertyExists(propertyConverted).flatMap {
           case false => repository.createProperty(propertyConverted).map(_ => Created)
           case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
         }
-
-      case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
     }
+    else Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
   }
 
 

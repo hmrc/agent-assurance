@@ -33,7 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class R2dwController @Inject()(repository: PropertiesRepository,
-                               val authConnector: AuthConnector)(implicit ec: ExecutionContext) extends BaseController with AuthActions {
+                               val authConnector: AuthConnector)(implicit val ec: ExecutionContext) extends BaseController with AuthActions {
 
   val key = "refusal-to-deal-with"
 
