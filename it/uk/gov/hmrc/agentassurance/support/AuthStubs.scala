@@ -84,12 +84,12 @@ trait AgentAuthStubs extends BasicUserAuthStubs {
         .withRequestBody(equalToJson(
           """{
             |	"authorise": [{"authProviders": ["GovernmentGateway"]}],
-            |	"retrieve": ["credentials"]
+            |	"retrieve": ["optionalCredentials"]
             |}""".stripMargin))
       .willReturn(aResponse().withStatus(200).withBody(
       s"""
          |{
-         |  "credentials" : {
+         |  "optionalCredentials" : {
          |    "providerId" : "$userId",
          |    "providerType" : "GovernmentGateway"
          |    }

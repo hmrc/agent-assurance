@@ -51,7 +51,7 @@ class OverseasAmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponen
 
     find(selector).map(_.headOption).flatMap {
       case Some(_) => Future.successful(Left(AmlsRecordExists))
-      case _ =>  collection.insert(amlsEntity)
+      case _ =>  collection.insert(ordered = false).one(amlsEntity)
         .map(_ => Right(()))
         .recover { case _ => Left(AmlsUnexpectedMongoError) }
     }

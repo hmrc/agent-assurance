@@ -52,6 +52,7 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
     bindIntProperty("minimumIRCTClients")
     bindServiceProperty("des.environment", "des.environment")
     bindServiceProperty("des.authorizationToken", "des.authorization-token")
+    ()
   }
 
   private def bindBaseUrl(serviceName: String) =

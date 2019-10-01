@@ -15,6 +15,7 @@ import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, Wire
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
+import scala.language.postfixOps
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -68,6 +69,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     super.beforeEach()
     await(repo.drop)
     await(overseasAmlsRepo.drop)
+    ()
   }
 
 
@@ -615,8 +617,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         When(s"GET /acceptableNumberOfClients/service/$enrolment is called")
         val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl).get(), 10 seconds)
 
-        Then("403 FORBIDDEN is returned")
-        response.status shouldBe 403
+        Then("401 UNAUTHORIZED is returned")
+        response.status shouldBe 401
       }
 
       scenario(s"User is not logged in when $enrolment") {

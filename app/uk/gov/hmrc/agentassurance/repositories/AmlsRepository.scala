@@ -66,7 +66,7 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
       case _ =>
         val selector = Json.obj("utr" -> JsString(utr))
         collection
-          .update(selector, AmlsEntity(Utr(utr), createAmlsRequest.amlsDetails, None, LocalDate.now()), upsert = true)
+          .update(ordered = false).one(selector, AmlsEntity(Utr(utr), createAmlsRequest.amlsDetails, None, LocalDate.now()), upsert = true)
           .map { updateResult =>
             if (updateResult.writeErrors.isEmpty) {
               Right(())
@@ -92,7 +92,7 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
             val selector = Json.obj("utr" -> JsString(utr.value))
             val toUpdate = existingEntity.copy(arn = Some(arn)).copy(updatedArnOn = Some(LocalDate.now()))
             collection
-              .update(selector, toUpdate)
+              .update(ordered = false).one(selector, toUpdate)
               .map { updateResult =>
                 if (updateResult.writeErrors.isEmpty) {
                   Right(toUpdate.amlsDetails)
@@ -100,14 +100,13 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
                   Left(AmlsUnexpectedMongoError)
                 }
               }.recover[Either[AmlsError, AmlsDetails]] {
-              case e: LastError => {
+              case e: LastError =>
                 e.code match {
                   case Some(11000) => Logger.warn(s"ARN should be unique for each UTR")
                     Left(UniqueKeyViolationError)
                   case _ =>
                     Left(AmlsUnexpectedMongoError)
                 }
-              }
             }
         }
 
