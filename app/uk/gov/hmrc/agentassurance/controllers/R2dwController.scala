@@ -18,23 +18,23 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
-import uk.gov.hmrc.agentassurance.models.{ErrorBody, Value}
 import uk.gov.hmrc.agentassurance.models.pagination.{PaginatedResources, PaginationLinks}
+import uk.gov.hmrc.agentassurance.models.{ErrorBody, Value}
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.BadRequestException
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class R2dwController @Inject()(repository: PropertiesRepository,
-                               val authConnector: AuthConnector) extends BaseController with AuthActions {
+                               cc: MessagesControllerComponents,
+                               val authConnector: AuthConnector)(implicit ec: ExecutionContext) extends BackendController(cc) with AuthActions {
 
   val key = "refusal-to-deal-with"
 

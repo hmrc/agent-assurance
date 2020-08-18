@@ -21,7 +21,16 @@ class PropertiesControllerISpec extends UnitSpec
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
-      .configure("microservice.services.auth.port" -> wireMockPort,
+      .configure("microservice.services.auth.host" -> wireMockHost,
+        "microservice.services.auth.port" -> wireMockPort,
+        "microservice.services.des.host" -> wireMockHost,
+        "microservice.services.des.port" -> wireMockPort,
+        "microservice.services.des.environment" -> "test",
+        "microservice.services.des.authorization-token" -> "secret",
+        "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
+        "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
+        "auditing.consumer.baseUri.host" -> wireMockHost,
+        "auditing.consumer.baseUri.port" -> wireMockPort,
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}")
 
   override implicit lazy val app: Application = appBuilder.build()
@@ -108,7 +117,7 @@ class PropertiesControllerISpec extends UnitSpec
       val response: WSResponse = Await.result(wsClient.url(s"$url/$key")
         .withHeaders("Content-Type" -> "application/json").post(badlyFormedJson), 10 seconds)
       response.status shouldBe BAD_REQUEST
-      response.body.contains("bad request") shouldBe true
+      response.body.contains("Bad Request") shouldBe true
     }
 
     "return 400 (with appropriate reason) json does not conform to the api" in {

@@ -1,25 +1,22 @@
 import sbt.Tests.{Group, SubProcess}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 
-scalaVersion := "2.11.11"
-
 lazy val compileDeps = Seq(
-  "uk.gov.hmrc" %% "bootstrap-play-25" % "4.12.0",
-  "uk.gov.hmrc" %% "auth-client" % "2.21.0-play-25",
-  "com.kenshoo" %% "metrics-play" % "2.5.9_0.5.1",
-  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.15.0-play-25",
-  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "3.8.0",
-  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.22.0-play-25"
+  "uk.gov.hmrc" %% "bootstrap-backend-play-27" % "2.24.0",
+  "uk.gov.hmrc" %% "auth-client" % "3.0.0-play-27",
+  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.19.0-play-27",
+  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.4.0",
+  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.30.0-play-27"
 )
 
 def testDeps(scope: String) = Seq(
-  "org.scalatest" %% "scalatest" % "3.0.7" % scope,
-  "org.scalamock" %% "scalamock" % "4.2.0" % scope,
+  "org.scalatest" %% "scalatest" % "3.0.8" % scope,
+  "org.scalamock" %% "scalamock" % "4.4.0" % scope,
   "org.mockito" % "mockito-core" % "2.27.0" % scope,
-  "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.1" % scope, //upgrade
-  "uk.gov.hmrc" %% "hmrctest" % "3.8.0-play-25" % scope,
-  "com.github.tomakehurst" % "wiremock" % "2.23.2" % scope,
-  "uk.gov.hmrc" %% "reactivemongo-test" % "4.14.0-play-25" % scope
+  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.3" % scope, //upgrade
+  "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-26" % scope,
+  "com.github.tomakehurst" % "wiremock-jre8" % "2.27.1" % scope,
+  "uk.gov.hmrc" %% "reactivemongo-test" % "4.21.0-play-27" % scope
 )
 
 lazy val scoverageSettings = {
@@ -38,7 +35,7 @@ lazy val root = Project("agent-assurance", file("."))
   .settings(
     name := "agent-assurance",
     organization := "uk.gov.hmrc",
-    scalaVersion := "2.11.11",
+    scalaVersion := "2.12.10",
     PlayKeys.playDefaultPort := 9565,
     resolvers := Seq(
       Resolver.bintrayRepo("hmrc", "releases"),
@@ -57,13 +54,7 @@ lazy val root = Project("agent-assurance", file("."))
     Keys.fork in IntegrationTest := false,
     Defaults.itSettings,
     unmanagedSourceDirectories in IntegrationTest += baseDirectory(_ / "it").value,
-    parallelExecution in IntegrationTest := false,
-    testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value)
+    parallelExecution in IntegrationTest := false
   )
   .enablePlugins(Seq(PlayScala,SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory) : _*)
 
-def oneForkedJvmPerTest(tests: Seq[TestDefinition]) = {
-  tests.map { test =>
-    new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq(s"-Dtest.name=${test.name}"))))
-  }
-}
