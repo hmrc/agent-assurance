@@ -18,18 +18,20 @@ package uk.gov.hmrc.agentassurance.connectors
 
 import java.net.URL
 
-import javax.inject.{Inject, Named, Singleton}
 import com.codahale.metrics.MetricRegistry
 import com.google.inject.ImplementedBy
 import com.kenshoo.play.metrics.Metrics
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 import play.utils.UriEncoding
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
+import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpReads}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -57,13 +59,14 @@ trait DesConnector {
 }
 
 @Singleton
-class DesConnectorImpl @Inject()(@Named("des-baseUrl") baseUrl: URL,
-                             @Named("des.authorizationToken") authorizationToken: String,
-                             @Named("des.environment") environment: String,
-                             httpGet: HttpGet,
-                             metrics: Metrics)
+class DesConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit appConfig: AppConfig)
   extends DesConnector with HttpAPIMonitor {
+
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+
+  private val baseUrl = appConfig.desBaseUrl
+  private val authorizationToken = appConfig.desAuthToken
+  private val environment = appConfig.desEnv
 
   def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
     val encodedClientId = UriEncoding.encodePathSegment(clientIdentifier.value, "UTF-8")
@@ -75,7 +78,7 @@ class DesConnectorImpl @Inject()(@Named("des-baseUrl") baseUrl: URL,
       UriEncoding.encodePathSegment(clientType, "UTF-8")
     }
 
-    val url = new URL(baseUrl, s"/registration/relationship/$encodedClientType/$encodedClientId")
+    val url = new URL(s"$baseUrl/registration/relationship/$encodedClientType/$encodedClientId")
 
     getWithDesHeaders[ClientRelationship]("GetStatusAgentRelationship", url).map(_.agents
       .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)

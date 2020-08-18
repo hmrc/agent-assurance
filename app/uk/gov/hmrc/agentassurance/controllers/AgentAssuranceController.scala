@@ -18,33 +18,34 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject._
 import play.api.Logger
-import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
-import play.api.mvc._
+import play.api.libs.json.{JsError, JsSuccess, Json}
+import play.api.mvc.{MessagesControllerComponents, _}
 import uk.gov.hmrc.agentassurance.auth.AuthActions
+import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
-import uk.gov.hmrc.agentassurance.util.toFuture
-import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.models.AmlsError._
+import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, OverseasAmlsRepository}
+import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AgentAssuranceController @Inject()(
-                                          @Named("minimumIRPAYEClients") minimumIRPAYEClients: Int,
-                                          @Named("minimumIRSAClients") minimumIRSAClients: Int,
-                                          @Named("minimumVatDecOrgClients") minimumVatDecOrgClients: Int,
-                                          @Named("minimumIRCTClients") minimumIRCTClients: Int,
-                                          override val authConnector: AuthConnector,
+class AgentAssuranceController @Inject()(override val authConnector: AuthConnector,
                                           val desConnector: DesConnector,
                                           val espConnector: EnrolmentStoreProxyConnector,
                                           val overseasAmlsRepository: OverseasAmlsRepository,
-                                          val amlsRepository: AmlsRepository) extends BaseController with AuthActions {
+                                          cc: MessagesControllerComponents,
+                                          val amlsRepository: AmlsRepository)(implicit val appConfig: AppConfig, ec: ExecutionContext) extends BackendController(cc) with AuthActions {
+
+  private val minimumIRPAYEClients = appConfig.minimumIRPAYEClients
+  private val minimumIRSAClients = appConfig.minimumIRSAClients
+  private val minimumVatDecOrgClients = appConfig.minimumVatDecOrgClients
+  private val minimumIRCTClients = appConfig.minimumIRCTClients
 
   def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
     implicit saAgentRef =>

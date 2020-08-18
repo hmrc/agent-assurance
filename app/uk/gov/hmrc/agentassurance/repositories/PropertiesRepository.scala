@@ -18,24 +18,23 @@ package uk.gov.hmrc.agentassurance.repositories
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json._
-import play.api.libs.json.Json.format
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.api.Cursor
-import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
+import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.models.pagination.PaginationResult
+import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class PropertiesRepository @Inject() (mongoComponent: ReactiveMongoComponent)
-  extends ReactiveRepository[Property, String]("agent-assurance", mongoComponent.mongoConnector.db, format[Property],
+  extends ReactiveRepository[Property, String]("agent-assurance", mongoComponent.mongoConnector.db, Property.propertyFormat,
     implicitly[Format[String]]) with AtomicUpdate[Property] {
 
+  import collection.BatchCommands.AggregationFramework.{Group, Match, Project, PushField, SumValue}
   import reactivemongo.bson._
-  import collection.BatchCommands.AggregationFramework.{Match, Project, Group, SumValue, PushField}
 
   def findProperties(key: String, page:Int, pageSize: Int)(implicit ec: ExecutionContext): Future[(Int, Seq[String])] = {
 

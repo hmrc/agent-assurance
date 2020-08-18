@@ -1,27 +1,37 @@
 package uk.gov.hmrc.agentassurance.connectors
 
-import com.kenshoo.play.metrics.Metrics
-import org.scalatestplus.play.OneAppPerSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
-import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.stubs.EnrolmentStoreProxyStubs
 import uk.gov.hmrc.agentassurance.support.{MetricTestSupport, WireMockSupport}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext
 
-class EnrolmentStoreProxyConnectorISpec extends UnitSpec with OneAppPerSuite with WireMockSupport with MetricTestSupport with EnrolmentStoreProxyStubs {
+class EnrolmentStoreProxyConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockSupport with MetricTestSupport with EnrolmentStoreProxyStubs {
   override implicit lazy val app: Application = appBuilder.build()
 
-  val connector =
-    new EnrolmentStoreProxyConnectorImpl(wireMockBaseUrl,app.injector.instanceOf[HttpGet], app.injector.instanceOf[Metrics])
+  implicit val appConfig = app.injector.instanceOf[AppConfig]
+
+  val connector =app.injector.instanceOf[EnrolmentStoreProxyConnectorImpl]
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
-      .configure("microservice.services.enrolment-store-proxy.port" -> wireMockPort)
-      .bindings(bind[EnrolmentStoreProxyConnector].toInstance(connector))
+      .configure(
+        "microservice.services.auth.host" -> wireMockHost,
+        "microservice.services.auth.port" -> wireMockPort,
+        "microservice.services.des.host" -> wireMockHost,
+        "microservice.services.des.port" -> wireMockPort,
+        "microservice.services.des.environment" -> "test",
+        "microservice.services.des.authorization-token" -> "secret",
+        "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
+        "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
+        "auditing.consumer.baseUri.host" -> wireMockHost,
+        "auditing.consumer.baseUri.port" -> wireMockPort
+      )
 
   private implicit val hc = HeaderCarrier()
   private implicit val ec = ExecutionContext.global

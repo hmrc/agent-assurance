@@ -21,14 +21,12 @@ import java.time.LocalDate
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
-import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.libs.json.Json
-import play.api.mvc.{RequestHeader, Result}
+import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{status, _}
-import play.mvc.Http
+import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
-import uk.gov.hmrc.agentassurance.models
 import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsRecordExists, AmlsUnexpectedMongoError, UniqueKeyViolationError}
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, OverseasAmlsRepository}
@@ -37,10 +35,13 @@ import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.{EmptyPredicate, Predicate}
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval, Retrieval, Retrievals}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval, Retrieval}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with BeforeAndAfterEach {
@@ -49,9 +50,16 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   val authConnector = mock[AuthConnector]
   val amlsRepository = mock[AmlsRepository]
   val overseasAmlsRepository = mock[OverseasAmlsRepository]
+  val cc = mock[MessagesControllerComponents]
+  val serviceConfig = mock[ServicesConfig]
 
-  val controller = new AgentAssuranceController(6, 6, 6, 6,
-    authConnector, desConnector, espConnector, overseasAmlsRepository, amlsRepository)
+ (serviceConfig.getInt(_: String)).expects(*).atLeastOnce().returning(1)
+  (serviceConfig.baseUrl(_: String)).expects(*).atLeastOnce().returning("some-url")
+ (serviceConfig.getConfString(_: String, _: String)).expects(*, *).atLeastOnce().returning("some-string")
+
+  implicit val appConfig = new AppConfig(serviceConfig)
+
+  val controller = new AgentAssuranceController(authConnector, desConnector, espConnector, overseasAmlsRepository, cc, amlsRepository)
 
   implicit val hc = new HeaderCarrier
 

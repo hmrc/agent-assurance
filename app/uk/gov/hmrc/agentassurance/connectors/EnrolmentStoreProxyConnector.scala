@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import java.net.URL
-
-import javax.inject.{Inject, Named, Singleton}
 import com.codahale.metrics.MetricRegistry
 import com.google.inject.ImplementedBy
 import com.kenshoo.play.metrics.Metrics
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.{format, fromJson}
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpReads, HttpResponse}
+import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -44,12 +44,12 @@ trait EnrolmentStoreProxyConnector {
 }
 
 @Singleton
-class EnrolmentStoreProxyConnectorImpl @Inject()(@Named("enrolment-store-proxy-baseUrl") baseUrl: URL, httpGet: HttpGet, metrics: Metrics) extends
+class EnrolmentStoreProxyConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit appConfig: AppConfig) extends
   EnrolmentStoreProxyConnector with HttpAPIMonitor with HistogramMonitor {
 
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  private val emacBaseUrl = s"$baseUrl/enrolment-store-proxy/enrolment-store"
+  private val emacBaseUrl = s"${appConfig.esProxyUrl}/enrolment-store-proxy/enrolment-store"
 
   implicit val responseHandler = new HttpReads[ClientAllocationResponse] {
     override def read(method: String, url: String, response: HttpResponse) = {

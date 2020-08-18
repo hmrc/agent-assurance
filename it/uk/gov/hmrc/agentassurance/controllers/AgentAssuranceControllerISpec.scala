@@ -27,9 +27,16 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
-      .configure("microservice.services.auth.port" -> wireMockPort,
+      .configure("microservice.services.auth.host" -> wireMockHost,
+        "microservice.services.auth.port" -> wireMockPort,
+        "microservice.services.des.host" -> wireMockHost,
         "microservice.services.des.port" -> wireMockPort,
+        "microservice.services.des.environment" -> "test",
+        "microservice.services.des.authorization-token" -> "secret",
+        "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
+        "auditing.consumer.baseUri.host" -> wireMockHost,
+        "auditing.consumer.baseUri.port" -> wireMockPort,
         "minimumIRPAYEClients" -> 6,
         "minimumIRSAClients" -> 6,
         "minimumVatDecOrgClients" -> 6,
