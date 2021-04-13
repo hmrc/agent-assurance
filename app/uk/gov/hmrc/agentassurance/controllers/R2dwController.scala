@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
 import uk.gov.hmrc.agentassurance.models.pagination.{PaginatedResources, PaginationLinks}
@@ -33,7 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class R2dwController @Inject()(repository: PropertiesRepository,
-                               cc: MessagesControllerComponents,
+                               cc: ControllerComponents,
                                val authConnector: AuthConnector)(implicit ec: ExecutionContext) extends BackendController(cc) with AuthActions {
 
   val key = "refusal-to-deal-with"
@@ -55,7 +55,7 @@ class R2dwController @Inject()(repository: PropertiesRepository,
   }
 
 
-  def isOnR2dwList(identifier: Utr): Action[AnyContent] = BasicAuth { implicit request =>
+  def isOnR2dwList(identifier: Utr): Action[AnyContent] = BasicAuth { _ =>
     repository.propertyExists(Value(identifier.value).toProperty(key)).map {
       case true => Forbidden
       case false => Ok
@@ -78,7 +78,7 @@ class R2dwController @Inject()(repository: PropertiesRepository,
     }
   }
 
-  def deleteProperty(identifier: Utr) = BasicAuth { implicit request =>
+  def deleteProperty(identifier: Utr) = BasicAuth { _ =>
     val property = Value(identifier.value).toProperty(key)
 
     repository.propertyExists(property).flatMap {

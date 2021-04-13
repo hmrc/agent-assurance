@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentassurance.controllers
 import javax.inject._
 import play.api.Logger
 import play.api.libs.json.{JsError, JsSuccess, Json}
-import play.api.mvc.{MessagesControllerComponents, _}
+import play.api.mvc._
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
@@ -39,7 +39,7 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
                                           val desConnector: DesConnector,
                                           val espConnector: EnrolmentStoreProxyConnector,
                                           val overseasAmlsRepository: OverseasAmlsRepository,
-                                          cc: MessagesControllerComponents,
+                                          cc: ControllerComponents,
                                           val amlsRepository: AmlsRepository)(implicit val appConfig: AppConfig, ec: ExecutionContext) extends BackendController(cc) with AuthActions {
 
   private val minimumIRPAYEClients = appConfig.minimumIRPAYEClients
@@ -47,9 +47,10 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
   private val minimumVatDecOrgClients = appConfig.minimumVatDecOrgClients
   private val minimumIRCTClients = appConfig.minimumIRCTClients
 
-  def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { implicit request =>
-    implicit saAgentRef =>
-      Future successful NoContent
+  private val logger = Logger(this.getClass)
+
+  def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { _ =>
+    _ => Future successful NoContent
   }
 
   def activeCesaRelationshipWithUtr(utr: Utr, saAgentReference: SaAgentReference): Action[AnyContent] =
@@ -114,7 +115,7 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
             case Right(_) => Created
             case Left(AmlsRecordExists) => Conflict
             case Left(error) =>
-              Logger.warn(s"Creating overseas amls details failed with error: $error")
+              logger.warn(s"Creating overseas amls details failed with error: $error")
               InternalServerError
           }
         } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import java.time.LocalDate
 
 import com.google.inject.ImplementedBy
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsString, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
@@ -66,7 +65,7 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
       case _ =>
         val selector = Json.obj("utr" -> JsString(utr))
         collection
-          .update(selector, AmlsEntity(Utr(utr), createAmlsRequest.amlsDetails, None, LocalDate.now()), upsert = true)
+          .update(false).one(selector, AmlsEntity(Utr(utr), createAmlsRequest.amlsDetails, None, LocalDate.now()), upsert = true)
           .map { updateResult =>
             if (updateResult.writeErrors.isEmpty) {
               Right(())
@@ -92,7 +91,7 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
             val selector = Json.obj("utr" -> JsString(utr.value))
             val toUpdate = existingEntity.copy(arn = Some(arn)).copy(updatedArnOn = Some(LocalDate.now()))
             collection
-              .update(selector, toUpdate)
+              .update(false).one(selector, toUpdate)
               .map { updateResult =>
                 if (updateResult.writeErrors.isEmpty) {
                   Right(toUpdate.amlsDetails)
@@ -102,7 +101,7 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
               }.recover[Either[AmlsError, AmlsDetails]] {
               case e: LastError => {
                 e.code match {
-                  case Some(11000) => Logger.warn(s"ARN should be unique for each UTR")
+                  case Some(11000) => logger.warn(s"ARN should be unique for each UTR")
                     Left(UniqueKeyViolationError)
                   case _ =>
                     Left(AmlsUnexpectedMongoError)

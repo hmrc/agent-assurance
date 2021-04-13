@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,19 @@ import play.api.mvc._
 import uk.gov.hmrc.agentassurance.controllers.ErrorResults.NoPermission
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals._
-import uk.gov.hmrc.auth.core.retrieve._
+import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait AuthActions extends AuthorisedFunctions {
+trait AuthActions extends AuthorisedFunctions with BaseController {
   me: Results =>
+
+  private val logger = Logger(this.getClass)
 
   override def authConnector: AuthConnector
 
@@ -52,7 +55,7 @@ trait AuthActions extends AuthorisedFunctions {
           }
       } recoverWith {
         case ex: NoActiveSession =>
-          Logger.warn("NoActiveSession while trying to access check IR SA endpoint", ex)
+          logger.warn("NoActiveSession while trying to access check IR SA endpoint", ex)
           Future.successful(Unauthorized)
       }
   }
@@ -61,10 +64,11 @@ trait AuthActions extends AuthorisedFunctions {
     implicit request =>
       implicit val hc: HeaderCarrier = fromHeadersAndSession(request.headers, None)
       authorised(AuthProviders(GovernmentGateway)).retrieve(Retrievals.credentials) {
-        case Credentials(providerId, _) => body(request)(providerId)
+        case Some(Credentials(providerId, _)) => body(request)(providerId)
+        case None => Future successful (NoPermission)
       } recover {
         case ex: NoActiveSession =>
-          Logger.warn("NoActiveSession while trying to access check acceptable number of clients endpoint", ex)
+          logger.warn("NoActiveSession while trying to access check acceptable number of clients endpoint", ex)
           Unauthorized
         case _: JsResultException =>
           NoPermission
@@ -77,7 +81,7 @@ trait AuthActions extends AuthorisedFunctions {
       body(request)
     } recoverWith {
       case ex: NoActiveSession =>
-        Logger.warn("NoActiveSession while trying to access check activeCesaRelationship endpoint", ex)
+        logger.warn("NoActiveSession while trying to access check activeCesaRelationship endpoint", ex)
         Future.successful(Unauthorized)
     }
   }
@@ -91,7 +95,7 @@ trait AuthActions extends AuthorisedFunctions {
           case _: NoActiveSession =>
             Unauthorized
           case _: UnsupportedAffinityGroup =>
-            Logger.warn("user doesn't belong to Agent affinityGroup")
+            logger.warn("user doesn't belong to Agent affinityGroup")
             Forbidden
         }
   }

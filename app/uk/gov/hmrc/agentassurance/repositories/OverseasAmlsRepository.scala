@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class OverseasAmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponen
 
     find(selector).map(_.headOption).flatMap {
       case Some(_) => Future.successful(Left(AmlsRecordExists))
-      case _ =>  collection.insert(amlsEntity)
+      case _ =>  collection.insert(false).one(amlsEntity)
         .map(_ => Right(()))
         .recover { case _ => Left(AmlsUnexpectedMongoError) }
     }

@@ -1,7 +1,6 @@
 package uk.gov.hmrc.agentassurance.controllers
 
 import java.time.LocalDate
-
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -19,7 +18,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.Random
+import scala.language.postfixOps
 
 class AgentAssuranceControllerISpec extends IntegrationSpec
   with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with WireMockSupport with EnrolmentStoreProxyStubs {
@@ -293,17 +292,9 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     def doRequest(createAmlsRequest: CreateAmlsRequest) =
       Await.result(
         wsClient.url(amlsCreateUrl)
-          .withHeaders(CONTENT_TYPE -> "application/json")
+          .withHttpHeaders(CONTENT_TYPE -> "application/json")
           .post(Json.toJson(createAmlsRequest)), 10 seconds
       )
-
-    def payload(maybeUtr: Option[Utr] = None,
-                supervisory: String = "supervisoryBody",
-                arn: Option[Arn] = None) = {
-      val utr = maybeUtr.getOrElse(Utr(Random.alphanumeric.take(10).mkString("")))
-      val amlsDetails = AmlsDetails(supervisory, Right(RegisteredDetails("0123456789", LocalDate.now())))
-      Json.toJson(amlsDetails).toString()
-    }
 
     scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
       Given("User is logged in and is an agent")
@@ -394,7 +385,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     def callPut(utr: Utr, arn: Arn) =
       Await.result(
         wsClient.url(amlsUpdateUrl(utr))
-          .withHeaders(CONTENT_TYPE -> "application/json")
+          .withHttpHeaders(CONTENT_TYPE -> "application/json")
           .put(Json.toJson(arn).toString()), 10 seconds
       )
 
@@ -495,7 +486,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     def doRequest(request: OverseasAmlsEntity) =
       Await.result(
         wsClient.url(amlsCreateUrl)
-          .withHeaders(CONTENT_TYPE -> "application/json")
+          .withHttpHeaders(CONTENT_TYPE -> "application/json")
           .post(Json.toJson(request)), 10 seconds
       )
 
