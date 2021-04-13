@@ -15,6 +15,8 @@ import scala.concurrent.duration.DurationInt
 import play.api.http.Status._
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, WireMockSupport}
 
+import scala.language.postfixOps
+
 class PropertiesControllerISpec extends UnitSpec
   with GuiceOneServerPerSuite with BeforeAndAfterEach with MongoSpecSupport with AgentAuthStubs with WireMockSupport {
   override def irAgentReference = ""
@@ -115,9 +117,9 @@ class PropertiesControllerISpec extends UnitSpec
                  """.stripMargin
 
       val response: WSResponse = Await.result(wsClient.url(s"$url/$key")
-        .withHeaders("Content-Type" -> "application/json").post(badlyFormedJson), 10 seconds)
+        .withHttpHeaders("Content-Type" -> "application/json").post(badlyFormedJson), 10 seconds)
       response.status shouldBe BAD_REQUEST
-      response.body.contains("Bad Request") shouldBe true
+      response.body.toLowerCase.contains("bad request") shouldBe true
     }
 
     "return 400 (with appropriate reason) json does not conform to the api" in {

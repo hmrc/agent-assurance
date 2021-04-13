@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,11 @@
 package uk.gov.hmrc.agentassurance.controllers
 
 import java.time.LocalDate
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
-import play.api.mvc.MessagesControllerComponents
-import play.api.test.FakeRequest
+import play.api.test.{FakeRequest, Helpers}
 import play.api.test.Helpers.{status, _}
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
@@ -50,7 +48,6 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   val authConnector = mock[AuthConnector]
   val amlsRepository = mock[AmlsRepository]
   val overseasAmlsRepository = mock[OverseasAmlsRepository]
-  val cc = mock[MessagesControllerComponents]
   val serviceConfig = mock[ServicesConfig]
 
  (serviceConfig.getInt(_: String)).expects(*).atLeastOnce().returning(1)
@@ -59,7 +56,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
   implicit val appConfig = new AppConfig(serviceConfig)
 
-  val controller = new AgentAssuranceController(authConnector, desConnector, espConnector, overseasAmlsRepository, cc, amlsRepository)
+  val controller = new AgentAssuranceController(authConnector, desConnector, espConnector, overseasAmlsRepository, Helpers.stubControllerComponents(), amlsRepository)
 
   implicit val hc = new HeaderCarrier
 

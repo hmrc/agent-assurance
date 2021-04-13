@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,24 +24,23 @@ import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.models.pagination.PaginationResult
-import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
+import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class PropertiesRepository @Inject() (mongoComponent: ReactiveMongoComponent)
   extends ReactiveRepository[Property, String]("agent-assurance", mongoComponent.mongoConnector.db, Property.propertyFormat,
-    implicitly[Format[String]]) with AtomicUpdate[Property] {
+    implicitly[Format[String]]) {
 
-  import collection.BatchCommands.AggregationFramework.{Group, Match, Project, PushField, SumValue}
-  import reactivemongo.bson._
+  import collection.BatchCommands.AggregationFramework.{Group, Match, Project, PushField, SumAll}
 
   def findProperties(key: String, page:Int, pageSize: Int)(implicit ec: ExecutionContext): Future[(Int, Seq[String])] = {
 
     val skipDuePageNumber = pageSize * (page - 1)
     val sliceForPagination = Json.obj("$slice" -> JsArray(Seq(JsString("$utrs"), JsNumber(skipDuePageNumber), JsNumber(pageSize))))
 
-    val groupUtrsByKey = Group(JsString("$key"))("totalUtrsForKey" -> SumValue(1), "utrs" -> PushField("value"))
+    val groupUtrsByKey = Group(JsString("$key"))("totalUtrsForKey" -> SumAll, "utrs" -> PushField("value"))
     val project = Project(Json.obj("collectionTotalForKey" -> "$totalUtrsForKey",
       "utrsForPage" -> sliceForPagination))
 
@@ -61,9 +60,6 @@ class PropertiesRepository @Inject() (mongoComponent: ReactiveMongoComponent)
 
   def deleteProperty(property: Property)(implicit ec: ExecutionContext): Future[Unit] =
     remove("key" -> property.key, "value" -> property.value).map(_ => ())
-
-  //false as we always want to update using the atomicUpdate function
-  override def isInsertion(newRecordId: BSONObjectID, oldRecord: Property): Boolean = false
 
   override def indexes: Seq[Index] = Seq(Index(Seq("key" -> IndexType.Ascending)))
 }

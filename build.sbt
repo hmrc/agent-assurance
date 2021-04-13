@@ -43,6 +43,10 @@ lazy val root = Project("agent-assurance", file("."))
       Resolver.typesafeRepo("releases"),
       Resolver.jcenterRepo
     ),
+    libraryDependencies ++= Seq(
+      compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.4.4" cross CrossVersion.full),
+      "com.github.ghik" % "silencer-lib" % "1.4.4" % Provided cross CrossVersion.full
+    ),
     libraryDependencies ++= compileDeps ++ testDeps("test") ++ testDeps("it"),
     publishingSettings,
     scoverageSettings,
@@ -53,6 +57,17 @@ lazy val root = Project("agent-assurance", file("."))
     majorVersion := 0,
     Keys.fork in IntegrationTest := false,
     Defaults.itSettings,
+    scalacOptions ++= Seq(
+      "-Yrangepos",
+      "-Xfatal-warnings",
+      "-Xlint:-missing-interpolator,_",
+      "-Yno-adapted-args",
+      "-Ywarn-dead-code",
+      "-deprecation",
+      "-feature",
+      "-unchecked",
+      "-language:implicitConversions",
+      "-P:silencer:pathFilters=views;routes"),
     unmanagedSourceDirectories in IntegrationTest += baseDirectory(_ / "it").value,
     parallelExecution in IntegrationTest := false
   )
