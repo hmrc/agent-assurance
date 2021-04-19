@@ -417,6 +417,17 @@ Note: Unnecessary use of -X or --request, POST is already inferred.
 * Connection #0 to host localhost left intact
 ```
 
+#### Get AMLS Details
+```
+GET     /agent-assurance/amls/utr/:identifier
+```
+Response Code(s)
+
+| Status Code | Description |
+|---|---|
+| 200 | AMLS Record is found and returned |
+| 404 | Couldn't find existing AMLS record in the db for the given UTR |
+
 #### Update AMLS Details of an ARN
 ```
 PUT   	/agent-assurance/amls/utr/:identifier

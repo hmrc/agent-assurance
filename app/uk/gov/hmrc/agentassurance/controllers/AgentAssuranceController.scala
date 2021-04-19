@@ -46,6 +46,7 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
   private val minimumIRSAClients = appConfig.minimumIRSAClients
   private val minimumVatDecOrgClients = appConfig.minimumVatDecOrgClients
   private val minimumIRCTClients = appConfig.minimumIRCTClients
+  private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
   private val logger = Logger(this.getClass)
 
@@ -126,6 +127,14 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
       case None ⇒
         BadRequest("No JSON found in request body")
     }
+  }
+
+  def getAmlsDetails(utr: Utr): Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) { _ =>
+    amlsRepository.getAmlDetails(utr)
+      .map {
+        case Some(details) => Ok(Json.toJson(details))
+        case _ => NotFound
+      }
   }
 
   def updateAmlsDetails(utr: Utr): Action[AnyContent] =  withAffinityGroupAgent { implicit request =>
