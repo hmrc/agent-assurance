@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import java.time.LocalDate
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
-import play.api.test.{FakeRequest, Helpers}
 import play.api.test.Helpers.{status, _}
+import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsRecordExists, AmlsUnexpectedMongoError, UniqueKeyViolationError}
@@ -33,12 +32,15 @@ import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.{EmptyPredicate, Predicate}
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval, Retrieval}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{affinityGroup, allEnrolments, credentials}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval, Retrieval}
+import uk.gov.hmrc.auth.core.syntax.retrieved.authSyntaxForRetrieved
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import java.time.LocalDate
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,9 +52,10 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   val overseasAmlsRepository = mock[OverseasAmlsRepository]
   val serviceConfig = mock[ServicesConfig]
 
- (serviceConfig.getInt(_: String)).expects(*).atLeastOnce().returning(1)
+  (serviceConfig.getInt(_: String)).expects(*).atLeastOnce().returning(1)
   (serviceConfig.baseUrl(_: String)).expects(*).atLeastOnce().returning("some-url")
- (serviceConfig.getConfString(_: String, _: String)).expects(*, *).atLeastOnce().returning("some-string")
+  (serviceConfig.getConfString(_: String, _: String)).expects(*, *).atLeastOnce().returning("some-string")
+  (serviceConfig.getString(_: String)).expects("stride.roles.agent-assurance").atLeastOnce().returning("maintain_agent_manually_assure")
 
   implicit val appConfig = new AppConfig(serviceConfig)
 
@@ -68,9 +71,14 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
     Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", "ARN123")), state = "activated", delegatedAuthRule = None)
   )
 
+  val strideEnrolment = Set(
+    Enrolment("maintain_agent_manually_assure", Seq.empty, state = "activated", delegatedAuthRule = None)
+  )
+
   val enrolmentsWithIrSAAgent = Enrolments(irSaAgentEnrolment)
   val enrolmentsWithNoIrSAAgent = Enrolments(hmrcAsAgentEnrolment)
   val enrolmentsWithoutIrSAAgent = Enrolments(Set.empty)
+  val enrolmentsWithStride = Enrolments(strideEnrolment)
 
   private val nino = Nino("AA000000A")
   private val utr = Utr("7000000002")
@@ -110,6 +118,12 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   def mockUpdateAmls(utr: Utr, arn: Arn)(response: Either[AmlsError, AmlsDetails]) = {
     (amlsRepository.updateArn(_: Utr, _: Arn)(_: ExecutionContext))
       .expects(utr, arn, *)
+      .returning(toFuture(response))
+  }
+
+  def mockGetAmls(utr: Utr)(response: Option[AmlsDetails]) = {
+    (amlsRepository.getAmlDetails(_: Utr)(_: ExecutionContext))
+      .expects(utr, *)
       .returning(toFuture(response))
   }
 
@@ -205,6 +219,69 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         status(response) mustBe FORBIDDEN
       }
+    }
+
+    "getAmlsDetails" should {
+
+      val utr = Utr("7000000002")
+
+      def doRequest = controller.getAmlsDetails(utr)(FakeRequest()
+        .withHeaders(CONTENT_TYPE -> "application/json"))
+
+      "not an agent or stride should return forbidden" in {
+
+        inSequence {
+          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithoutIrSAAgent and None and None)
+        }
+
+        val response = doRequest
+        status(response) mustBe FORBIDDEN
+
+      }
+
+      "an agent with non existing utr record should return not found" in {
+
+        inSequence {
+          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+          mockGetAmls(utr)(None)
+        }
+
+        val response = doRequest
+        status(response) mustBe NOT_FOUND
+
+      }
+
+      "an agent with existing aml record should return amls details" in {
+        inSequence {
+          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+          mockGetAmls(utr)(Some(AmlsDetails("abc", Right(RegisteredDetails("001", LocalDate.now())))))
+        }
+
+        val response = doRequest
+        status(response) mustBe OK
+      }
+
+      "a stride user with non existing utr record user should return not found" in {
+
+        inSequence {
+          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithStride and None and Some(Credentials("", "PrivilegedApplication")))
+          mockGetAmls(utr)(None)
+        }
+
+        val response = doRequest
+        status(response) mustBe NOT_FOUND
+      }
+
+      "a stride user with existing aml record should return amls details" in {
+        inSequence {
+          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithStride and None and Some(Credentials("", "PrivilegedApplication")))
+          mockGetAmls(utr)(Some(AmlsDetails("abc", Right(RegisteredDetails("001", LocalDate.now())))))
+        }
+
+        val response = doRequest
+        status(response) mustBe OK
+      }
+
     }
 
     "storeAmlsDetails" should {

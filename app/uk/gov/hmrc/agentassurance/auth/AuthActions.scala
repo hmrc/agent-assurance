@@ -22,9 +22,9 @@ import play.api.mvc._
 import uk.gov.hmrc.agentassurance.controllers.ErrorResults.NoPermission
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{affinityGroup, allEnrolments, credentials}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
@@ -40,6 +40,9 @@ trait AuthActions extends AuthorisedFunctions with BaseController {
 
   private def getEnrolmentInfo(enrolment: Set[Enrolment], enrolmentKey: String, identifier: String): Option[String] =
     enrolment.find(_.key equals enrolmentKey).flatMap(_.identifiers.find(_.key equals identifier).map(_.value))
+
+  def hasRequiredStrideRole(enrolments: Enrolments, strideRoles: Seq[String]): Boolean =
+    strideRoles.exists(s => enrolments.enrolments.exists(_.key == s))
 
   private type AuthorisedRequestWithSaRef = Request[AnyContent] => SaAgentReference => Future[Result]
   private type AuthorisedRequestWithUserId = Request[AnyContent] => String => Future[Result]
@@ -99,4 +102,20 @@ trait AuthActions extends AuthorisedFunctions with BaseController {
             Forbidden
         }
   }
+
+  def withAffinityGroupAgentOrStride(strideRoles: Seq[String])(action: Request[AnyContent] => Future[Result])(implicit ec: ExecutionContext) = Action.async {
+    implicit request =>
+      implicit val hc: HeaderCarrier = fromHeadersAndSession(request.headers, None)
+      authorised().retrieve(allEnrolments and affinityGroup and credentials) {
+        case enrolments ~ affinityGroup ~ optCreds =>
+          optCreds.collect {
+            case creds@Credentials(_, "GovernmentGateway") if affinityGroup.contains(AffinityGroup.Agent) =>
+              creds
+            case creds@Credentials(_, "PrivilegedApplication") if hasRequiredStrideRole(enrolments, strideRoles) =>
+              creds
+          }.map(_ => action(request)).getOrElse(Future successful Forbidden)
+      }
+  }
+
+
 }

@@ -39,7 +39,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         "minimumIRPAYEClients" -> 6,
         "minimumIRSAClients" -> 6,
         "minimumVatDecOrgClients" -> 6,
-        "minimumIRCTClients" -> 6)
+        "minimumIRCTClients" -> 6,
+        "stride.roles.agent-assurance" -> "maintain_agent_manually_assure")
 
   implicit val hc = new HeaderCarrier
 
@@ -373,7 +374,54 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("/amls/utr/:utr") {
+  feature("GET /amls/utr/:utr") {
+
+    val utr = Utr("7000000002")
+
+    def amlsGetUrl(utr: Utr) = s"http://localhost:$port/agent-assurance/amls/utr/${utr.value}"
+
+    val amlsDetails = AmlsDetails("supervisory", Right(RegisteredDetails("0123456789", LocalDate.now())))
+
+    def callGet(utr: Utr) = Await.result(
+      wsClient.url(amlsGetUrl(utr)).get(), 10 seconds
+    )
+
+    scenario("user logged in as an agent should be able to get existing amls record") {
+
+      await(repo.insert(AmlsEntity(utr, amlsDetails, None, LocalDate.now())))
+
+      Given("User is logged in and is an agent")
+      Given("User has an user id")
+      isLoggedInAsAnAfinityGroupAgent(userId)
+
+      When("GET /amls/utr/:identifier is called")
+      val updateResponse: WSResponse = callGet(utr)
+
+      Then("200 Ok is returned")
+      updateResponse.status shouldBe 200
+
+      updateResponse.json shouldBe Json.toJson(amlsDetails)
+    }
+
+    scenario("user logged in an as a stride should be able to get existing amls record") {
+
+      await(repo.insert(AmlsEntity(utr, amlsDetails, None, LocalDate.now())))
+
+      Given("User is logged in and is stride")
+      Given("User has an user id")
+      isLoggedInAsStride(userId)
+
+      When("GET /amls/utr/:identifier is called")
+      val updateResponse: WSResponse = callGet(utr)
+
+      Then("200 Ok is returned")
+      updateResponse.status shouldBe 200
+
+      updateResponse.json shouldBe Json.toJson(amlsDetails)
+    }
+  }
+
+  feature("PUT /amls/utr/:utr") {
 
     val utr = Utr("7000000002")
     val arn = Arn("AARN0000002")

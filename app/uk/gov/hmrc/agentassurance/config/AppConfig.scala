@@ -38,6 +38,8 @@ class AppConfig @Inject()(servicesConfig: ServicesConfig) {
   val minimumVatDecOrgClients = servicesConfig.getInt("minimumVatDecOrgClients")
   val minimumIRCTClients = servicesConfig.getInt("minimumIRCTClients")
 
+  val manuallyAssuredStrideRole = servicesConfig.getString("stride.roles.agent-assurance")
+
   val desEnv = getConf("des.environment")
   val desAuthToken = getConf("des.authorization-token")
 }

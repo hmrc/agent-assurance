@@ -13,6 +13,45 @@ trait BasicUserAuthStubs { WiremockAware =>
 trait AgentAuthStubs extends BasicUserAuthStubs {
   def irAgentReference: String
 
+  def isLoggedInAsAnAfinityGroupAgent(userId: String) = {
+    stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody(
+      s"""
+         |{
+         |  "affinityGroup": "Agent",
+         |  "allEnrolments": [
+         |  ],
+         |  "optionalCredentials" : {
+         |    "providerId" : "$userId",
+         |    "providerType" : "GovernmentGateway"
+         |    }
+         |}
+       """.stripMargin
+    )))
+    this
+  }
+
+  def isLoggedInAsStride(userId: String) = {
+    stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody(
+      s"""
+         |{
+         |  "allEnrolments": [
+         |    {
+         |      "key": "maintain_agent_manually_assure",
+         |      "identifiers": [
+         |      ],
+         |      "state": "Activated"
+         |    }
+         |  ],
+         |  "optionalCredentials" : {
+         |    "providerId" : "$userId",
+         |    "providerType" : "PrivilegedApplication"
+         |    }
+         |}
+       """.stripMargin
+    )))
+    this
+  }
+
   def isLoggedInAndIsEnrolledToIrSaAgent = {
     stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody(
       s"""

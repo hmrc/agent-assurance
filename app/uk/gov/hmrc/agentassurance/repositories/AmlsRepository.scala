@@ -43,6 +43,8 @@ trait AmlsRepository {
   def createOrUpdate(createAmlsRequest: CreateAmlsRequest)(implicit ec: ExecutionContext): Future[Either[AmlsError, Unit]]
 
   def updateArn(utr: Utr, arn: Arn)(implicit ec: ExecutionContext): Future[Either[AmlsError, AmlsDetails]]
+
+  def getAmlDetails(utr: Utr)(implicit ec: ExecutionContext): Future[Option[AmlsDetails]]
 }
 
 @Singleton
@@ -74,6 +76,11 @@ class AmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
             }
           }
     }
+  }
+
+  override def getAmlDetails(utr: Utr)(implicit ec: ExecutionContext): Future[Option[AmlsDetails]] = {
+    val selector = "utr" -> toJsFieldJsValueWrapper(utr.value)
+    find(selector).map(_.headOption.map(_.amlsDetails))
   }
 
   def updateArn(utr: Utr, arn: Arn)(implicit ec: ExecutionContext): Future[Either[AmlsError, AmlsDetails]] = {
