@@ -298,7 +298,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "store amlsDetails successfully in mongo" in {
 
         inSequence {
-          mockAgentAuth()(Right(()))
+          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
           mockCreateAmls(createAmlsRequest)(Right(()))
         }
         val response = doRequest()
@@ -309,7 +309,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         val amlsRequestWithInvalidUtr = createAmlsRequest.copy(utr = Utr("61122334455"))
 
-        mockAgentAuth()(Right(()))
+        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
 
         val response = doRequest(amlsRequestWithInvalidUtr)
         status(response) mustBe BAD_REQUEST
@@ -318,7 +318,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "handle mongo errors during storing amlsDetails" in {
 
         inSequence {
-          mockAgentAuth()(Right(Credentials("", "")))
+          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
           mockCreateAmls(createAmlsRequest)(Left(AmlsUnexpectedMongoError))
         }
         val response = doRequest()
@@ -327,7 +327,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle invalid amlsDetails json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
 
@@ -336,7 +336,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle no json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
@@ -388,7 +388,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle Arns which don't match the ARN pattern json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
 
@@ -397,7 +397,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle invalid Arn json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
 
@@ -406,7 +406,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       "handle no json case in the request" in {
 
-        mockAgentAuth()(Right(()))
+        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
 
         val response = controller.storeAmlsDetails()(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
