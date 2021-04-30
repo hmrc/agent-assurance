@@ -86,7 +86,7 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
         }
     }
 
-  def storeAmlsDetails: Action[AnyContent] = withAffinityGroupAgent { implicit request =>
+  def storeAmlsDetails: Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
     request.body.asJson.map(_.validate[CreateAmlsRequest]) match {
       case Some(JsSuccess(createAmlsRequest, _)) ⇒
         if (Utr.isValid(createAmlsRequest.utr.value)) {

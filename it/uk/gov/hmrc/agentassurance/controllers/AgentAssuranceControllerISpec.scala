@@ -299,7 +299,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
       Given("User is logged in and is an agent")
-      withAffinityGroupAgent
+      isLoggedInAsAnAfinityGroupAgent(userId)
 
       When("POST /amls/create is called")
       val response: WSResponse = doRequest(createAmlsRequest)
@@ -312,9 +312,27 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       dbRecord.createdOn shouldBe LocalDate.now()
     }
 
+    scenario("user logged in an as a stride should be able to create a new Amls record for the first time") {
+
+      Given("User is logged in and is stride")
+      Given("User has an user id")
+      isLoggedInAsStride(userId)
+
+      When("POST /amls/create is called")
+      val response: WSResponse = doRequest(createAmlsRequest)
+
+      Then("201 CREATED is returned")
+      response.status shouldBe 201
+
+      val dbRecord = await(repo.find()).head
+      dbRecord.utr shouldBe utr
+      dbRecord.createdOn shouldBe LocalDate.now()
+
+    }
+
     scenario("user logged in and is an agent should be able to create a new Amls Pending Details record for the first time") {
       Given("User is logged in and is an agent")
-      withAffinityGroupAgent
+      isLoggedInAsAnAfinityGroupAgent(userId)
 
       When("POST /amls/create is called with PendingAmlsDetails")
       val response: WSResponse = doRequest(pendingAmlsDetailsRequest)
@@ -342,7 +360,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     scenario("update existing amls record no ARN should be allowed") {
 
       Given("User is logged in and is an agent")
-      withAffinityGroupAgent
+      isLoggedInAsAnAfinityGroupAgent(userId)
 
       When("POST /amls/create is called")
       val response: WSResponse = doRequest(createAmlsRequest)
@@ -364,7 +382,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     scenario("return bad_request if UTR is not valid") {
 
       Given("User is logged in and is an agent")
-      withAffinityGroupAgent
+      isLoggedInAsAnAfinityGroupAgent(userId)
 
       When("POST /amls/create is called with invalid utr")
       val response: WSResponse = doRequest(createAmlsRequest.copy(utr = Utr("61122334455")))
