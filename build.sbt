@@ -2,11 +2,11 @@ import sbt.Tests.{Group, SubProcess}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 
 lazy val compileDeps = Seq(
-  "uk.gov.hmrc" %% "bootstrap-backend-play-27" % "2.24.0",
-  "uk.gov.hmrc" %% "auth-client" % "3.0.0-play-27",
-  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.19.0-play-27",
-  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.4.0",
-  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.30.0-play-27"
+  "uk.gov.hmrc" %% "bootstrap-backend-play-27" % "5.6.0",
+  "uk.gov.hmrc" %% "auth-client" % "5.6.0-play-27",
+  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.25.0-play-27",
+  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.7.0-play-27",
+  "uk.gov.hmrc" %% "simple-reactivemongo" % "8.0.0-play-27"
 )
 
 def testDeps(scope: String) = Seq(
@@ -38,11 +38,11 @@ lazy val root = Project("agent-assurance", file("."))
     scalaVersion := "2.12.10",
     PlayKeys.playDefaultPort := 9565,
     resolvers := Seq(
-      Resolver.bintrayRepo("hmrc", "releases"),
-      Resolver.bintrayRepo("hmrc", "release-candidates"),
       Resolver.typesafeRepo("releases"),
-      Resolver.jcenterRepo
+      Resolver.url("HMRC-open-artefacts-ivy", url("https://open.artefacts.tax.service.gov.uk/ivy2"))(Resolver.ivyStylePatterns)
     ),
+    resolvers += "HMRC-open-artefacts-maven" at "https://open.artefacts.tax.service.gov.uk/maven2",
+    resolvers += "HMRC-local-artefacts-maven" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases-local",
     libraryDependencies ++= Seq(
       compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.4.4" cross CrossVersion.full),
       "com.github.ghik" % "silencer-lib" % "1.4.4" % Provided cross CrossVersion.full
@@ -71,5 +71,5 @@ lazy val root = Project("agent-assurance", file("."))
     unmanagedSourceDirectories in IntegrationTest += baseDirectory(_ / "it").value,
     parallelExecution in IntegrationTest := false
   )
-  .enablePlugins(Seq(PlayScala,SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory) : _*)
+  .enablePlugins(Seq(PlayScala,SbtDistributablesPlugin) : _*)
 

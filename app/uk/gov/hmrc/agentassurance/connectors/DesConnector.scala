@@ -17,10 +17,10 @@
 package uk.gov.hmrc.agentassurance.connectors
 
 import java.net.URL
-
 import com.codahale.metrics.MetricRegistry
 import com.google.inject.ImplementedBy
 import com.kenshoo.play.metrics.Metrics
+
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Reads._
 import play.api.libs.json._
@@ -29,11 +29,10 @@ import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
-import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpReads}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 case class ClientRelationship(agents: Seq[Agent])
@@ -69,6 +68,19 @@ class DesConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit
   private val authorizationToken = appConfig.desAuthToken
   private val environment = appConfig.desEnv
 
+  private val Environment = "Environment"
+  private val CorrelationId = "CorrelationId"
+  private val Authorization_ = "Authorization"
+
+  private def explicitHeaders =
+    Seq(
+      Environment   -> s"$environment",
+      CorrelationId -> UUID.randomUUID().toString,
+      Authorization_ -> s"Bearer $authorizationToken"
+    )
+
+
+
   def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
     val encodedClientId = UriEncoding.encodePathSegment(clientIdentifier.value, "UTF-8")
     val encodedClientType: String = {
@@ -91,7 +103,7 @@ class DesConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit
       authorization = Some(Authorization(s"Bearer $authorizationToken")),
       extraHeaders = hc.extraHeaders :+ "Environment" -> environment)
     monitor(s"ConsumedAPI-DES-$apiName-GET") {
-      httpGet.GET[A](url.toString)(implicitly[HttpReads[A]], desHeaderCarrier, ec)
+      httpGet.GET[A](url.toString, headers = explicitHeaders)(implicitly[HttpReads[A]], desHeaderCarrier, ec)
     }
   }
 }
