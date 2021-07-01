@@ -119,7 +119,7 @@ class PropertiesControllerISpec extends UnitSpec
       val response: WSResponse = Await.result(wsClient.url(s"$url/$key")
         .withHttpHeaders("Content-Type" -> "application/json").post(badlyFormedJson), 10 seconds)
       response.status shouldBe BAD_REQUEST
-      response.body.toLowerCase.contains("bad request") shouldBe true
+      response.body.toLowerCase.contains("invalid json: illegal unquoted character") shouldBe true
     }
 
     "return 400 (with appropriate reason) json does not conform to the api" in {

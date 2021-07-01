@@ -27,7 +27,7 @@ import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{affinityGroup, allEnrolment
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -49,7 +49,7 @@ trait AuthActions extends AuthorisedFunctions with BaseController {
 
   def AuthorisedIRSAAgent[A](body: AuthorisedRequestWithSaRef)(implicit ec: ExecutionContext): Action[AnyContent] = Action.async {
     implicit request =>
-      implicit val hc: HeaderCarrier = fromHeadersAndSession(request.headers, None)
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
       authorised(AuthProviders(GovernmentGateway)).retrieve(allEnrolments) {
         enrol =>
           getEnrolmentInfo(enrol.enrolments, "IR-SA-AGENT", "IRAgentReference") match {
@@ -65,7 +65,7 @@ trait AuthActions extends AuthorisedFunctions with BaseController {
 
   def AuthorisedWithUserId[A](body: AuthorisedRequestWithUserId)(implicit ec: ExecutionContext): Action[AnyContent] = Action.async {
     implicit request =>
-      implicit val hc: HeaderCarrier = fromHeadersAndSession(request.headers, None)
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
       authorised(AuthProviders(GovernmentGateway)).retrieve(Retrievals.credentials) {
         case Some(Credentials(providerId, _)) => body(request)(providerId)
         case None => Future successful (NoPermission)
@@ -79,7 +79,7 @@ trait AuthActions extends AuthorisedFunctions with BaseController {
   }
 
   def BasicAuth[A](body: Request[AnyContent] => Future[Result])(implicit ec: ExecutionContext): Action[AnyContent] = Action.async { implicit request =>
-    implicit val hc: HeaderCarrier = fromHeadersAndSession(request.headers, None)
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     authorised() {
       body(request)
     } recoverWith {
@@ -91,7 +91,7 @@ trait AuthActions extends AuthorisedFunctions with BaseController {
 
   def withAffinityGroupAgent(action: Request[AnyContent] => Future[Result])(implicit ec: ExecutionContext) = Action.async {
     implicit request =>
-      implicit val hc: HeaderCarrier = fromHeadersAndSession(request.headers, None)
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
       authorised(AuthProviders(GovernmentGateway) and AffinityGroup.Agent) {
         action(request)
       }.recover {
@@ -105,7 +105,7 @@ trait AuthActions extends AuthorisedFunctions with BaseController {
 
   def withAffinityGroupAgentOrStride(strideRoles: Seq[String])(action: Request[AnyContent] => Future[Result])(implicit ec: ExecutionContext) = Action.async {
     implicit request =>
-      implicit val hc: HeaderCarrier = fromHeadersAndSession(request.headers, None)
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
       authorised().retrieve(allEnrolments and affinityGroup and credentials) {
         case enrolments ~ affinityGroup ~ optCreds =>
           optCreds.collect {
