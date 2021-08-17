@@ -22,7 +22,13 @@ import java.time.format.DateTimeFormatter
 import play.api.libs.json.{Format, Json, OFormat, _}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 
-case class RegisteredDetails(membershipNumber: String, membershipExpiresOn: LocalDate)
+case class RegisteredDetails(
+                              membershipNumber: String,
+                              membershipExpiresOn: LocalDate,
+                              amlsSafeId: Option[String] = None,
+                              agentBPRSafeId: Option[String] = None){
+  val safeIdsMatch: Option[Boolean] = amlsSafeId.flatMap(amls => agentBPRSafeId.map(_ == amls))
+}
 
 object RegisteredDetails {
   implicit val format = Json.format[RegisteredDetails]
@@ -46,11 +52,15 @@ object AmlsDetails {
 
       val mayBeMembershipNumber = (json \ "membershipNumber").asOpt[String]
 
+      val amlsSafeId = (json \ "amlsSafeId").asOpt[String]
+
+      val agentBPRSafeId = (json \ "agentBPRSafeId").asOpt[String]
+
       mayBeMembershipNumber match {
 
         case Some(membershipNumber) =>
           val membershipExpiresOn = LocalDate.parse((json \ "membershipExpiresOn").as[String], formatter)
-          JsSuccess(AmlsDetails(supervisoryBody, Right(RegisteredDetails(membershipNumber, membershipExpiresOn))))
+          JsSuccess(AmlsDetails(supervisoryBody, Right(RegisteredDetails(membershipNumber, membershipExpiresOn, amlsSafeId, agentBPRSafeId))))
 
         case None =>
           val appliedOn = LocalDate.parse((json \ "appliedOn").as[String], formatter)

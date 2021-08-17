@@ -2,10 +2,9 @@ import sbt.Tests.{Group, SubProcess}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 
 lazy val compileDeps = Seq(
-  "uk.gov.hmrc" %% "bootstrap-backend-play-27" % "5.6.0",
-  "uk.gov.hmrc" %% "auth-client" % "5.6.0-play-27",
+  "uk.gov.hmrc" %% "bootstrap-backend-play-27" % "5.11.0",
   "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.25.0-play-27",
-  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.7.0-play-27",
+  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.8.0-play-27",
   "uk.gov.hmrc" %% "simple-reactivemongo" % "8.0.0-play-27"
 )
 
@@ -14,9 +13,9 @@ def testDeps(scope: String) = Seq(
   "org.scalamock" %% "scalamock" % "4.4.0" % scope,
   "org.mockito" % "mockito-core" % "2.27.0" % scope,
   "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.3" % scope, //upgrade
-  "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-26" % scope,
+  "uk.gov.hmrc" %% "hmrctest" % "3.10.0-play-26" % scope,
   "com.github.tomakehurst" % "wiremock-jre8" % "2.27.1" % scope,
-  "uk.gov.hmrc" %% "reactivemongo-test" % "4.21.0-play-27" % scope
+  "uk.gov.hmrc" %% "reactivemongo-test" % "5.0.0-play-27" % scope
 )
 
 lazy val scoverageSettings = {

@@ -30,6 +30,7 @@ import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -126,6 +127,17 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
         BadRequest("Could not parse JSON in request")
       case None ⇒
         BadRequest("No JSON found in request body")
+    }
+  }
+
+  private def is5xx(u: UpstreamErrorResponse): Boolean = u.statusCode >= 500 && u.statusCode < 600
+
+  def getAmlsSubscription(amlsRegistrationNumber: String): Action[AnyContent] = Action.async { implicit request =>
+    desConnector.getAmlsSubscriptionStatus(amlsRegistrationNumber).map(amls => Ok(Json.toJson(amls))).recover {
+      case e: UpstreamErrorResponse if is5xx(e) => {
+        logger.warn(s"DES return status ${e.statusCode} ${e.message}")
+        InternalServerError
+      }
     }
   }
 
