@@ -27,6 +27,7 @@ import play.api.libs.json._
 import play.utils.UriEncoding
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpReads}
@@ -56,6 +57,7 @@ object RegistrationRelationshipResponse {
 @ImplementedBy(classOf[DesConnectorImpl])
 trait DesConnector {
   def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]]
+  def getAmlsSubscriptionStatus(amlsRegistrationNumber: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord]
 }
 
 @Singleton
@@ -96,6 +98,12 @@ class DesConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit
     getWithDesHeaders[ClientRelationship]("GetStatusAgentRelationship", url).map(_.agents
       .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
       .flatMap(_.agentId))
+  }
+
+  //API #1028 Get Subscription Status
+  def getAmlsSubscriptionStatus(amlsRegistrationNumber: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord] = {
+    val url = new URL(s"$baseUrl/anti-money-laundering/subscription/$amlsRegistrationNumber/status")
+    getWithDesHeaders[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
   }
 
   private def getWithDesHeaders[A: HttpReads](apiName: String, url: URL)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
