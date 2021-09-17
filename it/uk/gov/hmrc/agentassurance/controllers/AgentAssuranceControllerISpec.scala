@@ -627,6 +627,35 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
+  feature("GET /amls-subscription/:amlsRegistrationNumber"){
+    val validAmlsRegistrationNumber = "XAML00000700000"
+    def url(amlsRegistrationNumber: String) = s"http://localhost:$port/agent-assurance/amls-subscription/$amlsRegistrationNumber"
+
+    scenario("return 200 when amlsRegistrationNumber is valid"){
+
+      Given("amlsRegistrationNumber valid")
+      amlsSubscriptionRecordExists(validAmlsRegistrationNumber)
+
+      When(s"GET /amls-subscription/$validAmlsRegistrationNumber is called")
+      val response: WSResponse = Await.result(wsClient.url(url(validAmlsRegistrationNumber)).get(), 10 seconds)
+
+      Then("200 OK is returned")
+      response.status shouldBe 200
+    }
+
+    scenario("return 404 when amlsRegistrationNumber is not found"){
+
+      Given("amlsRegistrationNumber valid")
+      amlsSubscriptionRecordFails(validAmlsRegistrationNumber, 404)
+
+      When(s"GET /amls-subscription/$validAmlsRegistrationNumber is called")
+      val response: WSResponse = Await.result(wsClient.url(url(validAmlsRegistrationNumber)).get(), 10 seconds)
+
+      Then("404 NOT_FOUND is returned")
+      response.status shouldBe 404
+    }
+  }
+
   def delegatedEnrolmentClientCheck(enrolment: String, acceptableClientUrl: String): Unit = {
     feature(s"/acceptableNumberOfClients/service/$enrolment") {
 

@@ -16,12 +16,9 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import java.net.URL
 import com.codahale.metrics.MetricRegistry
 import com.google.inject.ImplementedBy
 import com.kenshoo.play.metrics.Metrics
-
-import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 import play.utils.UriEncoding
@@ -30,10 +27,12 @@ import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
-import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpReads}
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpReads}
 
+import java.net.URL
 import java.util.UUID
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 case class ClientRelationship(agents: Seq[Agent])

@@ -93,6 +93,25 @@ trait DesStubs {
     )
   }
 
+  def amlsSubscriptionRecordExists(amlsRegNumber: String) = {
+    stubFor(get(urlEqualTo(s"/anti-money-laundering/subscription/$amlsRegNumber/status"))
+      .willReturn(aResponse()
+        .withStatus(200).withBody(
+        s"""{
+           |"formBundleStatus": "Approved",
+           |"safeId": "xyz",
+           |"currentRegYearStartDate": "2021-01-01",
+           |"currentRegYearEndDate": "2021-12-31",
+           |"suspended": false
+           |}""".stripMargin)))
+  }
+
+  def amlsSubscriptionRecordFails(amlsRegNumber: String, status: Int) = {
+    stubFor(get(urlEqualTo(s"/anti-money-laundering/subscription/$amlsRegNumber/status"))
+      .willReturn(aResponse()
+        .withStatus(status)))
+  }
+
   private def clientIdentifierType(identifer: TaxIdentifier): String =
     identifer match {
       case _: Nino => "nino"
