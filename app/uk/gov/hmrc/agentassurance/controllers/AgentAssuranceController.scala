@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import javax.inject._
 import play.api.Logger
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc._
@@ -33,6 +32,7 @@ import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -134,6 +134,7 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
 
   def getAmlsSubscription(amlsRegistrationNumber: String): Action[AnyContent] = Action.async { implicit request =>
     desConnector.getAmlsSubscriptionStatus(amlsRegistrationNumber).map(amls => Ok(Json.toJson(amls))).recover {
+      case e: UpstreamErrorResponse if e.statusCode == 404 => NotFound
       case e: UpstreamErrorResponse if is5xx(e) => {
         logger.warn(s"DES return status ${e.statusCode} ${e.message}")
         InternalServerError
