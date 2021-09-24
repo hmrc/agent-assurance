@@ -80,8 +80,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
   override def irAgentReference: String = "IRSA-123"
 
-  feature("/irSaAgentEnrolment") {
-    scenario("User is enrolled in IR_SA_AGENT") {
+  Feature("/irSaAgentEnrolment") {
+    Scenario("User is enrolled in IR_SA_AGENT") {
       Given("User is enrolled in IR_SA_AGENT")
       isLoggedInAndIsEnrolledToIrSaAgent
 
@@ -92,7 +92,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 204
     }
 
-    scenario("User is not enrolled in IR_SA_AGENT") {
+    Scenario("User is not enrolled in IR_SA_AGENT") {
       Given("User is not enrolled in IR_SA_AGENT")
       isLoggedInAndNotEnrolledInIrSaAgent
 
@@ -103,7 +103,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 403
     }
 
-    scenario("User is not logged in") {
+    Scenario("User is not logged in") {
       Given("User is not logged in")
       isNotLoggedIn
 
@@ -115,8 +115,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("/activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference") {
-    scenario("User provides a NINO which has an active relationship in CESA") {
+  Feature("/activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference") {
+    Scenario("User provides a NINO which has an active relationship in CESA") {
       Given("User is logged in")
       isLoggedInWithoutUserId
 
@@ -130,7 +130,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 200
     }
 
-    scenario("User provides a NINO which has no active relationship in CESA") {
+    Scenario("User provides a NINO which has no active relationship in CESA") {
       Given("User is logged in")
       isLoggedInWithoutUserId
 
@@ -144,7 +144,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 403
     }
 
-    scenario("User provides a NINO which has an active relationship in CESA but with a different Agent Reference") {
+    Scenario("User provides a NINO which has an active relationship in CESA but with a different Agent Reference") {
       Given("User is logged in")
       isLoggedInWithoutUserId
 
@@ -158,7 +158,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 403
     }
 
-    scenario("User provides an invalid NINO") {
+    Scenario("User provides an invalid NINO") {
       When("GET /activeCesaRelationship/nino/AA000000/saAgentReference/IRSA-123 is called")
       val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("INVALID")).get(), 10 seconds)
 
@@ -166,7 +166,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 400
     }
 
-    scenario("DES return 500 server error when user calls the endpoint") {
+    Scenario("DES return 500 server error when user calls the endpoint") {
       Given("User is logged in")
       isLoggedInWithoutUserId
 
@@ -180,7 +180,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 502
     }
 
-    scenario("User is not logged in") {
+    Scenario("User is not logged in") {
       Given("User is not logged in")
       isNotLoggedIn
 
@@ -192,8 +192,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("/activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReference") {
-    scenario("User provides a UTR which has an active relationship in CESA") {
+  Feature("/activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReference") {
+    Scenario("User provides a UTR which has an active relationship in CESA") {
       Given("User is logged in")
       isLoggedInWithoutUserId
 
@@ -207,7 +207,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 200
     }
 
-    scenario("User provides a UTR which has no active relationship in CESA") {
+    Scenario("User provides a UTR which has no active relationship in CESA") {
       Given("User is logged in")
       isLoggedInWithoutUserId
 
@@ -221,7 +221,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 403
     }
 
-    scenario("User provides a UTR which has an active relationship in CESA but with a different Agent Reference") {
+    Scenario("User provides a UTR which has an active relationship in CESA but with a different Agent Reference") {
       Given("User is logged in")
       isLoggedInWithoutUserId
 
@@ -235,7 +235,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 403
     }
 
-    scenario("User provides an invalid UTR") {
+    Scenario("User provides an invalid UTR") {
       Given("User is logged in")
       isLoggedInWithoutUserId
 
@@ -249,7 +249,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 400
     }
 
-    scenario("DES return 500 server error when user calls the endpoint") {
+    Scenario("DES return 500 server error when user calls the endpoint") {
       Given("User is logged in")
       isLoggedInWithoutUserId
 
@@ -263,7 +263,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 502
     }
 
-    scenario("User is not logged") {
+    Scenario("User is not logged") {
       Given("User is logged in")
       isNotLoggedIn
 
@@ -281,7 +281,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   delegatedEnrolmentClientCheck(vatDecOrgKey, acceptableNumberOfVatDevOrgClientsUrl)
   delegatedEnrolmentClientCheck(irCtKey, acceptableNumberOfIRCTClientsUrl)
 
-  feature("/amls") {
+  Feature("/amls") {
 
     val amlsCreateUrl = s"http://localhost:$port/agent-assurance/amls"
 
@@ -297,7 +297,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
           .post(Json.toJson(createAmlsRequest)), 10 seconds
       )
 
-    scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
+    Scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
       Given("User is logged in and is an agent")
       isLoggedInAsAnAfinityGroupAgent(userId)
 
@@ -312,7 +312,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       dbRecord.createdOn shouldBe LocalDate.now()
     }
 
-    scenario("user logged in an as a stride should be able to create a new Amls record for the first time") {
+    Scenario("user logged in an as a stride should be able to create a new Amls record for the first time") {
 
       Given("User is logged in and is stride")
       Given("User has an user id")
@@ -330,7 +330,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     }
 
-    scenario("user logged in and is an agent should be able to create a new Amls Pending Details record for the first time") {
+    Scenario("user logged in and is an agent should be able to create a new Amls Pending Details record for the first time") {
       Given("User is logged in and is an agent")
       isLoggedInAsAnAfinityGroupAgent(userId)
 
@@ -346,7 +346,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       dbRecord.amlsDetails.details shouldBe Left(PendingDetails(LocalDate.now().minusDays(10)))
     }
 
-    scenario("User is not logged in") {
+    Scenario("User is not logged in") {
       Given("User is not logged in")
       isNotLoggedIn
 
@@ -357,7 +357,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 401
     }
 
-    scenario("update existing amls record no ARN should be allowed") {
+    Scenario("update existing amls record no ARN should be allowed") {
 
       Given("User is logged in and is an agent")
       isLoggedInAsAnAfinityGroupAgent(userId)
@@ -379,7 +379,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       dbRecord.amlsDetails.supervisoryBody shouldBe "updated-supervisory"
     }
 
-    scenario("return bad_request if UTR is not valid") {
+    Scenario("return bad_request if UTR is not valid") {
 
       Given("User is logged in and is an agent")
       isLoggedInAsAnAfinityGroupAgent(userId)
@@ -392,7 +392,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("GET /amls/utr/:utr") {
+  Feature("GET /amls/utr/:utr") {
 
     val utr = Utr("7000000002")
 
@@ -404,7 +404,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       wsClient.url(amlsGetUrl(utr)).get(), 10 seconds
     )
 
-    scenario("user logged in as an agent should be able to get existing amls record") {
+    Scenario("user logged in as an agent should be able to get existing amls record") {
 
       await(repo.insert(AmlsEntity(utr, amlsDetails, None, LocalDate.now())))
 
@@ -421,7 +421,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       updateResponse.json shouldBe Json.toJson(amlsDetails)
     }
 
-    scenario("user logged in an as a stride should be able to get existing amls record") {
+    Scenario("user logged in an as a stride should be able to get existing amls record") {
 
       await(repo.insert(AmlsEntity(utr, amlsDetails, None, LocalDate.now())))
 
@@ -439,7 +439,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("PUT /amls/utr/:utr") {
+  Feature("PUT /amls/utr/:utr") {
 
     val utr = Utr("7000000002")
     val arn = Arn("AARN0000002")
@@ -455,7 +455,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
           .put(Json.toJson(arn).toString()), 10 seconds
       )
 
-    scenario("user logged in and is an agent should be able to update existing amls record with ARN") {
+    Scenario("user logged in and is an agent should be able to update existing amls record with ARN") {
 
       await(repo.insert(AmlsEntity(utr, amlsDetails, None, LocalDate.now())))
 
@@ -471,7 +471,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       updateResponse.json shouldBe Json.toJson(amlsDetails)
     }
 
-    scenario("User is not logged in") {
+    Scenario("User is not logged in") {
       Given("User is not logged in")
       isNotLoggedIn
 
@@ -482,7 +482,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 401
     }
 
-    scenario("updating an existing amls record(with ARN) with the same ARN again should return existing amls record") {
+    Scenario("updating an existing amls record(with ARN) with the same ARN again should return existing amls record") {
 
       await(repo.insert(AmlsEntity(utr, amlsDetails, Some(arn), LocalDate.now())))
 
@@ -497,7 +497,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       newResponse.json shouldBe Json.toJson(amlsDetails)
     }
 
-    scenario("updates to an existing amls record(with ARN) with a different ARN should be Forbidden") {
+    Scenario("updates to an existing amls record(with ARN) with a different ARN should be Forbidden") {
 
       await(repo.insert(AmlsEntity(utr, amlsDetails, Some(Arn("123")), LocalDate.now())))
 
@@ -511,7 +511,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       newResponse.status shouldBe 403
     }
 
-    scenario("updating ARN for a non-existing amls record should return a bad_request") {
+    Scenario("updating ARN for a non-existing amls record should return a bad_request") {
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
@@ -523,7 +523,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       updateResponse.status shouldBe 404
     }
 
-    scenario("ARN to be unique to each UTR in the MDTP database") {
+    Scenario("ARN to be unique to each UTR in the MDTP database") {
 
       val newUtr = Utr("8588532862")
       await(repo.ensureIndexes)
@@ -541,7 +541,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("/overseas-agents/amls") {
+  Feature("/overseas-agents/amls") {
     val amlsCreateUrl = s"http://localhost:$port/agent-assurance/overseas-agents/amls"
 
     val arn = Arn("AARN0000002")
@@ -556,7 +556,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
           .post(Json.toJson(request)), 10 seconds
       )
 
-    scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
+    Scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
       Given("User is logged in and is an overseas agent")
       withAffinityGroupAgent
 
@@ -570,7 +570,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       dbRecord.arn shouldBe arn
     }
 
-    scenario("user logged in and is an agent should be able to create a new Amls record without membershipId") {
+    Scenario("user logged in and is an agent should be able to create a new Amls record without membershipId") {
       Given("User is logged in and is an overseas agent")
       withAffinityGroupAgent
 
@@ -585,7 +585,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       dbRecord.amlsDetails.membershipNumber shouldBe None
     }
 
-    scenario("User is not logged in") {
+    Scenario("User is not logged in") {
       Given("User is not logged in")
       isNotLoggedIn
 
@@ -596,7 +596,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 401
     }
 
-    scenario("return bad_request if Arn is not valid") {
+    Scenario("return bad_request if Arn is not valid") {
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
 
@@ -607,7 +607,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 400
     }
 
-    scenario("return conflict if the amls record exists") {
+    Scenario("return conflict if the amls record exists") {
       Given("User is logged in and is an overseas agent")
       withAffinityGroupAgent
 
@@ -627,11 +627,11 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     }
   }
 
-  feature("GET /amls-subscription/:amlsRegistrationNumber"){
+  Feature("GET /amls-subscription/:amlsRegistrationNumber"){
     val validAmlsRegistrationNumber = "XAML00000700000"
     def url(amlsRegistrationNumber: String) = s"http://localhost:$port/agent-assurance/amls-subscription/$amlsRegistrationNumber"
 
-    scenario("return 200 when amlsRegistrationNumber is valid"){
+    Scenario("return 200 when amlsRegistrationNumber is valid"){
 
       Given("amlsRegistrationNumber valid")
       amlsSubscriptionRecordExists(validAmlsRegistrationNumber)
@@ -643,7 +643,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 200
     }
 
-    scenario("return 404 when amlsRegistrationNumber is not found"){
+    Scenario("return 404 when amlsRegistrationNumber is not found"){
 
       Given("amlsRegistrationNumber valid")
       amlsSubscriptionRecordFails(validAmlsRegistrationNumber, 404)
@@ -657,9 +657,9 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   }
 
   def delegatedEnrolmentClientCheck(enrolment: String, acceptableClientUrl: String): Unit = {
-    feature(s"/acceptableNumberOfClients/service/$enrolment") {
+    Feature(s"/acceptableNumberOfClients/service/$enrolment") {
 
-      scenario(s"Logged in user is an agent with sufficient allocated $enrolment clients") {
+      Scenario(s"Logged in user is an agent with sufficient allocated $enrolment clients") {
         Given("User has an user id")
         isLoggedInWithUserId(userId)
 
@@ -673,7 +673,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         response.status shouldBe 204
       }
 
-      scenario(s"Logged in user is an agent with insufficient allocated $enrolment clients") {
+      Scenario(s"Logged in user is an agent with insufficient allocated $enrolment clients") {
         Given("User has an user id")
         isLoggedInWithUserId(userId)
 
@@ -687,7 +687,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         response.status shouldBe 403
       }
 
-      scenario(s"Logged in user is an agent with no allocated $enrolment clients") {
+      Scenario(s"Logged in user is an agent with no allocated $enrolment clients") {
         Given("User has an user id")
         isLoggedInWithUserId(userId)
 
@@ -701,7 +701,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         response.status shouldBe 403
       }
 
-      scenario("Logged in user is not an agent") {
+      Scenario("Logged in user is not an agent") {
         Given("User has no user id")
         isLoggedInWithoutUserId
 
@@ -712,7 +712,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         response.status shouldBe 403
       }
 
-      scenario(s"User is not logged in when $enrolment") {
+      Scenario(s"User is not logged in when $enrolment") {
         Given("User is not logged in")
         isNotLoggedIn
 
