@@ -3,11 +3,12 @@ package uk.gov.hmrc.agentassurance.connectors
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.stubs.EnrolmentStoreProxyStubs
 import uk.gov.hmrc.agentassurance.support.{MetricTestSupport, WireMockSupport}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.agentassurance.support.UnitSpec
 
 import scala.concurrent.ExecutionContext
 
