@@ -286,9 +286,9 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     val amlsCreateUrl = s"http://localhost:$port/agent-assurance/amls"
 
     val utr = Utr("7000000002")
-    val amlsDetails = AmlsDetails("supervisory", Right(RegisteredDetails("0123456789", LocalDate.now())))
+    val amlsDetails = AmlsDetails("supervisory", Right(RegisteredDetails("0123456789", Some(LocalDate.now()))))
     val createAmlsRequest = CreateAmlsRequest(utr, amlsDetails)
-    val pendingAmlsDetailsRequest =  CreateAmlsRequest(utr, AmlsDetails("supervisory", Left(PendingDetails(LocalDate.now().minusDays(10)))))
+    val pendingAmlsDetailsRequest =  CreateAmlsRequest(utr, AmlsDetails("supervisory", Left(PendingDetails(Some(LocalDate.now().minusDays(10))))))
 
     def doRequest(createAmlsRequest: CreateAmlsRequest) =
       Await.result(
@@ -343,7 +343,45 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       val dbRecord = await(repo.find()).head
       dbRecord.utr shouldBe utr
       dbRecord.createdOn shouldBe LocalDate.now()
-      dbRecord.amlsDetails.details shouldBe Left(PendingDetails(LocalDate.now().minusDays(10)))
+      dbRecord.amlsDetails.details shouldBe Left(PendingDetails(Some(LocalDate.now().minusDays(10))))
+    }
+
+    Scenario("stride user should be able to create a registered Amls record without a date (APB-5382)") {
+
+      Given("User is logged in and is stride")
+      Given("User has an user id")
+      isLoggedInAsStride(userId)
+
+      When("POST /amls/create is called with a registered AMLS record that doesn't have an expiry date")
+      val amlsDetailsNoDate = amlsDetails.copy(details = Right(RegisteredDetails("0123456789", None)))
+      val response: WSResponse = doRequest(createAmlsRequest.copy(amlsDetails = amlsDetailsNoDate))
+
+      Then("201 CREATED is returned")
+      response.status shouldBe 201
+
+      val dbRecord = await(repo.find()).head
+      dbRecord.utr shouldBe utr
+      dbRecord.amlsDetails shouldBe amlsDetailsNoDate
+      dbRecord.createdOn shouldBe LocalDate.now()
+    }
+
+    Scenario("stride user should be able to create a pending Amls record without a date (APB-5382)") {
+
+      Given("User is logged in and is stride")
+      Given("User has an user id")
+      isLoggedInAsStride(userId)
+
+      When("POST /amls/create is called with a pending AMLS record that doesn't have an applied date")
+      val amlsDetailsNoDate = amlsDetails.copy(details = Left(PendingDetails(None)))
+      val response: WSResponse = doRequest(createAmlsRequest.copy(amlsDetails = amlsDetailsNoDate))
+
+      Then("201 CREATED is returned")
+      response.status shouldBe 201
+
+      val dbRecord = await(repo.find()).head
+      dbRecord.utr shouldBe utr
+      dbRecord.amlsDetails shouldBe amlsDetailsNoDate
+      dbRecord.createdOn shouldBe LocalDate.now()
     }
 
     Scenario("User is not logged in") {
@@ -398,7 +436,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     def amlsGetUrl(utr: Utr) = s"http://localhost:$port/agent-assurance/amls/utr/${utr.value}"
 
-    val amlsDetails = AmlsDetails("supervisory", Right(RegisteredDetails("0123456789", LocalDate.now())))
+    val amlsDetails = AmlsDetails("supervisory", Right(RegisteredDetails("0123456789", Some(LocalDate.now()))))
 
     def callGet(utr: Utr) = Await.result(
       wsClient.url(amlsGetUrl(utr)).get(), 10 seconds
@@ -446,7 +484,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     def amlsUpdateUrl(utr: Utr) = s"http://localhost:$port/agent-assurance/amls/utr/${utr.value}"
 
-    val amlsDetails = AmlsDetails("supervisory", Right(RegisteredDetails("0123456789", LocalDate.now())))
+    val amlsDetails = AmlsDetails("supervisory", Right(RegisteredDetails("0123456789", Some(LocalDate.now()))))
 
     def callPut(utr: Utr, arn: Arn) =
       Await.result(

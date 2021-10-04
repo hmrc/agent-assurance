@@ -24,7 +24,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 
 case class RegisteredDetails(
                               membershipNumber: String,
-                              membershipExpiresOn: LocalDate,
+                              membershipExpiresOn: Option[LocalDate], // optional due to APB-5382
                               amlsSafeId: Option[String] = None,
                               agentBPRSafeId: Option[String] = None){
   val safeIdsMatch: Option[Boolean] = amlsSafeId.flatMap(amls => agentBPRSafeId.map(_ == amls))
@@ -34,7 +34,7 @@ object RegisteredDetails {
   implicit val format = Json.format[RegisteredDetails]
 }
 
-case class PendingDetails(appliedOn: LocalDate)
+case class PendingDetails(appliedOn: Option[LocalDate]) // optional due to APB-5382
 
 object PendingDetails {
   implicit val format = Json.format[PendingDetails]
@@ -59,11 +59,11 @@ object AmlsDetails {
       mayBeMembershipNumber match {
 
         case Some(membershipNumber) =>
-          val membershipExpiresOn = LocalDate.parse((json \ "membershipExpiresOn").as[String], formatter)
+          val membershipExpiresOn = (json \ "membershipExpiresOn").asOpt[String].map(LocalDate.parse(_, formatter))
           JsSuccess(AmlsDetails(supervisoryBody, Right(RegisteredDetails(membershipNumber, membershipExpiresOn, amlsSafeId, agentBPRSafeId))))
 
         case None =>
-          val appliedOn = LocalDate.parse((json \ "appliedOn").as[String], formatter)
+          val appliedOn = (json \ "appliedOn").asOpt[String].map(LocalDate.parse(_, formatter))
           JsSuccess(AmlsDetails(supervisoryBody, Left(PendingDetails(appliedOn))))
       }
     }
