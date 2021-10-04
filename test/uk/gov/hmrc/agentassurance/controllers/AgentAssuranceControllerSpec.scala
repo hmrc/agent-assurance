@@ -254,7 +254,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "an agent with existing aml record should return amls details" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
-          mockGetAmls(utr)(Some(AmlsDetails("abc", Right(RegisteredDetails("001", LocalDate.now())))))
+          mockGetAmls(utr)(Some(AmlsDetails("abc", Right(RegisteredDetails("001", Some(LocalDate.now()))))))
         }
 
         val response = doRequest
@@ -275,7 +275,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "a stride user with existing aml record should return amls details" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithStride and None and Some(Credentials("", "PrivilegedApplication")))
-          mockGetAmls(utr)(Some(AmlsDetails("abc", Right(RegisteredDetails("001", LocalDate.now())))))
+          mockGetAmls(utr)(Some(AmlsDetails("abc", Right(RegisteredDetails("001", Some(LocalDate.now()))))))
         }
 
         val response = doRequest
@@ -286,7 +286,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
     "storeAmlsDetails" should {
 
-      val amlsDetails = AmlsDetails("supervisoryBody", Right(RegisteredDetails("0123456789", LocalDate.now())))
+      val amlsDetails = AmlsDetails("supervisoryBody", Right(RegisteredDetails("0123456789", Some(LocalDate.now()))))
       val createAmlsRequest = CreateAmlsRequest(utr, amlsDetails)
 
       def doRequest(createAmlsRequest: CreateAmlsRequest = createAmlsRequest) =
@@ -343,6 +343,34 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
         status(response) mustBe BAD_REQUEST
       }
 
+      "accept registered AMLS details without a date (APB-5382)" in {
+        val amlsDetailsNoDateR = AmlsDetails("supervisoryBody", Right(RegisteredDetails("0123456789", None)))
+        val createAmlsRequestNoDateR = CreateAmlsRequest(utr, amlsDetailsNoDateR)
+
+        inSequence {
+          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+          mockCreateAmls(createAmlsRequestNoDateR)(Right(()))
+        }
+
+        val responseR = doRequest(createAmlsRequestNoDateR)
+
+        status(responseR) mustBe CREATED
+      }
+
+      "accept pending AMLS details without a date (APB-5382)" in {
+        val amlsDetailsNoDateL = AmlsDetails("supervisoryBody", Left(PendingDetails(None)))
+        val createAmlsRequestNoDateL = CreateAmlsRequest(utr, amlsDetailsNoDateL)
+
+        inSequence {
+          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+          mockCreateAmls(createAmlsRequestNoDateL)(Right(()))
+        }
+
+        val responseL = doRequest(createAmlsRequestNoDateL)
+
+        status(responseL) mustBe CREATED
+      }
+
     }
 
     "updateAmlsDetails" should {
@@ -360,7 +388,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         inSequence {
           mockAgentAuth()(Right(()))
-          mockUpdateAmls(utr, arn)(Right(AmlsDetails("supervisory", Right(RegisteredDetails("123", LocalDate.now())))))
+          mockUpdateAmls(utr, arn)(Right(AmlsDetails("supervisory", Right(RegisteredDetails("123", Some(LocalDate.now()))))))
         }
         val response = doRequest
         status(response) mustBe OK
