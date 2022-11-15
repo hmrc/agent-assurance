@@ -16,50 +16,60 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import javax.inject.{Inject, Singleton}
-import play.api.libs.json._
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.Cursor
-import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.play.json.ImplicitBSONHandlers._
+import org.mongodb.scala._
+import org.mongodb.scala.model.Aggregates.{filter, limit, skip}
+import org.mongodb.scala.model.Filters.{and, equal}
+import org.mongodb.scala.model.IndexModel
+import org.mongodb.scala.model.Indexes.ascending
 import uk.gov.hmrc.agentassurance.models.Property
-import uk.gov.hmrc.agentassurance.models.pagination.PaginationResult
-import uk.gov.hmrc.mongo.ReactiveRepository
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
+
 @Singleton
-class PropertiesRepository @Inject() (mongoComponent: ReactiveMongoComponent)
-  extends ReactiveRepository[Property, String]("agent-assurance", mongoComponent.mongoConnector.db, Property.propertyFormat,
-    implicitly[Format[String]]) {
+class PropertiesRepository @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
+  extends PlayMongoRepository[Property](
+    mongoComponent = mongo,
+    collectionName = "agent-assurance",
+    domainFormat = Property.propertyFormat,
+    indexes = Seq(
+      IndexModel(ascending("key"))
+    )
+    ) {
 
-  import collection.BatchCommands.AggregationFramework.{Group, Match, Project, PushField, SumAll}
-
-  def findProperties(key: String, page:Int, pageSize: Int)(implicit ec: ExecutionContext): Future[(Int, Seq[String])] = {
+  def findProperties(key: String, page:Int, pageSize: Int): Future[(Int, Seq[String])] = {
 
     val skipDuePageNumber = pageSize * (page - 1)
-    val sliceForPagination = Json.obj("$slice" -> JsArray(Seq(JsString("$utrs"), JsNumber(skipDuePageNumber), JsNumber(pageSize))))
 
-    val groupUtrsByKey = Group(JsString("$key"))("totalUtrsForKey" -> SumAll, "utrs" -> PushField("value"))
-    val project = Project(Json.obj("collectionTotalForKey" -> "$totalUtrsForKey",
-      "utrsForPage" -> sliceForPagination))
+    val collectionSize = collection.find(equal("key", key)).toFuture().map(_.size)
+    // TODO improve this query e.g. by using a facet to get total before a projection, skip & limit.
+    val utrsForPage = collection.aggregate(Seq(
+      filter(equal("key", key)),
+      skip(skipDuePageNumber),
+      limit(pageSize)
+    )).toFuture()
+      .map(_.map(_.value))
 
-    val pipeline = (Match(Json.obj("key" -> key)), List(groupUtrsByKey, project))
-    val results: Cursor[PaginationResult] = collection.aggregateWith[PaginationResult]()(_ => pipeline)
-
-    results.headOption.map {
-      case Some(paginatedResult) => (paginatedResult.collectionTotalForKey, paginatedResult.utrsForPage)
-      case None => (0, Seq.empty)
-    }
+    for {
+      size <- collectionSize
+      utrs <- utrsForPage
+    } yield (size, utrs)
   }
 
-  def propertyExists(property: Property)(implicit ec: ExecutionContext): Future[Boolean] =
-    find("key" -> property.key, "value" -> property.value).map(_.headOption.nonEmpty)
+  def propertyExists(property: Property): Future[Boolean] = {
+    collection.find(and(equal("key", property.key), equal("value", property.value)))
+      .headOption.map(_.isDefined)
+  }
 
-  def createProperty(property: Property)(implicit ec: ExecutionContext): Future[Unit] = insert(property).map(_ => ())
+  def createProperty(property: Property): Future[Unit] = {
+    collection.insertOne(property).toFuture().map(_ => ())
+  }
 
-  def deleteProperty(property: Property)(implicit ec: ExecutionContext): Future[Unit] =
-    remove("key" -> property.key, "value" -> property.value).map(_ => ())
-
-  override def indexes: Seq[Index] = Seq(Index(Seq("key" -> IndexType.Ascending)))
+  def deleteProperty(property: Property): Future[Unit] = {
+    collection.deleteOne(and(equal("key", property.key), equal("value", property.value)))
+      .toFuture().map(_ => ())
+  }
 }

@@ -111,26 +111,26 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   }
 
   def mockCreateAmls(createAmlsRequest: CreateAmlsRequest)(response: Either[AmlsError, Unit]) = {
-    (amlsRepository.createOrUpdate(_: CreateAmlsRequest)(_: ExecutionContext))
-      .expects(createAmlsRequest, *)
+    (amlsRepository.createOrUpdate(_: CreateAmlsRequest))
+      .expects(createAmlsRequest)
       .returning(toFuture(response))
   }
 
   def mockUpdateAmls(utr: Utr, arn: Arn)(response: Either[AmlsError, AmlsDetails]) = {
-    (amlsRepository.updateArn(_: Utr, _: Arn)(_: ExecutionContext))
-      .expects(utr, arn, *)
+    (amlsRepository.updateArn(_: Utr, _: Arn))
+      .expects(utr, arn)
       .returning(toFuture(response))
   }
 
   def mockGetAmls(utr: Utr)(response: Option[AmlsDetails]) = {
-    (amlsRepository.getAmlDetails(_: Utr)(_: ExecutionContext))
-      .expects(utr, *)
+    (amlsRepository.getAmlDetails(_: Utr))
+      .expects(utr)
       .returning(toFuture(response))
   }
 
   def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError, Unit]) = {
-    (overseasAmlsRepository.create(_: OverseasAmlsEntity)(_: ExecutionContext))
-      .expects(amlsEntity, *)
+    (overseasAmlsRepository.create(_: OverseasAmlsEntity))
+      .expects(amlsEntity)
       .returning(toFuture(response))
   }
 
@@ -528,7 +528,6 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         status(response) mustBe BAD_REQUEST
       }
-
     }
   }
 }

@@ -17,43 +17,56 @@
 package uk.gov.hmrc.agentassurance.repositories
 
 import com.google.inject.ImplementedBy
-import play.api.libs.json.Json._
-import javax.inject.{Inject, Singleton}
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.BSONObjectID
+import org.mongodb.scala.MongoException
+import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.model.Indexes.ascending
+import org.mongodb.scala.model.{IndexModel, IndexOptions}
+import play.api.Logging
 import uk.gov.hmrc.agentassurance.models.AmlsError._
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
+import javax.inject.{Inject, Singleton}
 import scala.collection.Seq
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[OverseasAmlsRepositoryImpl])
 trait OverseasAmlsRepository {
-  def create(amlsEntity: OverseasAmlsEntity)(implicit ec: ExecutionContext): Future[Either[AmlsError, Unit]]
+  def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]]
 }
 
 @Singleton
-class OverseasAmlsRepositoryImpl @Inject()(mongoComponent: ReactiveMongoComponent)
-  extends ReactiveRepository[OverseasAmlsEntity, BSONObjectID](
-    "overseas-agent-amls",
-    mongoComponent.mongoConnector.db,
-    OverseasAmlsEntity.format,
-    ReactiveMongoFormats.objectIdFormats) with OverseasAmlsRepository {
+class OverseasAmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: ExecutionContext)
+  extends PlayMongoRepository[OverseasAmlsEntity](
+    mongoComponent = mongo,
+    collectionName ="overseas-agent-amls",
+    domainFormat = OverseasAmlsEntity.format,
+    indexes = Seq(
+      IndexModel(ascending("arn"), IndexOptions().name("arnIndex").unique(true))
+    )
+    ) with OverseasAmlsRepository with Logging {
 
-  override def indexes: Seq[Index] = Seq(
-    Index(key = Seq("arn" -> IndexType.Ascending), name = Some("arnIndex"), unique = true))
-
-  def create(amlsEntity: OverseasAmlsEntity)(implicit ec: ExecutionContext): Future[Either[AmlsError, Unit]] = {
-    val selector = "arn" -> toJsFieldJsValueWrapper(amlsEntity.arn.value)
-
-    find(selector).map(_.headOption).flatMap {
-      case Some(_) => Future.successful(Left(AmlsRecordExists))
-      case _ =>  collection.insert(false).one(amlsEntity)
-        .map(_ => Right(()))
-        .recover { case _ => Left(AmlsUnexpectedMongoError) }
-    }
-  }
+  def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]] = {
+    collection
+      .find(equal("arn", amlsEntity.arn.value))
+      .headOption()
+      .flatMap{
+        case Some(_) => Future successful Left(AmlsRecordExists)
+        case _  =>
+          collection
+          .insertOne(amlsEntity)
+            .toFuture()
+            .map{
+              case insertOneResult if insertOneResult.wasAcknowledged() =>  Right(())
+              case e =>
+                logger.warn(s"Error inserting overseas AMLS record ${e}")
+                Left(AmlsUnexpectedMongoError)
+            }
+          }.recover {
+            case e: MongoException =>
+              logger.warn(s"Mongo exception when inserting overseas AMLS record $e")
+              Left(AmlsUnexpectedMongoError)
+          }
+      }
 }

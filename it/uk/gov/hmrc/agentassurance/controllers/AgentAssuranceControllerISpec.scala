@@ -1,6 +1,6 @@
 package uk.gov.hmrc.agentassurance.controllers
 
-import java.time.LocalDate
+import com.google.inject.AbstractModule
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -8,25 +8,39 @@ import play.api.libs.json.Json
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.CONTENT_TYPE
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.repositories.{AmlsRepositoryImpl, OverseasAmlsRepositoryImpl}
+import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
 import uk.gov.hmrc.agentassurance.stubs.{DesStubs, EnrolmentStoreProxyStubs}
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import java.time.LocalDate
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class AgentAssuranceControllerISpec extends IntegrationSpec
-  with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with WireMockSupport with EnrolmentStoreProxyStubs {
-  override implicit lazy val app: Application = appBuilder.build()
+  with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with WireMockSupport with EnrolmentStoreProxyStubs
+  with DefaultPlayMongoRepositorySupport[AmlsEntity]  {
+
+  override implicit lazy val app: Application = appBuilder.build
+
+  override lazy val repository = new AmlsRepositoryImpl(mongoComponent)
+
+  val moduleWithOverrides: AbstractModule = new AbstractModule() {
+    override def configure(): Unit = {
+      bind(classOf[AmlsRepositoryImpl]).toInstance(repository)
+    }
+  }
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
+      .disable[com.kenshoo.play.metrics.PlayModule]
       .configure("microservice.services.auth.host" -> wireMockHost,
+        "auditing.enabled" -> false,
         "microservice.services.auth.port" -> wireMockPort,
         "microservice.services.des.host" -> wireMockHost,
         "microservice.services.des.port" -> wireMockPort,
@@ -34,13 +48,12 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         "microservice.services.des.authorization-token" -> "secret",
         "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
-        "auditing.consumer.baseUri.host" -> wireMockHost,
-        "auditing.consumer.baseUri.port" -> wireMockPort,
         "minimumIRPAYEClients" -> 6,
         "minimumIRSAClients" -> 6,
         "minimumVatDecOrgClients" -> 6,
         "minimumIRCTClients" -> 6,
         "stride.roles.agent-assurance" -> "maintain_agent_manually_assure")
+      .overrides(moduleWithOverrides)
 
   implicit val hc = new HeaderCarrier
 
@@ -49,7 +62,6 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   def irSaAgentEnrolmentNinoUrl(nino: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/nino/$nino/saAgentReference/$irAgentReference"
 
   def irSaAgentEnrolmentUtrUrl(utr: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/utr/$utr/saAgentReference/$irAgentReference"
-
 
   val irPayeKey = "IR-PAYE"
   val irSaKey = "IR-SA"
@@ -64,19 +76,9 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
   val userId = "0000001531072644"
 
-  private lazy val repo = app.injector.instanceOf[AmlsRepositoryImpl]
-  private lazy val overseasAmlsRepo = app.injector.instanceOf[OverseasAmlsRepositoryImpl]
-
   implicit val defaultTimeout = 5 seconds
 
   def await[A](future: Future[A])(implicit timeout: Duration) = Await.result(future, timeout)
-
-  override def beforeEach() {
-    super.beforeEach()
-    await(repo.drop)
-    await(overseasAmlsRepo.drop)
-  }
-
 
   override def irAgentReference: String = "IRSA-123"
 
@@ -86,7 +88,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isLoggedInAndIsEnrolledToIrSaAgent
 
       When("GET /irSaAgentEnrolment is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUrl).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUrl)
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("204 NO_CONTENT is returned")
       response.status shouldBe 204
@@ -97,7 +100,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isLoggedInAndNotEnrolledInIrSaAgent
 
       When("GET /irSaAgentEnrolment is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUrl).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUrl)
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("403 FORBIDDEN is returned")
       response.status shouldBe 403
@@ -108,7 +112,9 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isNotLoggedIn
 
       When("GET /irSaAgentEnrolment is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUrl).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUrl)
+        .withHttpHeaders(("Authorization", "Bearer XYZ"))
+        .get(), 10 seconds)
 
       Then("401 UNAUTHORISED is returned")
       response.status shouldBe 401
@@ -124,7 +130,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       givenClientHasRelationshipWithAgentInCESA(Nino("AA000000A"), SaAgentReference(irAgentReference))
 
       When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("200 OK is returned")
       response.status shouldBe 200
@@ -138,7 +145,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       givenClientHasNoActiveRelationshipWithAgentInCESA(Nino("AA000000A"))
 
       When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("403 FORBIDDEN is returned")
       response.status shouldBe 403
@@ -152,7 +160,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       givenClientHasRelationshipWithAgentInCESA(Nino("AA000000A"), SaAgentReference("IRSA-456"))
 
       When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("403 FORBIDDEN is returned")
       response.status shouldBe 403
@@ -160,7 +169,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     Scenario("User provides an invalid NINO") {
       When("GET /activeCesaRelationship/nino/AA000000/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("INVALID")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("INVALID"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("400 BADREQUEST is returned")
       response.status shouldBe 400
@@ -174,7 +184,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       givenDesReturnsServerError()
 
       When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("502 BadGateway is returned")
       response.status shouldBe 502
@@ -185,7 +196,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isNotLoggedIn
 
       When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("401 Unauthorised is returned")
       response.status shouldBe 401
@@ -201,7 +213,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       givenClientHasRelationshipWithAgentInCESA(Utr("7000000002"), SaAgentReference(irAgentReference))
 
       When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("200 OK is returned")
       response.status shouldBe 200
@@ -215,7 +228,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       givenClientHasNoActiveRelationshipWithAgentInCESA(Utr("7000000002"))
 
       When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("403 FORBIDDEN is returned")
       response.status shouldBe 403
@@ -229,7 +243,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       givenClientHasRelationshipWithAgentInCESA(Utr("7000000002"), SaAgentReference("IRSA-456"))
 
       When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("403 FORBIDDEN is returned")
       response.status shouldBe 403
@@ -243,7 +258,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       givenClientIdentifierIsInvalid(Utr("INVALID"))
 
       When("GET /activeCesaRelationship/utr/INVALID/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("INVALID")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("INVALID"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("400 BADREQUEST is returned")
       response.status shouldBe 400
@@ -257,7 +273,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       givenDesReturnsServerError()
 
       When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("502 BadGateway is returned")
       response.status shouldBe 502
@@ -268,7 +285,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isNotLoggedIn
 
       When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
-      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002")).get(), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
       Then("401 Unauthorised is returned")
       response.status shouldBe 401
@@ -294,7 +312,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     def doRequest(createAmlsRequest: CreateAmlsRequest) =
       Await.result(
         wsClient.url(amlsCreateUrl)
-          .withHttpHeaders(CONTENT_TYPE -> "application/json")
+          .withHttpHeaders(CONTENT_TYPE -> "application/json", "Authorization" -> "Bearer XYZ")
           .post(Json.toJson(createAmlsRequest)), 10 seconds
       )
 
@@ -308,7 +326,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       Then("201 CREATED is returned")
       response.status shouldBe 201
 
-      val dbRecord = await(repo.find()).head
+      val dbRecord = await(repository.collection.find().toFuture()).head
       dbRecord.utr shouldBe utr
       dbRecord.createdOn shouldBe LocalDate.now()
     }
@@ -325,7 +343,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       Then("201 CREATED is returned")
       response.status shouldBe 201
 
-      val dbRecord = await(repo.find()).head
+      val dbRecord = await(repository.collection.find().toFuture()).head
       dbRecord.utr shouldBe utr
       dbRecord.createdOn shouldBe LocalDate.now()
 
@@ -341,7 +359,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       Then("201 CREATED is returned")
       response.status shouldBe 201
 
-      val dbRecord = await(repo.find()).head
+      val dbRecord = await(repository.collection.find().toFuture()).head
       dbRecord.utr shouldBe utr
       dbRecord.createdOn shouldBe LocalDate.now()
       dbRecord.amlsDetails.details shouldBe Left(PendingDetails(Some(validApplicationReferenceNumber), Some(LocalDate.now().minusDays(10))))
@@ -360,7 +378,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       Then("201 CREATED is returned")
       response.status shouldBe 201
 
-      val dbRecord = await(repo.find()).head
+      val dbRecord = await(repository.collection.find().toFuture()).head
       dbRecord.utr shouldBe utr
       dbRecord.amlsDetails shouldBe amlsDetailsNoDate
       dbRecord.createdOn shouldBe LocalDate.now()
@@ -379,7 +397,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       Then("201 CREATED is returned")
       response.status shouldBe 201
 
-      val dbRecord = await(repo.find()).head
+      val dbRecord = await(repository.collection.find().toFuture()).head
       dbRecord.utr shouldBe utr
       dbRecord.amlsDetails shouldBe amlsDetailsNoDate
       dbRecord.createdOn shouldBe LocalDate.now()
@@ -398,7 +416,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       Then("201 CREATED is returned")
       response.status shouldBe 201
 
-      val dbRecord = await(repo.find()).head
+      val dbRecord = await(repository.collection.find().toFuture()).head
       dbRecord.utr shouldBe utr
       dbRecord.amlsDetails shouldBe amlsDetailsNoDate
       dbRecord.createdOn shouldBe LocalDate.now()
@@ -432,7 +450,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       Then("201 CREATED is returned")
       newResponse.status shouldBe 201
 
-      val dbRecord = await(repo.find()).head
+      val dbRecord = await(repository.collection.find().toFuture()).head
       dbRecord.utr shouldBe utr
       dbRecord.amlsDetails.supervisoryBody shouldBe "updated-supervisory"
     }
@@ -459,12 +477,12 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     val amlsDetails = AmlsDetails("supervisory", Right(RegisteredDetails("0123456789", Some(LocalDate.now()))))
 
     def callGet(utr: Utr) = Await.result(
-      wsClient.url(amlsGetUrl(utr)).get(), 10 seconds
+      wsClient.url(amlsGetUrl(utr)).withHttpHeaders("Authorization" -> "Bearer XYZ").get(), 10 seconds
     )
 
     Scenario("user logged in as an agent should be able to get existing amls record") {
 
-      await(repo.insert(AmlsEntity(utr, amlsDetails, None, LocalDate.now())))
+      await(repository.createOrUpdate(CreateAmlsRequest(utr, amlsDetails)))
 
       Given("User is logged in and is an agent")
       Given("User has an user id")
@@ -481,7 +499,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     Scenario("user logged in an as a stride should be able to get existing amls record") {
 
-      await(repo.insert(AmlsEntity(utr, amlsDetails, None, LocalDate.now())))
+      await(repository.createOrUpdate(CreateAmlsRequest(utr, amlsDetails)))
 
       Given("User is logged in and is stride")
       Given("User has an user id")
@@ -509,13 +527,13 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     def callPut(utr: Utr, arn: Arn) =
       Await.result(
         wsClient.url(amlsUpdateUrl(utr))
-          .withHttpHeaders(CONTENT_TYPE -> "application/json")
+          .withHttpHeaders(CONTENT_TYPE -> "application/json", "Authorization" -> "Bearer XYZ")
           .put(Json.toJson(arn).toString()), 10 seconds
       )
 
     Scenario("user logged in and is an agent should be able to update existing amls record with ARN") {
 
-      await(repo.insert(AmlsEntity(utr, amlsDetails, None, LocalDate.now())))
+      await(repository.createOrUpdate(CreateAmlsRequest(utr, amlsDetails)))
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
@@ -542,7 +560,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     Scenario("updating an existing amls record(with ARN) with the same ARN again should return existing amls record") {
 
-      await(repo.insert(AmlsEntity(utr, amlsDetails, Some(arn), LocalDate.now())))
+      await(repository.createOrUpdate(CreateAmlsRequest(utr, amlsDetails)))
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
@@ -557,7 +575,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     Scenario("updates to an existing amls record(with ARN) with a different ARN should be Forbidden") {
 
-      await(repo.insert(AmlsEntity(utr, amlsDetails, Some(Arn("123")), LocalDate.now())))
+      await(repository.createOrUpdate(CreateAmlsRequest(utr, amlsDetails)))
+      await(repository.updateArn(utr, Arn("XX123")))
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
@@ -584,9 +603,9 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     Scenario("ARN to be unique to each UTR in the MDTP database") {
 
       val newUtr = Utr("8588532862")
-      await(repo.ensureIndexes)
-      await(repo.insert(AmlsEntity(utr, amlsDetails, Some(arn), LocalDate.now())))
-      await(repo.insert(AmlsEntity(newUtr, amlsDetails, None, LocalDate.now())))
+      await(repository.ensureIndexes)
+      await(repository.collection.insertOne(AmlsEntity(utr, amlsDetails, Some(arn), LocalDate.now())).toFuture())
+      await(repository.collection.insertOne(AmlsEntity(newUtr, amlsDetails, None, LocalDate.now())).toFuture())
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
@@ -596,92 +615,6 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       Then("400 BAD_REQUEST is returned")
       updateResponse.status shouldBe 400
-    }
-  }
-
-  Feature("/overseas-agents/amls") {
-    val amlsCreateUrl = s"http://localhost:$port/agent-assurance/overseas-agents/amls"
-
-    val arn = Arn("AARN0000002")
-
-    val amlsDetails = OverseasAmlsDetails("supervisory", Some("0123456789"))
-    val createOverseasAmlsRequest = OverseasAmlsEntity(arn, amlsDetails)
-
-    def doRequest(request: OverseasAmlsEntity) =
-      Await.result(
-        wsClient.url(amlsCreateUrl)
-          .withHttpHeaders(CONTENT_TYPE -> "application/json")
-          .post(Json.toJson(request)), 10 seconds
-      )
-
-    Scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
-      Given("User is logged in and is an overseas agent")
-      withAffinityGroupAgent
-
-      When("POST /overseas-agents/amls is called")
-      val response: WSResponse = doRequest(createOverseasAmlsRequest)
-
-      Then("201 CREATED is returned")
-      response.status shouldBe 201
-
-      val dbRecord = await(overseasAmlsRepo.find()).head
-      dbRecord.arn shouldBe arn
-    }
-
-    Scenario("user logged in and is an agent should be able to create a new Amls record without membershipId") {
-      Given("User is logged in and is an overseas agent")
-      withAffinityGroupAgent
-
-      When("POST /overseas-agents/amls is called")
-      val response: WSResponse = doRequest(createOverseasAmlsRequest.copy(amlsDetails = OverseasAmlsDetails("AOSS", None)))
-
-      Then("201 CREATED is returned")
-      response.status shouldBe 201
-
-      val dbRecord = await(overseasAmlsRepo.find()).head
-      dbRecord.arn shouldBe arn
-      dbRecord.amlsDetails.membershipNumber shouldBe None
-    }
-
-    Scenario("User is not logged in") {
-      Given("User is not logged in")
-      isNotLoggedIn
-
-      When("POST /overseas-agents/amls is called")
-      val response: WSResponse = doRequest(createOverseasAmlsRequest)
-
-      Then("401 UnAuthorized is returned")
-      response.status shouldBe 401
-    }
-
-    Scenario("return bad_request if Arn is not valid") {
-      Given("User is logged in and is an agent")
-      withAffinityGroupAgent
-
-      When("POST /overseas-agents/amls is called with invalid arn")
-      val response: WSResponse = doRequest(createOverseasAmlsRequest.copy(arn = Arn("61122334455")))
-
-      Then("400 BAD_REQUEST is returned")
-      response.status shouldBe 400
-    }
-
-    Scenario("return conflict if the amls record exists") {
-      Given("User is logged in and is an overseas agent")
-      withAffinityGroupAgent
-
-      When("POST /overseas-agents/amls is called")
-      val response: WSResponse = doRequest(createOverseasAmlsRequest)
-
-      Then("201 CREATED is returned")
-      response.status shouldBe 201
-
-      When("POST /overseas-agents/amls is called again")
-      val response2: WSResponse = doRequest(createOverseasAmlsRequest)
-
-      Then("409 CONFLICT is returned")
-      response2.status shouldBe 409
-
-      await(overseasAmlsRepo.find()).size shouldBe 1
     }
   }
 
@@ -725,7 +658,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         sufficientClientsAreAllocated(enrolment, userId)
 
         When(s"GET /acceptableNumberOfClients/service/$enrolment is called")
-        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl).get(), 10 seconds)
+        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl)
+          .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
         Then("204 NO_CONTENT is returned")
         response.status shouldBe 204
@@ -739,7 +673,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         tooFewClientsAreAllocated(enrolment, userId)
 
         When(s"GET /acceptableNumberOfClients/service/$enrolment is called")
-        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl).get(), 10 seconds)
+        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl)
+          .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
         Then("403 FORBIDDEN is returned")
         response.status shouldBe 403
@@ -753,7 +688,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         noClientsAreAllocated(enrolment, userId)
 
         When(s"GET /acceptableNumberOfClients/service/$enrolment is called")
-        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl).get(), 10 seconds)
+        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl)
+          .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
         Then("403 FORBIDDEN is returned")
         response.status shouldBe 403
@@ -764,7 +700,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         isLoggedInWithoutUserId
 
         When(s"GET /acceptableNumberOfClients/service/$enrolment is called")
-        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl).get(), 10 seconds)
+        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl)
+          .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
         Then("403 FORBIDDEN is returned")
         response.status shouldBe 403
@@ -775,12 +712,12 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         isNotLoggedIn
 
         When(s"GET /acceptableNumberOfClients/service/$enrolment is called")
-        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl).get(), 10 seconds)
+        val response: WSResponse = Await.result(wsClient.url(acceptableClientUrl)
+          .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
         Then("401 UNAUTHORISED is returned")
         response.status shouldBe 401
       }
     }
   }
-
 }
