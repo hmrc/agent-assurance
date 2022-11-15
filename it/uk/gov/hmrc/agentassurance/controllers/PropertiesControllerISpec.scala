@@ -1,29 +1,42 @@
 package uk.gov.hmrc.agentassurance.controllers
 
+import com.google.inject.AbstractModule
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
+import play.api.http.Status._
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.libs.ws.{WSClient, WSResponse}
-import uk.gov.hmrc.mongo.MongoSpecSupport
-import uk.gov.hmrc.agentassurance.support.UnitSpec
+import uk.gov.hmrc.agentassurance.models.Property
+import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
+import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, UnitSpec, WireMockSupport}
+import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.global
 import scala.concurrent.duration.DurationInt
-import play.api.http.Status._
-import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, WireMockSupport}
-
+import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class PropertiesControllerISpec extends UnitSpec
-  with GuiceOneServerPerSuite with BeforeAndAfterEach with MongoSpecSupport with AgentAuthStubs with WireMockSupport {
+  with GuiceOneServerPerSuite with BeforeAndAfterEach with AgentAuthStubs with WireMockSupport
+  with DefaultPlayMongoRepositorySupport[Property] {
+
+  override lazy val repository = new PropertiesRepository(mongoComponent)
+
   override def irAgentReference = ""
+
+  val moduleWithOverrides: AbstractModule = new AbstractModule() {
+    override def configure(): Unit = {
+      bind(classOf[PropertiesRepository]).toInstance(repository)
+    }
+  }
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
-      .configure("microservice.services.auth.host" -> wireMockHost,
+      .configure(
+        "auditing.enabled" -> false,
+        "microservice.services.auth.host" -> wireMockHost,
         "microservice.services.auth.port" -> wireMockPort,
         "microservice.services.des.host" -> wireMockHost,
         "microservice.services.des.port" -> wireMockPort,
@@ -32,8 +45,8 @@ class PropertiesControllerISpec extends UnitSpec
         "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "auditing.consumer.baseUri.host" -> wireMockHost,
-        "auditing.consumer.baseUri.port" -> wireMockPort,
-        "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}")
+        "auditing.consumer.baseUri.port" -> wireMockPort)
+      .overrides(moduleWithOverrides)
 
   override implicit lazy val app: Application = appBuilder.build()
 
@@ -42,17 +55,17 @@ class PropertiesControllerISpec extends UnitSpec
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
   def createProperty(key: String, value: String) =
-    wsClient.url(s"$url/$key").post(Json.obj("value" -> value))
+    wsClient.url(s"$url/$key")
+      .withHttpHeaders("Authorization" -> "Bearer XYZ").post(Json.obj("value" -> value))
 
-  def isAssured(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").get()
+  def isAssured(key: String, identifier: String): Future[WSResponse] =
+    wsClient.url(s"$url/$key/utr/$identifier").withHttpHeaders("Authorization" -> "Bearer XYZ").get()
 
-  def getEntirePaginatedList(key: String, page: Int, pageSize: Int): Future[WSResponse] = {wsClient.url(s"$url/$key?page=$page&pageSize=$pageSize").get()}
+  def getEntirePaginatedList(key: String, page: Int, pageSize: Int): Future[WSResponse] =
+  {wsClient.url(s"$url/$key?page=$page&pageSize=$pageSize").withHttpHeaders("Authorization" -> "Bearer XYZ").get()}
 
-  def deleteProperty(key: String, identifier: String): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").delete()
-
-  override def beforeEach(): Unit = dropMongoDb()
-
-  def dropMongoDb()(implicit ec: ExecutionContext = global): Unit = Await.result(mongo().drop(), 10 seconds)
+  def deleteProperty(key: String, identifier: String): Future[WSResponse] =
+    wsClient.url(s"$url/$key/utr/$identifier").withHttpHeaders("Authorization" -> "Bearer XYZ").delete()
 
   "a getProperty entire List for refusal-to-deal-with" should {
     behave like getPropertyList("refusal-to-deal-with")
@@ -126,7 +139,9 @@ class PropertiesControllerISpec extends UnitSpec
       isLoggedInWithoutUserId
       val payload = Json.obj("foo" -> "ewrewr", "bar" -> "retrwt")
 
-      val response: WSResponse = Await.result(wsClient.url(s"$url/$key").post(payload), 10 seconds)
+      val response: WSResponse = Await.result(wsClient.url(s"$url/$key")
+        .withHttpHeaders("Authorization" -> "Bearer XYZ")
+        .post(payload), 10 seconds)
       response.status shouldBe BAD_REQUEST
       response.body.contains("json failed validation") shouldBe true
     }
