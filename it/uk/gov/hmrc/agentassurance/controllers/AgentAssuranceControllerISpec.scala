@@ -187,9 +187,6 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A"))
         .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
-     // Then("502 BadGateway is returned")
-     // response.status shouldBe 502
-
       Then("error GET legacy relationship response: 500")
       response.status shouldBe 500
     }
@@ -295,9 +292,6 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002"))
         .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
-      //Then("502 BadGateway is returned")
-      //response.status shouldBe 502
-
       Then("error GET legacy relationship response: 500")
       response.status shouldBe 500
     }
@@ -317,7 +311,6 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 502
 
     }
-
 
     Scenario("User is not logged") {
       Given("User is logged in")
