@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,10 +98,10 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       .returning(toFuture(result))
   }
 
-  def mockDes(ti: TaxIdentifier)(response: Either[String, Seq[SaAgentReference]]) = {
+  def mockDes(ti: TaxIdentifier)(response: Either[String, Option[Seq[SaAgentReference]]]) = {
     (desConnector.getActiveCesaAgentRelationships(_: TaxIdentifier)(_: HeaderCarrier, _: ExecutionContext))
       .expects(ti, *, *)
-      .returning(response.fold[Future[Seq[SaAgentReference]]](e => Future.failed(new Exception(e)), r => toFuture(r)))
+      .returning(response.fold[Future[Option[Seq[SaAgentReference]]]](e => Future.failed(new Exception(e)), r => toFuture(r)))
   }
 
   def mockAgentAuth()(response: Either[String, Unit]) = {
@@ -163,7 +163,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "return OK where the user provides a valid NINO and saAgentReference nad has an active relationship in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(nino)(Right(Seq(saAgentReference)))
+          mockDes(nino)(Right(Some(Seq(saAgentReference))))
         }
 
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
@@ -173,7 +173,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "return FORBIDDEN when called with a valid NINO that is not active in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(nino)(Right(Seq.empty))
+          mockDes(nino)(Right(Some(Seq.empty)))
         }
 
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
@@ -183,7 +183,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "return FORBIDDEN when called with a valid NINO that is active in CESA but with a different IRAgentReference" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(nino)(Right(Seq(SaAgentReference("IRSA-456"))))
+          mockDes(nino)(Right(Some(Seq(SaAgentReference("IRSA-456")))))
         }
         val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
 
@@ -195,7 +195,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "return OK where the user provides a valid UTR and saAgentReference nad has an active relationship in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(utr)(Right(Seq(saAgentReference)))
+          mockDes(utr)(Right(Some(Seq(saAgentReference))))
         }
         val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
 
@@ -205,7 +205,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "return FORBIDDEN when called with a valid UTR that is not active in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(utr)(Right(Seq.empty))
+          mockDes(utr)(Right(Some(Seq.empty)))
         }
         val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
         status(response) mustBe FORBIDDEN
@@ -214,7 +214,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "return FORBIDDEN when called with a valid UTR that is active in CESA but with a different IRAgentReference" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(utr)(Right(Seq(SaAgentReference("IRSA-456"))))
+          mockDes(utr)(Right(Some(Seq(SaAgentReference("IRSA-456")))))
         }
         val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
 

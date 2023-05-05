@@ -187,8 +187,24 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A"))
         .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
-      Then("502 BadGateway is returned")
-      response.status shouldBe 502
+      Then("error GET legacy relationship response: 500")
+      response.status shouldBe 500
+    }
+
+    Scenario("DES return 502 server error when user calls the endpoint") {
+      Given("User is logged in")
+      isLoggedInWithoutUserId
+
+      And("DES return 500 server error")
+      givenDesReturnBadGateway()
+
+      When("GET /activeCesaRelationship/nino/AA000000A/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentNinoUrl("AA000000A"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
+
+       Then("502 BadGateway is returned")
+       response.status shouldBe 502
+
     }
 
     Scenario("User is not logged in") {
@@ -276,8 +292,24 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002"))
         .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
 
+      Then("error GET legacy relationship response: 500")
+      response.status shouldBe 500
+    }
+
+    Scenario("DES return 502 server error when user calls the endpoint") {
+      Given("User is logged in")
+      isLoggedInWithoutUserId
+
+      And("DES return 500 server error")
+      givenDesReturnBadGateway()
+
+      When("GET /activeCesaRelationship/utr/7000000002/saAgentReference/IRSA-123 is called")
+      val response: WSResponse = Await.result(wsClient.url(irSaAgentEnrolmentUtrUrl("7000000002"))
+        .withHttpHeaders(("Authorization", "Bearer XYZ")).get(), 10 seconds)
+
       Then("502 BadGateway is returned")
       response.status shouldBe 502
+
     }
 
     Scenario("User is not logged") {
@@ -292,6 +324,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 401
     }
   }
+
 
   // "acceptableNumberOfClients endpoints tests"
   delegatedEnrolmentClientCheck(irPayeKey, acceptableNumberOfPayeClientsUrl)

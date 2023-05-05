@@ -10,5 +10,4 @@ trait DataStreamStub extends Eventually {
   }
 
   private def auditUrl = "/write/audit"
-
 }

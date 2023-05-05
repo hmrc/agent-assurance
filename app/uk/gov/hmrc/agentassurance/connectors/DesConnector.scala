@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package uk.gov.hmrc.agentassurance.connectors
 import com.codahale.metrics.MetricRegistry
 import com.google.inject.ImplementedBy
 import com.kenshoo.play.metrics.Metrics
+import play.api.Logging
+import play.api.http.Status.{NOT_FOUND, OK}
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 import play.utils.UriEncoding
@@ -28,7 +30,7 @@ import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpReads}
+import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpReads, HttpResponse, UpstreamErrorResponse}
 
 import java.net.URL
 import java.util.UUID
@@ -55,13 +57,13 @@ object RegistrationRelationshipResponse {
 
 @ImplementedBy(classOf[DesConnectorImpl])
 trait DesConnector {
-  def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]]
+  def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Seq[SaAgentReference]]]
   def getAmlsSubscriptionStatus(amlsRegistrationNumber: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord]
 }
 
 @Singleton
 class DesConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit appConfig: AppConfig)
-  extends DesConnector with HttpAPIMonitor {
+  extends DesConnector with HttpAPIMonitor with Logging {
 
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
@@ -82,7 +84,7 @@ class DesConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit
 
 
 
-  def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
+  def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Seq[SaAgentReference]]] = {
     val encodedClientId = UriEncoding.encodePathSegment(clientIdentifier.value, "UTF-8")
     val encodedClientType: String = {
       val clientType = clientIdentifier match {
@@ -94,9 +96,19 @@ class DesConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit
 
     val url = new URL(s"$baseUrl/registration/relationship/$encodedClientType/$encodedClientId")
 
-    getWithDesHeaders[ClientRelationship]("GetStatusAgentRelationship", url).map(_.agents
-      .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
-      .flatMap(_.agentId))
+    getWithDesHeaders[HttpResponse]("GetStatusAgentRelationship", url).map(response => response.status match{
+      case OK => response.json.asOpt[ClientRelationship].map(
+          _.agents
+          .filter(agent => agent.hasAgent && agent.
+            agentCeasedDate.isEmpty)
+          .flatMap(_.agentId)
+      )
+      case NOT_FOUND => logger.warn(s" NOT_FOUND GET legacy relationship response: 404 ")
+                None
+      case _ =>
+      throw UpstreamErrorResponse(s" error GET legacy relationship response: ${response.status}", response.status)
+
+  })
   }
 
   //API #1028 Get Subscription Status

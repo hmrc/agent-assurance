@@ -53,6 +53,15 @@ trait DesStubs {
     )
   }
 
+  def givenClientIsUnknown404(identifier: TaxIdentifier) = {
+    val identifierType = clientIdentifierType(identifier)
+    stubFor(
+      get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
+        .willReturn(aResponse()
+          .withStatus(404)))
+  }
+
+
   def givenClientHasNoActiveRelationshipWithAgentInCESA(identifier: TaxIdentifier) = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
@@ -83,6 +92,13 @@ trait DesStubs {
     stubFor(
       get(urlMatching(s"/registration/.*"))
         .willReturn(aResponse().withStatus(500))
+    )
+  }
+
+  def givenDesReturnBadGateway() = {
+    stubFor(
+      get(urlMatching(s"/registration/.*"))
+        .willReturn(aResponse().withStatus(502))
     )
   }
 

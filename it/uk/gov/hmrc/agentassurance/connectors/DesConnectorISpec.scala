@@ -50,7 +50,7 @@ class DesConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockS
   }
 
   "DesConnector getActiveCesaAgentRelationships with a valid UTR" should {
-    behave like aCheckEndpoint(Utr("7000000002"))
+    behave like aCheckEndpoint(Utr("7000000002")) // 7000000002
   }
 
   private def aCheckEndpoint(identifier: TaxIdentifier) = {
@@ -58,62 +58,75 @@ class DesConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockS
       val agentId = SaAgentReference("bar")
       givenClientHasRelationshipWithAgentInCESA(identifier, agentId)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Seq(agentId)
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Some(Seq(agentId))
     }
 
     "return multiple Agents when client has multiple active agents" in {
-      val agentIds = Seq("001","002","003","004","005","005","007").map(SaAgentReference.apply)
-      givenClientHasRelationshipWithMultipleAgentsInCESA(identifier, agentIds)
+      val agentIds = Option(Seq("001","002","003","004","005","005","007").map(SaAgentReference.apply))
+      givenClientHasRelationshipWithMultipleAgentsInCESA(identifier, agentIds.get)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)) should contain theSameElementsAs agentIds
+      await(desConnector.getActiveCesaAgentRelationships(identifier)).get should contain theSameElementsAs agentIds.get
     }
 
     "return empty seq when client has no active relationship with an agent" in {
       givenClientHasNoActiveRelationshipWithAgentInCESA(identifier)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)).get shouldBe empty
     }
 
     "return empty seq when client has/had no relationship with any agent" in {
       givenClientHasNoRelationshipWithAnyAgentInCESA(identifier)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)).get shouldBe empty
     }
 
     "return empty seq when client relationship with agent ceased" in {
       givenClientRelationshipWithAgentCeasedInCESA(identifier, "foo")
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)).get shouldBe empty
     }
 
     "return empty seq when all client's relationships with agents ceased" in {
       givenAllClientRelationshipsWithAgentsCeasedInCESA(identifier, Seq("001", "002", "003", "004", "005", "005", "007"))
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)).get shouldBe empty
     }
 
     "fail when client id is invalid" in {
       givenClientIdentifierIsInvalid(identifier)
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier)).get
     }
 
     "fail when client is unknown" in {
       givenClientIsUnknownInCESAFor(identifier)
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier)).get
+    }
+
+    "When NOT_FOUND(404) occurs return None" in {
+      givenClientIsUnknown404(identifier)
+      givenAuditConnector()
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe None
     }
 
     "fail when DES is unavailable" in {
       givenDesReturnsServiceUnavailable()
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier)).get
+    }
+
+
+    "return 502 when DES returns BadGateway error" in {
+      givenDesReturnBadGateway()
+      givenAuditConnector()
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier)).get
     }
 
     "fail when DES is throwing errors" in {
       givenDesReturnsServerError()
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier)).get
     }
 
     "record metrics for GetStatusAgentRelationship" in {
