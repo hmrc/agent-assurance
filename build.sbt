@@ -19,12 +19,11 @@ lazy val root = Project("agent-assurance", file("."))
       "-Wconf:src=target/.*:s", // silence warnings from compiled files
       "-Wconf:src=Routes/.*:s"  // silence warnings from routes files
     ),
-    resolvers := Seq(
+    resolvers ++= Seq(
       Resolver.typesafeRepo("releases"),
-      Resolver.url("HMRC-open-artefacts-ivy", url("https://open.artefacts.tax.service.gov.uk/ivy2"))(Resolver.ivyStylePatterns)
+      Resolver.url("HMRC-open-artefacts-ivy", url("https://open.artefacts.tax.service.gov.uk/ivy2"))(Resolver.ivyStylePatterns),
+      "HMRC-open-artefacts-maven" at "https://open.artefacts.tax.service.gov.uk/maven2"
     ),
-    resolvers += "HMRC-open-artefacts-maven" at "https://open.artefacts.tax.service.gov.uk/maven2",
-    resolvers += "HMRC-local-artefacts-maven" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases-local",
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     routesImport ++= Seq("uk.gov.hmrc.agentassurance.binders.PathBinders._")
   )
