@@ -1,8 +1,15 @@
 # agent-assurance
 
-[ ![Download](https://api.bintray.com/packages/hmrc/releases/agent-assurance/images/download.svg) ](https://bintray.com/hmrc/releases/agent-assurance/_latestVersion)
+[![Build Status](https://travis-ci.org/hmrc/agent-assurance.svg)](https://travis-ci.org/hmrc/agent-assurance)
 
-This micro service is responsible for agents Know Your Customer operations.
+This microservice is responsible for agents Know Your Customer operations.
+
+It has checks for:
+- anti-money laundering supervision (AMLS)
+- refusal to deal with list
+- manually assured list
+- legacy enrolment check (IR-SA-AGENT)
+- active 'legacy' client/agent relationship in CESA (IR-PAYE, IR-SA, HMCE-VATDEC-ORG, IR-CT)
 
 ## Run the application locally
 
