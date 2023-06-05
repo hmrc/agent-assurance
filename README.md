@@ -11,6 +11,10 @@ It has checks for:
 - legacy enrolment check (IR-SA-AGENT)
 - active 'legacy' client/agent relationship in CESA (IR-PAYE, IR-SA, HMCE-VATDEC-ORG, IR-CT)
 
+These endpoints are called during the agent subscription journey. 
+
+The "refusal to deal with" and "manually assured" lists are maintained by HMRC helpdesk staff (stride users) in agent-helpdesk-frontend.
+
 ## Run the application locally
 
 To run the application execute
