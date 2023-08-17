@@ -255,7 +255,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "an agent with existing aml record should return amls details" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
-          mockGetAmls(utr)(Some(AmlsDetails("abc", Right(RegisteredDetails("001", Some(LocalDate.now()))))))
+          mockGetAmls(utr)(Some(AmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
         }
 
         val response = doRequest
@@ -276,7 +276,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "a stride user with existing aml record should return amls details" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithStride and None and Some(Credentials("", "PrivilegedApplication")))
-          mockGetAmls(utr)(Some(AmlsDetails("abc", Right(RegisteredDetails("001", Some(LocalDate.now()))))))
+          mockGetAmls(utr)(Some(AmlsDetails("abc", membershipNumber = Some("001"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
         }
 
         val response = doRequest
@@ -287,7 +287,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
     "storeAmlsDetails" should {
 
-      val amlsDetails = AmlsDetails("supervisoryBody", Right(RegisteredDetails("0123456789", Some(LocalDate.now()))))
+      val amlsDetails = AmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
       val createAmlsRequest = CreateAmlsRequest(utr, amlsDetails)
 
       def doRequest(createAmlsRequest: CreateAmlsRequest = createAmlsRequest) =
@@ -345,7 +345,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       }
 
       "accept registered AMLS details without a date (APB-5382)" in {
-        val amlsDetailsNoDateR = AmlsDetails("supervisoryBody", Right(RegisteredDetails("0123456789", None)))
+        val amlsDetailsNoDateR = AmlsDetails("supervisoryBody", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = None)
         val createAmlsRequestNoDateR = CreateAmlsRequest(utr, amlsDetailsNoDateR)
 
         inSequence {
@@ -359,7 +359,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       }
 
       "accept pending AMLS details without a date (APB-5382)" in {
-        val amlsDetailsNoDateL = AmlsDetails("supervisoryBody", Left(PendingDetails(Some(validApplicationReferenceNumber), None)))
+        val amlsDetailsNoDateL = AmlsDetails("supervisoryBody", membershipNumber = Some(validApplicationReferenceNumber), appliedOn = None, membershipExpiresOn = None)
         val createAmlsRequestNoDateL = CreateAmlsRequest(utr, amlsDetailsNoDateL)
 
         inSequence {
@@ -373,7 +373,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       }
 
       "accept pending AMLS details without a reference number" in {
-        val amlsDetailsNoDateL = AmlsDetails("supervisoryBody", Left(PendingDetails(None, Some(LocalDate.now()))))
+        val amlsDetailsNoDateL = AmlsDetails("supervisoryBody", membershipNumber = None, appliedOn = Some(LocalDate.now()), membershipExpiresOn = None)
         val createAmlsRequestNoDateL = CreateAmlsRequest(utr, amlsDetailsNoDateL)
 
         inSequence {
@@ -402,7 +402,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         inSequence {
           mockAgentAuth()(Right(()))
-          mockUpdateAmls(utr, arn)(Right(AmlsDetails("supervisory", Right(RegisteredDetails("123", Some(LocalDate.now()))))))
+          mockUpdateAmls(utr, arn)(Right(AmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
         }
         val response = doRequest
         status(response) mustBe OK
