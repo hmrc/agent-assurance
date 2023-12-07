@@ -57,21 +57,21 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
   (serviceConfig.getConfString(_: String, _: String)).expects(*, *).atLeastOnce().returning("some-string")
   (serviceConfig.getString(_: String)).expects("stride.roles.agent-assurance").atLeastOnce().returning("maintain_agent_manually_assure")
 
-  implicit val appConfig = new AppConfig(serviceConfig)
+  implicit val appConfig: AppConfig = new AppConfig(serviceConfig)
 
   val controller = new AgentAssuranceController(authConnector, desConnector, espConnector, overseasAmlsRepository, Helpers.stubControllerComponents(), amlsRepository)
 
-  implicit val hc = new HeaderCarrier
+  implicit val hc: HeaderCarrier = new HeaderCarrier
 
-  val irSaAgentEnrolment = Set(
+  val irSaAgentEnrolment: Set[Enrolment] = Set(
     Enrolment("IR-SA-AGENT", Seq(EnrolmentIdentifier("IRAgentReference", "IRSA-123")), state = "activated", delegatedAuthRule = None)
   )
 
-  val hmrcAsAgentEnrolment = Set(
+  val hmrcAsAgentEnrolment: Set[Enrolment] = Set(
     Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", "ARN123")), state = "activated", delegatedAuthRule = None)
   )
 
-  val strideEnrolment = Set(
+  val strideEnrolment: Set[Enrolment] = Set(
     Enrolment("maintain_agent_manually_assure", Seq.empty, state = "activated", delegatedAuthRule = None)
   )
 

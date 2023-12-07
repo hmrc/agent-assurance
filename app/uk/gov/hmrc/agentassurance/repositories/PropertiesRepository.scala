@@ -40,6 +40,8 @@ class PropertiesRepository @Inject() (mongo: MongoComponent)(implicit ec: Execut
     )
     ) {
 
+  override lazy val requiresTtlIndex: Boolean = false
+
   def findProperties(key: String, page:Int, pageSize: Int): Future[(Int, Seq[String])] = {
 
     val skipDuePageNumber = pageSize * (page - 1)
@@ -61,7 +63,7 @@ class PropertiesRepository @Inject() (mongo: MongoComponent)(implicit ec: Execut
 
   def propertyExists(property: Property): Future[Boolean] = {
     collection.find(and(equal("key", property.key), equal("value", property.value)))
-      .headOption.map(_.isDefined)
+      .headOption().map(_.isDefined)
   }
 
   def createProperty(property: Property): Future[Unit] = {

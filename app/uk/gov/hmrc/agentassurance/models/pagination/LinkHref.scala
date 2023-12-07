@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.models.pagination
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, Json}
 
 case class LinkHref(href: String)
 
 object LinkHref {
-  implicit val linkFormat = Json.format[LinkHref]
+  implicit val linkFormat: Format[LinkHref] = Json.format[LinkHref]
 }

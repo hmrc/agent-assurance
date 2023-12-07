@@ -29,7 +29,7 @@ case class PaginationParameters(page: Int, pageSize: Int) {
 
 object PaginationParameters {
 
-  implicit def queryStringBinder(implicit intBinder: QueryStringBindable[Int]) = new QueryStringBindable[PaginationParameters] {
+  implicit def queryStringBinder(implicit intBinder: QueryStringBindable[Int]): QueryStringBindable[PaginationParameters] = new QueryStringBindable[PaginationParameters] {
     override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, PaginationParameters]] = {
       Try(for {
         page <- intBinder.bind("page", params)
@@ -43,6 +43,7 @@ object PaginationParameters {
         case _ => Some(Left("Invalid pagination parameters"))
       }.get
     }
+
     override def unbind(key: String, parameters: PaginationParameters): String = {
       intBinder.unbind("page", parameters.page) + "&" + intBinder.unbind("pageSize", parameters.pageSize)
     }

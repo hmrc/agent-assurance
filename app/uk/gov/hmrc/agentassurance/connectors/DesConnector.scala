@@ -42,9 +42,9 @@ case class ClientRelationship(agents: Seq[Agent])
 case class Agent(agentId: Option[SaAgentReference], hasAgent: Boolean, agentCeasedDate: Option[String])
 
 object ClientRelationship {
-  implicit val agentReads = Json.reads[Agent]
+  implicit val agentReads: Reads[Agent] = Json.reads[Agent]
 
-  implicit val readClientRelationship =
+  implicit val readClientRelationship: Reads[ClientRelationship] =
     (JsPath \ "agents").readNullable[Seq[Agent]]
       .map(optionalAgents => ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
 }
@@ -52,7 +52,7 @@ object ClientRelationship {
 case class RegistrationRelationshipResponse(processingDate: String)
 
 object RegistrationRelationshipResponse {
-  implicit val reads = Json.reads[RegistrationRelationshipResponse]
+  implicit val reads: Reads[RegistrationRelationshipResponse] = Json.reads[RegistrationRelationshipResponse]
 }
 
 @ImplementedBy(classOf[DesConnectorImpl])
@@ -90,6 +90,7 @@ class DesConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit
       val clientType = clientIdentifier match {
         case nino @ Nino(_) => nino.name
         case _ @ Utr(_) => "utr"
+        case e => throw new RuntimeException(s"Unacceptable taxIdentifier: $e")
       }
       UriEncoding.encodePathSegment(clientType, "UTF-8")
     }

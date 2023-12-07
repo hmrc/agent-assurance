@@ -28,7 +28,6 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
 import javax.inject.{Inject, Singleton}
-import scala.collection.Seq
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[OverseasAmlsRepositoryImpl])
@@ -46,6 +45,8 @@ class OverseasAmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: E
       IndexModel(ascending("arn"), IndexOptions().name("arnIndex").unique(true))
     )
     ) with OverseasAmlsRepository with Logging {
+
+  override lazy val requiresTtlIndex: Boolean = false
 
   def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]] = {
     collection

@@ -22,7 +22,7 @@ class DesConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockS
   override implicit lazy val app: Application = appBuilder
     .build()
 
-  implicit val appConfig = app.injector.instanceOf[AppConfig]
+  implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   val desConnector = new DesConnectorImpl(app.injector.instanceOf[HttpClient], app.injector.instanceOf[Metrics])
 
@@ -42,8 +42,8 @@ class DesConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockS
       )
       .bindings(bind[DesConnector].toInstance(desConnector))
 
-  private implicit val hc = HeaderCarrier()
-  private implicit val ec = ExecutionContext.global
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
+  private implicit val ec: ExecutionContext = ExecutionContext.global
 
   "DesConnector getActiveCesaAgentRelationships with a valid NINO" should {
     behave like aCheckEndpoint(Nino("AB123456C"))

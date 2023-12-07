@@ -132,5 +132,6 @@ trait DesStubs {
     identifer match {
       case _: Nino => "nino"
       case _: Utr => "utr"
+      case e => throw new RuntimeException(s"Unacceptable taxIdentifier: $e")
     }
 }

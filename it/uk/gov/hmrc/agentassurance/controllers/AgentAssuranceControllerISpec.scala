@@ -26,7 +26,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   with GuiceOneServerPerSuite with AgentAuthStubs with DesStubs with WireMockSupport with EnrolmentStoreProxyStubs
   with DefaultPlayMongoRepositorySupport[AmlsEntity]  {
 
-  override implicit lazy val app: Application = appBuilder.build
+  override implicit lazy val app: Application = appBuilder.build()
 
   override lazy val repository = new AmlsRepositoryImpl(mongoComponent)
 
@@ -55,7 +55,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         "stride.roles.agent-assurance" -> "maintain_agent_manually_assure")
       .overrides(moduleWithOverrides)
 
-  implicit val hc = new HeaderCarrier
+  implicit val hc: HeaderCarrier = new HeaderCarrier
 
   val irSaAgentEnrolmentUrl = s"http://localhost:$port/agent-assurance/irSaAgentEnrolment"
 
@@ -76,7 +76,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
   val userId = "0000001531072644"
 
-  implicit val defaultTimeout = 5 seconds
+  implicit val defaultTimeout: Duration = 5 seconds
 
   def await[A](future: Future[A])(implicit timeout: Duration) = Await.result(future, timeout)
 
@@ -637,7 +637,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     Scenario("ARN to be unique to each UTR in the MDTP database") {
 
       val newUtr = Utr("8588532862")
-      await(repository.ensureIndexes)
+      await(repository.ensureIndexes())
       await(repository.collection.insertOne(AmlsEntity(utr, amlsDetails, Some(arn), LocalDate.now())).toFuture())
       await(repository.collection.insertOne(AmlsEntity(newUtr, amlsDetails, None, LocalDate.now())).toFuture())
 

@@ -4,13 +4,12 @@ lazy val root = Project("agent-assurance", file("."))
     name := "agent-assurance",
     organization := "uk.gov.hmrc",
     majorVersion := 1,
-    scalaVersion := "2.12.15",
+    scalaVersion := "2.13.12",
     PlayKeys.playDefaultPort := 9565,
     scalacOptions ++= Seq(
       "-Yrangepos",
       "-Xfatal-warnings",
       "-Xlint:-missing-interpolator,_",
-      "-Yno-adapted-args",
       "-Ywarn-dead-code",
       "-deprecation",
       "-feature",
@@ -32,6 +31,10 @@ lazy val root = Project("agent-assurance", file("."))
     Test / parallelExecution := false
   )
   .configs(IntegrationTest)
+  .settings(
+    //fix for scoverage compile errors for scala 2.13.10
+    libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always)
+  )
   .settings(
     IntegrationTest / Keys.fork := false,
     Defaults.itSettings,

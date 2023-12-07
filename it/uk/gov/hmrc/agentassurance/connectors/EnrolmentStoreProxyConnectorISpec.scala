@@ -15,7 +15,7 @@ import scala.concurrent.ExecutionContext
 class EnrolmentStoreProxyConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockSupport with MetricTestSupport with EnrolmentStoreProxyStubs {
   override implicit lazy val app: Application = appBuilder.build()
 
-  implicit val appConfig = app.injector.instanceOf[AppConfig]
+  implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   val connector =app.injector.instanceOf[EnrolmentStoreProxyConnectorImpl]
 
@@ -34,8 +34,8 @@ class EnrolmentStoreProxyConnectorISpec extends UnitSpec with GuiceOneAppPerSuit
         "auditing.consumer.baseUri.port" -> wireMockPort
       )
 
-  private implicit val hc = HeaderCarrier()
-  private implicit val ec = ExecutionContext.global
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
+  private implicit val ec: ExecutionContext = ExecutionContext.global
 
   private val service = "IR-PAYE"
   private val userId = "0000001531072644"

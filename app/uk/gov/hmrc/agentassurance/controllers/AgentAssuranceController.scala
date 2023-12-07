@@ -90,7 +90,7 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
 
   def storeAmlsDetails: Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
     request.body.asJson.map(_.validate[CreateAmlsRequest]) match {
-      case Some(JsSuccess(createAmlsRequest, _)) ⇒
+      case Some(JsSuccess(createAmlsRequest, _)) =>
         if (Utr.isValid(createAmlsRequest.utr.value)) {
           amlsRepository.createOrUpdate(createAmlsRequest).map {
             case Right(_) => Created
@@ -103,16 +103,16 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
         } else {
           BadRequest("utr is not valid")
         }
-      case Some(JsError(_)) ⇒
+      case Some(JsError(_)) =>
         BadRequest("Could not parse AmlsDetails JSON in request")
-      case None ⇒
+      case None =>
         BadRequest("No JSON found in request body")
     }
   }
 
   def storeOverseasAmlsDetails: Action[AnyContent] =  withAffinityGroupAgent { implicit request =>
     request.body.asJson.map(_.validate[OverseasAmlsEntity]) match {
-      case Some(JsSuccess(amlsEntity, _)) ⇒
+      case Some(JsSuccess(amlsEntity, _)) =>
         if (Arn.isValid(amlsEntity.arn.value)) {
           overseasAmlsRepository.create(amlsEntity).map {
             case Right(_) => Created
@@ -124,9 +124,9 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
         } else {
           BadRequest("Invalid Arn")
         }
-      case Some(JsError(_)) ⇒
+      case Some(JsError(_)) =>
         BadRequest("Could not parse JSON in request")
-      case None ⇒
+      case None =>
         BadRequest("No JSON found in request body")
     }
   }
@@ -153,7 +153,7 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
 
   def updateAmlsDetails(utr: Utr): Action[AnyContent] =  withAffinityGroupAgent { implicit request =>
     request.body.asJson.map(_.validate[Arn]) match {
-      case Some(JsSuccess(arn, _)) ⇒
+      case Some(JsSuccess(arn, _)) =>
         if (Arn.isValid(arn.value)) {
           amlsRepository.updateArn(utr, arn).map {
             case Right(updated) => Ok(Json.toJson(updated))
@@ -169,9 +169,9 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
           BadRequest("invalid Arn value")
         }
 
-      case Some(JsError(_)) ⇒
+      case Some(JsError(_)) =>
         BadRequest("Could not parse Arn JSON in request")
-      case None ⇒
+      case None =>
         BadRequest("No JSON found in request body")
     }
   }

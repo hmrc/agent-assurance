@@ -32,7 +32,6 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
-import scala.collection.Seq
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[AmlsRepositoryImpl])
@@ -64,6 +63,8 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
       Codecs.playFormatCodec(CreateAmlsRequest.format)
     )
   ) with AmlsRepository with Logging {
+
+  override lazy val requiresTtlIndex: Boolean = false
 
 
   override def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError, Unit]] = {
