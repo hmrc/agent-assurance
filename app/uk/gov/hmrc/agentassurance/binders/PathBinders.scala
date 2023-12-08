@@ -24,7 +24,7 @@ object PathBinders {
   implicit object NinoBinder extends SimpleObjectBinder[Nino](Nino.apply, _.value)
   implicit object SaAgentReferenceBinder extends SimpleObjectBinder[SaAgentReference](SaAgentReference.apply, _.value)
 
-  implicit val utrBinder = new PathBindable[Utr] {
+  implicit val utrBinder: PathBindable[Utr] = new PathBindable[Utr] {
     override def bind(key: String, value: String): Either[String, Utr] = {
       if(Utr.isValid(value)) Right(Utr(value)) else Left("Invalid UTR")
     }

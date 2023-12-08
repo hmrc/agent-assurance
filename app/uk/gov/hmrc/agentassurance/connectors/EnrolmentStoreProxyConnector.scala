@@ -20,7 +20,7 @@ import com.codahale.metrics.MetricRegistry
 import com.google.inject.ImplementedBy
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
-import play.api.libs.json.JsValue
+import play.api.libs.json.{Format, JsValue}
 import play.api.libs.json.Json.{format, fromJson}
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentassurance.config.AppConfig
@@ -33,7 +33,7 @@ import scala.util.Try
 case class ClientAllocation(friendlyName: String, state: String)
 
 object ClientAllocation {
-  implicit val formats = format[ClientAllocation]
+  implicit val formats: Format[ClientAllocation] = format[ClientAllocation]
 }
 
 case class ClientAllocationResponse(clients: Seq[ClientAllocation])
@@ -49,9 +49,9 @@ class EnrolmentStoreProxyConnectorImpl @Inject()(httpGet: HttpClient, metrics: M
 
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  private val emacBaseUrl = s"${appConfig.esProxyUrl}/enrolment-store-proxy/enrolment-store"
+  private val emacBaseUrl: String = s"${appConfig.esProxyUrl}/enrolment-store-proxy/enrolment-store"
 
-  implicit val responseHandler = new HttpReads[ClientAllocationResponse] {
+  implicit val responseHandler: HttpReads[ClientAllocationResponse] = new HttpReads[ClientAllocationResponse] {
     override def read(method: String, url: String, response: HttpResponse) = {
       Try(response.status match {
         case 200 => ClientAllocationResponse(parseClients((response.json \ "enrolments").get))

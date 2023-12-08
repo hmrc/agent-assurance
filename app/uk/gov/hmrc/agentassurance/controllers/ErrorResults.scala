@@ -24,7 +24,7 @@ object ErrorResults {
 
   case class ErrorBody(code: String, message: String)
 
-  implicit val errorBodyWrites = new Writes[ErrorBody] {
+  implicit val errorBodyWrites: Writes[ErrorBody] = new Writes[ErrorBody] {
     override def writes(body: ErrorBody): JsValue = Json.obj("code" -> body.code, "message" -> body.message)
   }
 

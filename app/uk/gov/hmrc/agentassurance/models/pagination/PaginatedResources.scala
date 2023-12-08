@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.models.pagination
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, Json}
 
 case class PaginatedResources(
                              _links: PaginationLinks,
@@ -27,5 +27,5 @@ case class PaginatedResources(
 
 object PaginatedResources {
 
-  implicit val format = Json.format[PaginatedResources]
+  implicit val format: Format[PaginatedResources] = Json.format[PaginatedResources]
 }

@@ -6,7 +6,7 @@ import org.scalatest.Suite
 import org.scalatest.matchers.should.Matchers
 import play.api.Application
 
-import scala.collection.JavaConverters
+import scala.jdk.CollectionConverters._
 
 trait MetricTestSupport {
   self: Suite with Matchers =>
@@ -17,7 +17,7 @@ trait MetricTestSupport {
 
   def givenCleanMetricRegistry(): Unit = {
     val registry = app.injector.instanceOf[Metrics].defaultRegistry
-    for (metric <- JavaConverters.asScalaIterator[String](registry.getMetrics.keySet().iterator())) {
+    for (metric <- (registry.getMetrics.keySet().iterator().asScala)) {
       registry.remove(metric)
     }
     metricsRegistry = registry
