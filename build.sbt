@@ -4,7 +4,7 @@ lazy val root = Project("agent-assurance", file("."))
     name := "agent-assurance",
     organization := "uk.gov.hmrc",
     majorVersion := 1,
-    scalaVersion := "2.13.12",
+    scalaVersion := "2.13.10",
     PlayKeys.playDefaultPort := 9565,
     scalacOptions ++= Seq(
       "-Yrangepos",
