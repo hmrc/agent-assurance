@@ -20,119 +20,49 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
-import play.api.test.Helpers.{status, _}
-import play.api.test.{FakeRequest, Helpers}
+import play.api.mvc.Result
+import play.api.test.Helpers._
+import play.api.test.FakeRequest
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
+import uk.gov.hmrc.agentassurance.helpers.TestConstants._
+import uk.gov.hmrc.agentassurance.mocks._
 import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsRecordExists, AmlsUnexpectedMongoError, UniqueKeyViolationError}
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, OverseasAmlsRepository}
-import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.authorise.{EmptyPredicate, Predicate}
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{affinityGroup, allEnrolments, credentials}
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval, Retrieval}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval}
 import uk.gov.hmrc.auth.core.syntax.retrieved.authSyntaxForRetrieved
-import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
+import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.time.LocalDate
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
-class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with BeforeAndAfterEach {
-  val desConnector = mock[DesConnector]
-  val espConnector = mock[EnrolmentStoreProxyConnector]
-  val authConnector = mock[AuthConnector]
-  val amlsRepository = mock[AmlsRepository]
-  val overseasAmlsRepository = mock[OverseasAmlsRepository]
-  val serviceConfig = mock[ServicesConfig]
+class AgentAssuranceControllerSpec extends PlaySpec
+  with MockFactory
+  with MockAuthConnector
+  with MockAmlsRepository
+  with MockOverseasAmlsRepository
+  with MockEnrolmentStoreProxyConnector
+  with MockDesConnector
+  with MockAppConfig
+  with BeforeAndAfterEach {
 
-  (serviceConfig.getInt(_: String)).expects(*).atLeastOnce().returning(1)
-  (serviceConfig.baseUrl(_: String)).expects(*).atLeastOnce().returning("some-url")
-  (serviceConfig.getConfString(_: String, _: String)).expects(*, *).atLeastOnce().returning("some-string")
-  (serviceConfig.getString(_: String)).expects("stride.roles.agent-assurance").atLeastOnce().returning("maintain_agent_manually_assure")
+  implicit val appConfig: AppConfig = mockAppConfig
 
-  implicit val appConfig: AppConfig = new AppConfig(serviceConfig)
-
-  val controller = new AgentAssuranceController(authConnector, desConnector, espConnector, overseasAmlsRepository, Helpers.stubControllerComponents(), amlsRepository)
+  val controller =
+    new AgentAssuranceController(
+      mockAuthConnector,
+      mockDesConnector,
+      mockEspConnector,
+      mockOverseasAmlsRepository,
+      stubControllerComponents(),
+      mockAmlsRepository
+    )
 
   implicit val hc: HeaderCarrier = new HeaderCarrier
-
-  val irSaAgentEnrolment: Set[Enrolment] = Set(
-    Enrolment("IR-SA-AGENT", Seq(EnrolmentIdentifier("IRAgentReference", "IRSA-123")), state = "activated", delegatedAuthRule = None)
-  )
-
-  val hmrcAsAgentEnrolment: Set[Enrolment] = Set(
-    Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", "ARN123")), state = "activated", delegatedAuthRule = None)
-  )
-
-  val strideEnrolment: Set[Enrolment] = Set(
-    Enrolment("maintain_agent_manually_assure", Seq.empty, state = "activated", delegatedAuthRule = None)
-  )
-
-  val enrolmentsWithIrSAAgent = Enrolments(irSaAgentEnrolment)
-  val enrolmentsWithNoIrSAAgent = Enrolments(hmrcAsAgentEnrolment)
-  val enrolmentsWithoutIrSAAgent = Enrolments(Set.empty)
-  val enrolmentsWithStride = Enrolments(strideEnrolment)
-
-  private val nino = Nino("AA000000A")
-  private val utr = Utr("7000000002")
-  private val saAgentReference = SaAgentReference("IRSA-123")
-  private val validApplicationReferenceNumber = "XAML00000123456"
-
-
-  def mockAuth()(response: Either[String, Enrolments]) = {
-    (authConnector.authorise(_: Predicate, _: Retrieval[Enrolments])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(AuthProviders(GovernmentGateway), Retrievals.allEnrolments, *, *)
-      .returning(response.fold[Future[Enrolments]](e => Future.failed(new Exception(e)), r => toFuture(r)))
-  }
-
-  def mockAuthWithNoRetrievals[A](retrieval: Retrieval[A])(result: A) = {
-    (authConnector.authorise[A](_: Predicate, _: Retrieval[A])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(EmptyPredicate, retrieval, *, *)
-      .returning(toFuture(result))
-  }
-
-  def mockDes(ti: TaxIdentifier)(response: Either[String, Option[Seq[SaAgentReference]]]) = {
-    (desConnector.getActiveCesaAgentRelationships(_: TaxIdentifier)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(ti, *, *)
-      .returning(response.fold[Future[Option[Seq[SaAgentReference]]]](e => Future.failed(new Exception(e)), r => toFuture(r)))
-  }
-
-  def mockAgentAuth()(response: Either[String, Unit]) = {
-    (authConnector.authorise(_: Predicate, _: EmptyRetrieval.type)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(AuthProviders(GovernmentGateway) and AffinityGroup.Agent, EmptyRetrieval, *, *)
-      .returning(response.fold[Future[Unit]](e => Future.failed(new Exception(e)), r => toFuture(r)))
-  }
-
-  def mockCreateAmls(createAmlsRequest: CreateAmlsRequest)(response: Either[AmlsError, Unit]) = {
-    (amlsRepository.createOrUpdate(_: CreateAmlsRequest))
-      .expects(createAmlsRequest)
-      .returning(toFuture(response))
-  }
-
-  def mockUpdateAmls(utr: Utr, arn: Arn)(response: Either[AmlsError, AmlsDetails]) = {
-    (amlsRepository.updateArn(_: Utr, _: Arn))
-      .expects(utr, arn)
-      .returning(toFuture(response))
-  }
-
-  def mockGetAmls(utr: Utr)(response: Option[AmlsDetails]) = {
-    (amlsRepository.getAmlDetails(_: Utr))
-      .expects(utr)
-      .returning(toFuture(response))
-  }
-
-  def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError, Unit]) = {
-    (overseasAmlsRepository.create(_: OverseasAmlsEntity))
-      .expects(amlsEntity)
-      .returning(toFuture(response))
-  }
 
   "AgentAssuranceController" when {
     "enrolledForIrSAAgent is called" should {
@@ -163,29 +93,29 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "return OK where the user provides a valid NINO and saAgentReference nad has an active relationship in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(nino)(Right(Some(Seq(saAgentReference))))
+          mockDes(testNino)(Right(Some(Seq(testSaAgentReference))))
         }
 
-        val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
+        val response = controller.activeCesaRelationshipWithNino(testNino, testSaAgentReference)(FakeRequest())
         status(response) mustBe OK
       }
 
       "return FORBIDDEN when called with a valid NINO that is not active in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(nino)(Right(Some(Seq.empty)))
+          mockDes(testNino)(Right(Some(Seq.empty)))
         }
 
-        val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
+        val response = controller.activeCesaRelationshipWithNino(testNino, testSaAgentReference)(FakeRequest())
         status(response) mustBe FORBIDDEN
       }
 
       "return FORBIDDEN when called with a valid NINO that is active in CESA but with a different IRAgentReference" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(nino)(Right(Some(Seq(SaAgentReference("IRSA-456")))))
+          mockDes(testNino)(Right(Some(Seq(SaAgentReference("IRSA-456")))))
         }
-        val response = controller.activeCesaRelationshipWithNino(nino, saAgentReference)(FakeRequest())
+        val response = controller.activeCesaRelationshipWithNino(testNino, testSaAgentReference)(FakeRequest())
 
         status(response) mustBe FORBIDDEN
       }
@@ -195,9 +125,9 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "return OK where the user provides a valid UTR and saAgentReference nad has an active relationship in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(utr)(Right(Some(Seq(saAgentReference))))
+          mockDes(testUtr)(Right(Some(Seq(testSaAgentReference))))
         }
-        val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
+        val response = controller.activeCesaRelationshipWithUtr(testUtr, testSaAgentReference)(FakeRequest())
 
         status(response) mustBe OK
       }
@@ -205,18 +135,18 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "return FORBIDDEN when called with a valid UTR that is not active in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(utr)(Right(Some(Seq.empty)))
+          mockDes(testUtr)(Right(Some(Seq.empty)))
         }
-        val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
+        val response = controller.activeCesaRelationshipWithUtr(testUtr, testSaAgentReference)(FakeRequest())
         status(response) mustBe FORBIDDEN
       }
 
       "return FORBIDDEN when called with a valid UTR that is active in CESA but with a different IRAgentReference" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(utr)(Right(Some(Seq(SaAgentReference("IRSA-456")))))
+          mockDes(testUtr)(Right(Some(Seq(SaAgentReference("IRSA-456")))))
         }
-        val response = controller.activeCesaRelationshipWithUtr(utr, saAgentReference)(FakeRequest())
+        val response = controller.activeCesaRelationshipWithUtr(testUtr, testSaAgentReference)(FakeRequest())
 
         status(response) mustBe FORBIDDEN
       }
@@ -226,7 +156,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
       val utr = Utr("7000000002")
 
-      def doRequest = controller.getAmlsDetails(utr)(FakeRequest()
+      def doRequest(): Future[Result] = controller.getAmlsDetails(utr)(FakeRequest()
         .withHeaders(CONTENT_TYPE -> "application/json"))
 
       "not an agent or stride should return forbidden" in {
@@ -235,7 +165,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithoutIrSAAgent and None and None)
         }
 
-        val response = doRequest
+        val response = doRequest()
         status(response) mustBe FORBIDDEN
 
       }
@@ -247,7 +177,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
           mockGetAmls(utr)(None)
         }
 
-        val response = doRequest
+        val response = doRequest()
         status(response) mustBe NOT_FOUND
 
       }
@@ -255,10 +185,10 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       "an agent with existing aml record should return amls details" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
-          mockGetAmls(utr)(Some(AmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
+          mockGetAmls(utr)(Some(UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
         }
 
-        val response = doRequest
+        val response = doRequest()
         status(response) mustBe OK
       }
 
@@ -269,17 +199,17 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
           mockGetAmls(utr)(None)
         }
 
-        val response = doRequest
+        val response = doRequest()
         status(response) mustBe NOT_FOUND
       }
 
       "a stride user with existing aml record should return amls details" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithStride and None and Some(Credentials("", "PrivilegedApplication")))
-          mockGetAmls(utr)(Some(AmlsDetails("abc", membershipNumber = Some("001"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
+          mockGetAmls(utr)(Some(UkAmlsDetails("abc", membershipNumber = Some("001"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
         }
 
-        val response = doRequest
+        val response = doRequest()
         status(response) mustBe OK
       }
 
@@ -287,8 +217,8 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
     "storeAmlsDetails" should {
 
-      val amlsDetails = AmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
-      val createAmlsRequest = CreateAmlsRequest(utr, amlsDetails)
+      val amlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
+      val createAmlsRequest = CreateAmlsRequest(testUtr, amlsDetails)
 
       def doRequest(createAmlsRequest: CreateAmlsRequest = createAmlsRequest) =
         controller.storeAmlsDetails()(FakeRequest()
@@ -345,8 +275,8 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       }
 
       "accept registered AMLS details without a date (APB-5382)" in {
-        val amlsDetailsNoDateR = AmlsDetails("supervisoryBody", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = None)
-        val createAmlsRequestNoDateR = CreateAmlsRequest(utr, amlsDetailsNoDateR)
+        val amlsDetailsNoDateR = UkAmlsDetails("supervisoryBody", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = None)
+        val createAmlsRequestNoDateR = CreateAmlsRequest(testUtr, amlsDetailsNoDateR)
 
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
@@ -359,8 +289,8 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       }
 
       "accept pending AMLS details without a date (APB-5382)" in {
-        val amlsDetailsNoDateL = AmlsDetails("supervisoryBody", membershipNumber = Some(validApplicationReferenceNumber), appliedOn = None, membershipExpiresOn = None)
-        val createAmlsRequestNoDateL = CreateAmlsRequest(utr, amlsDetailsNoDateL)
+        val amlsDetailsNoDateL = UkAmlsDetails("supervisoryBody", membershipNumber = Some(testValidApplicationReferenceNumber), appliedOn = None, membershipExpiresOn = None)
+        val createAmlsRequestNoDateL = CreateAmlsRequest(testUtr, amlsDetailsNoDateL)
 
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
@@ -373,8 +303,8 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       }
 
       "accept pending AMLS details without a reference number" in {
-        val amlsDetailsNoDateL = AmlsDetails("supervisoryBody", membershipNumber = None, appliedOn = Some(LocalDate.now()), membershipExpiresOn = None)
-        val createAmlsRequestNoDateL = CreateAmlsRequest(utr, amlsDetailsNoDateL)
+        val amlsDetailsNoDateL = UkAmlsDetails("supervisoryBody", membershipNumber = None, appliedOn = Some(LocalDate.now()), membershipExpiresOn = None)
+        val createAmlsRequestNoDateL = CreateAmlsRequest(testUtr, amlsDetailsNoDateL)
 
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
@@ -392,7 +322,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
       val utr = Utr("7000000002")
       val arn = Arn("AARN0000002")
 
-      def doRequest =
+      def doRequest(): Future[Result] =
         controller.updateAmlsDetails(utr)(FakeRequest()
           .withJsonBody(Json.toJson(arn))
           .withHeaders(CONTENT_TYPE -> "application/json")
@@ -402,9 +332,9 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
 
         inSequence {
           mockAgentAuth()(Right(()))
-          mockUpdateAmls(utr, arn)(Right(AmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
+          mockUpdateAmls(utr, arn)(Right(UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
         }
-        val response = doRequest
+        val response = doRequest()
         status(response) mustBe OK
         contentAsString(response) must include("supervisory")
       }
@@ -415,7 +345,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
           mockAgentAuth()(Right(()))
           mockUpdateAmls(utr, arn)(Left(AmlsUnexpectedMongoError))
         }
-        val response = doRequest
+        val response = doRequest()
         status(response) mustBe INTERNAL_SERVER_ERROR
       }
 
@@ -424,7 +354,7 @@ class AgentAssuranceControllerSpec extends PlaySpec with MockFactory with Before
           mockAgentAuth()(Right(()))
           mockUpdateAmls(utr, arn)(Left(UniqueKeyViolationError))
         }
-        val response = doRequest
+        val response = doRequest()
         status(response) mustBe BAD_REQUEST
       }
 

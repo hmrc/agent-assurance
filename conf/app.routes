@@ -24,6 +24,8 @@ DELETE        /manually-assured/utr/:identifier                                 
 POST          /amls                                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.storeAmlsDetails()
 PUT           /amls/utr/:identifier                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.updateAmlsDetails(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
 GET           /amls/utr/:identifier                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.getAmlsDetails(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
-GET           /amls-subscription/:amlsRegistrationNumber                                    @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.getAmlsSubscription(amlsRegistrationNumber: String)
+GET           /amls-subscription/:amlsRegistrationNumber                                   @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.getAmlsSubscription(amlsRegistrationNumber: String)
 
 POST          /overseas-agents/amls                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.storeOverseasAmlsDetails
+
+GET           /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.GetAmlsDetailsByArnController.getAmlsDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
