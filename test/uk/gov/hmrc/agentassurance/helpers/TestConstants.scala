@@ -48,7 +48,8 @@ object TestConstants {
   val testValidApplicationReferenceNumber = "XAML00000123456"
   val testArn = Arn("ARN123")
 
-  val testAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
+  val membershipExpiresOnDate = LocalDate.parse("2024-01-12")
+  val testAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(membershipExpiresOnDate))
   val testOverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
 
 }

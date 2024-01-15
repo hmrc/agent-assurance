@@ -42,7 +42,7 @@ class GetAmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsSer
     withAffinityGroupAgentOrStride(strideRoles) {
       request =>
         amlsDetailsService.getAmlsDetailsByArn(arn).map {
-          case Nil => NotFound // Should this be NoContent as this isn't an client side issue
+          case Nil => NoContent
           case Seq(amlsDetails@UkAmlsDetails(_, _, _, _, _, _)) => Ok(Json.toJson(amlsDetails))
           case Seq(overseasAmlsDetails@OverseasAmlsDetails(_, _)) => Ok(Json.toJson(overseasAmlsDetails))
           case _ => throw new InternalServerException("[getAmlsDetailsByArnController][getAmlsDetails] ARN has both Overseas and UK AMLS details")
