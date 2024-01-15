@@ -24,6 +24,7 @@ import org.mongodb.scala.model.{IndexModel, IndexOptions}
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.models.AmlsError._
 import uk.gov.hmrc.agentassurance.models._
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
@@ -33,6 +34,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[OverseasAmlsRepositoryImpl])
 trait OverseasAmlsRepository {
   def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]]
+
+  def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]]
+
 }
 
 @Singleton
@@ -70,4 +74,11 @@ class OverseasAmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: E
               Left(AmlsUnexpectedMongoError)
           }
       }
+
+  override def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]] =
+    collection
+      .find(equal("arn", arn.value))
+      .headOption()
+      .map(_.map(_.amlsDetails))
+
 }

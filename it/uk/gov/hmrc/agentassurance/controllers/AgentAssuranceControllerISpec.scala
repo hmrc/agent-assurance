@@ -338,8 +338,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     val utr = Utr("7000000002")
     val validApplicationReferenceNumber = "XAML00000123456"
-    val amlsDetails = AmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
-    val pendingAmlsDetails = AmlsDetails("supervisory", membershipNumber = Some(validApplicationReferenceNumber), appliedOn = Some(LocalDate.now().minusDays(10)), membershipExpiresOn = None)
+    val amlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
+    val pendingAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some(validApplicationReferenceNumber), appliedOn = Some(LocalDate.now().minusDays(10)), membershipExpiresOn = None)
     val createAmlsRequest = CreateAmlsRequest(utr, amlsDetails)
     val pendingAmlsDetailsRequest = CreateAmlsRequest(utr, pendingAmlsDetails)
 
@@ -396,7 +396,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       val dbRecord = await(repository.collection.find().toFuture()).head
       dbRecord.utr shouldBe utr
       dbRecord.createdOn shouldBe LocalDate.now()
-      dbRecord.amlsDetails shouldBe AmlsDetails("supervisory", membershipNumber = Some(validApplicationReferenceNumber), appliedOn = Some(LocalDate.now().minusDays(10)), membershipExpiresOn = None)
+      dbRecord.amlsDetails shouldBe UkAmlsDetails("supervisory", membershipNumber = Some(validApplicationReferenceNumber), appliedOn = Some(LocalDate.now().minusDays(10)), membershipExpiresOn = None)
     }
 
     Scenario("stride user should be able to create a registered Amls record without a date (APB-5382)") {
@@ -508,7 +508,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     def amlsGetUrl(utr: Utr) = s"http://localhost:$port/agent-assurance/amls/utr/${utr.value}"
 
-    val amlsDetails = AmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn =  Some(LocalDate.now()))
+    val amlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn =  Some(LocalDate.now()))
 
     def callGet(utr: Utr) = Await.result(
       wsClient.url(amlsGetUrl(utr)).withHttpHeaders("Authorization" -> "Bearer XYZ").get(), 10 seconds
@@ -556,7 +556,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     def amlsUpdateUrl(utr: Utr) = s"http://localhost:$port/agent-assurance/amls/utr/${utr.value}"
 
-    val amlsDetails = AmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn =  Some(LocalDate.now()))
+    val amlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn =  Some(LocalDate.now()))
 
     def callPut(utr: Utr, arn: Arn) =
       Await.result(

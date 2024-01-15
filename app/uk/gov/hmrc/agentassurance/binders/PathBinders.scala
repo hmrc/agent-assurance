@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentassurance.binders
 
 import play.api.mvc.PathBindable
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 
 object PathBinders {
@@ -30,5 +30,13 @@ object PathBinders {
     }
 
     override def unbind(key: String, utr: Utr): String = utr.value
+  }
+
+  implicit val arnBinder: PathBindable[Arn] = new PathBindable[Arn] {
+    override def bind(key: String, value: String): Either[String, Arn] = {
+      if(Arn.isValid(value)) Right(Arn(value)) else Left("Invalid ARN")
+    }
+
+    override def unbind(key: String, arn: Arn): String = arn.value
   }
 }

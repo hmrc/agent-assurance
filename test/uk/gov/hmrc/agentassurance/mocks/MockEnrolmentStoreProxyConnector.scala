@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models
+package uk.gov.hmrc.agentassurance.mocks
 
-import play.api.libs.json.{Json, OFormat}
+import org.scalamock.scalatest.MockFactory
+import uk.gov.hmrc.agentassurance.connectors.EnrolmentStoreProxyConnector
 
-case class OverseasAmlsDetails(supervisoryBody: String, membershipNumber: Option[String] = None) extends AmlsDetails
+trait MockEnrolmentStoreProxyConnector extends MockFactory {
 
-object OverseasAmlsDetails {
-  implicit val format: OFormat[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]
+  val mockEspConnector = mock[EnrolmentStoreProxyConnector]
+
 }

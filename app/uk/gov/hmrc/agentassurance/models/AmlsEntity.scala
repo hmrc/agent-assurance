@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,13 @@
 package uk.gov.hmrc.agentassurance.models
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 
-case class OverseasAmlsDetails(supervisoryBody: String, membershipNumber: Option[String] = None) extends AmlsDetails
+import java.time.LocalDate
 
-object OverseasAmlsDetails {
-  implicit val format: OFormat[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]
+
+case class AmlsEntity(utr: Utr, amlsDetails: UkAmlsDetails, arn: Option[Arn] = None, createdOn: LocalDate, updatedArnOn: Option[LocalDate] = None)
+
+object AmlsEntity {
+  implicit val amlsEntityFormat: OFormat[AmlsEntity] = Json.format[AmlsEntity]
 }

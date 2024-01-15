@@ -16,10 +16,21 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, Json}
 
-case class OverseasAmlsDetails(supervisoryBody: String, membershipNumber: Option[String] = None) extends AmlsDetails
+import java.time.LocalDate
 
-object OverseasAmlsDetails {
-  implicit val format: OFormat[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]
+case class UkAmlsDetails(supervisoryBody: String,
+                         membershipNumber: Option[String],
+                         amlsSafeId: Option[String] = None,
+                         agentBPRSafeId: Option[String] = None,
+                         appliedOn: Option[LocalDate],
+                         membershipExpiresOn: Option[LocalDate]) extends AmlsDetails {
+  val isPending: Boolean = membershipExpiresOn.isEmpty
+  val isRegistered: Boolean = !isPending
 }
+
+object UkAmlsDetails {
+  implicit val format: Format[UkAmlsDetails] = Json.format[UkAmlsDetails]
+}
+

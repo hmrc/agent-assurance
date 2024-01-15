@@ -14,8 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models
+package uk.gov.hmrc.agentassurance.mocks
 
-trait AmlsDetails {
+import org.scalamock.scalatest.MockFactory
+import uk.gov.hmrc.agentassurance.models.AmlsDetails
+import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+
+import scala.concurrent.Future
+
+trait MockAmlsDetailsService extends MockFactory {
+
+  val mockAmlsDetailsService = mock[AmlsDetailsService]
+
+  def mockGetAmlsDetailsByArn(arn: Arn)(response: Seq[AmlsDetails]) =
+    (mockAmlsDetailsService.getAmlsDetailsByArn(_: Arn))
+      .expects(arn)
+      .returning(Future.successful(response))
 
 }

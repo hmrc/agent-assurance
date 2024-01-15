@@ -24,7 +24,7 @@ import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.model.{IndexModel, IndexOptions, ReplaceOptions}
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError, UniqueKeyViolationError}
-import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsEntity, AmlsError, CreateAmlsRequest}
+import uk.gov.hmrc.agentassurance.models.{UkAmlsDetails, AmlsEntity, AmlsError, CreateAmlsRequest}
 import uk.gov.hmrc.agentassurance.util._
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.MongoComponent
@@ -38,26 +38,30 @@ import scala.concurrent.{ExecutionContext, Future}
 trait AmlsRepository {
 
   def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError, Unit]]
-  def updateArn(utr: Utr, arn: Arn): Future[Either[AmlsError, AmlsDetails]]
-  def getAmlDetails(utr: Utr): Future[Option[AmlsDetails]]
+
+  def updateArn(utr: Utr, arn: Arn): Future[Either[AmlsError, UkAmlsDetails]]
+
+  def getAmlDetails(utr: Utr): Future[Option[UkAmlsDetails]]
+
+  def getAmlsDetailsByArn(arn: Arn): Future[Option[UkAmlsDetails]]
 }
 
 @Singleton
 class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: ExecutionContext)
   extends PlayMongoRepository[AmlsEntity](
     mongoComponent = mongo,
-    collectionName ="agent-amls",
+    collectionName = "agent-amls",
     domainFormat = AmlsEntity.amlsEntityFormat,
     indexes = Seq(
       IndexModel(ascending("utr"),
         IndexOptions()
           .unique(true)
           .name("utrIndex")),
-        IndexModel(ascending("arn"),
-          IndexOptions()
-            .unique(true)
-            .name("arnIndex")
-            .partialFilterExpression(BsonDocument("arn" -> BsonDocument("$exists" -> true))))
+      IndexModel(ascending("arn"),
+        IndexOptions()
+          .unique(true)
+          .name("arnIndex")
+          .partialFilterExpression(BsonDocument("arn" -> BsonDocument("$exists" -> true))))
     ),
     extraCodecs = Seq(
       Codecs.playFormatCodec(CreateAmlsRequest.format)
@@ -93,7 +97,7 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
       }
   }
 
-  override def updateArn(utr: Utr, arn: Arn): Future[Either[AmlsError, AmlsDetails]] = {
+  override def updateArn(utr: Utr, arn: Arn): Future[Either[AmlsError, UkAmlsDetails]] = {
     collection
       .find(equal("utr", utr.value))
       .headOption()
@@ -108,30 +112,35 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
               .replaceOne(equal("utr", utr.value), toUpdate)
               .toFuture()
               .map {
-                case updateResult => if(updateResult.getModifiedCount == 1L) Right(toUpdate.amlsDetails)
-                  else {
+                case updateResult => if (updateResult.getModifiedCount == 1L) Right(toUpdate.amlsDetails)
+                else {
                   logger.warn(s"error updating AMLS record with ARN - acknowledged: " +
                     s"${updateResult.wasAcknowledged()}, modified count: ${updateResult.getModifiedCount}")
                   Left(AmlsUnexpectedMongoError)
                 }
               }.recover {
-              case e: MongoWriteException if e.getError.getCode == 11000 =>
-                Left(UniqueKeyViolationError)
-              case e => {
-                logger.warn(s"unexpected error when updating AMLS record with ARN ${e.getMessage}")
-                Left(AmlsUnexpectedMongoError)
+                case e: MongoWriteException if e.getError.getCode == 11000 =>
+                  Left(UniqueKeyViolationError)
+                case e => {
+                  logger.warn(s"unexpected error when updating AMLS record with ARN ${e.getMessage}")
+                  Left(AmlsUnexpectedMongoError)
+                }
               }
-            }
         }
         case None => Left(NoExistingAmlsError)
       }
   }
 
-  override def getAmlDetails(utr: Utr): Future[Option[AmlsDetails]] =
+  override def getAmlDetails(utr: Utr): Future[Option[UkAmlsDetails]] =
     collection
       .find(equal("utr", utr.value))
       .headOption()
       .map(_.map(_.amlsDetails))
 
+  override def getAmlsDetailsByArn(arn: Arn): Future[Option[UkAmlsDetails]] =
+    collection
+      .find(equal("arn", arn.value))
+      .headOption()
+      .map(_.map(_.amlsDetails))
 
 }
