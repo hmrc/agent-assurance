@@ -27,7 +27,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.math.random
+
 class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepository,
                                    cc: ControllerComponents,
                                    amlsRepository: AmlsRepository,
@@ -49,7 +49,8 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
 
 
 // source / created date for overseas
-  case class AmlsDataRequest(isUk: Boolean, status: String, isHmrc: Boolean)
+  case class AmlsDataRequest(isUk: Boolean, status: String, isHmrc: Boolean, isExpired: Option[Boolean])
+  // None Some(true) Some(false)
 
   object AmlsDataRequest {
     implicit val format: Format[AmlsDataRequest] = Json.format[AmlsDataRequest]
@@ -63,34 +64,47 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
   *
   * */
 
-  def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request =>arn: Arn =>
+  def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request => arn: Arn =>
     request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match {
       case Some(JsSuccess(amlsRequest, _)) =>
         if(amlsRequest.isUk) {
-          amlsRepository.createOrUpdate(
-            CreateAmlsRequest(
-              Utr(random.toString),
-              UkAmlsDetails(
-                supervisoryBody = "test",
-                membershipNumber = Some("XAML00000200000"),
-                appliedOn = None,
-                membershipExpiresOn = None)
-            )
-          ).map(_ => Created)
+          createUkAmlsRecord(amlsRequest.isHmrc)
         } else {
-          overseasAmlsRepository.create(
-            OverseasAmlsEntity(
-              arn,
-              OverseasAmlsDetails(
-                supervisoryBody = "AMLS Body 101",
-                membershipNumber = Some("12345")
-              )
-            )
-          ).map(_ => Created)
+          createOverseasAmlsRecord(arn)
         }
       case _ => Future successful BadRequest
     }
 
   }
+
+  private def createUkAmlsRecord(isHmrc: Boolean) = {
+    val body = if(isHmrc) "HM Revenue and Customs (HMRC)" else "Law Society of Scotland"
+
+    val utr: String = Math.random().*(1000000000).toString.substring(2,12)
+    amlsRepository.createOrUpdate(
+      CreateAmlsRequest(
+        Utr(utr),
+        UkAmlsDetails(
+          supervisoryBody = body,
+          membershipNumber = Some("XAML00000200000"),
+          appliedOn = None,
+          membershipExpiresOn = None)
+      )
+    ).map(_ => Created)
+  }
+
+  private def createOverseasAmlsRecord(arn: Arn) = {
+    overseasAmlsRepository.create(
+      OverseasAmlsEntity(
+        arn,
+        OverseasAmlsDetails(
+          supervisoryBody = "AMLS Body 101",
+          membershipNumber = Some("12345")
+        )
+      )
+    ).map(_ => Created)
+  }
+
+
 
 }
