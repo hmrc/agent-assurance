@@ -218,7 +218,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
     "storeAmlsDetails" should {
 
       val amlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
-      val createAmlsRequest = CreateAmlsRequest(testUtr, amlsDetails)
+      val createAmlsRequest = CreateAmlsRequest(testUtr, amlsDetails, AmlsSources.Subscription)
 
       def doRequest(createAmlsRequest: CreateAmlsRequest = createAmlsRequest) =
         controller.storeAmlsDetails()(FakeRequest()
@@ -276,7 +276,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
       "accept registered AMLS details without a date (APB-5382)" in {
         val amlsDetailsNoDateR = UkAmlsDetails("supervisoryBody", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = None)
-        val createAmlsRequestNoDateR = CreateAmlsRequest(testUtr, amlsDetailsNoDateR)
+        val createAmlsRequestNoDateR = CreateAmlsRequest(testUtr, amlsDetailsNoDateR, AmlsSources.Subscription)
 
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
@@ -290,7 +290,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
       "accept pending AMLS details without a date (APB-5382)" in {
         val amlsDetailsNoDateL = UkAmlsDetails("supervisoryBody", membershipNumber = Some(testValidApplicationReferenceNumber), appliedOn = None, membershipExpiresOn = None)
-        val createAmlsRequestNoDateL = CreateAmlsRequest(testUtr, amlsDetailsNoDateL)
+        val createAmlsRequestNoDateL = CreateAmlsRequest(testUtr, amlsDetailsNoDateL, AmlsSources.Subscription)
 
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
@@ -304,7 +304,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
       "accept pending AMLS details without a reference number" in {
         val amlsDetailsNoDateL = UkAmlsDetails("supervisoryBody", membershipNumber = None, appliedOn = Some(LocalDate.now()), membershipExpiresOn = None)
-        val createAmlsRequestNoDateL = CreateAmlsRequest(testUtr, amlsDetailsNoDateL)
+        val createAmlsRequestNoDateL = CreateAmlsRequest(testUtr, amlsDetailsNoDateL, AmlsSources.Subscription)
 
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))

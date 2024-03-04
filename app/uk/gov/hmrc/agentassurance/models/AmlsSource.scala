@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,17 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Format, Json}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import play.api.libs.json.Format
+import julienrf.json.derived
 
+sealed trait AmlsSource
 
-case class CreateAmlsRequest(utr: Utr, amlsDetails: UkAmlsDetails, amlsSource: AmlsSource)
+object AmlsSources {
+  @SuppressWarnings(Array("org.wartremover.warts.Any"))
+  implicit val formatAmlsSource: Format[AmlsSource] = derived.oformat[AmlsSource]()
 
-object CreateAmlsRequest {
-  import AmlsSources._
-  implicit val format: Format[CreateAmlsRequest] = Json.format[CreateAmlsRequest]
+  final case object Subscription extends AmlsSource
+  final case object AutomaticUpdate extends AmlsSource
+  final case object ManageAccountUpdate extends AmlsSource
 }
+

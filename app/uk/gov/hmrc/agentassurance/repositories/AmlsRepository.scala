@@ -24,7 +24,7 @@ import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.model.{IndexModel, IndexOptions, ReplaceOptions}
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError, UniqueKeyViolationError}
-import uk.gov.hmrc.agentassurance.models.{UkAmlsDetails, AmlsEntity, AmlsError, CreateAmlsRequest}
+import uk.gov.hmrc.agentassurance.models.{AmlsEntity, AmlsError, CreateAmlsRequest, UkAmlsDetails}
 import uk.gov.hmrc.agentassurance.util._
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.MongoComponent
@@ -84,10 +84,11 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
           collection
             .replaceOne(equal("utr", utr),
               AmlsEntity(
-                Utr(utr),
-                createAmlsRequest.amlsDetails,
-                None,
-                LocalDate.now()),
+                utr = Utr(utr),
+                amlsDetails = createAmlsRequest.amlsDetails,
+                arn = None,
+                createdOn = LocalDate.now(),
+                amlsSource = createAmlsRequest.amlsSource),
               ReplaceOptions().upsert(true))
             .toFuture()
             .map {

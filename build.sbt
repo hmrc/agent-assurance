@@ -10,6 +10,7 @@ lazy val root = Project("agent-assurance", file("."))
       "-Yrangepos",
       "-Xfatal-warnings",
       "-Xlint:-missing-interpolator,_",
+      "-Xlint:-byname-implicit",
       "-Ywarn-dead-code",
       "-deprecation",
       "-feature",

@@ -6,7 +6,7 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSClient
-import uk.gov.hmrc.agentassurance.models.{AmlsEntity, OverseasAmlsDetails, OverseasAmlsEntity, UkAmlsDetails}
+import uk.gov.hmrc.agentassurance.models.{AmlsEntity, AmlsSources, OverseasAmlsDetails, OverseasAmlsEntity, UkAmlsDetails}
 import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, AmlsRepositoryImpl, OverseasAmlsRepository, OverseasAmlsRepositoryImpl}
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
@@ -70,7 +70,7 @@ class GetAmlsDetailsByArnControllerISpec extends PlaySpec
   val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(arn,testOverseasAmlsDetails)
 
   val testCreatedDate: LocalDate = LocalDate.parse("2024-01-15")
-  val amlsEntity: AmlsEntity = AmlsEntity(testUtr, testAmlsDetails, Some(arn),testCreatedDate)
+  val amlsEntity: AmlsEntity = AmlsEntity(utr = testUtr, amlsDetails = testAmlsDetails, arn = Some(arn),createdOn = testCreatedDate, amlsSource = AmlsSources.Subscription)
 
 
   "GET /amls/arn/:arn" should {

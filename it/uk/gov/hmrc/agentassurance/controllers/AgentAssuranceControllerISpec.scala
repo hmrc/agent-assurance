@@ -340,8 +340,9 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     val validApplicationReferenceNumber = "XAML00000123456"
     val amlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
     val pendingAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some(validApplicationReferenceNumber), appliedOn = Some(LocalDate.now().minusDays(10)), membershipExpiresOn = None)
-    val createAmlsRequest = CreateAmlsRequest(utr, amlsDetails)
-    val pendingAmlsDetailsRequest = CreateAmlsRequest(utr, pendingAmlsDetails)
+    val createSubscriptionAmlsRequest = CreateAmlsRequest(utr, amlsDetails, AmlsSources.Subscription)
+    val createManageUpdateAmlsRequest = CreateAmlsRequest(utr, amlsDetails, AmlsSources.ManageAccountUpdate)
+    val pendingSubscriptionAmlsDetailsRequest = CreateAmlsRequest(utr, pendingAmlsDetails, AmlsSources.Subscription)
 
     def doRequest(createAmlsRequest: CreateAmlsRequest) =
       Await.result(
@@ -355,7 +356,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isLoggedInAsAnAfinityGroupAgent(userId)
 
       When("POST /amls/create is called")
-      val response: WSResponse = doRequest(createAmlsRequest)
+      val response: WSResponse = doRequest(createSubscriptionAmlsRequest)
 
       Then("201 CREATED is returned")
       response.status shouldBe 201
@@ -372,7 +373,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isLoggedInAsStride(userId)
 
       When("POST /amls/create is called")
-      val response: WSResponse = doRequest(createAmlsRequest)
+      val response: WSResponse = doRequest(createSubscriptionAmlsRequest)
 
       Then("201 CREATED is returned")
       response.status shouldBe 201
@@ -388,7 +389,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isLoggedInAsAnAfinityGroupAgent(userId)
 
       When("POST /amls/create is called with PendingAmlsDetails")
-      val response: WSResponse = doRequest(pendingAmlsDetailsRequest)
+      val response: WSResponse = doRequest(pendingSubscriptionAmlsDetailsRequest)
 
       Then("201 CREATED is returned")
       response.status shouldBe 201
@@ -407,7 +408,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       When("POST /amls/create is called with a registered AMLS record that doesn't have an expiry date")
       val amlsDetailsNoDate = amlsDetails.copy(membershipExpiresOn = None)
-      val response: WSResponse = doRequest(createAmlsRequest.copy(amlsDetails = amlsDetailsNoDate))
+      val response: WSResponse = doRequest(createSubscriptionAmlsRequest.copy(amlsDetails = amlsDetailsNoDate))
 
       Then("201 CREATED is returned")
       response.status shouldBe 201
@@ -426,7 +427,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       When("POST /amls/create is called with a pending AMLS record that doesn't have an applied date")
       val amlsDetailsNoDate = pendingAmlsDetails.copy(appliedOn = None)
-      val response: WSResponse = doRequest(createAmlsRequest.copy(amlsDetails = amlsDetailsNoDate))
+      val response: WSResponse = doRequest(createSubscriptionAmlsRequest.copy(amlsDetails = amlsDetailsNoDate))
 
       Then("201 CREATED is returned")
       response.status shouldBe 201
@@ -445,7 +446,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       When("POST /amls/create is called with a pending AMLS record without a reference number")
       val amlsDetailsNoDate = pendingAmlsDetails.copy(membershipNumber = None)
-      val response: WSResponse = doRequest(createAmlsRequest.copy(amlsDetails = amlsDetailsNoDate))
+      val response: WSResponse = doRequest(pendingSubscriptionAmlsDetailsRequest.copy(amlsDetails = amlsDetailsNoDate))
 
       Then("201 CREATED is returned")
       response.status shouldBe 201
@@ -461,7 +462,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isNotLoggedIn
 
       When("POST /amls/create is called")
-      val response: WSResponse = doRequest(createAmlsRequest)
+      val response: WSResponse = doRequest(createSubscriptionAmlsRequest)
 
       Then("401 UnAuthorized is returned")
       response.status shouldBe 401
@@ -473,13 +474,13 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isLoggedInAsAnAfinityGroupAgent(userId)
 
       When("POST /amls/create is called")
-      val response: WSResponse = doRequest(createAmlsRequest)
+      val response: WSResponse = doRequest(createManageUpdateAmlsRequest)
 
       Then("201 CREATED is returned")
       response.status shouldBe 201
 
       When("POST /amls/create is called second time with the same UTR")
-      val newResponse: WSResponse = doRequest(createAmlsRequest.copy(amlsDetails = createAmlsRequest.amlsDetails.copy(supervisoryBody = "updated-supervisory")))
+      val newResponse: WSResponse = doRequest(createManageUpdateAmlsRequest.copy(amlsDetails = createManageUpdateAmlsRequest.amlsDetails.copy(supervisoryBody = "updated-supervisory")))
 
       Then("201 CREATED is returned")
       newResponse.status shouldBe 201
@@ -495,7 +496,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       isLoggedInAsAnAfinityGroupAgent(userId)
 
       When("POST /amls/create is called with invalid utr")
-      val response: WSResponse = doRequest(createAmlsRequest.copy(utr = Utr("61122334455")))
+      val response: WSResponse = doRequest(createManageUpdateAmlsRequest.copy(utr = Utr("61122334455")))
 
       Then("400 BAD_REQUEST is returned")
       response.status shouldBe 400
@@ -509,6 +510,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
     def amlsGetUrl(utr: Utr) = s"http://localhost:$port/agent-assurance/amls/utr/${utr.value}"
 
     val amlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn =  Some(LocalDate.now()))
+    val createSubscriptionAmlsRequest = CreateAmlsRequest(utr, amlsDetails, AmlsSources.Subscription)
 
     def callGet(utr: Utr) = Await.result(
       wsClient.url(amlsGetUrl(utr)).withHttpHeaders("Authorization" -> "Bearer XYZ").get(), 10 seconds
@@ -516,7 +518,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     Scenario("user logged in as an agent should be able to get existing amls record") {
 
-      await(repository.createOrUpdate(CreateAmlsRequest(utr, amlsDetails)))
+      await(repository.createOrUpdate(createSubscriptionAmlsRequest))
 
       Given("User is logged in and is an agent")
       Given("User has an user id")
@@ -533,7 +535,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     Scenario("user logged in an as a stride should be able to get existing amls record") {
 
-      await(repository.createOrUpdate(CreateAmlsRequest(utr, amlsDetails)))
+      await(repository.createOrUpdate(createSubscriptionAmlsRequest))
 
       Given("User is logged in and is stride")
       Given("User has an user id")
@@ -558,6 +560,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     val amlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn =  Some(LocalDate.now()))
 
+    val createManageUpdateAmlsRequest = CreateAmlsRequest(utr, amlsDetails, AmlsSources.ManageAccountUpdate)
+
     def callPut(utr: Utr, arn: Arn) =
       Await.result(
         wsClient.url(amlsUpdateUrl(utr))
@@ -567,7 +571,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     Scenario("user logged in and is an agent should be able to update existing amls record with ARN") {
 
-      await(repository.createOrUpdate(CreateAmlsRequest(utr, amlsDetails)))
+      await(repository.createOrUpdate(createManageUpdateAmlsRequest))
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
@@ -594,7 +598,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     Scenario("updating an existing amls record(with ARN) with the same ARN again should return existing amls record") {
 
-      await(repository.createOrUpdate(CreateAmlsRequest(utr, amlsDetails)))
+      await(repository.createOrUpdate(createManageUpdateAmlsRequest))
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
@@ -609,7 +613,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
     Scenario("updates to an existing amls record(with ARN) with a different ARN should be Forbidden") {
 
-      await(repository.createOrUpdate(CreateAmlsRequest(utr, amlsDetails)))
+      await(repository.createOrUpdate(createManageUpdateAmlsRequest))
       await(repository.updateArn(utr, Arn("XX123")))
 
       Given("User is logged in and is an agent")
@@ -638,8 +642,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       val newUtr = Utr("8588532862")
       await(repository.ensureIndexes())
-      await(repository.collection.insertOne(AmlsEntity(utr, amlsDetails, Some(arn), LocalDate.now())).toFuture())
-      await(repository.collection.insertOne(AmlsEntity(newUtr, amlsDetails, None, LocalDate.now())).toFuture())
+      await(repository.collection.insertOne(AmlsEntity(utr = utr, amlsDetails = amlsDetails, arn = Some(arn), createdOn = LocalDate.now(), amlsSource =  AmlsSources.Subscription)).toFuture())
+      await(repository.collection.insertOne(AmlsEntity(utr = newUtr, amlsDetails = amlsDetails, arn = None, createdOn = LocalDate.now(), amlsSource =  AmlsSources.Subscription)).toFuture())
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
