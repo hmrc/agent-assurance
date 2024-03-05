@@ -391,7 +391,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
       val arn = Arn("AARN0000002")
 
       val amlsDetails = OverseasAmlsDetails("supervisoryBody", Some("0123456789"))
-      val overseasAmlsEntity = OverseasAmlsEntity(arn, amlsDetails)
+      val overseasAmlsEntity = OverseasAmlsEntity(arn, amlsDetails, AmlsSources.ManageAccountUpdate)
 
       def doRequest(request: OverseasAmlsEntity = overseasAmlsEntity) =
         controller.storeOverseasAmlsDetails(FakeRequest()

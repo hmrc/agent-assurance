@@ -16,11 +16,23 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
-case class OverseasAmlsEntity(arn: Arn, amlsDetails: OverseasAmlsDetails)
+case class OverseasAmlsEntity(arn: Arn, amlsDetails: OverseasAmlsDetails, amlsSource: AmlsSource)
 
 object OverseasAmlsEntity {
-  implicit val format: Format[OverseasAmlsEntity] = Json.format[OverseasAmlsEntity]
+
+  import play.api.libs.json._
+  import play.api.libs.functional.syntax._
+  import AmlsSources._
+  val jsonReads: Reads[OverseasAmlsEntity] = (
+    (__ \ "arn").read[Arn]  and
+      (__ \ "amlsDetails").read[OverseasAmlsDetails]  and
+      (__ \ "amlsSource").readWithDefault[AmlsSource](AmlsSources.Subscription)
+    )(OverseasAmlsEntity.apply _)
+
+  val jsonWrites: OWrites[OverseasAmlsEntity] = Json.writes[OverseasAmlsEntity]
+
+  implicit val format: Format[OverseasAmlsEntity] = Format(jsonReads, jsonWrites)
+
 }
