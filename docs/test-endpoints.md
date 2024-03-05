@@ -14,7 +14,7 @@ POST       /test-only/add-amls-data
 ### Example JSON
 
 #### Overseas
-isHmrc isn't used for overseas, doesn't matter
+Note: isHmrc is ignored, doesn't matter
 ```json
 {
   "isUk": false,

@@ -35,50 +35,16 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
                                    override val authConnector: AuthConnector
                                   )(implicit ex: ExecutionContext) extends BackendController(cc) with AuthActions {
 
-  //  amlsRegistrationNumber match {
-  //    case "XAML00000100000" => Some(jsonPendingResponse) //Pending
-  //    case "XAML00000200000" => Some(jsonApprovedResponse) //Approved
-  //    case "XAML00000300000" => Some(jsonSuspendedResponse) //Suspended
-  //    case "XAML00000400000" => Some(jsonRejectedResponse) //Rejected
-  //    case _                 => None
-  //  }
-
-  // if pending membership number could be blank - isExpired would be None
-  // membership number is ignored for overseas
-  /**
-  * {
-  *   "isUk": true
-  *   "membershipNumber": "",
-  *   "isHmrc": true,
-  *   "isExpired": true
-  * }
-  * */
-
-  /**
-   * {
-   *   "isUk": true
-   *   "membershipNumber": "",
-   *   "isHmrc": false
-   * }
-   * */
-
-  /**
-   * {
-   *   "isUk": false
-   *   "membershipNumber": ""
-   * }
-   * */
   case class AmlsDataRequest(
                               isUk: Boolean,
-                              membershipNumber: String,
-                              isHmrc: Boolean,
-                              isExpired: Option[Boolean]
+                              membershipNumber: String, // if pending membership number could be blank - isExpired would be None
+                              isHmrc: Boolean, // ignored if isUK = false
+                              isExpired: Option[Boolean] // ignored if isUK = false
                             )
 
   object AmlsDataRequest {
     implicit val format: Format[AmlsDataRequest] = Json.format[AmlsDataRequest]
   }
-
 
   def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request => arn: Arn =>
     request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match {
@@ -106,16 +72,14 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
                                   isExpired: Option[Boolean]
                                 ) = {
     val body = if(isHmrc) "HM Revenue and Customs (HMRC)" else "Law Society of Scotland"
-
+    val maybeMembershipNumber = if(membershipNumber.isEmpty) None else Some(membershipNumber)
     val dateExpiredOn = isExpired match {
       case Some(true) => Some(LocalDate.now())
       case Some(false) => Some(LocalDate.now().plusMonths(12))
       case _ => None
     }
-
-    val maybeMembershipNumber = if(membershipNumber.isEmpty) None else Some(membershipNumber)
-
     val utr: String = Math.random().*(1000000000).toString.substring(2,12)
+
     amlsRepository.createOrUpdate(
       CreateAmlsRequest(
         Utr(utr),
