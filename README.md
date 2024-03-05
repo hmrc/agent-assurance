@@ -19,7 +19,7 @@ The "refusal to deal with" and "manually assured" lists are maintained by HMRC h
 
 To run the application execute
 ```
-sbt run
+./run.sh
 ```
 
 Running locally, the services will run on http://localhost:9565
