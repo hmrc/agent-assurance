@@ -85,7 +85,7 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
           collection
             .replaceOne(equal("utr", utr),
               AmlsEntity(
-                utr = Utr(utr),
+                utr = Some(Utr(utr)),
                 amlsDetails = createAmlsRequest.amlsDetails,
                 arn = None,
                 createdOn = LocalDate.now(),

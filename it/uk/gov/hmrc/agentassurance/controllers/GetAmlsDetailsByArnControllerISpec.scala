@@ -70,7 +70,7 @@ class GetAmlsDetailsByArnControllerISpec extends PlaySpec
   val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(arn,testOverseasAmlsDetails, None, None)
 
   val testCreatedDate: LocalDate = LocalDate.parse("2024-01-15")
-  val amlsEntity: AmlsEntity = AmlsEntity(utr = testUtr, amlsDetails = testAmlsDetails, arn = Some(arn),createdOn = testCreatedDate, amlsSource = AmlsSources.Subscription)
+  val amlsEntity: AmlsEntity = AmlsEntity(utr = Some(testUtr), amlsDetails = testAmlsDetails, arn = Some(arn),createdOn = testCreatedDate, amlsSource = AmlsSources.Subscription)
 
 
   "GET /amls/arn/:arn" should {

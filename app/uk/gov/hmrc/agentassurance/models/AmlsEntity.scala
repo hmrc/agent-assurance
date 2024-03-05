@@ -21,7 +21,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import java.time.LocalDate
 
 
-case class AmlsEntity(utr: Utr,
+case class AmlsEntity(utr: Option[Utr],
                       amlsDetails: UkAmlsDetails,
                       arn: Option[Arn] = None,
                       createdOn: LocalDate,
@@ -33,7 +33,7 @@ object AmlsEntity {
   import play.api.libs.functional.syntax._
   import AmlsSources._
   val jsonReads: Reads[AmlsEntity] = (
-    (__ \ "utr").read[Utr]  and
+    (__ \ "utr").readNullable[Utr]  and
     (__ \ "amlsDetails").read[UkAmlsDetails]  and
     (__ \ "arn").readNullable[Arn]  and
     (__ \ "createdOn").read[LocalDate]  and

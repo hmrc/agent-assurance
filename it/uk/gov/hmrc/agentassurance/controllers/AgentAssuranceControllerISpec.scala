@@ -361,7 +361,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 201
 
       val dbRecord = await(repository.collection.find().toFuture()).head
-      dbRecord.utr shouldBe utr
+      dbRecord.utr shouldBe Some(utr)
       dbRecord.createdOn shouldBe LocalDate.now()
     }
 
@@ -378,7 +378,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 201
 
       val dbRecord = await(repository.collection.find().toFuture()).head
-      dbRecord.utr shouldBe utr
+      dbRecord.utr shouldBe Some(utr)
       dbRecord.createdOn shouldBe LocalDate.now()
 
     }
@@ -394,7 +394,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 201
 
       val dbRecord = await(repository.collection.find().toFuture()).head
-      dbRecord.utr shouldBe utr
+      dbRecord.utr shouldBe Some(utr)
       dbRecord.createdOn shouldBe LocalDate.now()
       dbRecord.amlsDetails shouldBe UkAmlsDetails("supervisory", membershipNumber = Some(validApplicationReferenceNumber), appliedOn = Some(LocalDate.now().minusDays(10)), membershipExpiresOn = None)
     }
@@ -413,7 +413,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 201
 
       val dbRecord = await(repository.collection.find().toFuture()).head
-      dbRecord.utr shouldBe utr
+      dbRecord.utr shouldBe Some(utr)
       dbRecord.amlsDetails shouldBe amlsDetailsNoDate
       dbRecord.createdOn shouldBe LocalDate.now()
     }
@@ -432,7 +432,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 201
 
       val dbRecord = await(repository.collection.find().toFuture()).head
-      dbRecord.utr shouldBe utr
+      dbRecord.utr shouldBe Some(utr)
       dbRecord.amlsDetails shouldBe amlsDetailsNoDate
       dbRecord.createdOn shouldBe LocalDate.now()
     }
@@ -451,7 +451,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       response.status shouldBe 201
 
       val dbRecord = await(repository.collection.find().toFuture()).head
-      dbRecord.utr shouldBe utr
+      dbRecord.utr shouldBe Some(utr)
       dbRecord.amlsDetails shouldBe amlsDetailsNoDate
       dbRecord.createdOn shouldBe LocalDate.now()
     }
@@ -485,7 +485,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
       newResponse.status shouldBe 201
 
       val dbRecord = await(repository.collection.find().toFuture()).head
-      dbRecord.utr shouldBe utr
+      dbRecord.utr shouldBe Some(utr)
       dbRecord.amlsDetails.supervisoryBody shouldBe "updated-supervisory"
     }
 
@@ -641,8 +641,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       val newUtr = Utr("8588532862")
       await(repository.ensureIndexes())
-      await(repository.collection.insertOne(AmlsEntity(utr = utr, amlsDetails = amlsDetails, arn = Some(arn), createdOn = LocalDate.now(), amlsSource =  AmlsSources.Subscription)).toFuture())
-      await(repository.collection.insertOne(AmlsEntity(utr = newUtr, amlsDetails = amlsDetails, arn = None, createdOn = LocalDate.now(), amlsSource =  AmlsSources.Subscription)).toFuture())
+      await(repository.collection.insertOne(AmlsEntity(utr = Some(utr), amlsDetails = amlsDetails, arn = Some(arn), createdOn = LocalDate.now(), amlsSource =  AmlsSources.Subscription)).toFuture())
+      await(repository.collection.insertOne(AmlsEntity(utr = Some(newUtr), amlsDetails = amlsDetails, arn = None, createdOn = LocalDate.now(), amlsSource =  AmlsSources.Subscription)).toFuture())
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent
