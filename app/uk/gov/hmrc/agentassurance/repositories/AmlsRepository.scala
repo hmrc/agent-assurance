@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentassurance.repositories
 
 import com.google.inject.ImplementedBy
 import org.mongodb.scala.MongoWriteException
-import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.model.{IndexModel, IndexOptions, ReplaceOptions}
@@ -56,16 +55,18 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
       IndexModel(ascending("utr"),
         IndexOptions()
           .unique(true)
-          .name("utrIndex")),
+          .name("utrIndex")
+          .sparse(true)),
       IndexModel(ascending("arn"),
         IndexOptions()
           .unique(true)
           .name("arnIndex")
-          .partialFilterExpression(BsonDocument("arn" -> BsonDocument("$exists" -> true))))
+          .sparse(true))
     ),
     extraCodecs = Seq(
       Codecs.playFormatCodec(CreateAmlsRequest.format)
-    )
+    ),
+    replaceIndexes = true //TODO WG - remove that
   ) with AmlsRepository with Logging {
 
   override lazy val requiresTtlIndex: Boolean = false
