@@ -20,9 +20,8 @@ import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 
-case class CreateAmlsRequest(utr: Utr, amlsDetails: UkAmlsDetails, amlsSource: AmlsSource)
+case class CreateAmlsRequest(utr: Utr, amlsDetails: UkAmlsDetails)
 
 object CreateAmlsRequest {
-  import AmlsSources._
   implicit val format: Format[CreateAmlsRequest] = Json.format[CreateAmlsRequest]
 }
