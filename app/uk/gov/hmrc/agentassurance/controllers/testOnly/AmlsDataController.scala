@@ -25,6 +25,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -33,42 +34,32 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
                                    amlsRepository: AmlsRepository,
                                    override val authConnector: AuthConnector
                                   )(implicit ex: ExecutionContext) extends BackendController(cc) with AuthActions {
-//I want to be able to update:
-// - UK or overseas
-// - supervisoryBody (HMRC or other)
-// - membershipNumber - affects stubbed status (so supply status  approved "XAML00000200000" pending "XAML00000100000"
-// - expiry date:
-//  -no date (overseas or pending)
-//  -expired
-//  -6 months future
-//
-// - ARN matches agent user
 
-// supply the status we want eg. NoAMLSDetailsUK, NoAMLSDetailsNonUK, ExpiredAMLSDetailsUK, ValidAMLSDetailsUK
-// HMRC or other
-
-
-// source / created date for overseas
-  case class AmlsDataRequest(isUk: Boolean, status: String, isHmrc: Boolean, isExpired: Option[Boolean])
-  // None Some(true) Some(false)
+  /**
+  * {
+  *   isUk: true
+  *   membershipNumber: "",
+  *   isHmrc: true,
+  *   isExpired: true
+  * }
+  * */
+  case class AmlsDataRequest(
+                              isUk: Boolean,
+                              membershipNumber: String,
+                              isHmrc: Boolean,
+                              isExpired: Option[Boolean]
+                            )
 
   object AmlsDataRequest {
     implicit val format: Format[AmlsDataRequest] = Json.format[AmlsDataRequest]
   }
-  /*
-  * {
-  *   isUk: true
-  *   status: "thing",
-  *   isHmrc: true
-  * }
-  *
-  * */
+
 
   def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request => arn: Arn =>
     request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match {
       case Some(JsSuccess(amlsRequest, _)) =>
         if(amlsRequest.isUk) {
-          createUkAmlsRecord(amlsRequest.isHmrc)
+          createUkAmlsRecord(amlsRequest.isHmrc, amlsRequest.membershipNumber, amlsRequest.isExpired)
         } else {
           createOverseasAmlsRecord(arn)
         }
@@ -77,8 +68,14 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
 
   }
 
-  private def createUkAmlsRecord(isHmrc: Boolean) = {
+  private def createUkAmlsRecord(isHmrc: Boolean, membershipNumber: String, isExpired: Option[Boolean]) = {
     val body = if(isHmrc) "HM Revenue and Customs (HMRC)" else "Law Society of Scotland"
+
+    val dateExpiredOn = if(isExpired.isDefined) {
+      if(isExpired.get) Some(LocalDate.now())
+      else Some(LocalDate.now().plusMonths(12))
+    }
+    else None
 
     val utr: String = Math.random().*(1000000000).toString.substring(2,12)
     amlsRepository.createOrUpdate(
@@ -86,9 +83,11 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
         Utr(utr),
         UkAmlsDetails(
           supervisoryBody = body,
-          membershipNumber = Some("XAML00000200000"),
+          membershipNumber = Some(membershipNumber),
           appliedOn = None,
-          membershipExpiresOn = None)
+          membershipExpiresOn = dateExpiredOn
+        )
+
       )
     ).map(_ => Created)
   }
