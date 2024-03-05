@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentassurance.mocks
 
 import org.scalamock.scalatest.MockFactory
-import uk.gov.hmrc.agentassurance.models.{AmlsError, OverseasAmlsDetails, OverseasAmlsEntity}
+import uk.gov.hmrc.agentassurance.models.{AmlsError, AmlsSources, OverseasAmlsDetails, OverseasAmlsEntity}
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
 import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -28,7 +28,11 @@ trait MockOverseasAmlsRepository extends MockFactory {
 
   def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError, Unit]) = {
     (mockOverseasAmlsRepository.create(_: OverseasAmlsEntity))
-      .expects(amlsEntity)
+    .expects(where {
+      (entity: OverseasAmlsEntity) => entity.arn == amlsEntity.arn &&
+        entity.amlsDetails == amlsEntity.amlsDetails &&
+        entity.amlsSource == amlsEntity.amlsSource.orElse(Some(AmlsSources.Subscription))
+    })
       .returning(toFuture(response))
   }
 

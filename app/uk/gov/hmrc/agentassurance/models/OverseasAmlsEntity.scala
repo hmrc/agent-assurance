@@ -17,21 +17,37 @@
 package uk.gov.hmrc.agentassurance.models
 
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
-case class OverseasAmlsEntity(arn: Arn, amlsDetails: OverseasAmlsDetails, amlsSource: AmlsSource)
+import java.time.Instant
+
+case class OverseasAmlsEntity(arn: Arn,
+                              amlsDetails: OverseasAmlsDetails,
+                              amlsSource: Option[AmlsSource],
+                              createdDate: Option[Instant])
 
 object OverseasAmlsEntity {
 
   import play.api.libs.json._
   import play.api.libs.functional.syntax._
   import AmlsSources._
+
+  implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
+
   val jsonReads: Reads[OverseasAmlsEntity] = (
     (__ \ "arn").read[Arn]  and
       (__ \ "amlsDetails").read[OverseasAmlsDetails]  and
-      (__ \ "amlsSource").readWithDefault[AmlsSource](AmlsSources.Subscription)
+      (__ \ "amlsSource").readNullableWithDefault[AmlsSource](Some(AmlsSources.Subscription)) and
+        (__ \ "createdDate").readNullable[Instant]
     )(OverseasAmlsEntity.apply _)
 
-  val jsonWrites: OWrites[OverseasAmlsEntity] = Json.writes[OverseasAmlsEntity]
+
+  val jsonWrites: Writes[OverseasAmlsEntity] = (
+    (JsPath \ "arn").write[Arn] and
+      (JsPath \ "amlsDetails").write[OverseasAmlsDetails] and
+      (JsPath \ "amlsSource").writeNullable[AmlsSource] and
+      (JsPath \ "createdDate").writeNullable[Instant]
+    )(r => (r.arn, r.amlsDetails, r.amlsSource, r.createdDate.orElse(Some(Instant.now()))))
 
   implicit val format: Format[OverseasAmlsEntity] = Format(jsonReads, jsonWrites)
 

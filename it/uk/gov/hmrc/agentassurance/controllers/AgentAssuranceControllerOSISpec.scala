@@ -7,7 +7,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.{CONTENT_TYPE, await, defaultAwaitTimeout}
-import uk.gov.hmrc.agentassurance.models.{AmlsSources, OverseasAmlsDetails, OverseasAmlsEntity}
+import uk.gov.hmrc.agentassurance.models.{OverseasAmlsDetails, OverseasAmlsEntity}
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepositoryImpl
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, IntegrationSpec, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -48,7 +48,7 @@ class AgentAssuranceControllerOSISpec extends IntegrationSpec with AgentAuthStub
     val arn = Arn("AARN0000002")
 
     val amlsDetails = OverseasAmlsDetails("supervisory", Some("0123456789"))
-    val createOverseasAmlsRequest = OverseasAmlsEntity(arn, amlsDetails, AmlsSources.Subscription)
+    val createOverseasAmlsRequest = OverseasAmlsEntity(arn, amlsDetails, None, None)
 
     def doRequest(request: OverseasAmlsEntity) =
       Await.result(

@@ -67,7 +67,7 @@ class GetAmlsDetailsByArnControllerISpec extends PlaySpec
   val membershipExpiresOnDate: LocalDate = LocalDate.parse("2024-01-12")
   val testAmlsDetails: UkAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(membershipExpiresOnDate))
   val testOverseasAmlsDetails: OverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
-  val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(arn,testOverseasAmlsDetails, AmlsSources.Subscription)
+  val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(arn,testOverseasAmlsDetails, None, None)
 
   val testCreatedDate: LocalDate = LocalDate.parse("2024-01-15")
   val amlsEntity: AmlsEntity = AmlsEntity(utr = testUtr, amlsDetails = testAmlsDetails, arn = Some(arn),createdOn = testCreatedDate, amlsSource = AmlsSources.Subscription)

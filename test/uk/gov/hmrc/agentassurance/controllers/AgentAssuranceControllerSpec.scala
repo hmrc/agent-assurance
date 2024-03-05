@@ -21,8 +21,8 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
 import play.api.mvc.Result
-import play.api.test.Helpers._
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks._
@@ -227,7 +227,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
         )
 
       "store amlsDetails successfully in mongo" in {
-
+//TODO WG - failing here
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
           mockCreateAmls(createAmlsRequest)(Right(()))
@@ -391,7 +391,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
       val arn = Arn("AARN0000002")
 
       val amlsDetails = OverseasAmlsDetails("supervisoryBody", Some("0123456789"))
-      val overseasAmlsEntity = OverseasAmlsEntity(arn, amlsDetails, AmlsSources.ManageAccountUpdate)
+      val overseasAmlsEntity = OverseasAmlsEntity(arn, amlsDetails, None, None)
 
       def doRequest(request: OverseasAmlsEntity = overseasAmlsEntity) =
         controller.storeOverseasAmlsDetails(FakeRequest()
