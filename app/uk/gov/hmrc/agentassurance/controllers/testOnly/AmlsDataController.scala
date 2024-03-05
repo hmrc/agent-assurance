@@ -35,14 +35,39 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
                                    override val authConnector: AuthConnector
                                   )(implicit ex: ExecutionContext) extends BackendController(cc) with AuthActions {
 
+  //  amlsRegistrationNumber match {
+  //    case "XAML00000100000" => Some(jsonPendingResponse) //Pending
+  //    case "XAML00000200000" => Some(jsonApprovedResponse) //Approved
+  //    case "XAML00000300000" => Some(jsonSuspendedResponse) //Suspended
+  //    case "XAML00000400000" => Some(jsonRejectedResponse) //Rejected
+  //    case _                 => None
+  //  }
+
+  // if pending membership number could be blank - isExpired would be None
+  // membership number is ignored for overseas
   /**
   * {
-  *   isUk: true
-  *   membershipNumber: "",
-  *   isHmrc: true,
-  *   isExpired: true
+  *   "isUk": true
+  *   "membershipNumber": "",
+  *   "isHmrc": true,
+  *   "isExpired": true
   * }
   * */
+
+  /**
+   * {
+   *   "isUk": true
+   *   "membershipNumber": "",
+   *   "isHmrc": false
+   * }
+   * */
+
+  /**
+   * {
+   *   "isUk": false
+   *   "membershipNumber": ""
+   * }
+   * */
   case class AmlsDataRequest(
                               isUk: Boolean,
                               membershipNumber: String,
@@ -59,23 +84,36 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match {
       case Some(JsSuccess(amlsRequest, _)) =>
         if(amlsRequest.isUk) {
-          createUkAmlsRecord(amlsRequest.isHmrc, amlsRequest.membershipNumber, amlsRequest.isExpired)
+          createUkAmlsRecord(arn, amlsRequest.membershipNumber, amlsRequest.isHmrc, amlsRequest.isExpired).map {
+            case Right(_) => Created
+            case _ => InternalServerError
+          }
         } else {
-          createOverseasAmlsRecord(arn)
+          createOverseasAmlsRecord(arn, amlsRequest.membershipNumber).map {
+            case Right(_) => Created
+            case _ => InternalServerError
+          }
         }
       case _ => Future successful BadRequest
     }
 
   }
 
-  private def createUkAmlsRecord(isHmrc: Boolean, membershipNumber: String, isExpired: Option[Boolean]) = {
+  private def createUkAmlsRecord(
+                                  arn: Arn,
+                                  membershipNumber: String,
+                                  isHmrc: Boolean,
+                                  isExpired: Option[Boolean]
+                                ) = {
     val body = if(isHmrc) "HM Revenue and Customs (HMRC)" else "Law Society of Scotland"
 
-    val dateExpiredOn = if(isExpired.isDefined) {
-      if(isExpired.get) Some(LocalDate.now())
-      else Some(LocalDate.now().plusMonths(12))
+    val dateExpiredOn = isExpired match {
+      case Some(true) => Some(LocalDate.now())
+      case Some(false) => Some(LocalDate.now().plusMonths(12))
+      case _ => None
     }
-    else None
+
+    val maybeMembershipNumber = if(membershipNumber.isEmpty) None else Some(membershipNumber)
 
     val utr: String = Math.random().*(1000000000).toString.substring(2,12)
     amlsRepository.createOrUpdate(
@@ -83,25 +121,27 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
         Utr(utr),
         UkAmlsDetails(
           supervisoryBody = body,
-          membershipNumber = Some(membershipNumber),
+          membershipNumber = maybeMembershipNumber,
           appliedOn = None,
           membershipExpiresOn = dateExpiredOn
         )
-
       )
-    ).map(_ => Created)
+    ).flatMap(_ => amlsRepository.updateArn(Utr(utr), arn))
+
   }
 
-  private def createOverseasAmlsRecord(arn: Arn) = {
+  private def createOverseasAmlsRecord(arn: Arn, membershipNumber: String) = {
+    val maybeMembershipNumber = if(membershipNumber.isEmpty) None else Some(membershipNumber)
+
     overseasAmlsRepository.create(
       OverseasAmlsEntity(
         arn,
         OverseasAmlsDetails(
           supervisoryBody = "AMLS Body 101",
-          membershipNumber = Some("12345")
+          membershipNumber = maybeMembershipNumber
         )
       )
-    ).map(_ => Created)
+    )
   }
 
 
