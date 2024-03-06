@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import org.scalamock.handlers.CallHandler3
 import org.scalamock.scalatest.MockFactory
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
 import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.domain.{SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -28,11 +30,19 @@ trait MockDesConnector extends MockFactory {
 
   val mockDesConnector = mock[DesConnector]
 
-  def mockDes(ti: TaxIdentifier)(response: Either[String, Option[Seq[SaAgentReference]]]) = {
+  def mockGetActiveCesaAgentRelationships(ti: TaxIdentifier)(response: Either[String, Option[Seq[SaAgentReference]]]): CallHandler3[TaxIdentifier, HeaderCarrier, ExecutionContext, Future[Option[Seq[SaAgentReference]]]] = {
     (mockDesConnector.getActiveCesaAgentRelationships(_: TaxIdentifier)(_: HeaderCarrier, _: ExecutionContext))
       .expects(ti, *, *)
       .returning(response.fold[Future[Option[Seq[SaAgentReference]]]](e => Future.failed(new Exception(e)), r => toFuture(r)))
   }
+
+  def mockGetAmlsSubscriptionStatus(registrationNumber: String)(response: Future[AmlsSubscriptionRecord]): CallHandler3[String, HeaderCarrier, ExecutionContext, Future[AmlsSubscriptionRecord]] = {
+    (mockDesConnector.getAmlsSubscriptionStatus(_: String)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(registrationNumber, *, *)
+      .returning(response)
+  }
+
+
 
 
 }
