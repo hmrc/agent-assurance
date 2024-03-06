@@ -54,11 +54,11 @@ object TestConstants {
   val testAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(membershipExpiresOnDate))
   val testUKAmlsEntity = UkAmlsEntity(utr = Some(testUtr), amlsDetails = testAmlsDetails, arn = Some(testArn),
     createdOn = today, updatedArnOn = None, amlsSource = AmlsSource.Subscription)
-  val testOverseasAmlsEntity = OverseasAmlsEntity(testArn, testOverseasAmlsDetails, None)
 
   val testHmrcAmlsDetails: UkAmlsDetails = UkAmlsDetails("HM Revenue and Customs (HMRC)", membershipNumber = Some(testValidApplicationReferenceNumber), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
   val testHmrcAmlsDetailsNoMembershipNumber: UkAmlsDetails = UkAmlsDetails("HM Revenue and Customs (HMRC)", membershipNumber = None, appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
   val testOverseasAmlsDetails: OverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
+  val testOverseasAmlsEntity = OverseasAmlsEntity(testArn, testOverseasAmlsDetails, None)
   val testUKAmlsRequest = AmlsRequest(ukRecord = true, Some(testUtr), "supervisory", "0123456789", Some(membershipExpiresOnDate))
   val testOverseasAmlsRequest = AmlsRequest(ukRecord = false, None, "supervisory", "0123456789", Some(membershipExpiresOnDate))
 }
