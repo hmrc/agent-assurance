@@ -93,7 +93,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
       "return OK where the user provides a valid NINO and saAgentReference nad has an active relationship in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(testNino)(Right(Some(Seq(testSaAgentReference))))
+          mockGetActiveCesaAgentRelationships(testNino)(Right(Some(Seq(testSaAgentReference))))
         }
 
         val response = controller.activeCesaRelationshipWithNino(testNino, testSaAgentReference)(FakeRequest())
@@ -103,7 +103,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
       "return FORBIDDEN when called with a valid NINO that is not active in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(testNino)(Right(Some(Seq.empty)))
+          mockGetActiveCesaAgentRelationships(testNino)(Right(Some(Seq.empty)))
         }
 
         val response = controller.activeCesaRelationshipWithNino(testNino, testSaAgentReference)(FakeRequest())
@@ -113,7 +113,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
       "return FORBIDDEN when called with a valid NINO that is active in CESA but with a different IRAgentReference" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(testNino)(Right(Some(Seq(SaAgentReference("IRSA-456")))))
+          mockGetActiveCesaAgentRelationships(testNino)(Right(Some(Seq(SaAgentReference("IRSA-456")))))
         }
         val response = controller.activeCesaRelationshipWithNino(testNino, testSaAgentReference)(FakeRequest())
 
@@ -125,7 +125,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
       "return OK where the user provides a valid UTR and saAgentReference nad has an active relationship in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(testUtr)(Right(Some(Seq(testSaAgentReference))))
+          mockGetActiveCesaAgentRelationships(testUtr)(Right(Some(Seq(testSaAgentReference))))
         }
         val response = controller.activeCesaRelationshipWithUtr(testUtr, testSaAgentReference)(FakeRequest())
 
@@ -135,7 +135,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
       "return FORBIDDEN when called with a valid UTR that is not active in CESA" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(testUtr)(Right(Some(Seq.empty)))
+          mockGetActiveCesaAgentRelationships(testUtr)(Right(Some(Seq.empty)))
         }
         val response = controller.activeCesaRelationshipWithUtr(testUtr, testSaAgentReference)(FakeRequest())
         status(response) mustBe FORBIDDEN
@@ -144,7 +144,7 @@ class AgentAssuranceControllerSpec extends PlaySpec
       "return FORBIDDEN when called with a valid UTR that is active in CESA but with a different IRAgentReference" in {
         inSequence {
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
-          mockDes(testUtr)(Right(Some(Seq(SaAgentReference("IRSA-456")))))
+          mockGetActiveCesaAgentRelationships(testUtr)(Right(Some(Seq(SaAgentReference("IRSA-456")))))
         }
         val response = controller.activeCesaRelationshipWithUtr(testUtr, testSaAgentReference)(FakeRequest())
 
