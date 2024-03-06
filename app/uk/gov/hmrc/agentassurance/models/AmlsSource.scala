@@ -22,7 +22,6 @@ import julienrf.json.derived
 sealed trait AmlsSource
 
 object AmlsSource {
-  @SuppressWarnings(Array("org.wartremover.warts.Any"))
   implicit val formatAmlsSource: Format[AmlsSource] = derived.oformat[AmlsSource]()
 
   final case object Subscription extends AmlsSource
