@@ -31,13 +31,13 @@ import uk.gov.hmrc.http.InternalServerException
 
 import scala.concurrent.ExecutionContext
 
-class GetAmlsDetailsByArnControllerSpec extends PlaySpec
+class AmlsDetailsByArnControllerSpec extends PlaySpec
   with MockAuthConnector
   with MockAppConfig
   with MockAmlsDetailsService
   with BeforeAndAfterEach with ScalaFutures {
 
-  val controller = new GetAmlsDetailsByArnController(mockAmlsDetailsService, mockAuthConnector, stubControllerComponents())(mockAppConfig, ExecutionContext.global)
+  val controller = new AmlsDetailsByArnController(mockAmlsDetailsService, mockAuthConnector, stubControllerComponents())(mockAppConfig, ExecutionContext.global)
 
   "getAmlsDetails" should {
     "return forbidden" when {

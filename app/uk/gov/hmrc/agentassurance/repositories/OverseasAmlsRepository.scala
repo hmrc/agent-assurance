@@ -17,10 +17,11 @@
 package uk.gov.hmrc.agentassurance.repositories
 
 import com.google.inject.ImplementedBy
+import com.mongodb.client.model.ReturnDocument
 import org.mongodb.scala.MongoException
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.{IndexModel, IndexOptions}
+import org.mongodb.scala.model.{FindOneAndReplaceOptions, IndexModel, IndexOptions}
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.models.AmlsError._
 import uk.gov.hmrc.agentassurance.models._
@@ -36,6 +37,8 @@ trait OverseasAmlsRepository {
   def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]]
 
   def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]]
+
+  def createOrUpdate(amlsEntity: OverseasAmlsEntity): Future[Option[OverseasAmlsEntity]]
 
 }
 
@@ -80,5 +83,14 @@ class OverseasAmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: E
       .find(equal("arn", arn.value))
       .headOption()
       .map(_.map(_.amlsDetails))
+
+  override def createOrUpdate(amlsEntity: OverseasAmlsEntity): Future[Option[OverseasAmlsEntity]] = {
+    collection
+      .findOneAndReplace(
+        equal("arn", amlsEntity.arn.value),
+        amlsEntity,
+        FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE))
+      .headOption()
+  }
 
 }

@@ -28,4 +28,5 @@ GET           /amls-subscription/:amlsRegistrationNumber                        
 
 POST          /overseas-agents/amls                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.storeOverseasAmlsDetails
 
-GET           /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.GetAmlsDetailsByArnController.getAmlsDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
+GET           /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.getAmlsDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
+POST          /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.postAmlsDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)

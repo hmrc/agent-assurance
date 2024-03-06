@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentassurance.mocks
 
 import org.scalamock.scalatest.MockFactory
-import uk.gov.hmrc.agentassurance.models.{AmlsError, CreateAmlsRequest, UkAmlsDetails}
+import uk.gov.hmrc.agentassurance.models.{AmlsError, CreateAmlsRequest, UkAmlsDetails, UkAmlsEntity}
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
@@ -46,6 +46,12 @@ trait MockAmlsRepository extends MockFactory {
  def mockGetAmlsDetailsByArn(arn: Arn)(response: Option[UkAmlsDetails]) = {
     (mockAmlsRepository.getAmlsDetailsByArn(_: Arn))
       .expects(arn)
+      .returning(toFuture(response))
+  }
+
+  def mockCreateOrUpdate(arn: Arn, ukAmnlsEntity: UkAmlsEntity)(response: Option[UkAmlsEntity]) = {
+    (mockAmlsRepository.createOrUpdate(_: Arn, _: UkAmlsEntity))
+      .expects(arn, ukAmnlsEntity)
       .returning(toFuture(response))
   }
 
