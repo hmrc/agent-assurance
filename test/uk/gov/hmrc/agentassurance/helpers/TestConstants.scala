@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.helpers
 
-import uk.gov.hmrc.agentassurance.models.{OverseasAmlsDetails, UkAmlsDetails}
+import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.{Enrolment, EnrolmentIdentifier, Enrolments}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
@@ -47,9 +47,13 @@ object TestConstants {
   val testSaAgentReference = SaAgentReference("IRSA-123")
   val testValidApplicationReferenceNumber = "XAML00000123456"
   val testArn = Arn("ARN123")
+  val today = LocalDate.now
 
   val membershipExpiresOnDate = LocalDate.parse("2024-01-12")
   val testAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(membershipExpiresOnDate))
   val testOverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
-
+  val testUKAmlsEntity = UkAmlsEntity(Some(testUtr), testAmlsDetails, Some(testArn), today, None)
+  val testOverseasAmlsEntity = OverseasAmlsEntity(testArn, testOverseasAmlsDetails)
+  val testUKAmlsRequest = AmlsRequest(ukRecord = true, Some(testUtr), "supervisory", "0123456789", Some(membershipExpiresOnDate))
+  val testOverseasAmlsRequest = AmlsRequest(ukRecord = false, None, "supervisory", "0123456789", Some(membershipExpiresOnDate))
 }

@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import play.api.libs.json.Json
+import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.{OverseasAmlsDetails, UkAmlsDetails}
+import uk.gov.hmrc.agentassurance.models.{AmlsRequest, OverseasAmlsDetails, UkAmlsDetails}
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -28,12 +28,12 @@ import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class GetAmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsService,
-                                              val authConnector: AuthConnector,
-                                              override val controllerComponents: ControllerComponents
+class AmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsService,
+                                           val authConnector: AuthConnector,
+                                           override val controllerComponents: ControllerComponents
                                              )(implicit val appConfig: AppConfig, ec: ExecutionContext) extends BackendController(controllerComponents) with AuthActions {
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
@@ -49,5 +49,15 @@ class GetAmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsSer
         }
 
     }
+
+  def postAmlsDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgent { implicit request =>
+    request.body.asJson.map(_.validate[AmlsRequest] match {
+      case JsSuccess(amlsRequest, _) =>
+        amlsDetailsService.handleStoringNewAmls(arn, amlsRequest)
+          .map(res =>
+          if(res.isRight) Created else InternalServerError)
+      case JsError(errors) => Future successful BadRequest(s"Could not parse body: $errors")
+    }).getOrElse(Future successful BadRequest("No JSON found in request"))
+  }
 
 }

@@ -38,5 +38,11 @@ trait MockOverseasAmlsRepository extends MockFactory {
       .returning(toFuture(response))
   }
 
+  def mockCreateOrUpdate(amlsEntity: OverseasAmlsEntity)(response: Option[OverseasAmlsEntity]) = {
+    (mockOverseasAmlsRepository.createOrUpdate(_: OverseasAmlsEntity))
+      .expects(amlsEntity)
+      .returning(toFuture(response))
+  }
+
 
 }

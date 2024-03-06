@@ -17,14 +17,15 @@
 package uk.gov.hmrc.agentassurance.repositories
 
 import com.google.inject.ImplementedBy
+import com.mongodb.client.model.ReturnDocument
 import org.mongodb.scala.MongoWriteException
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.{IndexModel, IndexOptions, ReplaceOptions}
+import org.mongodb.scala.model.{FindOneAndReplaceOptions, IndexModel, IndexOptions, ReplaceOptions}
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError, UniqueKeyViolationError}
-import uk.gov.hmrc.agentassurance.models.{UkAmlsDetails, AmlsEntity, AmlsError, CreateAmlsRequest}
+import uk.gov.hmrc.agentassurance.models.{UkAmlsEntity, AmlsError, CreateAmlsRequest, UkAmlsDetails}
 import uk.gov.hmrc.agentassurance.util._
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.MongoComponent
@@ -39,6 +40,8 @@ trait AmlsRepository {
 
   def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError, Unit]]
 
+  def createOrUpdate(arn: Arn, amlsEntity: UkAmlsEntity): Future[Option[UkAmlsEntity]]
+
   def updateArn(utr: Utr, arn: Arn): Future[Either[AmlsError, UkAmlsDetails]]
 
   def getAmlDetails(utr: Utr): Future[Option[UkAmlsDetails]]
@@ -48,10 +51,10 @@ trait AmlsRepository {
 
 @Singleton
 class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: ExecutionContext)
-  extends PlayMongoRepository[AmlsEntity](
+  extends PlayMongoRepository[UkAmlsEntity](
     mongoComponent = mongo,
     collectionName = "agent-amls",
-    domainFormat = AmlsEntity.amlsEntityFormat,
+    domainFormat = UkAmlsEntity.amlsEntityFormat,
     indexes = Seq(
       IndexModel(ascending("utr"),
         IndexOptions()
@@ -83,8 +86,8 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
         case _ =>
           collection
             .replaceOne(equal("utr", utr),
-              AmlsEntity(
-                Utr(utr),
+              UkAmlsEntity(
+                Option(Utr(utr)),
                 createAmlsRequest.amlsDetails,
                 None,
                 LocalDate.now()),
@@ -95,6 +98,15 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
               case _ => Left(AmlsUnexpectedMongoError)
             }
       }
+  }
+
+  override def createOrUpdate(arn: Arn, amlsEntity: UkAmlsEntity): Future[Option[UkAmlsEntity]] = {
+    collection
+      .findOneAndReplace(
+        equal("arn", arn.value),
+        amlsEntity,
+        FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE))
+      .headOption()
   }
 
   override def updateArn(utr: Utr, arn: Arn): Future[Either[AmlsError, UkAmlsDetails]] = {

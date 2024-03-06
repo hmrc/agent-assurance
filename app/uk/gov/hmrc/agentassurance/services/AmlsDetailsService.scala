@@ -16,17 +16,20 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import uk.gov.hmrc.agentassurance.models.AmlsDetails
-import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, OverseasAmlsRepository}
+import play.api.Logging
+import uk.gov.hmrc.agentassurance.models._
+import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, ArchivedAmlsRepository, OverseasAmlsRepository}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
+import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepository,
-                                   amlsRepository: AmlsRepository
-                                  )(implicit ec: ExecutionContext) {
+                                   amlsRepository: AmlsRepository,
+                                   archivedAmlsRepository: ArchivedAmlsRepository
+                                  )(implicit ec: ExecutionContext) extends Logging {
 
   def getAmlsDetailsByArn(arn: Arn): Future[Seq[AmlsDetails]] =
     Future.sequence(
@@ -36,4 +39,19 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
       )
     ).map(_.flatten)
 
+  def handleStoringNewAmls(arn: Arn, amlsRequest: AmlsRequest): Future[Either[AmlsError, Unit]] = {
+      val amlsDetails = amlsRequest.toAmlsEntity(amlsRequest)
+    (amlsDetails match {
+          case uk: UkAmlsDetails =>
+            amlsRepository
+              .createOrUpdate(arn, UkAmlsEntity(amlsRequest.utr, uk, arn = Some(arn), LocalDate.now))
+          case os: OverseasAmlsDetails =>
+            overseasAmlsRepository.createOrUpdate(OverseasAmlsEntity(arn, os))
+        }).flatMap {
+      case Some(oldAmlsEntity) => archivedAmlsRepository.create(ArchivedAmlsEntity(arn,oldAmlsEntity))
+      case None =>
+        logger.info(s"no AMLS record existed for ${arn.value} so nothing to archive")
+        Future successful Right(())
+      }
+    }
 }

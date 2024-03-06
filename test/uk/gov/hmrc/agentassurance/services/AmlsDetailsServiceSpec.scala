@@ -18,14 +18,16 @@ package uk.gov.hmrc.agentassurance.services
 
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentassurance.helpers.TestConstants.{testAmlsDetails, testArn, testOverseasAmlsDetails}
-import uk.gov.hmrc.agentassurance.mocks.{MockAmlsRepository, MockOverseasAmlsRepository}
+import uk.gov.hmrc.agentassurance.helpers.TestConstants._
+import uk.gov.hmrc.agentassurance.mocks.{MockAmlsRepository, MockArchivedAmlsRepository, MockOverseasAmlsRepository}
+import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
 
 import scala.concurrent.ExecutionContext
 
-class AmlsDetailsServiceSpec extends PlaySpec with MockAmlsRepository with MockOverseasAmlsRepository {
+class AmlsDetailsServiceSpec extends PlaySpec with MockAmlsRepository with MockOverseasAmlsRepository with MockArchivedAmlsRepository{
 
-  val service = new AmlsDetailsService(mockOverseasAmlsRepository, mockAmlsRepository)(ExecutionContext.global)
+  val service = new AmlsDetailsService(mockOverseasAmlsRepository, mockAmlsRepository, mockArchivedAmlsRepository)(ExecutionContext.global)
 
   "getAmlsDetailsByArn" should {
     "return Future(Seq(UkAmlsDetails(_,_,_,_,_,_)))" when {
@@ -72,6 +74,51 @@ class AmlsDetailsServiceSpec extends PlaySpec with MockAmlsRepository with MockO
 
         result mustBe Seq.empty
       }
+    }
+  }
+
+  "handleStoringAmls" should {
+    "return Right() when storing a UK AMLS record and there was no existing record" in {
+      mockCreateOrUpdate(testArn, testUKAmlsEntity)(None)
+
+      val result = await(service.handleStoringNewAmls(testArn, testUKAmlsRequest))
+
+      result mustBe Right(())
+    }
+
+    "return Right() when UK AMLS and there is an existing AMLS record" in {
+      mockCreateOrUpdate(testArn, testUKAmlsEntity)(Some(testUKAmlsEntity))
+      mockCreate(ArchivedAmlsEntity(testArn, testUKAmlsEntity))(Right(()))
+
+      val result = await(service.handleStoringNewAmls(testArn, testUKAmlsRequest))
+
+      result mustBe Right(())
+    }
+
+    "return Right() when Overseas AMLS and there is no existing AMLS record" in {
+      mockCreateOrUpdate(testOverseasAmlsEntity)(None)
+
+      val result = await(service.handleStoringNewAmls(testArn, testOverseasAmlsRequest))
+
+      result mustBe Right(())
+    }
+
+    "return Right() when Overseas AMLS and there is an existing AMLS record" in {
+      mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
+      mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Right(()))
+
+      val result = await(service.handleStoringNewAmls(testArn, testOverseasAmlsRequest))
+
+      result mustBe Right(())
+    }
+
+    "return Left() when there was a problem with storing new AMLS record" in {
+      mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
+      mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Left(AmlsUnexpectedMongoError))
+
+      val result = await(service.handleStoringNewAmls(testArn, testOverseasAmlsRequest))
+
+      result mustBe Left(AmlsUnexpectedMongoError)
     }
   }
 
