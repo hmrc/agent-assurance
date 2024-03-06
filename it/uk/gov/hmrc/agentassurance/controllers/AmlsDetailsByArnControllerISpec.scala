@@ -211,7 +211,7 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
 
         overseasAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
         overseasAmlsRepository.collection.find().toFuture()
-          .futureValue.head mustBe OverseasAmlsEntity(arn,OverseasAmlsDetails("Indian BC", Some("B343")), None)
+          .futureValue.head mustBe OverseasAmlsEntity(arn,OverseasAmlsDetails("Indian BC", Some("B343")), Some(frozenInstant))
 
         archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
 
