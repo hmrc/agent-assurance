@@ -13,3 +13,6 @@
 ->         /                          prod.Routes
 
 GET        /test-only/acceptableNumberOfClients/service/:service/minimumAcceptableNumberOfClients/:minimumAcceptableNumberOfClients  @uk.gov.hmrc.agentassurance.controllers.testOnly.TestOnlyController.acceptableNumberOfClientsForAny(service: String, minimumAcceptableNumberOfClients: Int)
+
+POST       /test-only/add-amls-data          @uk.gov.hmrc.agentassurance.controllers.testOnly.AmlsDataController.addAmlsData()
+
