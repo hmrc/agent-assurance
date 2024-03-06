@@ -73,10 +73,13 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
       val amlsDetails = amlsRequest.toAmlsEntity(amlsRequest)
     (amlsDetails match {
           case uk: UkAmlsDetails =>
+            val ukAmlsEntity = UkAmlsEntity(utr = amlsRequest.utr, amlsDetails = uk, arn = Some(arn), createdOn = LocalDate.now,
+              amlsSource = AmlsSource.Subscription)
+
             amlsRepository
-              .createOrUpdate(arn, UkAmlsEntity(amlsRequest.utr, uk, arn = Some(arn), LocalDate.now))
+              .createOrUpdate(arn, ukAmlsEntity )
           case os: OverseasAmlsDetails =>
-            overseasAmlsRepository.createOrUpdate(OverseasAmlsEntity(arn, os))
+            overseasAmlsRepository.createOrUpdate(OverseasAmlsEntity(arn = arn, amlsDetails = os, createdDate = None))
         }).flatMap {
       case Some(oldAmlsEntity) => archivedAmlsRepository.create(ArchivedAmlsEntity(arn,oldAmlsEntity))
       case None =>

@@ -29,6 +29,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
+import java.time.Clock
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,7 +44,7 @@ trait OverseasAmlsRepository {
 }
 
 @Singleton
-class OverseasAmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: ExecutionContext)
+class OverseasAmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: ExecutionContext, clock: Clock)
   extends PlayMongoRepository[OverseasAmlsEntity](
     mongoComponent = mongo,
     collectionName ="overseas-agent-amls",
@@ -63,7 +64,7 @@ class OverseasAmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: E
         case Some(_) => Future successful Left(AmlsRecordExists)
         case _  =>
           collection
-          .insertOne(amlsEntity)
+          .insertOne(amlsEntity.withDefaultCreatedDate)
             .toFuture()
             .map{
               case insertOneResult if insertOneResult.wasAcknowledged() =>  Right(())
@@ -88,7 +89,7 @@ class OverseasAmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: E
     collection
       .findOneAndReplace(
         equal("arn", amlsEntity.arn.value),
-        amlsEntity,
+        amlsEntity.withDefaultCreatedDate,
         FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE))
       .headOption()
   }

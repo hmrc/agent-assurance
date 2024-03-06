@@ -9,7 +9,8 @@ object AppDependencies {
     "uk.gov.hmrc"       %% "bootstrap-backend-play-28" % bootstrapVer,
     "uk.gov.hmrc"       %% "agent-mtd-identifiers"     % "1.15.0",
     "uk.gov.hmrc"       %% "agent-kenshoo-monitoring"  % "5.5.0" exclude("uk.gov.hmrc", "bootstrap-backend-play-28"),
-    "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-28"        % mongoVer
+    "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-28"        % mongoVer,
+    "org.julienrf"      %% "play-json-derived-codecs"  % "7.0.0"
   )
 
   lazy val test = Seq(

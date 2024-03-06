@@ -15,6 +15,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.agentassurance.support.UnitSpec
 
+import java.time.Clock
 import scala.concurrent.ExecutionContext
 
 class DesConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockSupport with DesStubs with DataStreamStub with MetricTestSupport {
@@ -40,7 +41,8 @@ class DesConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockS
         "auditing.consumer.baseUri.host" -> wireMockHost,
         "auditing.consumer.baseUri.port" -> wireMockPort
       )
-      .bindings(bind[DesConnector].toInstance(desConnector))
+      .bindings(bind[DesConnector].toInstance(desConnector), bind(classOf[Clock]).toInstance(clock))
+
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.global

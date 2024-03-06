@@ -48,7 +48,7 @@ class AgentAssuranceControllerOSISpec extends IntegrationSpec with AgentAuthStub
     val arn = Arn("AARN0000002")
 
     val amlsDetails = OverseasAmlsDetails("supervisory", Some("0123456789"))
-    val createOverseasAmlsRequest = OverseasAmlsEntity(arn, amlsDetails)
+    val createOverseasAmlsRequest = OverseasAmlsEntity(arn, amlsDetails, None)
 
     def doRequest(request: OverseasAmlsEntity) =
       Await.result(
