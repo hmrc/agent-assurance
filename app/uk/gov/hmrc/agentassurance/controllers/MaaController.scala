@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
@@ -29,6 +28,7 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton

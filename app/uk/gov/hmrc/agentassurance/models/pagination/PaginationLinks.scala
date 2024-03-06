@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.models.pagination
 
-import java.net.URLEncoder
-
 import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
+
+import java.net.URLEncoder
 
 case class PaginationLinks(
                             self: LinkHref,
