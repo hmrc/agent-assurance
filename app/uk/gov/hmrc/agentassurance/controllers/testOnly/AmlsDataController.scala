@@ -99,11 +99,12 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
 
     overseasAmlsRepository.create(
       OverseasAmlsEntity(
-        arn,
-        OverseasAmlsDetails(
+        arn = arn,
+        amlsDetails = OverseasAmlsDetails(
           supervisoryBody = "AMLS Body 101",
           membershipNumber = maybeMembershipNumber
-        )
+        ),
+        createdDate = None
       )
     )
   }

@@ -13,6 +13,7 @@ import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, UnitSpec, WireMockSupport}
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
+import java.time.Clock
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
@@ -29,6 +30,7 @@ class PropertiesControllerISpec extends UnitSpec
   val moduleWithOverrides: AbstractModule = new AbstractModule() {
     override def configure(): Unit = {
       bind(classOf[PropertiesRepository]).toInstance(repository)
+      bind(classOf[Clock]).toInstance(clock)
     }
   }
 

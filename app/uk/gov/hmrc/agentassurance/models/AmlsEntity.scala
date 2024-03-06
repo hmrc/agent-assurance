@@ -16,22 +16,47 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Format, Json, OFormat}
+import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 
-import java.time.LocalDate
+import java.time.{Clock, Instant, LocalDate}
 
 sealed trait AmlsEntity
 
 
-case class UkAmlsEntity(utr: Option[Utr], amlsDetails: UkAmlsDetails, arn: Option[Arn] = None, createdOn: LocalDate, updatedArnOn: Option[LocalDate] = None
+case class UkAmlsEntity(utr: Option[Utr],
+                        amlsDetails: UkAmlsDetails,
+                        arn: Option[Arn] = None,
+                        createdOn: LocalDate,
+                        updatedArnOn: Option[LocalDate] = None,
+                        amlsSource: AmlsSource
                        ) extends AmlsEntity
 
 object UkAmlsEntity {
-  implicit val amlsEntityFormat: OFormat[UkAmlsEntity] = Json.format[UkAmlsEntity]
+
+  import play.api.libs.json._
+  import play.api.libs.functional.syntax._
+
+  val jsonReads: Reads[UkAmlsEntity] = (
+    (__ \ "utr").readNullable[Utr]  and
+      (__ \ "amlsDetails").read[UkAmlsDetails]  and
+      (__ \ "arn").readNullable[Arn]  and
+      (__ \ "createdOn").read[LocalDate]  and
+      (__ \ "updatedArnOn").readNullable[LocalDate]  and
+      (__ \ "amlsSource").readWithDefault[AmlsSource](AmlsSource.Subscription)
+    )(UkAmlsEntity.apply _)
+
+  val jsonWrites: OWrites[UkAmlsEntity] = Json.writes[UkAmlsEntity]
+
+  implicit val amlsEntityFormat: OFormat[UkAmlsEntity] = OFormat(jsonReads, jsonWrites)
+
 }
 
-case class OverseasAmlsEntity(arn: Arn, amlsDetails: OverseasAmlsDetails) extends AmlsEntity
+case class OverseasAmlsEntity(arn: Arn,
+                              amlsDetails: OverseasAmlsDetails,
+                              createdDate: Option[Instant]) extends AmlsEntity {
+  def withDefaultCreatedDate(implicit clock: Clock): OverseasAmlsEntity = copy(createdDate = Some(createdDate.getOrElse(Instant.now(clock))))
+}
 
 object OverseasAmlsEntity {
   implicit val format: Format[OverseasAmlsEntity] = Json.format[OverseasAmlsEntity]

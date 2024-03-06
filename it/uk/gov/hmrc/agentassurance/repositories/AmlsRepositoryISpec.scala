@@ -1,15 +1,30 @@
 package uk.gov.hmrc.agentassurance.repositories
 
+import com.google.inject.AbstractModule
 import org.scalatestplus.play.PlaySpec
-import uk.gov.hmrc.agentassurance.models.{UkAmlsEntity, UkAmlsDetails}
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
+import uk.gov.hmrc.agentassurance.models.{AmlsSource, UkAmlsDetails, UkAmlsEntity}
+import uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
-import java.time.LocalDate
+import java.time.{Clock, LocalDate}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class AmlsRepositoryISpec extends PlaySpec with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
+class AmlsRepositoryISpec extends PlaySpec with DefaultPlayMongoRepositorySupport[UkAmlsEntity] with GuiceOneServerPerSuite with InstantClockTestSupport {
+  override implicit lazy val app: Application = appBuilder.build()
 
+  val moduleWithOverrides: AbstractModule = new AbstractModule() {
+    override def configure(): Unit = {
+      bind(classOf[Clock]).toInstance(clock)
+    }
+  }
+
+  protected def appBuilder: GuiceApplicationBuilder =
+    new GuiceApplicationBuilder()
+      .overrides(moduleWithOverrides)
   override lazy val repository = new AmlsRepositoryImpl(mongoComponent)
 
   val arn = Arn("TARN0000001")
@@ -25,7 +40,7 @@ class AmlsRepositoryISpec extends PlaySpec with DefaultPlayMongoRepositorySuppor
   "createOrUpdate" should {
     "create a new record when none currently exists" in {
 
-      val amlsEntity = UkAmlsEntity(Some(utr), newUkAmlsDetails, Some(arn), today)
+      val amlsEntity = UkAmlsEntity(utr = Some(utr), amlsDetails = newUkAmlsDetails, arn = Some(arn), createdOn = today, amlsSource = AmlsSource.Subscription)
 
       val result = repository.createOrUpdate(arn, amlsEntity).futureValue
       result mustBe None
@@ -42,8 +57,9 @@ class AmlsRepositoryISpec extends PlaySpec with DefaultPlayMongoRepositorySuppor
         membershipNumber = Some("ABC123"),
         appliedOn = None,
         membershipExpiresOn = Some(LocalDate.parse("2020-12-31")))
-      val newAmlsEntity = UkAmlsEntity(Some(utr), newUkAmlsDetails, Some(arn), today)
-      val oldAmlsEntity = UkAmlsEntity(Some(utr), oldUkAmlsDetails, Some(arn), LocalDate.parse("2020-01-01"))
+      val newAmlsEntity = UkAmlsEntity(utr = Some(utr), amlsDetails = newUkAmlsDetails, arn = Some(arn), createdOn = today, amlsSource = AmlsSource.Subscription)
+      val oldAmlsEntity = UkAmlsEntity(utr = Some(utr), amlsDetails = oldUkAmlsDetails, arn = Some(arn),
+        createdOn = LocalDate.parse("2020-01-01"), amlsSource = AmlsSource.Subscription)
 
       repository.collection.find().toFuture().futureValue.size mustBe 0
 

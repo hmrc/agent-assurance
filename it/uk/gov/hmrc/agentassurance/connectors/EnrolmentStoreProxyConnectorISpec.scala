@@ -1,5 +1,6 @@
 package uk.gov.hmrc.agentassurance.connectors
 
+import com.google.inject.AbstractModule
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -10,6 +11,7 @@ import uk.gov.hmrc.agentassurance.support.{MetricTestSupport, WireMockSupport}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.agentassurance.support.UnitSpec
 
+import java.time.Clock
 import scala.concurrent.ExecutionContext
 
 class EnrolmentStoreProxyConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockSupport with MetricTestSupport with EnrolmentStoreProxyStubs {
@@ -32,7 +34,13 @@ class EnrolmentStoreProxyConnectorISpec extends UnitSpec with GuiceOneAppPerSuit
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "auditing.consumer.baseUri.host" -> wireMockHost,
         "auditing.consumer.baseUri.port" -> wireMockPort
-      )
+      ).overrides(moduleWithOverrides)
+
+  lazy val moduleWithOverrides: AbstractModule = new AbstractModule {
+    override def configure(): Unit = {
+      bind(classOf[Clock]).toInstance(clock)
+    }
+  }
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.global

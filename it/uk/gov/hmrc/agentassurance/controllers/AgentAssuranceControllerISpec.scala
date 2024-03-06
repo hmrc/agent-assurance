@@ -16,7 +16,7 @@ import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
-import java.time.LocalDate
+import java.time.{Clock, LocalDate}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
@@ -33,6 +33,7 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
   val moduleWithOverrides: AbstractModule = new AbstractModule() {
     override def configure(): Unit = {
       bind(classOf[AmlsRepositoryImpl]).toInstance(repository)
+      bind(classOf[Clock]).toInstance(clock)
     }
   }
 
@@ -638,8 +639,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
 
       val newUtr = Utr("8588532862")
       await(repository.ensureIndexes())
-      await(repository.collection.insertOne(UkAmlsEntity(Some(utr), amlsDetails, Some(arn), LocalDate.now())).toFuture())
-      await(repository.collection.insertOne(UkAmlsEntity(Some(newUtr), amlsDetails, None, LocalDate.now())).toFuture())
+      await(repository.collection.insertOne(UkAmlsEntity(utr = Some(utr), amlsDetails = amlsDetails, arn = Some(arn), createdOn = LocalDate.now(), amlsSource = AmlsSource.Subscription)).toFuture())
+      await(repository.collection.insertOne(UkAmlsEntity(utr = Some(newUtr), amlsDetails = amlsDetails, arn = None, createdOn = LocalDate.now(), amlsSource = AmlsSource.Subscription)).toFuture())
 
       Given("User is logged in and is an agent")
       withAffinityGroupAgent

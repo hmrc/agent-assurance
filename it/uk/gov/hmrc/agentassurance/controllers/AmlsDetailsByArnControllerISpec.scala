@@ -10,7 +10,7 @@ import play.api.libs.ws.{BodyWritable, WSClient}
 import play.api.test.Helpers.CONTENT_TYPE
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories._
-import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, WireMockSupport}
+import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, InstantClockTestSupport, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
@@ -24,7 +24,9 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
   with AgentAuthStubs
   with GuiceOneServerPerSuite
   with WireMockSupport
-  with CleanMongoCollectionSupport {
+  with CleanMongoCollectionSupport
+  with InstantClockTestSupport
+  {
 
 
   override implicit lazy val app: Application = appBuilder.build()
@@ -80,10 +82,10 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
   val membershipExpiresOnDate: LocalDate = LocalDate.parse("2024-01-12")
   val testAmlsDetails: UkAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(membershipExpiresOnDate))
   val testOverseasAmlsDetails: OverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
-  val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(arn,testOverseasAmlsDetails)
+  val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(arn,testOverseasAmlsDetails, None)
 
   val testCreatedDate: LocalDate = LocalDate.parse("2024-01-15")
-  val amlsEntity: UkAmlsEntity = UkAmlsEntity(Some(testUtr), testAmlsDetails, Some(arn),testCreatedDate)
+  val amlsEntity: UkAmlsEntity = UkAmlsEntity(utr = Some(testUtr), amlsDetails = testAmlsDetails, arn = Some(arn),createdOn = testCreatedDate, amlsSource = AmlsSource.Subscription)
 
 
   "GET /amls/arn/:arn" should {
@@ -147,7 +149,8 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
             appliedOn = None,
             membershipExpiresOn = Some(LocalDate.parse("2019-10-10"))),
           arn = Some(arn),
-          createdOn = LocalDate.parse("2020-10-10"))
+          createdOn = LocalDate.parse("2020-10-10"),
+          amlsSource = AmlsSource.Subscription)
 
         ukAmlsRepository.collection.insertOne(ukAmlsEntity).toFuture().futureValue
 
@@ -190,7 +193,8 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
           amlsDetails = OverseasAmlsDetails(
             supervisoryBody = "Indian ACA",
             membershipNumber = Some("CC123")),
-          arn = arn
+          arn = arn,
+          createdDate = None
         )
 
         overseasAmlsRepository.collection.insertOne(overseasAmlsEntity).toFuture().futureValue
@@ -207,7 +211,7 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
 
         overseasAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
         overseasAmlsRepository.collection.find().toFuture()
-          .futureValue.head mustBe OverseasAmlsEntity(arn,OverseasAmlsDetails("Indian BC", Some("B343")))
+          .futureValue.head mustBe OverseasAmlsEntity(arn,OverseasAmlsDetails("Indian BC", Some("B343")), None)
 
         archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
 
