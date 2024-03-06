@@ -27,7 +27,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[ArchivedAmlsRepositoryImpl])
@@ -35,7 +35,7 @@ trait ArchivedAmlsRepository {
   def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]]
 }
 
-
+@Singleton
 class ArchivedAmlsRepositoryImpl @Inject()(mongoComponent: MongoComponent)(
   implicit ec: ExecutionContext) extends PlayMongoRepository[ArchivedAmlsEntity](
   mongoComponent = mongoComponent,

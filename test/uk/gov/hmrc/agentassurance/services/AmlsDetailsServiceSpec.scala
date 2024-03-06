@@ -19,15 +19,18 @@ package uk.gov.hmrc.agentassurance.services
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
-import uk.gov.hmrc.agentassurance.mocks.{MockAmlsRepository, MockArchivedAmlsRepository, MockOverseasAmlsRepository}
+import uk.gov.hmrc.agentassurance.mocks.{MockAmlsRepository, MockArchivedAmlsRepository, MockDesConnector, MockOverseasAmlsRepository}
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
-import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
+import uk.gov.hmrc.agentassurance.models.{AmlsSubscriptionRecord, ArchivedAmlsEntity}
+import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.ExecutionContext
+import java.time.LocalDate
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class AmlsDetailsServiceSpec extends PlaySpec with MockAmlsRepository with MockOverseasAmlsRepository with MockArchivedAmlsRepository{
+class AmlsDetailsServiceSpec extends PlaySpec with MockAmlsRepository with MockOverseasAmlsRepository with MockArchivedAmlsRepository with MockDesConnector {
 
-  val service = new AmlsDetailsService(mockOverseasAmlsRepository, mockAmlsRepository, mockArchivedAmlsRepository)(ExecutionContext.global)
+  val service = new AmlsDetailsService(mockOverseasAmlsRepository, mockAmlsRepository, mockArchivedAmlsRepository, mockDesConnector)
 
   "getAmlsDetailsByArn" should {
     "return Future(Seq(UkAmlsDetails(_,_,_,_,_,_)))" when {
@@ -119,6 +122,63 @@ class AmlsDetailsServiceSpec extends PlaySpec with MockAmlsRepository with MockO
       val result = await(service.handleStoringNewAmls(testArn, testOverseasAmlsRequest))
 
       result mustBe Left(AmlsUnexpectedMongoError)
+    }
+  }
+
+  "getUpdatedAmlsDetailsForHmrcBody" should {
+    implicit val hc = HeaderCarrier()
+    "return amls details with no updates" when {
+      "there is no membership number" in {
+        val result = service.getUpdatedAmlsDetailsForHmrcBody(testHmrcAmlsDetailsNoMembershipNumber)
+
+        await(result) mustBe testHmrcAmlsDetailsNoMembershipNumber
+      }
+
+      "there is no amls subscription record" in {
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.failed(new Exception("failed to return a record")))
+
+        val result = service.getUpdatedAmlsDetailsForHmrcBody(testHmrcAmlsDetails)
+
+        await(result) mustBe testHmrcAmlsDetails
+      }
+      "the subscription record's end date is before the amls details expiry date" in {
+        val testDate = LocalDate.now().minusWeeks(2)
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.successful(
+          AmlsSubscriptionRecord("Approved", "1", None, Some(testDate), None))
+        )
+
+        val result = service.getUpdatedAmlsDetailsForHmrcBody(testHmrcAmlsDetails)
+
+        await(result) mustBe testHmrcAmlsDetails
+      }
+      "the supervisory body is not HMRC" in {
+        val result = service.getUpdatedAmlsDetailsForHmrcBody(testAmlsDetails)
+
+        await(result) mustBe testAmlsDetails
+      }
+    }
+    "return amls details with updates" when {
+      "there is a membership number, the supervisory body is HMRC, the form bundle status is `approved` and the end date is after the expiry date" in {
+        val testDate = LocalDate.now().plusWeeks(2)
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.successful(
+          AmlsSubscriptionRecord("Approved", "1", None, Some(testDate), None))
+        )
+
+        val result = service.getUpdatedAmlsDetailsForHmrcBody(testHmrcAmlsDetails)
+
+        await(result) mustBe testHmrcAmlsDetails.copy(membershipExpiresOn = Some(testDate))
+      }
+
+      "there is a membership number, the supervisory body is HMRC, the form bundle status is `approved with conditions` and the end date is after the expiry date" in {
+        val testDate = LocalDate.now().plusWeeks(2)
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.successful(
+          AmlsSubscriptionRecord("ApprovedWithConditions", "1", None, Some(testDate), None))
+        )
+
+        val result = service.getUpdatedAmlsDetailsForHmrcBody(testHmrcAmlsDetails)
+
+        await(result) mustBe testHmrcAmlsDetails.copy(membershipExpiresOn = Some(testDate))
+      }
     }
   }
 

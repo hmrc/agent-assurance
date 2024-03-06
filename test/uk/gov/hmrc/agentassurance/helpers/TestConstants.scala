@@ -37,21 +37,23 @@ object TestConstants {
     Enrolment("maintain_agent_manually_assure", Seq.empty, state = "activated", delegatedAuthRule = None)
   )
 
-  val enrolmentsWithIrSAAgent = Enrolments(irSaAgentEnrolment)
-  val enrolmentsWithNoIrSAAgent = Enrolments(hmrcAsAgentEnrolment)
-  val enrolmentsWithoutIrSAAgent = Enrolments(Set.empty)
-  val enrolmentsWithStride = Enrolments(strideEnrolment)
+  val enrolmentsWithIrSAAgent: Enrolments = Enrolments(irSaAgentEnrolment)
+  val enrolmentsWithNoIrSAAgent: Enrolments = Enrolments(hmrcAsAgentEnrolment)
+  val enrolmentsWithoutIrSAAgent: Enrolments = Enrolments(Set.empty)
+  val enrolmentsWithStride: Enrolments = Enrolments(strideEnrolment)
 
-  val testNino = Nino("AA000000A")
-  val testUtr = Utr("7000000002")
-  val testSaAgentReference = SaAgentReference("IRSA-123")
-  val testValidApplicationReferenceNumber = "XAML00000123456"
-  val testArn = Arn("ARN123")
+  val testNino: Nino = Nino("AA000000A")
+  val testUtr: Utr = Utr("7000000002")
+  val testSaAgentReference: SaAgentReference = SaAgentReference("IRSA-123")
+  val testValidApplicationReferenceNumber: String = "XAML00000123456"
+  val testArn: Arn = Arn("ARN123")
   val today = LocalDate.now
 
-  val membershipExpiresOnDate = LocalDate.parse("2024-01-12")
-  val testAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(membershipExpiresOnDate))
-  val testOverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
+  val membershipExpiresOnDate: LocalDate = LocalDate.parse("2024-01-12")
+  val testAmlsDetails: UkAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(membershipExpiresOnDate))
+  val testHmrcAmlsDetails: UkAmlsDetails = UkAmlsDetails("HM Revenue and Customs (HMRC)", membershipNumber = Some(testValidApplicationReferenceNumber), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
+  val testHmrcAmlsDetailsNoMembershipNumber: UkAmlsDetails = UkAmlsDetails("HM Revenue and Customs (HMRC)", membershipNumber = None, appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
+  val testOverseasAmlsDetails: OverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
   val testUKAmlsEntity = UkAmlsEntity(Some(testUtr), testAmlsDetails, Some(testArn), today, None)
   val testOverseasAmlsEntity = OverseasAmlsEntity(testArn, testOverseasAmlsDetails)
   val testUKAmlsRequest = AmlsRequest(ukRecord = true, Some(testUtr), "supervisory", "0123456789", Some(membershipExpiresOnDate))
