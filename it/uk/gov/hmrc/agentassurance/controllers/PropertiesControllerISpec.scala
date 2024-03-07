@@ -25,7 +25,6 @@ class PropertiesControllerISpec extends UnitSpec
 
   override lazy val repository = new PropertiesRepository(mongoComponent)
 
-  override def irAgentReference = ""
 
   val moduleWithOverrides: AbstractModule = new AbstractModule() {
     override def configure(): Unit = {
