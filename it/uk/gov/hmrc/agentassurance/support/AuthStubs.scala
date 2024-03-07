@@ -11,7 +11,7 @@ trait BasicUserAuthStubs { WiremockAware =>
 }
 
 trait AgentAuthStubs extends BasicUserAuthStubs {
-  def irAgentReference: String
+  def irAgentReference: String = "IRSA-123"
 
   def isLoggedInAsAnAfinityGroupAgent(userId: String) = {
     stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody(
