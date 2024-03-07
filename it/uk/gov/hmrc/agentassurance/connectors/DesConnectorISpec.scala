@@ -8,14 +8,11 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.stubs.{DataStreamStub, DesStubs}
-import uk.gov.hmrc.agentassurance.support.{MetricTestSupport, WireMockSupport}
+import uk.gov.hmrc.agentassurance.support.{MetricTestSupport, UnitSpec, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
-import uk.gov.hmrc.agentassurance.support.UnitSpec
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 
-import java.time.Clock
 import scala.concurrent.ExecutionContext
 
 class DesConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockSupport with DesStubs with DataStreamStub with MetricTestSupport {
@@ -41,7 +38,7 @@ class DesConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockS
         "auditing.consumer.baseUri.host" -> wireMockHost,
         "auditing.consumer.baseUri.port" -> wireMockPort
       )
-      .bindings(bind[DesConnector].toInstance(desConnector), bind(classOf[Clock]).toInstance(clock))
+      .bindings(bind[DesConnector].toInstance(desConnector))
 
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
