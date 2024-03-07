@@ -45,7 +45,7 @@ class AmlsJourneyControllerISpec extends PlaySpec
     new GuiceApplicationBuilder()
       .configure("microservice.services.auth.host" -> wireMockHost,
         "microservice.services.auth.port" -> wireMockPort,
-        "auditing.enabled" -> false,
+        "auditing.enabled" -> false
       )
       .overrides(moduleWithOverrides)
 
