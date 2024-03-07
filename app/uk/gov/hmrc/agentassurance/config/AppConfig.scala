@@ -29,17 +29,18 @@ class AppConfig @Inject()(servicesConfig: ServicesConfig) {
 
   private def baseUrl(key: String) = servicesConfig.baseUrl(key)
 
-  val authBaseUrl = baseUrl("auth")
-  val desBaseUrl = baseUrl("des")
-  val esProxyUrl = baseUrl("enrolment-store-proxy")
+  val authBaseUrl: String = baseUrl("auth")
+  val desBaseUrl: String = baseUrl("des")
+  val acaBaseUrl: String = baseUrl("agent-client-authorisation")
+  val esProxyUrl: String = baseUrl("enrolment-store-proxy")
 
-  val minimumIRPAYEClients = servicesConfig.getInt("minimumIRPAYEClients")
-  val minimumIRSAClients = servicesConfig.getInt("minimumIRSAClients")
-  val minimumVatDecOrgClients = servicesConfig.getInt("minimumVatDecOrgClients")
-  val minimumIRCTClients = servicesConfig.getInt("minimumIRCTClients")
+  val minimumIRPAYEClients: Int = servicesConfig.getInt("minimumIRPAYEClients")
+  val minimumIRSAClients: Int = servicesConfig.getInt("minimumIRSAClients")
+  val minimumVatDecOrgClients: Int = servicesConfig.getInt("minimumVatDecOrgClients")
+  val minimumIRCTClients: Int = servicesConfig.getInt("minimumIRCTClients")
 
-  val manuallyAssuredStrideRole = servicesConfig.getString("stride.roles.agent-assurance")
+  val manuallyAssuredStrideRole: String = servicesConfig.getString("stride.roles.agent-assurance")
 
-  val desEnv = getConf("des.environment")
-  val desAuthToken = getConf("des.authorization-token")
+  val desEnv: String = getConf("des.environment")
+  val desAuthToken: String = getConf("des.authorization-token")
 }

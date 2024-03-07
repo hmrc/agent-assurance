@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.controllers.testOnly
 
-import javax.inject.{Inject, Singleton}
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController
+
+import javax.inject.{Inject, Singleton}
 
 @Singleton
 class TestOnlyController @Inject()(ctrl: AgentAssuranceController) {

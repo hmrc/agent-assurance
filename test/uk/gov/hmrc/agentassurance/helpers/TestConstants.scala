@@ -45,20 +45,25 @@ object TestConstants {
   val testNino: Nino = Nino("AA000000A")
   val testUtr: Utr = Utr("7000000002")
   val testSaAgentReference: SaAgentReference = SaAgentReference("IRSA-123")
-  val testValidApplicationReferenceNumber: String = "XAML00000123456"
+  val testValidApplicationReferenceNumber = "XAML00000123456"
   val testArn: Arn = Arn("ARN123")
-  val today = LocalDate.now
+  val today: LocalDate = LocalDate.now
 
 
-  val membershipExpiresOnDate = LocalDate.parse("2024-01-12")
-  val testAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(membershipExpiresOnDate))
-  val testUKAmlsEntity = UkAmlsEntity(utr = Some(testUtr), amlsDetails = testAmlsDetails, arn = Some(testArn),
+  val membershipExpiresOnDate: LocalDate = LocalDate.parse("2024-01-12")
+  val testAmlsDetails: UkAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(membershipExpiresOnDate))
+  val testUKAmlsEntity: UkAmlsEntity = UkAmlsEntity(utr = Some(testUtr), amlsDetails = testAmlsDetails, arn = Some(testArn),
     createdOn = today, updatedArnOn = None, amlsSource = AmlsSource.Subscription)
 
   val testHmrcAmlsDetails: UkAmlsDetails = UkAmlsDetails("HM Revenue and Customs (HMRC)", membershipNumber = Some(testValidApplicationReferenceNumber), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
   val testHmrcAmlsDetailsNoMembershipNumber: UkAmlsDetails = UkAmlsDetails("HM Revenue and Customs (HMRC)", membershipNumber = None, appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
   val testOverseasAmlsDetails: OverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
-  val testOverseasAmlsEntity = OverseasAmlsEntity(testArn, testOverseasAmlsDetails, None)
-  val testUKAmlsRequest = AmlsRequest(ukRecord = true, Some(testUtr), "supervisory", "0123456789", Some(membershipExpiresOnDate))
-  val testOverseasAmlsRequest = AmlsRequest(ukRecord = false, None, "supervisory", "0123456789", Some(membershipExpiresOnDate))
+  val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(testArn, testOverseasAmlsDetails, None)
+  val testUKAmlsRequest: AmlsRequest = AmlsRequest(ukRecord = true, Some(testUtr), "supervisory", "0123456789", Some(membershipExpiresOnDate))
+  val testOverseasAmlsRequest: AmlsRequest = AmlsRequest(ukRecord = false, None, "supervisory", "0123456789", Some(membershipExpiresOnDate))
+
+  val agencyDetailsUk: AgencyDetails = AgencyDetails(None, None, None,
+    Some(BusinessAddress("line1", None, None, None, None, "GB")))
+  val agencyDetailsOverseas: AgencyDetails = AgencyDetails(None, None, None,
+    Some(BusinessAddress("line1", None, None, None, None, "US")))
 }
