@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentassurance.connectors
 
 import com.codahale.metrics.MetricRegistry
+import com.google.inject.ImplementedBy
 import com.kenshoo.play.metrics.Metrics
 import play.api.http.Status.{NO_CONTENT, OK}
 import play.api.i18n.Lang.logger
@@ -30,14 +31,19 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse, Int
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
+@ImplementedBy(classOf[AgentClientAuthConnectorImpl])
+trait AgentClientAuthConnector {
+  def getAgencyDetails()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AgencyDetails]]
+}
+
 @Singleton
-class AgentClientAuthConnector @Inject()(http: HttpClient, metrics: Metrics)
+class AgentClientAuthConnectorImpl @Inject()(http: HttpClient, metrics: Metrics)
                                         (implicit appConfig: AppConfig) extends HttpAPIMonitor {
 
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
   def getAgencyDetails()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AgencyDetails]] =
-    monitor("ConsumerAPI-Get-AgencyDetails-GET") {
+    monitor("ConsumerAPI-AgentClientAuthorisation-AgencyDetails-GET") {
       http.GET[Option[AgencyDetails]](s"${appConfig.acaBaseUrl}/agent-client-authorisation/agent/agency-details")(
         AgentClientAuthHttpReads,
         hc,

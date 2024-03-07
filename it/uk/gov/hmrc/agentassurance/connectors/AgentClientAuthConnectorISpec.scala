@@ -21,7 +21,7 @@ class AgentClientAuthConnectorISpec extends UnitSpec with GuiceOneAppPerSuite wi
 
   implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
-  val acaConnector = new AgentClientAuthConnector(app.injector.instanceOf[HttpClient], app.injector.instanceOf[Metrics])
+  val acaConnector = new AgentClientAuthConnectorImpl(app.injector.instanceOf[HttpClient], app.injector.instanceOf[Metrics])
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -39,7 +39,7 @@ class AgentClientAuthConnectorISpec extends UnitSpec with GuiceOneAppPerSuite wi
         "auditing.consumer.baseUri.host" -> wireMockHost,
         "auditing.consumer.baseUri.port" -> wireMockPort
       )
-      .bindings(bind[AgentClientAuthConnector].toInstance(acaConnector))
+      .bindings(bind[AgentClientAuthConnectorImpl].toInstance(acaConnector))
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.global
@@ -75,10 +75,9 @@ class AgentClientAuthConnectorISpec extends UnitSpec with GuiceOneAppPerSuite wi
     }
 
     "throw an exception if JSON does not parse" in {
-      getAgentDetails(Json.obj(), OK)
+      getAgentDetails(Json.obj("agencyName" -> 1), OK) //not empty because all AgencyDetails are optional
 
-      val exception: InternalServerException = intercept[InternalServerException]{ await(acaConnector.getAgencyDetails()) }
-      exception.message shouldBe ""
+      intercept[InternalServerException]{ await(acaConnector.getAgencyDetails()) }
     }
 
 
