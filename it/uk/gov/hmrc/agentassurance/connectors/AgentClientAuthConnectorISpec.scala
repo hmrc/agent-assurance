@@ -77,7 +77,7 @@ class AgentClientAuthConnectorISpec extends UnitSpec with GuiceOneAppPerSuite wi
     "throw an exception if JSON does not parse" in {
       getAgentDetails(Json.obj(), OK)
 
-      val exception: InternalServerException = intercept[InternalServerException] { await(acaConnector.getAgencyDetails()) }
+      val exception: InternalServerException = intercept[InternalServerException]{ await(acaConnector.getAgencyDetails()) }
       exception.message shouldBe ""
     }
 

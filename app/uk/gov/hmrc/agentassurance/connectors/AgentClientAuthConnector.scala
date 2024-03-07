@@ -20,36 +20,47 @@ import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import play.api.http.Status.{NO_CONTENT, OK}
 import play.api.i18n.Lang.logger
-import play.api.libs.json.{JsError, JsSuccess, Json}
+import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.agentassurance.connectors.AgentClientAuthHttpParser.AgentClientAuthHttpReads
 import uk.gov.hmrc.agentassurance.models.AgencyDetails
-//import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, InternalServerException}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse, InternalServerException}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AgentClientAuthConnector @Inject()(http: HttpClient, metrics: Metrics)(implicit appConfig: AppConfig) extends HttpAPIMonitor {
-  val baseUrl: String = appConfig.acaBaseUrl
+class AgentClientAuthConnector @Inject()(http: HttpClient, metrics: Metrics)
+                                        (implicit appConfig: AppConfig) extends HttpAPIMonitor {
+
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
   def getAgencyDetails()(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[AgencyDetails]] =
     monitor("ConsumerAPI-Get-AgencyDetails-GET") {
-      http
-        .GET[HttpResponse](s"${appConfig.acaBaseUrl}/agent-client-authorisation/agent/agency-details")
-        .map(response =>
-          response.status match {
-            case OK => Json.parse(response.body).validate[AgencyDetails] match {
-              case JsSuccess(value,_) => Some(value)
-              case JsError(e) => throw new InternalServerException(e.mkString)
-            }
-            case NO_CONTENT => None
-            case s => logger.error(s"unexpected response $s when getting agency details")
-              None
-          }
-        )
+      http.GET[Option[AgencyDetails]](s"${appConfig.acaBaseUrl}/agent-client-authorisation/agent/agency-details")(
+        AgentClientAuthHttpReads,
+        hc,
+        ec
+      )
     }
 
+}
+
+object AgentClientAuthHttpParser {
+  implicit object AgentClientAuthHttpReads extends HttpReads[Option[AgencyDetails]] {
+    override def read(method: String, url: String, response: HttpResponse): Option[AgencyDetails] =
+      response.status match {
+        case OK =>
+          response.json.validate[AgencyDetails] match {
+            case JsSuccess(value, _) => Some(value)
+            case JsError(errors) => throw new InternalServerException(s"Json failed to parse with errors - $errors")
+          }
+        case NO_CONTENT =>
+          None
+        case s =>
+          logger.error(s"unexpected response $s when getting agency details")
+          None
+      }
+  }
 }
