@@ -12,12 +12,12 @@ import play.api.test.Helpers.CONTENT_TYPE
 import uk.gov.hmrc.agentassurance.models.AmlsJourney
 import uk.gov.hmrc.agentassurance.repositories.AmlsJourneyRepository
 import uk.gov.hmrc.agentassurance.services.{AmlsJourneyService, AmlsJourneyServiceImpl}
-import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, WireMockSupport}
+import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, InstantClockTestSupport, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.mongo.cache.DataKey
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
-import java.time.{Instant, LocalDate}
+import java.time.{Clock, Instant, LocalDate}
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
@@ -26,7 +26,7 @@ class AmlsJourneyControllerISpec extends PlaySpec
   with AgentAuthStubs
   with GuiceOneServerPerSuite
   with WireMockSupport
-  with CleanMongoCollectionSupport {
+  with CleanMongoCollectionSupport with InstantClockTestSupport {
 
   override implicit lazy val app: Application = appBuilder.build()
 
@@ -37,6 +37,7 @@ class AmlsJourneyControllerISpec extends PlaySpec
   val moduleWithOverrides: AbstractModule = new AbstractModule() {
     override def configure(): Unit = {
       bind(classOf[AmlsJourneyService]).toInstance(service)
+      bind(classOf[Clock]).toInstance(clock)
     }
   }
 
@@ -44,7 +45,7 @@ class AmlsJourneyControllerISpec extends PlaySpec
     new GuiceApplicationBuilder()
       .configure("microservice.services.auth.host" -> wireMockHost,
         "microservice.services.auth.port" -> wireMockPort,
-        "auditing.enabled" -> false
+        "auditing.enabled" -> false,
       )
       .overrides(moduleWithOverrides)
 
