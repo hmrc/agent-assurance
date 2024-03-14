@@ -31,8 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepository,
                                    amlsRepository: AmlsRepository,
                                    archivedAmlsRepository: ArchivedAmlsRepository,
-                                   desConnector: DesConnector
-                                  )(implicit ec: ExecutionContext) extends Logging {
+                                   desConnector: DesConnector)(implicit ec: ExecutionContext) extends Logging {
 
   def getAmlsDetailsByArn(arn: Arn): Future[Seq[AmlsDetails]] =
     Future.sequence(
@@ -69,22 +68,43 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     }
   }
 
-  def handleStoringNewAmls(arn: Arn, amlsRequest: AmlsRequest): Future[Either[AmlsError, Unit]] = {
-      val amlsDetails = amlsRequest.toAmlsEntity(amlsRequest)
-    (amlsDetails match {
-          case uk: UkAmlsDetails =>
-            val ukAmlsEntity = UkAmlsEntity(utr = amlsRequest.utr, amlsDetails = uk, arn = Some(arn), createdOn = LocalDate.now,
-              amlsSource = AmlsSource.Subscription)
+  def storeAmlsRequest(arn: Arn, amlsRequest: AmlsRequest, amlsSource: AmlsSource = AmlsSource.Subscription): Future[Either[AmlsError, AmlsDetails]] = {
 
-            amlsRepository
-              .createOrUpdate(arn, ukAmlsEntity )
-          case os: OverseasAmlsDetails =>
-            overseasAmlsRepository.createOrUpdate(OverseasAmlsEntity(arn = arn, amlsDetails = os, createdDate = None))
-        }).flatMap {
-      case Some(oldAmlsEntity) => archivedAmlsRepository.create(ArchivedAmlsEntity(arn,oldAmlsEntity))
-      case None =>
-        logger.info(s"no AMLS record existed for ${arn.value} so nothing to archive")
-        Future successful Right(())
+    val newAmlsDetails: AmlsDetails = amlsRequest.toAmlsEntity(amlsRequest)
+
+    {
+      newAmlsDetails match {
+        case ukAmlsDetails: UkAmlsDetails =>
+          amlsRepository.createOrUpdate( // this method returns old document BEFORE updating it
+            arn,
+            UkAmlsEntity(
+              utr = amlsRequest.utr,
+              amlsDetails = ukAmlsDetails,
+              arn = Some(arn),
+              createdOn = LocalDate.now,
+              amlsSource = amlsSource
+            )
+          )
+        case overseasAmlsDetails: OverseasAmlsDetails =>
+          overseasAmlsRepository.createOrUpdate( // this method returns old document BEFORE updating it
+            OverseasAmlsEntity(
+              arn = arn,
+              amlsDetails = overseasAmlsDetails,
+              createdDate = None // TODO - should this be Instant.now() as it is for the UK details?
+            )
+          )
       }
+    }.flatMap {
+      case Some(oldAmlsEntity) =>
+        logger.info(s"[AmlsDetailsService][storeNewAmlsRequest] Old AMLS record archived, stored and returned new record")
+        archivedAmlsRepository.create(ArchivedAmlsEntity(arn, oldAmlsEntity)).map {
+          case Right(_) => Right(newAmlsDetails)
+          case Left(error) => Left(error)
+        }
+      case None =>
+        logger.info(s"[AmlsDetailsService][storeNewAmlsRequest] No old AMLS record found, returning new record")
+        Future.successful(Right(newAmlsDetails))
     }
+  }
+
 }
