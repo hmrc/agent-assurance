@@ -80,53 +80,8 @@ class AmlsDetailsServiceSpec extends PlaySpec with MockAmlsRepository with MockO
     }
   }
 
-  "handleStoringAmls" should {
-    "return Right() when storing a UK AMLS record and there was no existing record" in {
-      mockCreateOrUpdate(testArn, testUKAmlsEntity)(None)
-
-      val result = await(service.handleStoringNewAmls(testArn, testUKAmlsRequest))
-
-      result mustBe Right(())
-    }
-
-    "return Right() when UK AMLS and there is an existing AMLS record" in {
-      mockCreateOrUpdate(testArn, testUKAmlsEntity)(Some(testUKAmlsEntity))
-      mockCreate(ArchivedAmlsEntity(testArn, testUKAmlsEntity))(Right(()))
-
-      val result = await(service.handleStoringNewAmls(testArn, testUKAmlsRequest))
-
-      result mustBe Right(())
-    }
-
-    "return Right() when Overseas AMLS and there is no existing AMLS record" in {
-      mockCreateOrUpdate(testOverseasAmlsEntity)(None)
-
-      val result = await(service.handleStoringNewAmls(testArn, testOverseasAmlsRequest))
-
-      result mustBe Right(())
-    }
-
-    "return Right() when Overseas AMLS and there is an existing AMLS record" in {
-      mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
-      mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Right(()))
-
-      val result = await(service.handleStoringNewAmls(testArn, testOverseasAmlsRequest))
-
-      result mustBe Right(())
-    }
-
-    "return Left() when there was a problem with storing new AMLS record" in {
-      mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
-      mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Left(AmlsUnexpectedMongoError))
-
-      val result = await(service.handleStoringNewAmls(testArn, testOverseasAmlsRequest))
-
-      result mustBe Left(AmlsUnexpectedMongoError)
-    }
-  }
-
   "getUpdatedAmlsDetailsForHmrcBody" should {
-    implicit val hc = HeaderCarrier()
+    implicit val hc: HeaderCarrier = HeaderCarrier()
     "return amls details with no updates" when {
       "there is no membership number" in {
         val result = service.getUpdatedAmlsDetailsForHmrcBody(testHmrcAmlsDetailsNoMembershipNumber)
@@ -179,6 +134,51 @@ class AmlsDetailsServiceSpec extends PlaySpec with MockAmlsRepository with MockO
 
         await(result) mustBe testHmrcAmlsDetails.copy(membershipExpiresOn = Some(testDate))
       }
+    }
+  }
+
+  "storeAmlsRequest" should {
+    "return Right(testAmlsDetails) when storing a UK AMLS record and there was no existing record" in {
+      mockCreateOrUpdate(testArn, testUKAmlsEntity)(None)
+
+      val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
+
+      result mustBe Right(testAmlsDetails)
+    }
+
+    "return Right(testAmlsDetails) when UK AMLS and there is an existing AMLS record" in {
+      mockCreateOrUpdate(testArn, testUKAmlsEntity)(Some(testUKAmlsEntity))
+      mockCreate(ArchivedAmlsEntity(testArn, testUKAmlsEntity))(Right(()))
+
+      val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
+
+      result mustBe Right(testAmlsDetails)
+    }
+
+    "return Right(testOverseasAmlsDetails) when Overseas AMLS and there is no existing AMLS record" in {
+      mockCreateOrUpdate(testOverseasAmlsEntity)(None)
+
+      val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
+
+      result mustBe Right(testOverseasAmlsDetails)
+    }
+
+    "return Right(testOverseasAmlsDetails) when Overseas AMLS and there is an existing AMLS record" in {
+      mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
+      mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Right(()))
+
+      val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
+
+      result mustBe Right(testOverseasAmlsDetails)
+    }
+
+    "return Left(AmlsUnexpectedMongoError) when there was a problem with storing new AMLS record" in {
+      mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
+      mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Left(AmlsUnexpectedMongoError))
+
+      val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
+
+      result mustBe Left(AmlsUnexpectedMongoError)
     }
   }
 

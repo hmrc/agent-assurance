@@ -34,7 +34,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class AmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsService,
                                            val authConnector: AuthConnector,
                                            override val controllerComponents: ControllerComponents
-                                             )(implicit val appConfig: AppConfig, ec: ExecutionContext) extends BackendController(controllerComponents) with AuthActions {
+                                          )(implicit val appConfig: AppConfig, ec: ExecutionContext) extends BackendController(controllerComponents) with AuthActions {
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
@@ -43,21 +43,30 @@ class AmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsServic
       request =>
         amlsDetailsService.getAmlsDetailsByArn(arn).map {
           case Nil => NoContent
-          case Seq(amlsDetails@UkAmlsDetails(_, _, _, _, _, _)) => Ok(Json.toJson(amlsDetails))
-          case Seq(overseasAmlsDetails@OverseasAmlsDetails(_, _)) => Ok(Json.toJson(overseasAmlsDetails))
-          case _ => throw new InternalServerException("[getAmlsDetailsByArnController][getAmlsDetails] ARN has both Overseas and UK AMLS details")
+          case Seq(amlsDetails@UkAmlsDetails(_, _, _, _, _, _)) =>
+            Ok(Json.toJson(amlsDetails))
+          case Seq(overseasAmlsDetails@OverseasAmlsDetails(_, _)) =>
+            Ok(Json.toJson(overseasAmlsDetails))
+          case _ =>
+            throw new InternalServerException("[AmlsDetailsByArnController][getAmlsDetails] ARN has both Overseas and UK AMLS details")
         }
 
     }
 
-  def postAmlsDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgent { implicit request =>
-    request.body.asJson.map(_.validate[AmlsRequest] match {
-      case JsSuccess(amlsRequest, _) =>
-        amlsDetailsService.handleStoringNewAmls(arn, amlsRequest)
-          .map(res =>
-          if(res.isRight) Created else InternalServerError)
-      case JsError(errors) => Future successful BadRequest(s"Could not parse body: $errors")
-    }).getOrElse(Future successful BadRequest("No JSON found in request"))
+  def postAmlsDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgent {
+    implicit request =>
+      request.body.asJson.map {
+        _.validate[AmlsRequest] match {
+          case JsSuccess(amlsRequest, _) =>
+            amlsDetailsService.storeAmlsRequest(arn, amlsRequest).map {
+              case Right(_) => Created
+              case Left(error) =>
+                throw new InternalServerException(s"[AmlsDetailsByArnController][postAmlsDetails] failed to store new AMLS details. Error - ${error.toString}")
+            }
+          case JsError(errors) =>
+            Future.successful(BadRequest(s"[AmlsDetailsByArnController][postAmlsDetails] Could not parse body: $errors"))
+        }
+      }.getOrElse(Future.successful(BadRequest("[AmlsDetailsByArnController][postAmlsDetails] No JSON found in request")))
   }
 
 }
