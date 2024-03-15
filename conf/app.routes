@@ -30,6 +30,7 @@ POST          /overseas-agents/amls                                             
 
 GET           /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.getAmlsDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
 POST          /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.postAmlsDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
+GET           /amls/status/:arn                                                            @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.getAmlsStatus(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
 
 GET          /amls-journey                                                                  @uk.gov.hmrc.agentassurance.controllers.AmlsJourneyController.getAmlsJourneyRecord
 PUT          /amls-journey                                                                   @uk.gov.hmrc.agentassurance.controllers.AmlsJourneyController.putAmlsJourneyRecord

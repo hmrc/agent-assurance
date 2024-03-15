@@ -21,7 +21,7 @@ import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, ArchivedAmlsRepository, OverseasAmlsRepository}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 
 import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
@@ -31,7 +31,65 @@ import scala.concurrent.{ExecutionContext, Future}
 class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepository,
                                    amlsRepository: AmlsRepository,
                                    archivedAmlsRepository: ArchivedAmlsRepository,
-                                   desConnector: DesConnector)(implicit ec: ExecutionContext) extends Logging {
+                                   desConnector: DesConnector,
+                                   agencyDetailsService: AgencyDetailsService)(implicit ec: ExecutionContext) extends Logging {
+
+  def getAmlsStatus(arn: Arn)
+                   (implicit ec: ExecutionContext, hc: HeaderCarrier): Future[AmlsStatus] =
+    getAmlsDetailsByArnValidated(arn).map {
+      case Some(amlsDetails: UkAmlsDetails) =>
+        if (amlsDetails.supervisoryBodyIsHmrc)
+          if (amlsDetails.isPending) Future.successful(AmlsStatus.NoAmlsDetailsUK)
+          else getAmlsStatusForHmrcBody(amlsDetails)
+        else
+          if (amlsDetails.isExpired) Future.successful(AmlsStatus.ExpiredAmlsDetailsUK)
+          else Future.successful(AmlsStatus.ValidAmlsDetailsUK)
+
+      case Some(_: OverseasAmlsDetails) => Future.successful(AmlsStatus.ValidAmlsNonUK)
+
+      case None =>
+        agencyDetailsService.isUkAddress().map {
+          case true => AmlsStatus.NoAmlsDetailsUK
+          case false => AmlsStatus.NoAmlsDetailsNonUK
+        }
+    }.flatten
+
+
+  def getAmlsStatusForHmrcBody(amlsDetails: UkAmlsDetails)
+                                     (implicit ec: ExecutionContext, hc: HeaderCarrier): Future[AmlsStatus] =
+
+    if (amlsDetails.supervisoryBodyIsHmrc)
+      amlsDetails.membershipNumber match {
+        case Some(x) => desConnector.getAmlsSubscriptionStatus(x).map(Some(_)).map(_.map { amlsSubscriptionRecord =>
+          amlsSubscriptionRecord.formBundleStatus match {
+            case "Pending" => AmlsStatus.PendingAmlsDetails
+            case "Rejected" => AmlsStatus.PendingAmlsDetailsRejected
+            case "Approved" | "ApprovedWithConditions" =>
+              val isAmlsSubscriptionRecordNewer = (for {
+                amlsRecordEndDate <- amlsSubscriptionRecord.currentRegYearEndDate
+                amlsDetailsExpiryDate <- amlsDetails.membershipExpiresOn
+              } yield amlsRecordEndDate.isAfter(amlsDetailsExpiryDate))
+                .getOrElse(amlsDetails.membershipExpiresOn.isEmpty)
+
+              if (isAmlsSubscriptionRecordNewer) AmlsStatus.ExpiredAmlsDetailsHmrcUK
+              else AmlsStatus.ValidAmlsDetailsHmrcUK
+            case _ => throw new InternalServerException("[AmlsDetailsService][getAmlsStatusForHmrcBody] Invalid amls subscription status from DES")
+          }
+
+        }.getOrElse(AmlsStatus.NoAmlsDetailsHmrcUK))
+          .recover(_ => AmlsStatus.NoAmlsDetailsHmrcUK)
+        case None => Future.successful(AmlsStatus.NoAmlsDetailsHmrcUK)
+      }
+    else Future.successful(AmlsStatus.NoAmlsDetailsUK)
+
+  def getAmlsDetailsByArnValidated(arn: Arn): Future[Option[AmlsDetails]] = getAmlsDetailsByArn(arn: Arn).collect {
+      case (amlsDetails:UkAmlsDetails)::Nil => Some(amlsDetails)
+      case (overseasAmlsDetails:OverseasAmlsDetails)::Nil => Some(overseasAmlsDetails)
+      case Nil => None
+      case _ =>
+        throw new InternalServerException("[AmlsDetailsService][getAmlsDetailsByArnValidated] ARN has both Overseas and UK AMLS details")
+  }
+
 
   def getAmlsDetailsByArn(arn: Arn): Future[Seq[AmlsDetails]] =
     Future.sequence(
@@ -90,7 +148,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
             OverseasAmlsEntity(
               arn = arn,
               amlsDetails = overseasAmlsDetails,
-              createdDate = None // TODO - should this be Instant.now() as it is for the UK details?
+              createdDate = None
             )
           )
       }

@@ -17,11 +17,12 @@
 package uk.gov.hmrc.agentassurance.mocks
 
 import org.scalamock.scalatest.MockFactory
-import uk.gov.hmrc.agentassurance.models.AmlsDetails
+import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsStatus, UkAmlsDetails}
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait MockAmlsDetailsService extends MockFactory {
 
@@ -31,5 +32,16 @@ trait MockAmlsDetailsService extends MockFactory {
     (mockAmlsDetailsService.getAmlsDetailsByArn(_: Arn))
       .expects(arn)
       .returning(Future.successful(response))
+
+  def mockGetAmlsStatusForHmrcBody(amlsDetails: UkAmlsDetails)(response: AmlsStatus) =
+    (mockAmlsDetailsService.getAmlsStatusForHmrcBody(_: UkAmlsDetails)(_: ExecutionContext, _: HeaderCarrier))
+      .expects(amlsDetails, *, *)
+      .returning(Future.successful(response))
+
+  def mockGetAmlsStatus(arn: Arn)(response: AmlsStatus) =
+    (mockAmlsDetailsService.getAmlsStatus(_: Arn)(_: ExecutionContext, _: HeaderCarrier))
+      .expects(arn, *, *)
+      .returning(Future.successful(response))
+
 
 }

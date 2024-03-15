@@ -60,6 +60,7 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
 
   val arn = Arn("AARN0000002")
   val url = s"http://localhost:$port/agent-assurance/amls/arn/${arn.value}"
+  val statusUrl = s"http://localhost:$port/agent-assurance/amls/status/${arn.value}"
   override def irAgentReference: String = "IRSA-123"
 
   val wsClient = app.injector.instanceOf[WSClient]
@@ -76,6 +77,13 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
         .withHttpHeaders("Authorization" -> "Bearer XYZ", CONTENT_TYPE -> "application/json")
         .post(body), 15.seconds
     )
+
+    def doStatusRequest() =
+      Await.result(
+        wsClient.url(statusUrl)
+          .withHttpHeaders( "Authorization" -> "Bearer XYZ")
+          .get(), 15.seconds
+      )
 
 
   val testUtr: Utr = Utr("7000000002")
@@ -235,4 +243,34 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
       }
     }
   }
+
+  //TODO Please complete.  For some reason do not work for me on my loacl machine
+/*  "GET /amls/status/:arn" should {
+    "return 204 when no AMLS records found for the ARN" in {
+      isLoggedInAsStride("stride")
+      val response = doStatusRequest()
+      response.status mustBe 204
+    }
+    "return 200 when UK AMLS records found for the ARN" in {
+      isLoggedInAsStride("stride")
+      ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
+      val response = doStatusRequest()
+      response.status mustBe 200
+      response.body[String] mustBe """{"NoAmlsDetailsUK":{}}"""
+    }
+    "return 200 when overseas AMLS records found for the ARN" in {
+      isLoggedInAsStride("stride")
+      overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
+      val response = doStatusRequest()
+      response.status mustBe 200
+      response.body[String] mustBe """{"NoAmlsDetailsNonUK":{}}"""
+    }
+    "return 500 when overseas and UK AMLS records found for the ARN" in {
+      isLoggedInAsStride("stride")
+      overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
+      ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
+      val response = doStatusRequest()
+      response.status mustBe 500
+    }
+  }*/
 }

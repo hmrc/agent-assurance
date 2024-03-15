@@ -38,9 +38,16 @@ class AmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsServic
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
+  def getAmlsStatus(arn: Arn): Action[AnyContent] =
+    withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
+        amlsDetailsService.getAmlsStatus(arn).map { amlsStatus =>
+          Ok(Json.toJson(amlsStatus))
+        }
+    }
+
+
   def getAmlsDetails(arn: Arn): Action[AnyContent] =
-    withAffinityGroupAgentOrStride(strideRoles) {
-      request =>
+    withAffinityGroupAgentOrStride(strideRoles) { _ =>
         amlsDetailsService.getAmlsDetailsByArn(arn).map {
           case Nil => NoContent
           case Seq(amlsDetails@UkAmlsDetails(_, _, _, _, _, _)) =>
