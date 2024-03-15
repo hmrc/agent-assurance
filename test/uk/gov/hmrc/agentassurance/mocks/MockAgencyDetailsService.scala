@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.services
+package uk.gov.hmrc.agentassurance.mocks
 
-import play.api.Logging
-import uk.gov.hmrc.agentassurance.connectors.AgentClientAuthConnector
+import org.scalamock.scalatest.MockFactory
+import uk.gov.hmrc.agentassurance.services.AgencyDetailsService
 import uk.gov.hmrc.http.HeaderCarrier
 
-import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
-@Singleton
-class AgencyDetailsService @Inject()(acaConnector: AgentClientAuthConnector) extends Logging {
+trait MockAgencyDetailsService extends MockFactory {
 
-  def isUkAddress()(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Boolean] =
-    for {
-      optAgencyDetails <- acaConnector.getAgencyDetails()
-      optAddress = optAgencyDetails.flatMap(_.agencyAddress)
-      countryCodeIsUk = optAddress.exists(_.countryCode == "GB")
-    } yield countryCodeIsUk
+  val mockAgencyDetailsService = mock[AgencyDetailsService]
+
+  def mockIsUkAddress()(response: Boolean) =
+    (mockAgencyDetailsService.isUkAddress()( _: ExecutionContext, _: HeaderCarrier))
+      .expects(*,*)
+      .returning(Future.successful(response))
 
 }

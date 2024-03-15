@@ -38,7 +38,7 @@ trait AgentClientAuthConnector {
 
 @Singleton
 class AgentClientAuthConnectorImpl @Inject()(http: HttpClient, metrics: Metrics)
-                                        (implicit appConfig: AppConfig) extends HttpAPIMonitor {
+                                        (implicit appConfig: AppConfig) extends AgentClientAuthConnector with HttpAPIMonitor {
 
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 

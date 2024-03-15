@@ -23,6 +23,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks.{MockAmlsDetailsService, MockAppConfig, MockAuthConnector}
+import uk.gov.hmrc.agentassurance.models.AmlsStatus
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{affinityGroup, allEnrolments, credentials}
@@ -141,4 +142,31 @@ class AmlsDetailsByArnControllerSpec extends PlaySpec
     }
   }
 
+
+  "getAmlsStatus" should {
+    "return forbidden" when {
+      "not an agent or stride" in {
+        inSequence {
+          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithoutIrSAAgent and None and None)
+        }
+
+        val response = controller.getAmlsDetails(testArn)(FakeRequest())
+        status(response) mustBe FORBIDDEN
+
+      }
+    }
+    "return no content for an agent " when {
+      "there are no records found in the database" in {
+        inSequence {
+          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+          mockGetAmlsStatus(testArn)(AmlsStatus.NoAmlsDetailsUK)
+        }
+
+        val response = controller.getAmlsStatus(testArn)(FakeRequest())
+        status(response) mustBe OK
+        contentAsString(response) mustBe """{"NoAmlsDetailsUK":{}}"""
+      }
+    }
+
+  }
 }
