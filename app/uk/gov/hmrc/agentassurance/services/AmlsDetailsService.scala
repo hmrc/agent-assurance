@@ -25,6 +25,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 
 import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
+import scala.collection.immutable.{::, Nil}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -32,75 +33,42 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
                                    amlsRepository: AmlsRepository,
                                    archivedAmlsRepository: ArchivedAmlsRepository,
                                    desConnector: DesConnector,
-                                   agencyDetailsService: AgencyDetailsService)(implicit ec: ExecutionContext) extends Logging {
+                                   agencyDetailsService: AgencyDetailsService
+                                  )(implicit ec: ExecutionContext) extends Logging {
 
-  def getAmlsStatus(arn: Arn)
-                   (implicit ec: ExecutionContext, hc: HeaderCarrier): Future[AmlsStatus] =
-    getAmlsDetailsByArnValidated(arn).map {
-      case Some(amlsDetails: UkAmlsDetails) =>
-        if (amlsDetails.supervisoryBodyIsHmrc)
-          if (amlsDetails.isPending) Future.successful(AmlsStatus.NoAmlsDetailsUK)
-          else getAmlsStatusForHmrcBody(amlsDetails)
-        else
-          if (amlsDetails.isExpired) Future.successful(AmlsStatus.ExpiredAmlsDetailsUK)
-          else Future.successful(AmlsStatus.ValidAmlsDetailsUK)
-
-      case Some(_: OverseasAmlsDetails) => Future.successful(AmlsStatus.ValidAmlsNonUK)
-
-      case None =>
-        agencyDetailsService.isUkAddress().map {
-          case true => AmlsStatus.NoAmlsDetailsUK
-          case false => AmlsStatus.NoAmlsDetailsNonUK
-        }
-    }.flatten
-
-
-  def getAmlsStatusForHmrcBody(amlsDetails: UkAmlsDetails)
-                                     (implicit ec: ExecutionContext, hc: HeaderCarrier): Future[AmlsStatus] =
-
-    if (amlsDetails.supervisoryBodyIsHmrc)
-      amlsDetails.membershipNumber match {
-        case Some(x) => desConnector.getAmlsSubscriptionStatus(x).map(Some(_)).map(_.map { amlsSubscriptionRecord =>
-          amlsSubscriptionRecord.formBundleStatus match {
-            case "Pending" => AmlsStatus.PendingAmlsDetails
-            case "Rejected" => AmlsStatus.PendingAmlsDetailsRejected
-            case "Approved" | "ApprovedWithConditions" =>
-              val isAmlsSubscriptionRecordNewer = (for {
-                amlsRecordEndDate <- amlsSubscriptionRecord.currentRegYearEndDate
-                amlsDetailsExpiryDate <- amlsDetails.membershipExpiresOn
-              } yield amlsRecordEndDate.isAfter(amlsDetailsExpiryDate))
-                .getOrElse(amlsDetails.membershipExpiresOn.isEmpty)
-
-              if (isAmlsSubscriptionRecordNewer) AmlsStatus.ExpiredAmlsDetailsHmrcUK
-              else AmlsStatus.ValidAmlsDetailsHmrcUK
-            case _ => throw new InternalServerException("[AmlsDetailsService][getAmlsStatusForHmrcBody] Invalid amls subscription status from DES")
-          }
-
-        }.getOrElse(AmlsStatus.NoAmlsDetailsHmrcUK))
-          .recover(_ => AmlsStatus.NoAmlsDetailsHmrcUK)
-        case None => Future.successful(AmlsStatus.NoAmlsDetailsHmrcUK)
-      }
-    else Future.successful(AmlsStatus.NoAmlsDetailsUK)
-
-  def getAmlsDetailsByArnValidated(arn: Arn): Future[Option[AmlsDetails]] = getAmlsDetailsByArn(arn: Arn).collect {
-      case (amlsDetails:UkAmlsDetails)::Nil => Some(amlsDetails)
-      case (overseasAmlsDetails:OverseasAmlsDetails)::Nil => Some(overseasAmlsDetails)
-      case Nil => None
-      case _ =>
-        throw new InternalServerException("[AmlsDetailsService][getAmlsDetailsByArnValidated] ARN has both Overseas and UK AMLS details")
-  }
-
-
-  def getAmlsDetailsByArn(arn: Arn): Future[Seq[AmlsDetails]] =
+  def getAmlsDetailsByArn(arn: Arn): Future[Option[AmlsDetails]] =
     Future.sequence(
       Seq(
         amlsRepository.getAmlsDetailsByArn(arn),
         overseasAmlsRepository.getOverseasAmlsDetailsByArn(arn)
       )
-    ).map(_.flatten)
+    ).map(_.flatten).collect {
+      case (amlsDetails: UkAmlsDetails) :: Nil => Some(amlsDetails)
+      case (overseasAmlsDetails: OverseasAmlsDetails) :: Nil => Some(overseasAmlsDetails)
+      case Nil => None
+      case _ =>
+        throw new InternalServerException("[AmlsDetailsService][getAmlsDetailsByArn] ARN has both Overseas and UK AMLS details")
+    }
 
-  def getUpdatedAmlsDetailsForHmrcBody(amlsDetails: UkAmlsDetails)
-                                      (implicit ec: ExecutionContext, hc: HeaderCarrier): Future[UkAmlsDetails] = {
+  def getAmlsStatus(arn: Arn)(implicit hc: HeaderCarrier): Future[AmlsStatus] =
+    getAmlsDetailsByArn(arn).map {
+      case Some(amlsDetails: UkAmlsDetails) if amlsDetails.isExpired =>
+        Future.successful(AmlsStatus.ExpiredAmlsDetailsUK)
+      case Some(amlsDetails: UkAmlsDetails) if amlsDetails.supervisoryBodyIsHmrc && amlsDetails.isPending =>
+        Future.successful(AmlsStatus.NoAmlsDetailsUK)
+      case Some(amlsDetails: UkAmlsDetails) if amlsDetails.supervisoryBodyIsHmrc =>
+        getAmlsStatusForHmrcBody(amlsDetails)
+      case Some(_: UkAmlsDetails) =>
+        Future.successful(AmlsStatus.ValidAmlsDetailsUK)
+      case Some(_: OverseasAmlsDetails) =>
+        Future.successful(AmlsStatus.ValidAmlsNonUK)
+      case None =>
+        agencyDetailsService.agencyDetailsHasUkAddress().map {
+          if (_) AmlsStatus.NoAmlsDetailsUK else AmlsStatus.NoAmlsDetailsNonUK
+        }
+    }.flatten
+
+  private def getAmlsStatusForHmrcBody(amlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[AmlsStatus] = {
 
     val optMembershipNumber = amlsDetails.membershipNumber
     val isHmrc = amlsDetails.supervisoryBodyIsHmrc
@@ -110,23 +78,32 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
         desConnector.getAmlsSubscriptionStatus(membershipNumber).map {
           amlsRecord =>
             amlsRecord.formBundleStatus match {
-              case "Approved" | "ApprovedWithConditions" => {
-                for {
-                  amlsRecordEndDate <- amlsRecord.currentRegYearEndDate
-                  amlsDetailsExpiryDate <- amlsDetails.membershipExpiresOn
-                  if amlsRecordEndDate.isAfter(amlsDetailsExpiryDate)
-                } yield amlsDetails.copy(membershipExpiresOn = Some(amlsRecordEndDate))
-              }.getOrElse(amlsDetails)
+              case "Pending" =>
+                AmlsStatus.PendingAmlsDetails
+              case "Rejected" =>
+                AmlsStatus.PendingAmlsDetailsRejected
+              case "Approved" | "ApprovedWithConditions" =>
+                val isExpired = {
+                  for {
+                    amlsRecordEndDate <- amlsRecord.currentRegYearEndDate
+                    amlsDetailsExpiryDate <- amlsDetails.membershipExpiresOn
+                  } yield amlsRecordEndDate.isAfter(amlsDetailsExpiryDate)
+                }.getOrElse(amlsDetails.membershipExpiresOn.isEmpty)
+
+                if (isExpired) AmlsStatus.ExpiredAmlsDetailsHmrcUK else AmlsStatus.ValidAmlsDetailsHmrcUK
               case _ =>
-                amlsDetails
+                throw new InternalServerException("[AmlsDetailsService][getAmlsStatusForHmrcBody] Invalid AMLS form bundle status from DES")
             }
-        }.recover(_ => amlsDetails)
-      case _ =>
-        Future.successful(amlsDetails)
+
+        }.recover(_ => AmlsStatus.NoAmlsDetailsHmrcUK)
+      case (_, false) => Future.successful(AmlsStatus.NoAmlsDetailsUK)
+      case (None, _) => Future.successful(AmlsStatus.NoAmlsDetailsHmrcUK)
     }
   }
 
-  def storeAmlsRequest(arn: Arn, amlsRequest: AmlsRequest, amlsSource: AmlsSource = AmlsSource.Subscription): Future[Either[AmlsError, AmlsDetails]] = {
+  def storeAmlsRequest(arn: Arn,
+                       amlsRequest: AmlsRequest,
+                       amlsSource: AmlsSource = AmlsSource.Subscription): Future[Either[AmlsError, AmlsDetails]] = {
 
     val newAmlsDetails: AmlsDetails = amlsRequest.toAmlsEntity(amlsRequest)
 

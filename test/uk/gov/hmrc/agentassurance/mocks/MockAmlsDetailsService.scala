@@ -16,31 +16,27 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import org.scalamock.handlers.{CallHandler1, CallHandler2}
 import org.scalamock.scalatest.MockFactory
-import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsStatus, UkAmlsDetails}
+import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsStatus}
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 trait MockAmlsDetailsService extends MockFactory {
 
-  val mockAmlsDetailsService = mock[AmlsDetailsService]
+  val mockAmlsDetailsService: AmlsDetailsService = mock[AmlsDetailsService]
 
-  def mockGetAmlsDetailsByArn(arn: Arn)(response: Seq[AmlsDetails]) =
+  def mockGetAmlsDetailsByArn(arn: Arn)(response: Future[Option[AmlsDetails]]): CallHandler1[Arn, Future[Option[AmlsDetails]]] =
     (mockAmlsDetailsService.getAmlsDetailsByArn(_: Arn))
       .expects(arn)
-      .returning(Future.successful(response))
+      .returning(response)
 
-  def mockGetAmlsStatusForHmrcBody(amlsDetails: UkAmlsDetails)(response: AmlsStatus) =
-    (mockAmlsDetailsService.getAmlsStatusForHmrcBody(_: UkAmlsDetails)(_: ExecutionContext, _: HeaderCarrier))
-      .expects(amlsDetails, *, *)
-      .returning(Future.successful(response))
-
-  def mockGetAmlsStatus(arn: Arn)(response: AmlsStatus) =
-    (mockAmlsDetailsService.getAmlsStatus(_: Arn)(_: ExecutionContext, _: HeaderCarrier))
-      .expects(arn, *, *)
+  def mockGetAmlsStatus(arn: Arn)(response: AmlsStatus): CallHandler2[Arn, HeaderCarrier, Future[AmlsStatus]] =
+    (mockAmlsDetailsService.getAmlsStatus(_: Arn)(_: HeaderCarrier))
+      .expects(arn, *)
       .returning(Future.successful(response))
 
 

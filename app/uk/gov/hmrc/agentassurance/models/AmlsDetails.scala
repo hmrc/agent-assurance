@@ -30,8 +30,8 @@ case class UkAmlsDetails(supervisoryBody: String,
                          membershipExpiresOn: Option[LocalDate]) extends AmlsDetails {
   val isPending: Boolean = membershipExpiresOn.isEmpty
   val isRegistered: Boolean = !isPending
-  val supervisoryBodyIsHmrc: Boolean = supervisoryBody equals "HM Revenue and Customs (HMRC)"
-  val isExpired:Boolean = membershipExpiresOn.map(LocalDate.now().isAfter(_)).getOrElse(true)
+  val supervisoryBodyIsHmrc: Boolean = supervisoryBody.equals("HM Revenue and Customs (HMRC)")
+  val isExpired: Boolean = membershipExpiresOn.forall(LocalDate.now.isAfter(_))
 }
 
 object UkAmlsDetails {

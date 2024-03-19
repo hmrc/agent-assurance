@@ -33,21 +33,21 @@ class AgencyDetailsServiceSpec extends PlaySpec with MockAgentClientAuthConnecto
     "return true if agency address country code is GB" in {
       mockGetAgencyDetails()(Some(agencyDetailsUk))
 
-      val result = await(service.isUkAddress())
+      val result = await(service.agencyDetailsHasUkAddress())
       result mustBe true
     }
 
     "return false if agency address country code is not GB" in {
       mockGetAgencyDetails()(Some(agencyDetailsOverseas))
 
-      val result = await(service.isUkAddress())
+      val result = await(service.agencyDetailsHasUkAddress())
       result mustBe false
     }
 
     "return false if no agency address" in {
       mockGetAgencyDetails()(None)
 
-      val result = await(service.isUkAddress())
+      val result = await(service.agencyDetailsHasUkAddress())
       result mustBe false
     }
   }
