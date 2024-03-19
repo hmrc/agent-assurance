@@ -20,7 +20,7 @@ import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.{AmlsRequest, OverseasAmlsDetails, UkAmlsDetails}
+import uk.gov.hmrc.agentassurance.models.AmlsRequest
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -38,29 +38,11 @@ class AmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsServic
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
-  def getAmlsStatus(arn: Arn): Action[AnyContent] =
-    withAffinityGroupAgentOrStride(strideRoles) {
-      implicit request =>
-        amlsDetailsService.getAmlsStatus(arn).map {
-          amlsStatus =>
-            Ok(Json.toJson(amlsStatus))
-        }
-    }
-
-
   def getAmlsDetails(arn: Arn): Action[AnyContent] =
-    withAffinityGroupAgentOrStride(strideRoles) {
-      _ =>
-        amlsDetailsService.getAmlsDetailsByArn(arn).map {
-          case None => NoContent
-          case Some(amlsDetails: UkAmlsDetails) =>
-            Ok(Json.toJson(amlsDetails))
-          case Some(overseasAmlsDetails: OverseasAmlsDetails) =>
-            Ok(Json.toJson(overseasAmlsDetails))
-          case _ =>
-            throw new InternalServerException("[AmlsDetailsByArnController][getAmlsDetails] ARN has both Overseas and UK AMLS details")
-        }
-
+    withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
+      amlsDetailsService.getAmlsDetailsByArn(arn).map { response =>
+        Ok(Json.toJson(response))
+      }
     }
 
   def postAmlsDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgent {
