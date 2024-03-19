@@ -147,7 +147,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
       "there is no membership number" in {
         val result = service invokePrivate privateMethod(testHmrcAmlsDetailsNoMembershipNumber, hc)
 
-        await(result) mustBe AmlsStatus.NoAmlsDetailsHmrcUK
+        await(result) mustBe AmlsStatus.NoAmlsDetailsUK
       }
 
       "there is no amls subscription record" in {
@@ -155,7 +155,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
 
         val result = service invokePrivate privateMethod(testHmrcAmlsDetails, hc)
 
-        await(result) mustBe AmlsStatus.NoAmlsDetailsHmrcUK
+        await(result) mustBe AmlsStatus.NoAmlsDetailsUK
       }
       "the subscription record's end date is before the amls details expiry date" in {
         val testDate = LocalDate.now().minusWeeks(2)
@@ -165,7 +165,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
 
         val result = service invokePrivate privateMethod(testHmrcAmlsDetails, hc)
 
-        await(result) mustBe AmlsStatus.ValidAmlsDetailsHmrcUK
+        await(result) mustBe AmlsStatus.ValidAmlsDetailsUK
       }
       "the supervisory body is not HMRC" in {
         val result = service invokePrivate privateMethod(testAmlsDetails, hc)
@@ -182,7 +182,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
 
         val result = service invokePrivate privateMethod(testHmrcAmlsDetails, hc)
 
-        await(result) mustBe AmlsStatus.ExpiredAmlsDetailsHmrcUK
+        await(result) mustBe AmlsStatus.ExpiredAmlsDetailsUK
       }
 
       "there is a membership number, the supervisory body is HMRC, the form bundle status is `approved with conditions` and the end date is after the expiry date" in {
@@ -193,7 +193,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
 
         val result = service invokePrivate privateMethod(testHmrcAmlsDetails, hc)
 
-        await(result) mustBe AmlsStatus.ExpiredAmlsDetailsHmrcUK
+        await(result) mustBe AmlsStatus.ExpiredAmlsDetailsUK
       }
     }
 
@@ -229,7 +229,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetailsNoMembershipNumber))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         val result = service.getAmlsStatus(testArn)
-        await(result) mustBe AmlsStatus.NoAmlsDetailsHmrcUK
+        await(result) mustBe AmlsStatus.NoAmlsDetailsUK
       }
 
       "there is no amls subscription record" in {
@@ -237,7 +237,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.failed(new Exception("failed to return a record")))
         val result = service.getAmlsStatus(testArn)
-        await(result) mustBe AmlsStatus.NoAmlsDetailsHmrcUK
+        await(result) mustBe AmlsStatus.NoAmlsDetailsUK
       }
       "the subscription record's end date is before the amls details expiry date" in {
         val testDate = LocalDate.now().minusWeeks(2)
@@ -247,7 +247,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
           AmlsSubscriptionRecord("Approved", "1", None, Some(testDate), None))
         )
         val result = service.getAmlsStatus(testArn)
-        await(result) mustBe AmlsStatus.ValidAmlsDetailsHmrcUK
+        await(result) mustBe AmlsStatus.ValidAmlsDetailsUK
       }
     }
     "return amls UK HMRC status Expired " when {
@@ -259,7 +259,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
           AmlsSubscriptionRecord("Approved", "1", None, Some(testDate), None))
         )
         val result = service.getAmlsStatus(testArn)
-        await(result) mustBe AmlsStatus.ExpiredAmlsDetailsHmrcUK
+        await(result) mustBe AmlsStatus.ExpiredAmlsDetailsUK
       }
 
       "there is a membership number, the supervisory body is HMRC, the form bundle status is `approved with conditions` and the end date is after the expiry date" in {
@@ -270,7 +270,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
           AmlsSubscriptionRecord("ApprovedWithConditions", "1", None, Some(testDate), None))
         )
         val result = service.getAmlsStatus(testArn)
-        await(result) mustBe AmlsStatus.ExpiredAmlsDetailsHmrcUK
+        await(result) mustBe AmlsStatus.ExpiredAmlsDetailsUK
       }
     }
 
