@@ -27,7 +27,7 @@ trait MockAgencyDetailsService extends MockFactory {
   val mockAgencyDetailsService = mock[AgencyDetailsService]
 
   def mockIsUkAddress()(response: Boolean) =
-    (mockAgencyDetailsService.isUkAddress()( _: ExecutionContext, _: HeaderCarrier))
+    (mockAgencyDetailsService.agencyDetailsHasUkAddress()( _: ExecutionContext, _: HeaderCarrier))
       .expects(*,*)
       .returning(Future.successful(response))
 

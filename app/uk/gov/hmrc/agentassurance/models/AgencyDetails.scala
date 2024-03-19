@@ -23,7 +23,9 @@ case class AgencyDetails(
                           agencyEmail: Option[String],
                           agencyTelephone: Option[String],
                           agencyAddress: Option[BusinessAddress]
-                        )
+                        ) {
+  val hasUkAddress: Boolean = agencyAddress.exists(_.countryCode == "GB")
+}
 object AgencyDetails {
   implicit val agencyDetailsFormat: OFormat[AgencyDetails] = Json.format[AgencyDetails]
 }

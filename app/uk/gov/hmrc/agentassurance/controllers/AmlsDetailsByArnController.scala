@@ -39,20 +39,23 @@ class AmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsServic
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
   def getAmlsStatus(arn: Arn): Action[AnyContent] =
-    withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
-        amlsDetailsService.getAmlsStatus(arn).map { amlsStatus =>
-          Ok(Json.toJson(amlsStatus))
+    withAffinityGroupAgentOrStride(strideRoles) {
+      implicit request =>
+        amlsDetailsService.getAmlsStatus(arn).map {
+          amlsStatus =>
+            Ok(Json.toJson(amlsStatus))
         }
     }
 
 
   def getAmlsDetails(arn: Arn): Action[AnyContent] =
-    withAffinityGroupAgentOrStride(strideRoles) { _ =>
+    withAffinityGroupAgentOrStride(strideRoles) {
+      _ =>
         amlsDetailsService.getAmlsDetailsByArn(arn).map {
-          case Nil => NoContent
-          case Seq(amlsDetails@UkAmlsDetails(_, _, _, _, _, _)) =>
+          case None => NoContent
+          case Some(amlsDetails: UkAmlsDetails) =>
             Ok(Json.toJson(amlsDetails))
-          case Seq(overseasAmlsDetails@OverseasAmlsDetails(_, _)) =>
+          case Some(overseasAmlsDetails: OverseasAmlsDetails) =>
             Ok(Json.toJson(overseasAmlsDetails))
           case _ =>
             throw new InternalServerException("[AmlsDetailsByArnController][getAmlsDetails] ARN has both Overseas and UK AMLS details")
@@ -71,7 +74,7 @@ class AmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsServic
                 throw new InternalServerException(s"[AmlsDetailsByArnController][postAmlsDetails] failed to store new AMLS details. Error - ${error.toString}")
             }
           case JsError(errors) =>
-            Future.successful(BadRequest(s"[AmlsDetailsByArnController][postAmlsDetails] Could not parse body: $errors"))
+            Future.successful(BadRequest(s"[AmlsDetailsByArnController][postAmlsDetails] Could not parse JSON body: $errors"))
         }
       }.getOrElse(Future.successful(BadRequest("[AmlsDetailsByArnController][postAmlsDetails] No JSON found in request")))
   }

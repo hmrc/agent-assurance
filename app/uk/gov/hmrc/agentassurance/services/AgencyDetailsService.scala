@@ -26,11 +26,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class AgencyDetailsService @Inject()(acaConnector: AgentClientAuthConnector) extends Logging {
 
-  def isUkAddress()(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Boolean] =
-    for {
-      optAgencyDetails <- acaConnector.getAgencyDetails()
-      optAddress = optAgencyDetails.flatMap(_.agencyAddress)
-      countryCodeIsUk = optAddress.exists(_.countryCode == "GB")
-    } yield countryCodeIsUk
+  def agencyDetailsHasUkAddress()(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Boolean] =
+   acaConnector.getAgencyDetails().map(_.exists(_.hasUkAddress))
 
 }
