@@ -58,6 +58,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
         Future.successful(AmlsStatus.NoAmlsDetailsUK)
       case Some(amlsDetails: UkAmlsDetails) if amlsDetails.supervisoryBodyIsHmrc =>
         getAmlsStatusForHmrcBody(amlsDetails)
+          .map(_.getOrElse(if (amlsDetails.isExpired) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK))
       case Some(_: UkAmlsDetails) =>
         Future.successful(AmlsStatus.ValidAmlsDetailsUK)
       case Some(_: OverseasAmlsDetails) =>
@@ -68,7 +69,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
         }
     }.flatten
 
-  private def getAmlsStatusForHmrcBody(amlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[AmlsStatus] = {
+  private def getAmlsStatusForHmrcBody(amlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[Option[AmlsStatus]] = {
 
     val optMembershipNumber = amlsDetails.membershipNumber
     val isHmrc = amlsDetails.supervisoryBodyIsHmrc
@@ -79,9 +80,9 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
           amlsRecord =>
             amlsRecord.formBundleStatus match {
               case "Pending" =>
-                AmlsStatus.PendingAmlsDetails
+                Some(AmlsStatus.PendingAmlsDetails)
               case "Rejected" =>
-                AmlsStatus.PendingAmlsDetailsRejected
+                Some(AmlsStatus.PendingAmlsDetailsRejected)
               case "Approved" | "ApprovedWithConditions" =>
                 val isExpired = {
                   for {
@@ -90,14 +91,13 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
                   } yield amlsRecordEndDate.isAfter(amlsDetailsExpiryDate)
                 }.getOrElse(amlsDetails.membershipExpiresOn.isEmpty)
 
-                if (isExpired) AmlsStatus.ExpiredAmlsDetailsHmrcUK else AmlsStatus.ValidAmlsDetailsHmrcUK
-              case _ =>
-                throw new InternalServerException("[AmlsDetailsService][getAmlsStatusForHmrcBody] Invalid AMLS form bundle status from DES")
+                if (isExpired) Some(AmlsStatus.ExpiredAmlsDetailsUK) else Some(AmlsStatus.ValidAmlsDetailsUK)
+              case _ => None
             }
 
-        }.recover(_ => AmlsStatus.NoAmlsDetailsHmrcUK)
-      case (_, false) => Future.successful(AmlsStatus.NoAmlsDetailsUK)
-      case (None, _) => Future.successful(AmlsStatus.NoAmlsDetailsHmrcUK)
+        }.recover(_ => Some(AmlsStatus.NoAmlsDetailsUK))
+      case (_, false) => Future.successful(Some(AmlsStatus.NoAmlsDetailsUK))
+      case (None, _) => Future.successful(Some(AmlsStatus.NoAmlsDetailsUK))
     }
   }
 

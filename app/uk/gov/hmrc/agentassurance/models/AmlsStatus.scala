@@ -20,30 +20,19 @@ import julienrf.json.derived
 import play.api.libs.json.Format
 
 sealed trait AmlsStatus
-sealed trait AmlsOverseas
-sealed trait AmlsUkHmrc
-sealed trait AmlsUkNonHmrc
-
-sealed trait NoAmlsDetails
-sealed trait ValidAmls
-sealed trait ExpiredAmlsDetails
-sealed trait PendingAmlsDetails
 
 object AmlsStatus {
   implicit val formatAmlsSource: Format[AmlsStatus] = derived.oformat[AmlsStatus]()
 
-  final case object NoAmlsDetailsNonUK extends AmlsStatus with AmlsOverseas with NoAmlsDetails
-  final case object ValidAmlsNonUK extends AmlsStatus with AmlsOverseas with ValidAmls
+  final case object NoAmlsDetailsNonUK extends AmlsStatus
+  final case object ValidAmlsNonUK extends AmlsStatus
 
-  final case object NoAmlsDetailsUK extends AmlsStatus with AmlsUkNonHmrc with NoAmlsDetails
-  final case object ValidAmlsDetailsUK extends AmlsStatus with AmlsUkNonHmrc
-  final case object ExpiredAmlsDetailsUK extends AmlsStatus with AmlsUkNonHmrc with ExpiredAmlsDetails
+  final case object NoAmlsDetailsUK extends AmlsStatus
+  final case object ValidAmlsDetailsUK extends AmlsStatus
+  final case object ExpiredAmlsDetailsUK extends AmlsStatus
 
-  final case object NoAmlsDetailsHmrcUK extends AmlsStatus with AmlsUkHmrc with NoAmlsDetails
-  final case object ValidAmlsDetailsHmrcUK extends AmlsStatus with AmlsUkHmrc with ValidAmls
-  final case object ExpiredAmlsDetailsHmrcUK extends AmlsStatus with AmlsUkHmrc with ExpiredAmlsDetails
-  final case object PendingAmlsDetails  extends AmlsStatus with AmlsUkHmrc with PendingAmlsDetails
-  final case object PendingAmlsDetailsRejected  extends AmlsStatus with AmlsUkHmrc with PendingAmlsDetails
+  final case object PendingAmlsDetails  extends AmlsStatus
+  final case object PendingAmlsDetailsRejected  extends AmlsStatus
 
 }
 
