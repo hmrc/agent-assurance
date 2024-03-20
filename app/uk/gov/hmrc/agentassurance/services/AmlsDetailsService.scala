@@ -38,8 +38,6 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
 
   def getAmlsDetailsByArn(arn: Arn)(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] =
     getAmlsDetails(arn).map {
-      case Some(amlsDetails: UkAmlsDetails) if amlsDetails.isExpired =>
-        Future.successful((AmlsStatus.ExpiredAmlsDetailsUK, Some(amlsDetails)))
       case Some(amlsDetails: UkAmlsDetails) if amlsDetails.supervisoryBodyIsHmrc && amlsDetails.isPending =>
         Future.successful((AmlsStatus.NoAmlsDetailsUK, Some(amlsDetails)))
       case Some(amlsDetails: UkAmlsDetails) if amlsDetails.supervisoryBodyIsHmrc =>
@@ -49,6 +47,8 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
             Some(amlsDetails)
           )
         }
+      case Some(amlsDetails: UkAmlsDetails) if amlsDetails.isExpired =>
+        Future.successful((AmlsStatus.ExpiredAmlsDetailsUK, Some(amlsDetails)))
       case Some(amlsDetails: UkAmlsDetails) =>
         Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(amlsDetails)))
       case Some(amlsDetails: OverseasAmlsDetails) =>
