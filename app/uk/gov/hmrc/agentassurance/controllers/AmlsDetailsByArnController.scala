@@ -20,7 +20,7 @@ import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.AmlsRequest
+import uk.gov.hmrc.agentassurance.models.{AmlsRequest, OverseasAmlsDetails, OverseasAmlsDetailsResponse, UkAmlsDetails, UkAmlsDetailsResponse}
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -40,8 +40,15 @@ class AmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsServic
 
   def getAmlsDetails(arn: Arn): Action[AnyContent] =
     withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
-      amlsDetailsService.getAmlsDetailsByArn(arn).map { response =>
-        Ok(Json.toJson(response))
+      amlsDetailsService.getAmlsDetailsByArn(arn).map {
+        case (amlsStatus, None) =>
+          Ok(Json.toJson(UkAmlsDetailsResponse(amlsStatus.toString)))
+        case (amlsStatus, Some(amlsDetails: UkAmlsDetails)) =>
+          Ok(Json.toJson(UkAmlsDetailsResponse(amlsStatus.toString, Some(amlsDetails))))
+        case (amlsStatus, Some(overseasAmlsDetails: OverseasAmlsDetails)) =>
+          Ok(Json.toJson(OverseasAmlsDetailsResponse(amlsStatus.toString, Some(overseasAmlsDetails))))
+        case _ =>
+          throw new InternalServerException("[AmlsDetailsByArnController][getAmlsDetails] ARN has both Overseas and UK AMLS details")
       }
     }
 

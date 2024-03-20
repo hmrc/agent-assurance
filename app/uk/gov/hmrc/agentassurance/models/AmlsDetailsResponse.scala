@@ -18,8 +18,14 @@ package uk.gov.hmrc.agentassurance.models
 
 import play.api.libs.json.{Format, Json}
 
-case class AmlsDetailsResponse(status: AmlsStatus, details: Option[AmlsDetails] = None)
+case class UkAmlsDetailsResponse(status: String, details: Option[UkAmlsDetails] = None)
 
-object AmlsDetailsResponse {
-  implicit val format: Format[AmlsDetailsResponse] = Json.format[AmlsDetailsResponse]
+object UkAmlsDetailsResponse {
+  implicit val format: Format[UkAmlsDetailsResponse] = Json.format[UkAmlsDetailsResponse]
+}
+
+case class OverseasAmlsDetailsResponse(status: String, details: Option[OverseasAmlsDetails] = None)
+
+object OverseasAmlsDetailsResponse {
+  implicit val format: Format[OverseasAmlsDetailsResponse] = Json.format[OverseasAmlsDetailsResponse]
 }

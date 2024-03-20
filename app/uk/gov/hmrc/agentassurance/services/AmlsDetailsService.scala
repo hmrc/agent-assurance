@@ -36,27 +36,28 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
                                    agencyDetailsService: AgencyDetailsService
                                   )(implicit ec: ExecutionContext) extends Logging {
 
-  def getAmlsDetailsByArn(arn: Arn)(implicit hc: HeaderCarrier): Future[AmlsDetailsResponse] =
+  def getAmlsDetailsByArn(arn: Arn)(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] =
     getAmlsDetails(arn).map {
       case Some(amlsDetails: UkAmlsDetails) if amlsDetails.isExpired =>
-        Future.successful(AmlsDetailsResponse(AmlsStatus.ExpiredAmlsDetailsUK, Some(amlsDetails)))
+        Future.successful((AmlsStatus.ExpiredAmlsDetailsUK, Some(amlsDetails)))
       case Some(amlsDetails: UkAmlsDetails) if amlsDetails.supervisoryBodyIsHmrc && amlsDetails.isPending =>
-        Future.successful(AmlsDetailsResponse(AmlsStatus.NoAmlsDetailsUK, Some(amlsDetails)))
+        Future.successful((AmlsStatus.NoAmlsDetailsUK, Some(amlsDetails)))
       case Some(amlsDetails: UkAmlsDetails) if amlsDetails.supervisoryBodyIsHmrc =>
         getAmlsStatusForHmrcBody(amlsDetails).map { amlsStatus =>
-          AmlsDetailsResponse(
+          (
             amlsStatus.getOrElse(if (amlsDetails.isExpired) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK),
             Some(amlsDetails)
           )
         }
       case Some(amlsDetails: UkAmlsDetails) =>
-        Future.successful(AmlsDetailsResponse(AmlsStatus.ValidAmlsDetailsUK, Some(amlsDetails)))
+        Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(amlsDetails)))
       case Some(amlsDetails: OverseasAmlsDetails) =>
-        Future.successful(AmlsDetailsResponse(AmlsStatus.ValidAmlsNonUK, Some(amlsDetails)))
+        Future.successful((AmlsStatus.ValidAmlsNonUK, Some(amlsDetails)))
       case None =>
         agencyDetailsService.agencyDetailsHasUkAddress().map { hasUkAddress =>
-          AmlsDetailsResponse(
-            if (hasUkAddress) AmlsStatus.NoAmlsDetailsUK else AmlsStatus.NoAmlsDetailsNonUK
+          (
+            if (hasUkAddress) AmlsStatus.NoAmlsDetailsUK else AmlsStatus.NoAmlsDetailsNonUK,
+            None
           )
         }
     }.flatten
