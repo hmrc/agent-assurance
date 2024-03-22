@@ -173,50 +173,146 @@ class AmlsDetailsServiceSpec extends PlaySpec
     }
   }
 
-  "storeAmlsRequest" should {
-    "return Right(testAmlsDetails) when storing a UK AMLS record and there was no existing record" in {
-      mockCreateOrUpdate(testArn, testUKAmlsEntity)(None)
+  "getAmlsDetailsByArn calling getAmlsStatusForHmrcBody" should { // TODO - replace with the ignored tests below once Play upgrade is completed
+    "return amls UK HMRC status" when {
+      "there is no membership number" in {
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetailsNoMembershipNumber))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
 
-      val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
+        val result = await(service.getAmlsDetailsByArn(testArn))
 
-      result mustBe Right(testAmlsDetails)
+        result mustBe (AmlsStatus.NoAmlsDetailsUK, Some(testHmrcAmlsDetailsNoMembershipNumber))
+      }
+
+      "there is no amls subscription record" in {
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.failed(new Exception("failed to return a record")))
+
+        val result = await(service.getAmlsDetailsByArn(testArn))
+
+        result mustBe (AmlsStatus.NoAmlsDetailsUK, Some(testHmrcAmlsDetails))
+      }
+
+      "the subscription record's end date is before the amls details expiry date" in {
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
+
+        val testDate = LocalDate.now().minusWeeks(2)
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.successful(
+          AmlsSubscriptionRecord("Approved", "1", None, Some(testDate), None))
+        )
+
+        val result = await(service.getAmlsDetailsByArn(testArn))
+
+        result mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testHmrcAmlsDetails))
+      }
+
+      //TODO
+      "the subscription record's has no end date and there is no expiry date" in {
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None)))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
+
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.successful(
+          AmlsSubscriptionRecord("Approved", "1", None, None, None))
+        )
+
+        val result = await(service.getAmlsDetailsByArn(testArn))
+
+        result mustBe(AmlsStatus.NoAmlsDetailsUK, Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None)))
+      }
+
+      "the subscription record's status is not Pending/Rejected/Approved" in {
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
+
+        val testDate = LocalDate.now().minusWeeks(2)
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.successful(
+          AmlsSubscriptionRecord("Other", "1", None, Some(testDate), None))
+        )
+
+        val result = await(service.getAmlsDetailsByArn(testArn))
+
+        result mustBe(AmlsStatus.ValidAmlsDetailsUK, Some(testHmrcAmlsDetails))
+      }
+
+      "the subscription record's status is not Pending/Rejected/Approved and the AMLS has expired" in {
+        val testDate = LocalDate.now().minusWeeks(2)
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = Some(testDate))))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
+
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.successful(
+          AmlsSubscriptionRecord("Other", "1", None, Some(testDate), None))
+        )
+
+        val result = await(service.getAmlsDetailsByArn(testArn))
+
+        result mustBe(AmlsStatus.ExpiredAmlsDetailsUK, Some(testHmrcAmlsDetails.copy(membershipExpiresOn = Some(testDate))))
+      }
     }
 
-    "return Right(testAmlsDetails) when UK AMLS and there is an existing AMLS record" in {
-      mockCreateOrUpdate(testArn, testUKAmlsEntity)(Some(testUKAmlsEntity))
-      mockCreate(ArchivedAmlsEntity(testArn, testUKAmlsEntity))(Right(()))
+    "return amls HMRC status Expire status" when {
+      "there is a membership number, the supervisory body is HMRC, the form bundle status is `approved` and the end date is after the expiry date" in {
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
 
-      val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
+        val testDate = LocalDate.now().plusWeeks(2)
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.successful(
+          AmlsSubscriptionRecord("Approved", "1", None, Some(testDate), None))
+        )
 
-      result mustBe Right(testAmlsDetails)
+        val result = await(service.getAmlsDetailsByArn(testArn))
+
+        result mustBe (AmlsStatus.ExpiredAmlsDetailsUK, Some(testHmrcAmlsDetails))
+      }
+
+      "there is a membership number, the supervisory body is HMRC, the form bundle status is `approved with conditions` and the end date is after the expiry date" in {
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
+
+        val testDate = LocalDate.now().plusWeeks(2)
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.successful(
+          AmlsSubscriptionRecord("ApprovedWithConditions", "1", None, Some(testDate), None))
+        )
+
+        val result = await(service.getAmlsDetailsByArn(testArn))
+
+        result mustBe (AmlsStatus.ExpiredAmlsDetailsUK, Some(testHmrcAmlsDetails))
+      }
     }
 
-    "return Right(testOverseasAmlsDetails) when Overseas AMLS and there is no existing AMLS record" in {
-      mockCreateOrUpdate(testOverseasAmlsEntity)(None)
+    "return amls HMRC  status Pending status" when {
+      "there is a membership number, the supervisory body is HMRC, the form bundle status is `approved` and the end date is after the expiry date" in {
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
 
-      val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
+        val testDate = LocalDate.now().plusWeeks(2)
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.successful(
+          AmlsSubscriptionRecord("Pending", "1", None, Some(testDate), None))
+        )
 
-      result mustBe Right(testOverseasAmlsDetails)
-    }
+        val result = await(service.getAmlsDetailsByArn(testArn))
 
-    "return Right(testOverseasAmlsDetails) when Overseas AMLS and there is an existing AMLS record" in {
-      mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
-      mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Right(()))
+        result mustBe (AmlsStatus.PendingAmlsDetails, Some(testHmrcAmlsDetails))
+      }
 
-      val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
+      "there is a membership number, the supervisory body is HMRC, the form bundle status is `approved with conditions` and the end date is after the expiry date" in {
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
 
-      result mustBe Right(testOverseasAmlsDetails)
-    }
+        val testDate = LocalDate.now().plusWeeks(2)
+        mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(Future.successful(
+          AmlsSubscriptionRecord("Rejected", "1", None, Some(testDate), None))
+        )
 
-    "return Left(AmlsUnexpectedMongoError) when there was a problem with storing new AMLS record" in {
-      mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
-      mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Left(AmlsUnexpectedMongoError))
+        val result = await(service.getAmlsDetailsByArn(testArn))
 
-      val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
-
-      result mustBe Left(AmlsUnexpectedMongoError)
+        result mustBe (AmlsStatus.PendingAmlsDetailsRejected, Some(testHmrcAmlsDetails))
+      }
     }
   }
+
+
 
   "getAmlsStatusForHmrcBody" ignore { // TODO - remove the ignore when Play upgrade is completed
     // The tests don't pass because there a bug between ScalaTest 5.1.0 and Scala 2.13 regarding the Symbol
@@ -301,6 +397,51 @@ class AmlsDetailsServiceSpec extends PlaySpec
 
         await(result) mustBe AmlsStatus.PendingAmlsDetailsRejected
       }
+    }
+  }
+
+  "storeAmlsRequest" should {
+    "return Right(testAmlsDetails) when storing a UK AMLS record and there was no existing record" in {
+      mockCreateOrUpdate(testArn, testUKAmlsEntity)(None)
+
+      val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
+
+      result mustBe Right(testAmlsDetails)
+    }
+
+    "return Right(testAmlsDetails) when UK AMLS and there is an existing AMLS record" in {
+      mockCreateOrUpdate(testArn, testUKAmlsEntity)(Some(testUKAmlsEntity))
+      mockCreate(ArchivedAmlsEntity(testArn, testUKAmlsEntity))(Right(()))
+
+      val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
+
+      result mustBe Right(testAmlsDetails)
+    }
+
+    "return Right(testOverseasAmlsDetails) when Overseas AMLS and there is no existing AMLS record" in {
+      mockCreateOrUpdate(testOverseasAmlsEntity)(None)
+
+      val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
+
+      result mustBe Right(testOverseasAmlsDetails)
+    }
+
+    "return Right(testOverseasAmlsDetails) when Overseas AMLS and there is an existing AMLS record" in {
+      mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
+      mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Right(()))
+
+      val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
+
+      result mustBe Right(testOverseasAmlsDetails)
+    }
+
+    "return Left(AmlsUnexpectedMongoError) when there was a problem with storing new AMLS record" in {
+      mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
+      mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Left(AmlsUnexpectedMongoError))
+
+      val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
+
+      result mustBe Left(AmlsUnexpectedMongoError)
     }
   }
 
