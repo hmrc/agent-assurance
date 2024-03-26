@@ -10,6 +10,7 @@ import play.api.libs.ws.{BodyWritable, WSClient}
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories._
+import uk.gov.hmrc.agentassurance.stubs.AgentClientAuthorisationStub
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, InstantClockTestSupport, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -25,7 +26,8 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
   with GuiceOneServerPerSuite
   with WireMockSupport
   with CleanMongoCollectionSupport
-  with InstantClockTestSupport {
+  with InstantClockTestSupport
+  with AgentClientAuthorisationStub {
 
 
   override implicit lazy val app: Application = appBuilder.build()
@@ -52,6 +54,8 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
     new GuiceApplicationBuilder()
       .configure("microservice.services.auth.host" -> wireMockHost,
         "microservice.services.auth.port" -> wireMockPort,
+        "microservice.services.agent-client-authorisation.host" -> wireMockHost,
+        "microservice.services.agent-client-authorisation.port" -> wireMockPort,
         "auditing.enabled" -> false,
         "stride.roles.agent-assurance" -> "maintain_agent_manually_assure")
       .overrides(moduleWithOverrides)
@@ -86,6 +90,18 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
         .get(), 15.seconds
     )
 
+  val agentDetails = AgencyDetails(
+    Some("My Agency"),
+    Some("abc@abc.com"),
+    Some("07345678901"),
+    Some(BusinessAddress(
+      "25 Any Street",
+      Some("Central Grange"),
+      Some("Telford"),
+      None,
+      Some("TF4 3TR"),
+      "GB"))
+  )
 
   val testUtr: Utr = Utr("7000000002")
   val membershipExpiresOnDate: LocalDate = LocalDate.parse("2024-01-12")
@@ -99,22 +115,24 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
   "GET /amls/arn/:arn" should {
     "return NO_CONTENT when no AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
+      getAgentDetails(Json.toJson(agentDetails), OK)
       val response = doRequest()
-      response.status mustBe NO_CONTENT
+      response.status mustBe OK
+      response.json mustBe Json.obj("status" -> "NoAmlsDetailsUK")
     }
     "return OK when UK AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
       ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
       val response = doRequest()
       response.status mustBe OK
-      response.json mustBe Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789", "membershipExpiresOn" -> "2024-01-12")
+      response.json mustBe Json.obj("status" -> "ExpiredAmlsDetailsUK", "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789", "membershipExpiresOn" -> "2024-01-12"))
     }
     "return OK when overseas AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
       overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
       val response = doRequest()
       response.status mustBe OK
-      response.json mustBe Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789")
+      response.json mustBe Json.obj("status" -> "ValidAmlsNonUK", "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789"))
     }
     "return INTERNAL_SERVER_ERROR when overseas and UK AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")

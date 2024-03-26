@@ -22,6 +22,8 @@ import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 
+import scala.concurrent.Future
+
 trait MockAmlsRepository extends MockFactory {
 
   val mockAmlsRepository = mock[AmlsRepository]
@@ -43,10 +45,17 @@ trait MockAmlsRepository extends MockFactory {
       .expects(utr)
       .returning(toFuture(response))
   }
+
  def mockGetAmlsDetailsByArn(arn: Arn)(response: Option[UkAmlsDetails]) = {
     (mockAmlsRepository.getAmlsDetailsByArn(_: Arn))
       .expects(arn)
       .returning(toFuture(response))
+  }
+
+  def mockGetAmlsDetailsByArnFuture(arn: Arn)(response: Future[Option[UkAmlsDetails]]) = {
+    (mockAmlsRepository.getAmlsDetailsByArn(_: Arn))
+      .expects(arn)
+      .returning(response)
   }
 
   def mockCreateOrUpdate(arn: Arn, ukAmnlsEntity: UkAmlsEntity)(response: Option[UkAmlsEntity]) = {

@@ -56,6 +56,7 @@ object TestConstants {
     createdOn = today, updatedArnOn = None, amlsSource = AmlsSource.Subscription)
 
   val testHmrcAmlsDetails: UkAmlsDetails = UkAmlsDetails("HM Revenue and Customs (HMRC)", membershipNumber = Some(testValidApplicationReferenceNumber), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
+  val testHmrcAmlsDetailsPending: UkAmlsDetails = UkAmlsDetails("HM Revenue and Customs (HMRC)", membershipNumber = Some(testValidApplicationReferenceNumber), appliedOn = Some(LocalDate.now().minusWeeks(1)), membershipExpiresOn = None)
   val testHmrcAmlsDetailsNoMembershipNumber: UkAmlsDetails = UkAmlsDetails("HM Revenue and Customs (HMRC)", membershipNumber = None, appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
   val testOverseasAmlsDetails: OverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
   val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(testArn, testOverseasAmlsDetails, None)

@@ -39,19 +39,19 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
   def getAmlsDetailsByArn(arn: Arn)(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
     getAmlsDetails(arn).map {
       case None => // No AMLS record found
-        handleNoAmlsDetails // Scenarios #1 and #2
+        handleNoAmlsDetails // Scenarios: #1, #2
       case Some(overseasAmlsDetails: OverseasAmlsDetails) =>
         Future.successful((AmlsStatus.ValidAmlsNonUK, Some(overseasAmlsDetails))) // Scenario #7
       case Some(ukAmlsDetails: UkAmlsDetails) =>
         if (ukAmlsDetails.supervisoryBodyIsHmrc) {
           ukAmlsDetails.membershipNumber.map { membershipNumber =>
-            processUkHmrcAmlsDetails(membershipNumber, ukAmlsDetails.membershipExpiresOn).map { amlsStatus =>
-              (amlsStatus, Some(ukAmlsDetails)) // Scenarios #5A, #5B, #6A, #6B #8, #9
+            processUkHmrcAmlsDetails(membershipNumber, ukAmlsDetails).map { amlsStatus =>
+              (amlsStatus, Some(ukAmlsDetails)) // Scenarios: #5a, #5b, #6a, #6b #8, #9
             }
           }.getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, Some(ukAmlsDetails)))) // Scenario #10
         } else { // supervisoryBodyIsNotHmrc
           Future.successful((
-            if (isDateInThePast(ukAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK // Scenarios #4a and #4b
+            if (dateIsInThePast(ukAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK // Scenarios: #4a, #4b
             else AmlsStatus.ValidAmlsDetailsUK, // Scenario #3
             Some(ukAmlsDetails)
           ))
@@ -60,7 +60,8 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
   }
 
   // either today's date is after the membership expiry date or there is no date so it hasn't expired
-  private def isDateInThePast(renewalDate: Option[LocalDate]): Boolean =
+  //TODO make private when we upgrade play and can test private methods
+  def dateIsInThePast(renewalDate: Option[LocalDate]): Boolean =
     renewalDate.exists(LocalDate.now().isAfter(_))
 
   // User has no AMLS record with us, if their agency is based in the UK then we deem them as UK
@@ -74,37 +75,38 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     }
   }
 
-  private def processUkHmrcAmlsDetails(membershipNumber: String, amlsMembershipExpiresOn: Option[LocalDate])(implicit hc: HeaderCarrier): Future[AmlsStatus] = {
+  private def processUkHmrcAmlsDetails(membershipNumber: String, asaAmlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[AmlsStatus] = {
     desConnector.getAmlsSubscriptionStatus(membershipNumber).map {
-      amlsSubscriptionRecord =>
-        amlsSubscriptionRecord.formBundleStatus match {
-          case "Pending" =>
-            AmlsStatus.PendingAmlsDetails // Scenario #8
-          case "Rejected" =>
-            AmlsStatus.PendingAmlsDetailsRejected // Scenario #9
-          case _ =>
-            val amlsExpiryDate: Option[LocalDate] = findCorrectExpiryDate(amlsSubscriptionRecord.currentRegYearEndDate, amlsMembershipExpiresOn)
-            // now we have the correct expiry date we can check if it has expired, which covers multiple scenarios
-            if (isDateInThePast(amlsExpiryDate)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
+      desAmlsRecord =>
+        (asaAmlsDetails.isPending, desAmlsRecord.formBundleStatus) match {
+          case (true, "Pending") => // Scenario #8
+            AmlsStatus.PendingAmlsDetails
+          case (true, "Rejected") => // Scenario #9
+            AmlsStatus.PendingAmlsDetailsRejected
+          case (_, "Approved" | "ApprovedWithConditions") =>
+            // check if ETMP has more recent expiry date
+            val amlsExpiryDate = findCorrectExpiryDate(desAmlsRecord.currentRegYearEndDate, asaAmlsDetails.membershipExpiresOn)
+            if (dateIsInThePast(amlsExpiryDate)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
+          case (_, _) =>
+            // catch all where we won't use the ETMP record and just use ASA
+            if (dateIsInThePast(asaAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
         }
     }
   }
 
   // we have two potential optional dates to use so this logic will select the correct date
-  private def findCorrectExpiryDate(maybeAmlsSubscriptionExpiry: Option[LocalDate], maybeAmlsDetailsExpiry: Option[LocalDate]) = {
-    (maybeAmlsSubscriptionExpiry, maybeAmlsDetailsExpiry) match {
-      case (Some(amlsSubscriptionExpiry), Some(amlsDetailsExpiry)) =>
-        if (amlsSubscriptionExpiry.isAfter(amlsDetailsExpiry)) {
-          //TODO update amlsDetails expiry date
-          Some(amlsSubscriptionExpiry) // Scenario #5A
+  //TODO make private when we upgrade play and can test private methods
+  def findCorrectExpiryDate(maybeDesAmlsExpiry: Option[LocalDate], maybeAsaAmlsExpiry: Option[LocalDate]): Option[LocalDate] = {
+    (maybeDesAmlsExpiry, maybeAsaAmlsExpiry) match {
+      case (Some(desAmlsExpiry), Some(asaAmlsExpiry)) =>
+        if (desAmlsExpiry.isAfter(asaAmlsExpiry)) {
+          Some(desAmlsExpiry)
         } else {
-          Some(amlsDetailsExpiry) //TODO what scenario is this?
+          Some(asaAmlsExpiry)
         }
-      case (Some(amlsSubscriptionExpiry), None) =>
-        //TODO update amlsDetails expiry date
-        Some(amlsSubscriptionExpiry) // Scenario #5B
-      case (None, Some(amlsDetailsExpiry)) => Some(amlsDetailsExpiry) // Scenario #6B
-      case (None, None) => None //TODO what scenario is this?
+      case (Some(desAmlsExpiry), None) => Some(desAmlsExpiry)
+      case (None, Some(asaAmlsExpiry)) => Some(asaAmlsExpiry)
+      case (None, None) => None
     }
   }
 
