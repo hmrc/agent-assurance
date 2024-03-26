@@ -58,12 +58,12 @@ class AmlsDetailsByArnControllerSpec extends PlaySpec
       "there are no records found in the database" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
-          mockGetAmlsDetailsByArn(testArn)(Future.successful(None))
+          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus.NoAmlsDetailsUK, None)))
         }
 
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
-        status(response) mustBe NO_CONTENT
-
+        status(response) mustBe OK
+        contentAsJson(response) mustBe Json.obj("status" -> "NoAmlsDetailsUK")
       }
     }
 
@@ -71,12 +71,12 @@ class AmlsDetailsByArnControllerSpec extends PlaySpec
       "there are no records found in the database" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithStride and None and Some(Credentials("", "PrivilegedApplication")))
-          mockGetAmlsDetailsByArn(testArn)(Future.successful(None))
+          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus.NoAmlsDetailsUK, None)))
         }
 
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
-        status(response) mustBe NO_CONTENT
-
+        status(response) mustBe OK
+        contentAsJson(response) mustBe Json.obj("status" -> "NoAmlsDetailsUK")
       }
     }
 
@@ -84,25 +84,24 @@ class AmlsDetailsByArnControllerSpec extends PlaySpec
       "only a UK AMLS Details record exists in the database" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
-          mockGetAmlsDetailsByArn(testArn)(Future.successful(Some(testAmlsDetails)))
+          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(testAmlsDetails))))
         }
 
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
 
         status(response) mustBe OK
-        contentAsJson(response) mustBe Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789", "membershipExpiresOn" -> "2024-01-12")
-
+        contentAsJson(response) mustBe Json.obj("status" -> "ValidAmlsDetailsUK", "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789", "membershipExpiresOn" -> "2024-01-12"))
       }
 
       "only an Overseas AMLS Details record exists in the database" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
-          mockGetAmlsDetailsByArn(testArn)(Future.successful(Some(testOverseasAmlsDetails)))
+          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus.ValidAmlsNonUK, Some(testOverseasAmlsDetails))))
         }
 
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
         status(response) mustBe OK
-        contentAsJson(response) mustBe Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789")
+        contentAsJson(response) mustBe Json.obj("status" -> "ValidAmlsNonUK", "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789"))
       }
     }
 
@@ -110,7 +109,7 @@ class AmlsDetailsByArnControllerSpec extends PlaySpec
       "only a UK AMLS Details record exists in the database" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithStride and None and Some(Credentials("", "PrivilegedApplication")))
-          mockGetAmlsDetailsByArn(testArn)(Future.successful(Some(testAmlsDetails)))
+          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(testAmlsDetails))))
         }
 
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
@@ -120,12 +119,12 @@ class AmlsDetailsByArnControllerSpec extends PlaySpec
       "only an Overseas AMLS Details record exists in the database" in {
         inSequence {
           mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithStride and None and Some(Credentials("", "PrivilegedApplication")))
-          mockGetAmlsDetailsByArn(testArn)(Future.successful(Some(testOverseasAmlsDetails)))
+          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus.ValidAmlsNonUK, Some(testOverseasAmlsDetails))))
         }
 
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
         status(response) mustBe OK
-        contentAsJson(response) mustBe Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789")
+        contentAsJson(response) mustBe Json.obj("status" -> "ValidAmlsNonUK", "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789"))
       }
     }
 
@@ -143,31 +142,4 @@ class AmlsDetailsByArnControllerSpec extends PlaySpec
     }
   }
 
-
-  "getAmlsStatus" should {
-    "return forbidden" when {
-      "not an agent or stride" in {
-        inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithoutIrSAAgent and None and None)
-        }
-
-        val response = controller.getAmlsDetails(testArn)(FakeRequest())
-        status(response) mustBe FORBIDDEN
-
-      }
-    }
-    "return no content for an agent " when {
-      "there are no records found in the database" in {
-        inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
-          mockGetAmlsStatus(testArn)(AmlsStatus.NoAmlsDetailsUK)
-        }
-
-        val response = controller.getAmlsStatus(testArn)(FakeRequest())
-        status(response) mustBe OK
-        contentAsJson(response) mustBe Json.obj("NoAmlsDetailsUK" -> Json.obj())
-      }
-    }
-
-  }
 }

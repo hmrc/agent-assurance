@@ -109,12 +109,12 @@ trait DesStubs {
     )
   }
 
-  def amlsSubscriptionRecordExists(amlsRegNumber: String) = {
+  def amlsSubscriptionRecordExists(amlsRegNumber: String, status: String = "Approved") = {
     stubFor(get(urlEqualTo(s"/anti-money-laundering/subscription/$amlsRegNumber/status"))
       .willReturn(aResponse()
         .withStatus(200).withBody(
         s"""{
-           |"formBundleStatus": "Approved",
+           |"formBundleStatus": "$status",
            |"safeId": "xyz",
            |"currentRegYearStartDate": "2021-01-01",
            |"currentRegYearEndDate": "2021-12-31",

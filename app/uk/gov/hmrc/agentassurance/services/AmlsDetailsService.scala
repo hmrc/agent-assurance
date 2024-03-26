@@ -36,7 +36,81 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
                                    agencyDetailsService: AgencyDetailsService
                                   )(implicit ec: ExecutionContext) extends Logging {
 
-  def getAmlsDetailsByArn(arn: Arn): Future[Option[AmlsDetails]] =
+  def getAmlsDetailsByArn(arn: Arn)(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
+    getAmlsDetails(arn).map {
+      case None => // No AMLS record found
+        handleNoAmlsDetails // Scenarios: #1, #2
+      case Some(overseasAmlsDetails: OverseasAmlsDetails) =>
+        Future.successful((AmlsStatus.ValidAmlsNonUK, Some(overseasAmlsDetails))) // Scenario #7
+      case Some(ukAmlsDetails: UkAmlsDetails) =>
+        if (ukAmlsDetails.supervisoryBodyIsHmrc) {
+          ukAmlsDetails.membershipNumber.map { membershipNumber =>
+            processUkHmrcAmlsDetails(membershipNumber, ukAmlsDetails).map { amlsStatus =>
+              (amlsStatus, Some(ukAmlsDetails)) // Scenarios: #5a, #5b, #6a, #6b #8, #9
+            }
+          }.getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, Some(ukAmlsDetails)))) // Scenario #10
+        } else { // supervisoryBodyIsNotHmrc
+          Future.successful((
+            if (dateIsInThePast(ukAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK // Scenarios: #4a, #4b
+            else AmlsStatus.ValidAmlsDetailsUK, // Scenario #3
+            Some(ukAmlsDetails)
+          ))
+        }
+    }.flatten
+  }
+
+  // either today's date is after the membership expiry date or there is no date so it hasn't expired
+  //TODO make private when we upgrade play and can test private methods
+  def dateIsInThePast(renewalDate: Option[LocalDate]): Boolean =
+    renewalDate.exists(LocalDate.now().isAfter(_))
+
+  // User has no AMLS record with us, if their agency is based in the UK then we deem them as UK
+  private def handleNoAmlsDetails(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
+    agencyDetailsService.agencyDetailsHasUkAddress().map { isUk =>
+      (
+        if (isUk) AmlsStatus.NoAmlsDetailsUK // Scenario #1
+        else AmlsStatus.NoAmlsDetailsNonUK, // Scenario #2
+        None
+      )
+    }
+  }
+
+  private def processUkHmrcAmlsDetails(membershipNumber: String, asaAmlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[AmlsStatus] = {
+    desConnector.getAmlsSubscriptionStatus(membershipNumber).map {
+      desAmlsRecord =>
+        (asaAmlsDetails.isPending, desAmlsRecord.formBundleStatus) match {
+          case (true, "Pending") => // Scenario #8
+            AmlsStatus.PendingAmlsDetails
+          case (true, "Rejected") => // Scenario #9
+            AmlsStatus.PendingAmlsDetailsRejected
+          case (_, "Approved" | "ApprovedWithConditions") =>
+            // check if ETMP has more recent expiry date
+            val amlsExpiryDate = findCorrectExpiryDate(desAmlsRecord.currentRegYearEndDate, asaAmlsDetails.membershipExpiresOn)
+            if (dateIsInThePast(amlsExpiryDate)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
+          case (_, _) =>
+            // catch all where we won't use the ETMP record and just use ASA
+            if (dateIsInThePast(asaAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
+        }
+    }
+  }
+
+  // we have two potential optional dates to use so this logic will select the correct date
+  //TODO make private when we upgrade play and can test private methods
+  def findCorrectExpiryDate(maybeDesAmlsExpiry: Option[LocalDate], maybeAsaAmlsExpiry: Option[LocalDate]): Option[LocalDate] = {
+    (maybeDesAmlsExpiry, maybeAsaAmlsExpiry) match {
+      case (Some(desAmlsExpiry), Some(asaAmlsExpiry)) =>
+        if (desAmlsExpiry.isAfter(asaAmlsExpiry)) {
+          Some(desAmlsExpiry)
+        } else {
+          Some(asaAmlsExpiry)
+        }
+      case (Some(desAmlsExpiry), None) => Some(desAmlsExpiry)
+      case (None, Some(asaAmlsExpiry)) => Some(asaAmlsExpiry)
+      case (None, None) => None
+    }
+  }
+
+  private def getAmlsDetails(arn: Arn): Future[Option[AmlsDetails]] = {
     Future.sequence(
       Seq(
         amlsRepository.getAmlsDetailsByArn(arn),
@@ -48,56 +122,6 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
       case Nil => None
       case _ =>
         throw new InternalServerException("[AmlsDetailsService][getAmlsDetailsByArn] ARN has both Overseas and UK AMLS details")
-    }
-
-  def getAmlsStatus(arn: Arn)(implicit hc: HeaderCarrier): Future[AmlsStatus] =
-    getAmlsDetailsByArn(arn).map {
-      case Some(amlsDetails: UkAmlsDetails) if amlsDetails.isExpired =>
-        Future.successful(AmlsStatus.ExpiredAmlsDetailsUK)
-      case Some(amlsDetails: UkAmlsDetails) if amlsDetails.supervisoryBodyIsHmrc && amlsDetails.isPending =>
-        Future.successful(AmlsStatus.NoAmlsDetailsUK)
-      case Some(amlsDetails: UkAmlsDetails) if amlsDetails.supervisoryBodyIsHmrc =>
-        getAmlsStatusForHmrcBody(amlsDetails)
-          .map(_.getOrElse(if (amlsDetails.isExpired) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK))
-      case Some(_: UkAmlsDetails) =>
-        Future.successful(AmlsStatus.ValidAmlsDetailsUK)
-      case Some(_: OverseasAmlsDetails) =>
-        Future.successful(AmlsStatus.ValidAmlsNonUK)
-      case None =>
-        agencyDetailsService.agencyDetailsHasUkAddress().map {
-          if (_) AmlsStatus.NoAmlsDetailsUK else AmlsStatus.NoAmlsDetailsNonUK
-        }
-    }.flatten
-
-  private def getAmlsStatusForHmrcBody(amlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[Option[AmlsStatus]] = {
-
-    val optMembershipNumber = amlsDetails.membershipNumber
-    val isHmrc = amlsDetails.supervisoryBodyIsHmrc
-
-    (optMembershipNumber, isHmrc) match {
-      case (Some(membershipNumber), true) =>
-        desConnector.getAmlsSubscriptionStatus(membershipNumber).map {
-          amlsRecord =>
-            amlsRecord.formBundleStatus match {
-              case "Pending" =>
-                Some(AmlsStatus.PendingAmlsDetails)
-              case "Rejected" =>
-                Some(AmlsStatus.PendingAmlsDetailsRejected)
-              case "Approved" | "ApprovedWithConditions" =>
-                val isExpired = {
-                  for {
-                    amlsRecordEndDate <- amlsRecord.currentRegYearEndDate
-                    amlsDetailsExpiryDate <- amlsDetails.membershipExpiresOn
-                  } yield amlsRecordEndDate.isAfter(amlsDetailsExpiryDate)
-                }.getOrElse(amlsDetails.membershipExpiresOn.isEmpty)
-
-                if (isExpired) Some(AmlsStatus.ExpiredAmlsDetailsUK) else Some(AmlsStatus.ValidAmlsDetailsUK)
-              case _ => None
-            }
-
-        }.recover(_ => Some(AmlsStatus.NoAmlsDetailsUK))
-      case (_, false) => Future.successful(Some(AmlsStatus.NoAmlsDetailsUK))
-      case (None, _) => Future.successful(Some(AmlsStatus.NoAmlsDetailsUK))
     }
   }
 

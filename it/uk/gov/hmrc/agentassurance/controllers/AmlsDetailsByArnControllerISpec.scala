@@ -10,6 +10,7 @@ import play.api.libs.ws.{BodyWritable, WSClient}
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories._
+import uk.gov.hmrc.agentassurance.stubs.{AgentClientAuthorisationStub, DesStubs}
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, InstantClockTestSupport, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -25,7 +26,9 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
   with GuiceOneServerPerSuite
   with WireMockSupport
   with CleanMongoCollectionSupport
-  with InstantClockTestSupport {
+  with InstantClockTestSupport
+  with AgentClientAuthorisationStub
+  with DesStubs {
 
 
   override implicit lazy val app: Application = appBuilder.build()
@@ -52,6 +55,8 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
     new GuiceApplicationBuilder()
       .configure("microservice.services.auth.host" -> wireMockHost,
         "microservice.services.auth.port" -> wireMockPort,
+        "microservice.services.agent-client-authorisation.host" -> wireMockHost,
+        "microservice.services.agent-client-authorisation.port" -> wireMockPort,
         "auditing.enabled" -> false,
         "stride.roles.agent-assurance" -> "maintain_agent_manually_assure")
       .overrides(moduleWithOverrides)
@@ -59,7 +64,6 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
 
   val arn = Arn("AARN0000002")
   val url = s"http://localhost:$port/agent-assurance/amls/arn/${arn.value}"
-  val statusUrl = s"http://localhost:$port/agent-assurance/amls/status/${arn.value}"
 
   override def irAgentReference: String = "IRSA-123"
 
@@ -79,43 +83,53 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
         .post(body), 15.seconds
     )
 
-  def doStatusRequest() =
-    Await.result(
-      wsClient.url(statusUrl)
-        .withHttpHeaders("Authorization" -> "Bearer XYZ")
-        .get(), 15.seconds
-    )
-
+  def agentDetails(countryCode: String = "GB") = AgencyDetails(
+    Some("My Agency"),
+    Some("abc@abc.com"),
+    Some("07345678901"),
+    Some(BusinessAddress(
+      "25 Any Street",
+      Some("Central Grange"),
+      Some("Telford"),
+      None,
+      Some("TF4 3TR"),
+      countryCode))
+  )
 
   val testUtr: Utr = Utr("7000000002")
-  val membershipExpiresOnDate: LocalDate = LocalDate.parse("2024-01-12")
+  val membershipExpiresOnDate: LocalDate = LocalDate.now.plusWeeks(4)
   val testAmlsDetails: UkAmlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(membershipExpiresOnDate))
   val testOverseasAmlsDetails: OverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
   val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(arn, testOverseasAmlsDetails, None)
 
-  val testCreatedDate: LocalDate = LocalDate.parse("2024-01-15")
+  val testCreatedDate: LocalDate = LocalDate.now.plusWeeks(2)
   val amlsEntity: UkAmlsEntity = UkAmlsEntity(utr = Some(testUtr), amlsDetails = testAmlsDetails, arn = Some(arn), createdOn = testCreatedDate, amlsSource = AmlsSource.Subscription)
 
   "GET /amls/arn/:arn" should {
-    "return NO_CONTENT when no AMLS records found for the ARN" in {
+    s"return OK with status when no AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
+      getAgentDetails(Json.toJson(agentDetails()), OK)
       val response = doRequest()
-      response.status mustBe NO_CONTENT
+      response.status mustBe OK
+      response.json mustBe Json.obj("status" -> "NoAmlsDetailsUK")
     }
-    "return OK when UK AMLS records found for the ARN" in {
+
+    s"return OK with status when UK AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
       ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
       val response = doRequest()
       response.status mustBe OK
-      response.json mustBe Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789", "membershipExpiresOn" -> "2024-01-12")
+      response.json mustBe Json.obj("status" -> "ValidAmlsDetailsUK", "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789","membershipExpiresOn" -> membershipExpiresOnDate))
     }
-    "return OK when overseas AMLS records found for the ARN" in {
+
+    s"return OK with status when overseas AMLS details found for the ARN" in {
       isLoggedInAsStride("stride")
       overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
       val response = doRequest()
       response.status mustBe OK
-      response.json mustBe Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789")
+      response.json mustBe Json.obj("status" -> "ValidAmlsNonUK", "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789"))
     }
+
     "return INTERNAL_SERVER_ERROR when overseas and UK AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
       overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
@@ -240,34 +254,6 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
         val response = doPostRequest(Json.obj("not" -> "acceptable"))
         response.status mustBe BAD_REQUEST
         response.body.contains("Could not parse JSON body:") mustBe true
-      }
-    }
-  }
-
-  "GET /amls/status/:arn" should {
-    "return OK" when {
-      "A UK AMLS record with an expired membership is found for the ARN" in {
-        isLoggedInAsStride("stride")
-        ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
-        val response = doStatusRequest()
-        response.status mustBe OK
-        response.json mustBe Json.obj("ExpiredAmlsDetailsUK" -> Json.obj())
-      }
-      "a valid overseas AMLS record is found for the ARN" in {
-        isLoggedInAsStride("stride")
-        overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
-        val response = doStatusRequest()
-        response.status mustBe OK
-        response.json mustBe Json.obj("ValidAmlsNonUK" -> Json.obj())
-      }
-    }
-    "return INTERNAL_SERVER_ERROR" when {
-      "both overseas and UK AMLS records found for the same ARN" in {
-        isLoggedInAsStride("stride")
-        overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
-        ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
-        val response = doStatusRequest()
-        response.status mustBe INTERNAL_SERVER_ERROR
       }
     }
   }
