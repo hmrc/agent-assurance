@@ -47,8 +47,6 @@ class AmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsServic
           Ok(Json.toJson(UkAmlsDetailsResponse(amlsStatus.toString, Some(amlsDetails))))
         case (amlsStatus, Some(overseasAmlsDetails: OverseasAmlsDetails)) =>
           Ok(Json.toJson(OverseasAmlsDetailsResponse(amlsStatus.toString, Some(overseasAmlsDetails))))
-        case _ =>
-          throw new InternalServerException("[AmlsDetailsByArnController][getAmlsDetails] ARN has both Overseas and UK AMLS details")
       }
     }
 
