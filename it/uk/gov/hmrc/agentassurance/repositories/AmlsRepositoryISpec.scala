@@ -96,5 +96,32 @@ class AmlsRepositoryISpec extends PlaySpec with DefaultPlayMongoRepositorySuppor
     }
   }
 
+  "updateExpiryDate" when {
+    "given a new date" should {
+      "update the record" in {
+        val newExpiryDate = LocalDate.now().plusWeeks(2)
+        val oldUkAmlsDetails = UkAmlsDetails(
+          supervisoryBody = "ACCA",
+          membershipNumber = Some("ABC123"),
+          appliedOn = None,
+          membershipExpiresOn = Some(LocalDate.parse("2020-12-31")))
+        val oldAmlsEntity = UkAmlsEntity(utr = Some(utr), amlsDetails = oldUkAmlsDetails, arn = Some(arn),
+          createdOn = LocalDate.parse("2020-01-01"), amlsSource = AmlsSource.Subscription)
+
+        repository.collection.find().toFuture().futureValue.size mustBe 0
+
+        repository.collection.insertOne(oldAmlsEntity).toFuture().futureValue
+        val setupCheck = repository.collection.find().toFuture().futureValue
+        setupCheck.size mustBe 1
+        setupCheck.head mustBe oldAmlsEntity
+
+        repository.updateExpiryDate(oldAmlsEntity.arn.get, newExpiryDate)
+
+        val checkResult = repository.collection.find().toFuture().futureValue
+        checkResult.size mustBe 1
+        checkResult.head mustBe oldAmlsEntity.copy(amlsDetails = oldUkAmlsDetails.copy(membershipExpiresOn = Some(newExpiryDate)))
+      }
+    }
+  }
 
 }

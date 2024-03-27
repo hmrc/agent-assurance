@@ -39,7 +39,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
   def getAmlsDetailsByArn(arn: Arn)(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
     getAmlsDetails(arn).map {
       case None => // No AMLS record found
-        handleNoAmlsDetails // Scenarios: #1, #2
+        handleNoAmlsDetails() // Scenarios: #1, #2
       case Some(overseasAmlsDetails: OverseasAmlsDetails) =>
         Future.successful((AmlsStatus.ValidAmlsNonUK, Some(overseasAmlsDetails))) // Scenario #7
       case Some(ukAmlsDetails: UkAmlsDetails) =>
@@ -65,7 +65,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     renewalDate.exists(LocalDate.now().isAfter(_))
 
   // User has no AMLS record with us, if their agency is based in the UK then we deem them as UK
-  private def handleNoAmlsDetails(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
+  private def handleNoAmlsDetails()(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
     agencyDetailsService.agencyDetailsHasUkAddress().map { isUk =>
       (
         if (isUk) AmlsStatus.NoAmlsDetailsUK // Scenario #1
@@ -100,11 +100,11 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     (maybeDesAmlsExpiry, maybeAsaAmlsExpiry) match {
       case (Some(desAmlsExpiry), Some(asaAmlsExpiry)) =>
         if (desAmlsExpiry.isAfter(asaAmlsExpiry)) {
-          Some(desAmlsExpiry)
+          Some(desAmlsExpiry) //TODO update ASA date
         } else {
           Some(asaAmlsExpiry)
         }
-      case (Some(desAmlsExpiry), None) => Some(desAmlsExpiry)
+      case (Some(desAmlsExpiry), None) => Some(desAmlsExpiry) //TODO update ASA date
       case (None, Some(asaAmlsExpiry)) => Some(asaAmlsExpiry)
       case (None, None) => None
     }

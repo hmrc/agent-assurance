@@ -18,10 +18,11 @@ package uk.gov.hmrc.agentassurance.repositories
 
 import com.google.inject.ImplementedBy
 import com.mongodb.client.model.ReturnDocument
-import org.mongodb.scala.MongoWriteException
+import org.mongodb.scala.{MongoWriteException, SingleObservable}
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.{FindOneAndReplaceOptions, IndexModel, IndexOptions, ReplaceOptions}
+import org.mongodb.scala.model.{Filters, FindOneAndReplaceOptions, IndexModel, IndexOptions, ReplaceOptions, Updates}
+import org.mongodb.scala.result.UpdateResult
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError, UniqueKeyViolationError}
 import uk.gov.hmrc.agentassurance.models.{AmlsError, AmlsSource, CreateAmlsRequest, UkAmlsDetails, UkAmlsEntity}
@@ -48,6 +49,9 @@ trait AmlsRepository {
   def getAmlsDetailsByArn(arn: Arn): Future[Option[UkAmlsDetails]]
 
   def getUtr(arn: Arn): Future[Option[Utr]]
+
+  def updateExpiryDate(arn: Arn, date: LocalDate): SingleObservable[UpdateResult]
+
 }
 
 @Singleton
@@ -164,5 +168,15 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
       .find(equal("arn", arn.value))
       .headOption()
       .map(_.flatMap(_.utr))
+
+  override def updateExpiryDate(arn: Arn, date: LocalDate): SingleObservable[UpdateResult] = {
+    collection.updateOne(
+      filter = Filters.equal("arn", arn.value),
+      update = Updates.combine(
+        Updates.set("amlsDetails.membershipExpiresOn", date),
+        Updates.set("amlsSource.Subscription", "AutomaticUpdate")
+      )
+    )
+  }
 
 }
