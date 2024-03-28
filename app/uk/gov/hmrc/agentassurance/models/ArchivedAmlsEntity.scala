@@ -76,7 +76,6 @@ object ArchivedAmlsEntity {
 
 // for the ASA AMLS journey (using POST /amls/arn/:arn)
 case class AmlsRequest(ukRecord: Boolean,
-                       utr: Option[Utr],
                        supervisoryBody: String,
                        membershipNumber: String,
                        membershipExpiresOn: Option[LocalDate]

@@ -57,6 +57,8 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
         "microservice.services.auth.port" -> wireMockPort,
         "microservice.services.agent-client-authorisation.host" -> wireMockHost,
         "microservice.services.agent-client-authorisation.port" -> wireMockPort,
+        "microservice.services.des.host" -> wireMockHost,
+        "microservice.services.des.port" -> wireMockPort,
         "auditing.enabled" -> false,
         "stride.roles.agent-assurance" -> "maintain_agent_manually_assure")
       .overrides(moduleWithOverrides)
@@ -143,10 +145,10 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
     "return CREATED for UK AMLS" when {
       "no previous record exists for the ARN" in {
         isLoggedInAsAnAfinityGroupAgent("agent1")
+        givenDESGetAgentRecord(arn, Some(testUtr))
 
         val amlsRequest = AmlsRequest(
           ukRecord = true,
-          utr = Some(testUtr),
           supervisoryBody = "ACCA",
           membershipNumber = "A123",
           membershipExpiresOn = Some(LocalDate.parse("2024-12-31")))
@@ -158,7 +160,7 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
         archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 0
       }
 
-      "an existing record exists for the ARN, archiving the existing AMLS record" in {
+      "an existing record (including UTR) exists for the ARN, archiving the existing AMLS record" in {
         isLoggedInAsAnAfinityGroupAgent("agent1")
 
         val ukAmlsEntity = UkAmlsEntity(
@@ -178,7 +180,38 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
 
         val amlsRequest = AmlsRequest(
           ukRecord = true,
-          utr = Some(testUtr),
+          supervisoryBody = "ACCA",
+          membershipNumber = "A123",
+          membershipExpiresOn = Some(LocalDate.parse("2024-12-31")))
+
+        val response = doPostRequest(Json.toJson(amlsRequest))
+        response.status mustBe CREATED
+
+        ukAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
+        archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
+      }
+
+      "an existing record (without a UTR) exists for the ARN, archiving the existing AMLS record" in {
+        isLoggedInAsAnAfinityGroupAgent("agent1")
+        givenDESGetAgentRecord(arn, Some(testUtr))
+
+        val ukAmlsEntity = UkAmlsEntity(
+          utr = None,
+          amlsDetails = UkAmlsDetails(
+            supervisoryBody = "ICAEW",
+            membershipNumber = Some("123"),
+            amlsSafeId = None,
+            agentBPRSafeId = None,
+            appliedOn = None,
+            membershipExpiresOn = Some(LocalDate.parse("2019-10-10"))),
+          arn = Some(arn),
+          createdOn = LocalDate.parse("2020-10-10"),
+          amlsSource = AmlsSource.Subscription)
+
+        ukAmlsRepository.collection.insertOne(ukAmlsEntity).toFuture().futureValue
+
+        val amlsRequest = AmlsRequest(
+          ukRecord = true,
           supervisoryBody = "ACCA",
           membershipNumber = "A123",
           membershipExpiresOn = Some(LocalDate.parse("2024-12-31")))
@@ -196,7 +229,6 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
 
         val amlsRequest = AmlsRequest(
           ukRecord = false,
-          utr = None,
           supervisoryBody = "Indian AC",
           membershipNumber = "X243",
           membershipExpiresOn = Some(LocalDate.parse("2024-12-31")))
@@ -223,7 +255,6 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
 
         val amlsRequest = AmlsRequest(
           ukRecord = false,
-          utr = None,
           supervisoryBody = "Indian BC",
           membershipNumber = "B343",
           membershipExpiresOn = Some(LocalDate.parse("2024-12-31")))

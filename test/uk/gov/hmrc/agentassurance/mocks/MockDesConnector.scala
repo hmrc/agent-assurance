@@ -19,8 +19,9 @@ package uk.gov.hmrc.agentassurance.mocks
 import org.scalamock.handlers.CallHandler3
 import org.scalamock.scalatest.MockFactory
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
+import uk.gov.hmrc.agentassurance.models.{AgentDetailsDesResponse, AmlsSubscriptionRecord}
 import uk.gov.hmrc.agentassurance.util.toFuture
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.{SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -41,6 +42,11 @@ trait MockDesConnector extends MockFactory {
       .expects(registrationNumber, *, *)
       .returning(response)
   }
+
+  def mockGetAgentRecord(arn: Arn)(response: AgentDetailsDesResponse) =
+    (mockDesConnector.getAgentRecord(_: Arn)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(arn, *, *)
+      .returning(Future successful response)
 
 
 

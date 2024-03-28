@@ -20,7 +20,7 @@ import play.api.Logging
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, ArchivedAmlsRepository, OverseasAmlsRepository}
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 
 import java.time.LocalDate
@@ -127,23 +127,25 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
 
   def storeAmlsRequest(arn: Arn,
                        amlsRequest: AmlsRequest,
-                       amlsSource: AmlsSource = AmlsSource.Subscription): Future[Either[AmlsError, AmlsDetails]] = {
+                       amlsSource: AmlsSource = AmlsSource.Subscription)(implicit hc: HeaderCarrier): Future[Either[AmlsError, AmlsDetails]] = {
 
     val newAmlsDetails: AmlsDetails = amlsRequest.toAmlsEntity(amlsRequest)
 
     {
       newAmlsDetails match {
         case ukAmlsDetails: UkAmlsDetails =>
-          amlsRepository.createOrUpdate( // this method returns old document BEFORE updating it
+          getOrRetrieveUtr(arn)
+            .flatMap(mUtr =>
+              amlsRepository.createOrUpdate( // this method returns old document BEFORE updating it
             arn,
             UkAmlsEntity(
-              utr = amlsRequest.utr,
+              utr = mUtr,
               amlsDetails = ukAmlsDetails,
               arn = Some(arn),
               createdOn = LocalDate.now,
               amlsSource = amlsSource
             )
-          )
+          ))
         case overseasAmlsDetails: OverseasAmlsDetails =>
           overseasAmlsRepository.createOrUpdate( // this method returns old document BEFORE updating it
             OverseasAmlsEntity(
@@ -165,5 +167,12 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
         Future.successful(Right(newAmlsDetails))
     }
   }
+
+  private def getOrRetrieveUtr(arn: Arn)(implicit hc: HeaderCarrier): Future[Option[Utr]] =
+    for {
+      a <- amlsRepository.getUtr(arn)
+      b <- if(a.isEmpty) desConnector.getAgentRecord(arn).map(_.uniqueTaxReference) else Future.successful(a)
+    } yield b
+
 
 }

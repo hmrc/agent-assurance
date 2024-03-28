@@ -71,6 +71,29 @@ class AmlsRepositoryISpec extends PlaySpec with DefaultPlayMongoRepositorySuppor
       checkResult.size mustBe 1
       checkResult.head mustBe newAmlsEntity.copy(createdOn = today)
     }
+
+    "getUtr" should {
+      "return a utr" in {
+        val amlsEntity = UkAmlsEntity(utr = Some(utr), amlsDetails = newUkAmlsDetails, arn = Some(arn), createdOn = today, amlsSource = AmlsSource.Subscription)
+
+        repository.collection.insertOne(amlsEntity).toFuture().futureValue
+
+        val result = repository.getUtr(arn).futureValue
+
+        result mustBe Some(utr)
+
+      }
+
+      "return None" in {
+        val amlsEntity = UkAmlsEntity(utr = None, amlsDetails = newUkAmlsDetails, arn = Some(arn), createdOn = today, amlsSource = AmlsSource.Subscription)
+
+        repository.collection.insertOne(amlsEntity).toFuture().futureValue
+
+        val result = repository.getUtr(arn).futureValue
+
+        result mustBe None
+      }
+    }
   }
 
 

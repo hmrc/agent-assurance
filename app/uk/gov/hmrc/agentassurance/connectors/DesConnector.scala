@@ -26,8 +26,8 @@ import play.api.libs.json._
 import play.utils.UriEncoding
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.{AgentDetailsDesResponse, AmlsSubscriptionRecord}
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpReads, HttpResponse, UpstreamErrorResponse}
@@ -59,6 +59,8 @@ object RegistrationRelationshipResponse {
 trait DesConnector {
   def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Seq[SaAgentReference]]]
   def getAmlsSubscriptionStatus(amlsRegistrationNumber: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord]
+
+  def getAgentRecord(arn: Arn)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse]
 }
 
 @Singleton
@@ -116,6 +118,11 @@ class DesConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit
   def getAmlsSubscriptionStatus(amlsRegistrationNumber: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord] = {
     val url = new URL(s"$baseUrl/anti-money-laundering/subscription/$amlsRegistrationNumber/status")
     getWithDesHeaders[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
+  }
+
+  override def getAgentRecord(arn: Arn)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse] = {
+    val url = new URL(s"$baseUrl/registration/personal-details/arn/${arn.value}")
+    getWithDesHeaders[AgentDetailsDesResponse]("GetAgentRecord", url)
   }
 
   private def getWithDesHeaders[A: HttpReads](apiName: String, url: URL)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
