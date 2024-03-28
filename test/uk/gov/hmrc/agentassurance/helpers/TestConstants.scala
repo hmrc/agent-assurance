@@ -62,6 +62,8 @@ object TestConstants {
   val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(testArn, testOverseasAmlsDetails, None)
   val testUKAmlsRequest: AmlsRequest = AmlsRequest(ukRecord = true, "supervisory", "0123456789", Some(membershipExpiresOnDate))
   val testOverseasAmlsRequest: AmlsRequest = AmlsRequest(ukRecord = false, "supervisory", "0123456789", Some(membershipExpiresOnDate))
+  val testAgentDetailsDesResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(uniqueTaxReference = Some(testUtr), agencyDetails = None, suspensionDetails = None)
+  val testAgentDetailsDesResponseNoUtr: AgentDetailsDesResponse = testAgentDetailsDesResponse.copy(uniqueTaxReference = None)
 
   val agencyDetailsUk: AgencyDetails = AgencyDetails(None, None, None,
     Some(BusinessAddress("line1", None, None, None, None, "GB")))
