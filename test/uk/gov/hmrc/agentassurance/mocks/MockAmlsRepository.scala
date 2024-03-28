@@ -64,4 +64,10 @@ trait MockAmlsRepository extends MockFactory {
       .returning(toFuture(response))
   }
 
+  def mockGetUtr(arn: Arn)(response: Option[Utr]) = {
+    (mockAmlsRepository.getUtr(_: Arn))
+      .expects(arn)
+      .returning(toFuture(response))
+  }
+
 }

@@ -327,6 +327,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
 
   "storeAmlsRequest" should {
     "return Right(testAmlsDetails) when storing a UK AMLS record and there was no existing record" in {
+      mockGetUtr(testArn)(Some(testUtr))
       mockCreateOrUpdate(testArn, testUKAmlsEntity)(None)
 
       val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
@@ -335,6 +336,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
     }
 
     "return Right(testAmlsDetails) when UK AMLS and there is an existing AMLS record" in {
+      mockGetUtr(testArn)(Some(testUtr))
       mockCreateOrUpdate(testArn, testUKAmlsEntity)(Some(testUKAmlsEntity))
       mockCreate(ArchivedAmlsEntity(testArn, testUKAmlsEntity))(Right(()))
 

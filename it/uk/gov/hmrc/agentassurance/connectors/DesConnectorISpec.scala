@@ -7,9 +7,10 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.agentassurance.models.{AgencyDetails, AgentDetailsDesResponse, BusinessAddress}
 import uk.gov.hmrc.agentassurance.stubs.{DataStreamStub, DesStubs}
 import uk.gov.hmrc.agentassurance.support.{MetricTestSupport, UnitSpec, WireMockSupport}
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, SuspensionDetails, Utr}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 
@@ -44,12 +45,41 @@ class DesConnectorISpec extends UnitSpec with GuiceOneAppPerSuite with WireMockS
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.global
 
+  val arn = Arn("AARN00012345")
+
   "DesConnector getActiveCesaAgentRelationships with a valid NINO" should {
     behave like aCheckEndpoint(Nino("AB123456C"))
   }
 
   "DesConnector getActiveCesaAgentRelationships with a valid UTR" should {
     behave like aCheckEndpoint(Utr("7000000002")) // 7000000002
+  }
+
+  "DesConnector getAgentRecord" should {
+    "return agency details for a given ARN" in {
+
+      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
+
+      val result = await(desConnector.getAgentRecord(arn))
+      result shouldBe
+        AgentDetailsDesResponse(
+          Some(Utr("0123456789")),
+          Some(
+          AgencyDetails(
+            Some("ABC Accountants"),
+            Some("abc@xyz.com"),
+            Some("07345678901"),
+            Some(BusinessAddress("Matheson House",
+              Some("Grange Central"),
+              Some("Town Centre"),
+              Some("Telford"),
+              Some("TF3 4ER"),
+              "GB"))
+          )),
+          Some(SuspensionDetails(
+            suspensionStatus = false,
+            None)))
+    }
   }
 
   private def aCheckEndpoint(identifier: TaxIdentifier) = {

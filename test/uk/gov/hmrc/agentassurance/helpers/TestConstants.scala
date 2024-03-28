@@ -60,8 +60,8 @@ object TestConstants {
   val testHmrcAmlsDetailsNoMembershipNumber: UkAmlsDetails = UkAmlsDetails("HM Revenue and Customs (HMRC)", membershipNumber = None, appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
   val testOverseasAmlsDetails: OverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
   val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(testArn, testOverseasAmlsDetails, None)
-  val testUKAmlsRequest: AmlsRequest = AmlsRequest(ukRecord = true, Some(testUtr), "supervisory", "0123456789", Some(membershipExpiresOnDate))
-  val testOverseasAmlsRequest: AmlsRequest = AmlsRequest(ukRecord = false, None, "supervisory", "0123456789", Some(membershipExpiresOnDate))
+  val testUKAmlsRequest: AmlsRequest = AmlsRequest(ukRecord = true, "supervisory", "0123456789", Some(membershipExpiresOnDate))
+  val testOverseasAmlsRequest: AmlsRequest = AmlsRequest(ukRecord = false, "supervisory", "0123456789", Some(membershipExpiresOnDate))
 
   val agencyDetailsUk: AgencyDetails = AgencyDetails(None, None, None,
     Some(BusinessAddress("line1", None, None, None, None, "GB")))

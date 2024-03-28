@@ -46,6 +46,8 @@ trait AmlsRepository {
   def getAmlDetails(utr: Utr): Future[Option[UkAmlsDetails]]
 
   def getAmlsDetailsByArn(arn: Arn): Future[Option[UkAmlsDetails]]
+
+  def getUtr(arn: Arn): Future[Option[Utr]]
 }
 
 @Singleton
@@ -156,5 +158,11 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
       .find(equal("arn", arn.value))
       .headOption()
       .map(_.map(_.amlsDetails))
+
+  override def getUtr(arn: Arn): Future[Option[Utr]] =
+    collection
+      .find(equal("arn", arn.value))
+      .headOption()
+      .map(_.flatMap(_.utr))
 
 }
