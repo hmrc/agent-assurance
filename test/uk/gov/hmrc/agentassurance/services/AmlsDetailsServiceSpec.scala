@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.services
 
+import com.mongodb.client.result.UpdateResult
 import org.scalatest.PrivateMethodTester
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
@@ -250,26 +251,27 @@ class AmlsDetailsServiceSpec extends PlaySpec
 
   "findCorrectExpiryDate" when {
     val defaultDate = Some(LocalDate.now())
-
     "both expiry dates are populated" should {
       "return the DES expiry date if it is after the ASA expiry date" in {
         val des = defaultDate.map(_.plusWeeks(1))
         val asa = defaultDate
-        val result = service.findCorrectExpiryDate(des, asa)
+        updateExpiryDate(testArn, des.get)(UpdateResult.acknowledged(1, null, null))
+
+        val result = service.findCorrectExpiryDate(testArn, des, asa)
 
         result mustBe des
       }
       "return the ASA expiry date if it is after the DES expiry date" in {
         val des = defaultDate
         val asa = defaultDate.map(_.plusWeeks(1))
-        val result = service.findCorrectExpiryDate(des, asa)
+        val result = service.findCorrectExpiryDate(testArn, des, asa)
 
         result mustBe asa
       }
       "return the ASA expiry date if it is equal to the DES expiry date" in {
         val des = defaultDate
         val asa = defaultDate
-        val result = service.findCorrectExpiryDate(des, asa)
+        val result = service.findCorrectExpiryDate(testArn, des, asa)
 
         result mustBe asa
       }
@@ -279,7 +281,7 @@ class AmlsDetailsServiceSpec extends PlaySpec
       "return the ASA expiry date" in {
         val des = None
         val asa = defaultDate
-        val result = service.findCorrectExpiryDate(des, asa)
+        val result = service.findCorrectExpiryDate(testArn, des, asa)
 
         result mustBe asa
       }
@@ -289,7 +291,9 @@ class AmlsDetailsServiceSpec extends PlaySpec
       "return the DES expiry date" in {
         val des = defaultDate
         val asa = None
-        val result = service.findCorrectExpiryDate(des, asa)
+        updateExpiryDate(testArn, des.get)(UpdateResult.acknowledged(1, null, null))
+
+        val result = service.findCorrectExpiryDate(testArn, des, asa)
 
         result mustBe des
       }
@@ -297,14 +301,12 @@ class AmlsDetailsServiceSpec extends PlaySpec
 
     "neither expiry dates are provided" should {
       "return None" in {
-        service.findCorrectExpiryDate(None, None) mustBe None
+        service.findCorrectExpiryDate(testArn, None, None) mustBe None
       }
     }
-
   }
 
   "dateIsInThePast" when {
-
     "not provided with a date" should {
       "return false" in {
         service.dateIsInThePast(None) mustBe false
@@ -322,7 +324,6 @@ class AmlsDetailsServiceSpec extends PlaySpec
         service.dateIsInThePast(Some(LocalDate.now().minusWeeks(1))) mustBe true
       }
     }
-
   }
 
   "storeAmlsRequest" should {

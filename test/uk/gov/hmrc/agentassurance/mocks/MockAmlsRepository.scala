@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import org.mongodb.scala.result.UpdateResult
 import org.scalamock.scalatest.MockFactory
 import uk.gov.hmrc.agentassurance.models.{AmlsError, CreateAmlsRequest, UkAmlsDetails, UkAmlsEntity}
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 
+import java.time.LocalDate
 import scala.concurrent.Future
 
 trait MockAmlsRepository extends MockFactory {
@@ -67,6 +69,11 @@ trait MockAmlsRepository extends MockFactory {
   def mockGetUtr(arn: Arn)(response: Option[Utr]) = {
     (mockAmlsRepository.getUtr(_: Arn))
       .expects(arn)
+  }
+
+  def updateExpiryDate(arn: Arn, date: LocalDate)(response: UpdateResult) = {
+    (mockAmlsRepository.updateExpiryDate(_: Arn, _: LocalDate))
+      .expects(arn, date)
       .returning(toFuture(response))
   }
 

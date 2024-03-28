@@ -45,7 +45,8 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
       case Some(ukAmlsDetails: UkAmlsDetails) =>
         if (ukAmlsDetails.supervisoryBodyIsHmrc) {
           ukAmlsDetails.membershipNumber.map { membershipNumber =>
-            processUkHmrcAmlsDetails(membershipNumber, ukAmlsDetails).map { amlsStatus =>
+            //this call may have update ASA AMLS expiry date side-effect
+            processUkHmrcAmlsDetails(arn, membershipNumber, ukAmlsDetails).map { amlsStatus =>
               (amlsStatus, Some(ukAmlsDetails)) // Scenarios: #5a, #5b, #6a, #6b #8, #9
             }
           }.getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, Some(ukAmlsDetails)))) // Scenario #10
@@ -75,7 +76,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     }
   }
 
-  private def processUkHmrcAmlsDetails(membershipNumber: String, asaAmlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[AmlsStatus] = {
+  private def processUkHmrcAmlsDetails(arn: Arn, membershipNumber: String, asaAmlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[AmlsStatus] = {
     desConnector.getAmlsSubscriptionStatus(membershipNumber).map {
       desAmlsRecord =>
         (asaAmlsDetails.isPending, desAmlsRecord.formBundleStatus) match {
@@ -85,7 +86,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
             AmlsStatus.PendingAmlsDetailsRejected
           case (_, "Approved" | "ApprovedWithConditions") =>
             // check if ETMP has more recent expiry date
-            val amlsExpiryDate = findCorrectExpiryDate(desAmlsRecord.currentRegYearEndDate, asaAmlsDetails.membershipExpiresOn)
+            val amlsExpiryDate = findCorrectExpiryDate(arn, desAmlsRecord.currentRegYearEndDate, asaAmlsDetails.membershipExpiresOn)
             if (dateIsInThePast(amlsExpiryDate)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
           case (_, _) =>
             // catch all where we won't use the ETMP record and just use ASA
@@ -96,17 +97,22 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
 
   // we have two potential optional dates to use so this logic will select the correct date
   //TODO make private when we upgrade play and can test private methods
-  def findCorrectExpiryDate(maybeDesAmlsExpiry: Option[LocalDate], maybeAsaAmlsExpiry: Option[LocalDate]): Option[LocalDate] = {
+  def findCorrectExpiryDate(arn: Arn, maybeDesAmlsExpiry: Option[LocalDate], maybeAsaAmlsExpiry: Option[LocalDate]): Option[LocalDate] = {
     (maybeDesAmlsExpiry, maybeAsaAmlsExpiry) match {
       case (Some(desAmlsExpiry), Some(asaAmlsExpiry)) =>
         if (desAmlsExpiry.isAfter(asaAmlsExpiry)) {
-          Some(desAmlsExpiry) //TODO update ASA date
+          amlsRepository.updateExpiryDate(arn, desAmlsExpiry)
+          Some(desAmlsExpiry)
         } else {
           Some(asaAmlsExpiry)
         }
-      case (Some(desAmlsExpiry), None) => Some(desAmlsExpiry) //TODO update ASA date
-      case (None, Some(asaAmlsExpiry)) => Some(asaAmlsExpiry)
-      case (None, None) => None
+      case (Some(desAmlsExpiry), None) =>
+        amlsRepository.updateExpiryDate(arn, desAmlsExpiry)
+        Some(desAmlsExpiry)
+      case (None, Some(asaAmlsExpiry)) =>
+        Some(asaAmlsExpiry)
+      case (None, None) =>
+        None
     }
   }
 

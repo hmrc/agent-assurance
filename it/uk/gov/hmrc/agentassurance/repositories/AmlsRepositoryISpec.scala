@@ -115,7 +115,7 @@ class AmlsRepositoryISpec extends PlaySpec with DefaultPlayMongoRepositorySuppor
         setupCheck.size mustBe 1
         setupCheck.head mustBe oldAmlsEntity
 
-        repository.updateExpiryDate(oldAmlsEntity.arn.get, newExpiryDate)
+        repository.updateExpiryDate(oldAmlsEntity.arn.get, newExpiryDate).futureValue
 
         val checkResult = repository.collection.find().toFuture().futureValue
         checkResult.size mustBe 1

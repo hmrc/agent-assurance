@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.repositories
 
 import com.google.inject.ImplementedBy
 import com.mongodb.client.model.ReturnDocument
-import org.mongodb.scala.{MongoWriteException, SingleObservable}
+import org.mongodb.scala.MongoWriteException
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.model.{Filters, FindOneAndReplaceOptions, IndexModel, IndexOptions, ReplaceOptions, Updates}
@@ -50,8 +50,7 @@ trait AmlsRepository {
 
   def getUtr(arn: Arn): Future[Option[Utr]]
 
-  def updateExpiryDate(arn: Arn, date: LocalDate): SingleObservable[UpdateResult]
-
+  def updateExpiryDate(arn: Arn, date: LocalDate): Future[UpdateResult]
 }
 
 @Singleton
@@ -169,14 +168,15 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
       .headOption()
       .map(_.flatMap(_.utr))
 
-  override def updateExpiryDate(arn: Arn, date: LocalDate): SingleObservable[UpdateResult] = {
-    collection.updateOne(
-      filter = Filters.equal("arn", arn.value),
-      update = Updates.combine(
-        Updates.set("amlsDetails.membershipExpiresOn", date),
-        Updates.set("amlsSource.Subscription", "AutomaticUpdate")
-      )
-    )
+  override def updateExpiryDate(arn: Arn, date: LocalDate): Future[UpdateResult] = {
+    collection
+      .updateOne(
+        filter = Filters.equal("arn", arn.value),
+        update = Updates.combine(
+          Updates.set("amlsDetails.membershipExpiresOn", date.toString),
+          Updates.set("amlsSource.Subscription", "AutomaticUpdate")
+        )
+      ).toFuture()
   }
 
 }

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Format, Json, OFormat}
+import play.api.libs.json.{Format, Json}
 
 import java.time.LocalDate
 
@@ -41,6 +41,6 @@ object UkAmlsDetails {
 case class OverseasAmlsDetails(supervisoryBody: String, membershipNumber: Option[String] = None) extends AmlsDetails
 
 object OverseasAmlsDetails {
-  implicit val format: OFormat[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]
+  implicit val format: Format[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]
 }
 
