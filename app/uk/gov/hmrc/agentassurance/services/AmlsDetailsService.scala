@@ -39,13 +39,14 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
   def getAmlsDetailsByArn(arn: Arn)(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
     getAmlsDetails(arn).map {
       case None => // No AMLS record found
-        handleNoAmlsDetails // Scenarios: #1, #2
+        handleNoAmlsDetails() // Scenarios: #1, #2
       case Some(overseasAmlsDetails: OverseasAmlsDetails) =>
         Future.successful((AmlsStatus.ValidAmlsNonUK, Some(overseasAmlsDetails))) // Scenario #7
       case Some(ukAmlsDetails: UkAmlsDetails) =>
         if (ukAmlsDetails.supervisoryBodyIsHmrc) {
           ukAmlsDetails.membershipNumber.map { membershipNumber =>
-            processUkHmrcAmlsDetails(membershipNumber, ukAmlsDetails).map { amlsStatus =>
+            //this call may have update ASA AMLS expiry date side-effect
+            processUkHmrcAmlsDetails(arn, membershipNumber, ukAmlsDetails).map { amlsStatus =>
               (amlsStatus, Some(ukAmlsDetails)) // Scenarios: #5a, #5b, #6a, #6b #8, #9
             }
           }.getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, Some(ukAmlsDetails)))) // Scenario #10
@@ -65,7 +66,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     renewalDate.exists(LocalDate.now().isAfter(_))
 
   // User has no AMLS record with us, if their agency is based in the UK then we deem them as UK
-  private def handleNoAmlsDetails(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
+  private def handleNoAmlsDetails()(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
     agencyDetailsService.agencyDetailsHasUkAddress().map { isUk =>
       (
         if (isUk) AmlsStatus.NoAmlsDetailsUK // Scenario #1
@@ -75,7 +76,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     }
   }
 
-  private def processUkHmrcAmlsDetails(membershipNumber: String, asaAmlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[AmlsStatus] = {
+  private def processUkHmrcAmlsDetails(arn: Arn, membershipNumber: String, asaAmlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[AmlsStatus] = {
     desConnector.getAmlsSubscriptionStatus(membershipNumber).map {
       desAmlsRecord =>
         (asaAmlsDetails.isPending, desAmlsRecord.formBundleStatus) match {
@@ -85,7 +86,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
             AmlsStatus.PendingAmlsDetailsRejected
           case (_, "Approved" | "ApprovedWithConditions") =>
             // check if ETMP has more recent expiry date
-            val amlsExpiryDate = findCorrectExpiryDate(desAmlsRecord.currentRegYearEndDate, asaAmlsDetails.membershipExpiresOn)
+            val amlsExpiryDate = findCorrectExpiryDate(arn, desAmlsRecord.currentRegYearEndDate, asaAmlsDetails.membershipExpiresOn)
             if (dateIsInThePast(amlsExpiryDate)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
           case (_, _) =>
             // catch all where we won't use the ETMP record and just use ASA
@@ -96,17 +97,22 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
 
   // we have two potential optional dates to use so this logic will select the correct date
   //TODO make private when we upgrade play and can test private methods
-  def findCorrectExpiryDate(maybeDesAmlsExpiry: Option[LocalDate], maybeAsaAmlsExpiry: Option[LocalDate]): Option[LocalDate] = {
+  def findCorrectExpiryDate(arn: Arn, maybeDesAmlsExpiry: Option[LocalDate], maybeAsaAmlsExpiry: Option[LocalDate]): Option[LocalDate] = {
     (maybeDesAmlsExpiry, maybeAsaAmlsExpiry) match {
       case (Some(desAmlsExpiry), Some(asaAmlsExpiry)) =>
         if (desAmlsExpiry.isAfter(asaAmlsExpiry)) {
+          amlsRepository.updateExpiryDate(arn, desAmlsExpiry)
           Some(desAmlsExpiry)
         } else {
           Some(asaAmlsExpiry)
         }
-      case (Some(desAmlsExpiry), None) => Some(desAmlsExpiry)
-      case (None, Some(asaAmlsExpiry)) => Some(asaAmlsExpiry)
-      case (None, None) => None
+      case (Some(desAmlsExpiry), None) =>
+        amlsRepository.updateExpiryDate(arn, desAmlsExpiry)
+        Some(desAmlsExpiry)
+      case (None, Some(asaAmlsExpiry)) =>
+        Some(asaAmlsExpiry)
+      case (None, None) =>
+        None
     }
   }
 
