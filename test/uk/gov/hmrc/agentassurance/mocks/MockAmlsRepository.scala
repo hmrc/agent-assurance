@@ -69,6 +69,7 @@ trait MockAmlsRepository extends MockFactory {
   def mockGetUtr(arn: Arn)(response: Option[Utr]) = {
     (mockAmlsRepository.getUtr(_: Arn))
       .expects(arn)
+      .returning(toFuture(response))
   }
 
   def updateExpiryDate(arn: Arn, date: LocalDate)(response: UpdateResult) = {
