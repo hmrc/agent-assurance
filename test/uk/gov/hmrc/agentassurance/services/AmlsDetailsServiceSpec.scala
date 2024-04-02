@@ -308,28 +308,28 @@ class AmlsDetailsServiceSpec extends PlaySpec
     }
   }
 
-  "dateIsTodayOrInThePast" when {
+  "hasRenewalDateExpired" when {
     "not provided with a date" should {
       "return false" in {
-        service.dateIsTodayOrInThePast(None) mustBe false
+        service.hasRenewalDateExpired(None) mustBe false
       }
     }
 
     "provided with a date that is in the future" should {
       "return false" in {
-        service.dateIsTodayOrInThePast(Some(LocalDate.now().plusWeeks(1))) mustBe false
+        service.hasRenewalDateExpired(Some(LocalDate.now().plusWeeks(1))) mustBe false
       }
     }
 
     "provided with a date that is in the past" should {
       "return true" in {
-        service.dateIsTodayOrInThePast(Some(LocalDate.now().minusWeeks(1))) mustBe true
+        service.hasRenewalDateExpired(Some(LocalDate.now().minusWeeks(1))) mustBe true
       }
     }
 
     "provided with today's date" should {
       "return true" in {
-        service.dateIsTodayOrInThePast(Some(LocalDate.now())) mustBe true
+        service.hasRenewalDateExpired(Some(LocalDate.now())) mustBe true
       }
     }
   }
