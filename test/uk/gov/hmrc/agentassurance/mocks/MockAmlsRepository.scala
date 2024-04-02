@@ -72,7 +72,7 @@ trait MockAmlsRepository extends MockFactory {
       .returning(toFuture(response))
   }
 
-  def updateExpiryDate(arn: Arn, date: LocalDate)(response: UpdateResult) = {
+  def mockUpdateExpiryDate(arn: Arn, date: LocalDate)(response: UpdateResult) = {
     (mockAmlsRepository.updateExpiryDate(_: Arn, _: LocalDate))
       .expects(arn, date)
       .returning(toFuture(response))

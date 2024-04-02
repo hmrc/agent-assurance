@@ -52,7 +52,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
           }.getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, Some(ukAmlsDetails)))) // Scenario #10
         } else { // supervisoryBodyIsNotHmrc
           Future.successful((
-            if (dateIsInThePast(ukAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK // Scenarios: #4a, #4b
+            if (hasRenewalDateExpired(ukAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK // Scenarios: #4a, #4b
             else AmlsStatus.ValidAmlsDetailsUK, // Scenario #3
             Some(ukAmlsDetails)
           ))
@@ -60,10 +60,11 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     }.flatten
   }
 
-  // either today's date is after the membership expiry date or there is no date so it hasn't expired
+  // if today's date >= renewal date then it has expired
+  // if no renewal date or today's date < renewal date then it has not expired
   //TODO make private when we upgrade play and can test private methods
-  def dateIsInThePast(renewalDate: Option[LocalDate]): Boolean =
-    renewalDate.exists(LocalDate.now().isAfter(_))
+  def hasRenewalDateExpired(optRenewalDate: Option[LocalDate]): Boolean =
+    optRenewalDate.exists(renewalDate => LocalDate.now().isAfter(renewalDate) || LocalDate.now().equals(renewalDate))
 
   // User has no AMLS record with us, if their agency is based in the UK then we deem them as UK
   private def handleNoAmlsDetails()(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
@@ -87,10 +88,10 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
           case (_, "Approved" | "ApprovedWithConditions") =>
             // check if ETMP has more recent expiry date
             val amlsExpiryDate = findCorrectExpiryDate(arn, desAmlsRecord.currentRegYearEndDate, asaAmlsDetails.membershipExpiresOn)
-            if (dateIsInThePast(amlsExpiryDate)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
+            if (hasRenewalDateExpired(amlsExpiryDate)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
           case (_, _) =>
             // catch all where we won't use the ETMP record and just use ASA
-            if (dateIsInThePast(asaAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
+            if (hasRenewalDateExpired(asaAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
         }
     }
   }
