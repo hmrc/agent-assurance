@@ -35,22 +35,11 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
                                    override val authConnector: AuthConnector
                                   )(implicit ex: ExecutionContext) extends BackendController(cc) with AuthActions {
 
-  case class AmlsDataRequest(
-                              isUk: Boolean,
-                              membershipNumber: String, // if pending membership number could be blank - isExpired would be None
-                              isHmrc: Boolean, // ignored if isUK = false
-                              isExpired: Option[Boolean] // ignored if isUK = false
-                            )
-
-  object AmlsDataRequest {
-    implicit val format: Format[AmlsDataRequest] = Json.format[AmlsDataRequest]
-  }
-
   def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request => arn: Arn =>
     request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match {
       case Some(JsSuccess(amlsRequest, _)) =>
         if(amlsRequest.isUk) {
-          createUkAmlsRecord(arn, amlsRequest.membershipNumber, amlsRequest.isHmrc, amlsRequest.isExpired).map {
+          createUkAmlsRecord(arn, amlsRequest).map {
             case Right(_) => Created
             case _ => InternalServerError
           }
@@ -65,15 +54,10 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
 
   }
 
-  private def createUkAmlsRecord(
-                                  arn: Arn,
-                                  membershipNumber: String,
-                                  isHmrc: Boolean,
-                                  isExpired: Option[Boolean]
-                                ) = {
-    val body = if(isHmrc) "HM Revenue and Customs (HMRC)" else "Law Society of Scotland"
-    val maybeMembershipNumber = if(membershipNumber.isEmpty) None else Some(membershipNumber)
-    val dateExpiredOn = isExpired match {
+  private def createUkAmlsRecord(arn: Arn, amlsRequest: AmlsDataRequest) = {
+    val body = if(amlsRequest.isHmrc) "HM Revenue and Customs (HMRC)" else "Law Society of Scotland"
+    val maybeMembershipNumber = if(amlsRequest.membershipNumber.isEmpty) None else Some(amlsRequest.membershipNumber)
+    val dateExpiredOn = amlsRequest.isExpired match {
       case Some(true) => Some(LocalDate.now())
       case Some(false) => Some(LocalDate.now().plusMonths(12))
       case _ => None
@@ -86,7 +70,7 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
         UkAmlsDetails(
           supervisoryBody = body,
           membershipNumber = maybeMembershipNumber,
-          appliedOn = None,
+          appliedOn = amlsRequest.appliedOn,
           membershipExpiresOn = dateExpiredOn
         )
       )
@@ -107,6 +91,16 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
         createdDate = None
       )
     )
+  }
+
+  case class AmlsDataRequest(isUk: Boolean,
+                              membershipNumber: String, // if pending membership number could be blank - isExpired would be None
+                              isHmrc: Boolean, // ignored if isUK = false
+                              isExpired: Option[Boolean], // ignored if isUK = false
+                              appliedOn: Option[LocalDate] = None)
+
+  object AmlsDataRequest {
+    implicit val format: Format[AmlsDataRequest] = Json.format[AmlsDataRequest]
   }
 
 
