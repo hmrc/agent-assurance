@@ -137,13 +137,13 @@ trait DesStubs {
           .withStatus(200)
           .withBody(personalDetailsResponseBodyWithValidData(utr))))
 
-  def givenNoDESGetAgentRecord(arn: Arn, utr: Option[Utr]): StubMapping =
+  def givenNoDESGetAgentRecord(arn: Arn, optUtr: Option[Utr]): StubMapping =
     stubFor(
       get(urlEqualTo(
         s"/registration/personal-details/arn/${arn.value}"))
         .willReturn(aResponse()
           .withStatus(200)
-          .withBody(noPersonalDetailsResponseBodyWithValidData(utr))))
+          .withBody(noPersonalDetailsResponseBodyWithValidData(optUtr))))
 
 
 
@@ -155,7 +155,7 @@ trait DesStubs {
     }
 
 
-  def personalDetailsResponseBodyWithValidData(utr: Option[Utr]) =
+  def personalDetailsResponseBodyWithValidData(optUtr: Option[Utr]) =
     s"""
        |{
        |   "isAnOrganisation" : true,
@@ -164,8 +164,8 @@ trait DesStubs {
        |   },
        |   "isAnAgent" : true,
        |   "safeId" : "XB0000100101711",
-       |   """.stripMargin ++ utr.map(x =>
-      s""" "uniqueTaxReference": "${x.value}",
+       |   """.stripMargin ++ optUtr.map(utr =>
+      s""" "uniqueTaxReference": "${utr.value}",
          |""".stripMargin).getOrElse("") ++
           s""" "agencyDetails" : {
        |      "agencyAddress" : {
@@ -205,7 +205,7 @@ trait DesStubs {
        |}
             """.stripMargin
 
-  def noPersonalDetailsResponseBodyWithValidData(utr: Option[Utr]) =
+  def noPersonalDetailsResponseBodyWithValidData(optUtr: Option[Utr]) =
     s"""
        |{
        |   "isAnOrganisation" : true,
@@ -214,8 +214,8 @@ trait DesStubs {
        |   },
        |   "isAnAgent" : true,
        |   "safeId" : "XB0000100101711",
-       |   """.stripMargin ++ utr.map(x =>
-      s""" "uniqueTaxReference": "${x.value}",
+       |   """.stripMargin ++ optUtr.map(utr =>
+      s""" "uniqueTaxReference": "${utr.value}",
          |""".stripMargin).getOrElse("") ++
       s""" "suspensionDetails": {"suspensionStatus": false},
          |   "organisation" : {

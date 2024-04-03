@@ -43,7 +43,7 @@ class AgentServicesController @Inject()(
     desConnector
       .getAgentRecord(arn)
       .map {
-      case _@AgentDetailsDesResponse(utrO, Some(agencyDetails), _) => Ok(Json.toJson(AgentDetailsResponse(agencyDetails, utrO)))
+      case _@AgentDetailsDesResponse(optUtr, Some(agencyDetails), _) => Ok(Json.toJson(AgentDetailsResponse(agencyDetails, optUtr)))
       case _ => NoContent
     }
   }
