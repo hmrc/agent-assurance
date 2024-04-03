@@ -137,6 +137,15 @@ trait DesStubs {
           .withStatus(200)
           .withBody(personalDetailsResponseBodyWithValidData(utr))))
 
+  def givenNoDESGetAgentRecord(arn: Arn, optUtr: Option[Utr]): StubMapping =
+    stubFor(
+      get(urlEqualTo(
+        s"/registration/personal-details/arn/${arn.value}"))
+        .willReturn(aResponse()
+          .withStatus(200)
+          .withBody(noPersonalDetailsResponseBodyWithValidData(optUtr))))
+
+
 
   private def clientIdentifierType(identifer: TaxIdentifier): String =
     identifer match {
@@ -146,7 +155,7 @@ trait DesStubs {
     }
 
 
-  def personalDetailsResponseBodyWithValidData(utr: Option[Utr]) =
+  def personalDetailsResponseBodyWithValidData(optUtr: Option[Utr]) =
     s"""
        |{
        |   "isAnOrganisation" : true,
@@ -155,8 +164,8 @@ trait DesStubs {
        |   },
        |   "isAnAgent" : true,
        |   "safeId" : "XB0000100101711",
-       |   """.stripMargin ++ utr.map(x =>
-      s""" "uniqueTaxReference": "${x.value}",
+       |   """.stripMargin ++ optUtr.map(utr =>
+      s""" "uniqueTaxReference": "${utr.value}",
          |""".stripMargin).getOrElse("") ++
           s""" "agencyDetails" : {
        |      "agencyAddress" : {
@@ -195,4 +204,44 @@ trait DesStubs {
        |   "agentReferenceNumber" : "TestARN"
        |}
             """.stripMargin
+
+  def noPersonalDetailsResponseBodyWithValidData(optUtr: Option[Utr]) =
+    s"""
+       |{
+       |   "isAnOrganisation" : true,
+       |   "contactDetails" : {
+       |      "phoneNumber" : "07000000000"
+       |   },
+       |   "isAnAgent" : true,
+       |   "safeId" : "XB0000100101711",
+       |   """.stripMargin ++ optUtr.map(utr =>
+      s""" "uniqueTaxReference": "${utr.value}",
+         |""".stripMargin).getOrElse("") ++
+      s""" "suspensionDetails": {"suspensionStatus": false},
+         |   "organisation" : {
+         |      "organisationName" : "CT AGENT 183",
+         |      "isAGroup" : false,
+         |      "organisationType" : "0000"
+         |   },
+         |   "addressDetails" : {
+         |      "addressLine2" : "Grange Central 183",
+         |      "addressLine3" : "Telford 183",
+         |      "addressLine4" : "Shropshire 183",
+         |      "postalCode" : "TF3 4ER",
+         |      "countryCode" : "GB",
+         |      "addressLine1" : "Matheson House 183"
+         |   },
+         |   "individual" : {
+         |      "firstName" : "John",
+         |      "lastName" : "Smith"
+         |   },
+         |   "isAnASAgent" : true,
+         |   "isAnIndividual" : false,
+         |   "businessPartnerExists" : true,
+         |   "agentReferenceNumber" : "TestARN"
+         |}
+            """.stripMargin
+
 }
+
+
