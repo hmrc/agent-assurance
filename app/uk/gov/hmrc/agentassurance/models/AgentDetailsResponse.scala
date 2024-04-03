@@ -16,14 +16,18 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{JsValue, Json, Writes}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 
-case class AgentDetailsResponse(agencyDetails: AgencyDetails, utr: Option[Utr])
+case class AgentDetailsResponse(agencyDetails: AgencyDetails, optUtr: Option[Utr])
 
 object AgentDetailsResponse {
-  implicit val AgentDetailsResponseFormat: OFormat[AgentDetailsResponse] = Json.format[AgentDetailsResponse]
+  implicit val agentDetailsResponseWrites: Writes[AgentDetailsResponse] = new Writes[AgentDetailsResponse] {
+    override def writes(agentDetailsResponse: AgentDetailsResponse): JsValue =
+      if (agentDetailsResponse.optUtr.isDefined) Json.obj("agencyDetails" -> agentDetailsResponse.agencyDetails, "utr" -> agentDetailsResponse.optUtr)
+      else Json.obj("agencyDetails" -> agentDetailsResponse.agencyDetails)
+  }
 
 }
 
