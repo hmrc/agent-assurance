@@ -35,16 +35,16 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
                                    override val authConnector: AuthConnector
                                   )(implicit ex: ExecutionContext) extends BackendController(cc) with AuthActions {
 
-  def addAmlsData(): Action[AnyContent] = Action.async { request =>
+  def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request => arn: Arn =>
     request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match {
       case Some(JsSuccess(amlsRequest, _)) =>
         if(amlsRequest.isUk) {
-          createUkAmlsRecord(Arn("123132123"), amlsRequest).map {
+          createUkAmlsRecord(arn, amlsRequest).map {
             case Right(_) => Created
             case _ => InternalServerError
           }
         } else {
-          createOverseasAmlsRecord(Arn("123132123"), amlsRequest.membershipNumber).map {
+          createOverseasAmlsRecord(arn, amlsRequest.membershipNumber).map {
             case Right(_) => Created
             case _ => InternalServerError
           }
