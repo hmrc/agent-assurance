@@ -129,13 +129,13 @@ trait DesStubs {
         .withStatus(status)))
   }
 
-  def givenDESGetAgentRecord(arn: Arn, utr: Option[Utr]): StubMapping =
+  def givenDESGetAgentRecord(arn: Arn, utr: Option[Utr], overseas: Boolean = false): StubMapping =
     stubFor(
       get(urlEqualTo(
         s"/registration/personal-details/arn/${arn.value}"))
         .willReturn(aResponse()
           .withStatus(200)
-          .withBody(personalDetailsResponseBodyWithValidData(utr))))
+          .withBody(personalDetailsResponseBodyWithValidData(utr, overseas))))
 
   def givenNoDESGetAgentRecord(arn: Arn, optUtr: Option[Utr]): StubMapping =
     stubFor(
@@ -155,7 +155,7 @@ trait DesStubs {
     }
 
 
-  def personalDetailsResponseBodyWithValidData(optUtr: Option[Utr]) =
+  def personalDetailsResponseBodyWithValidData(optUtr: Option[Utr], overseas: Boolean) =
     s"""
        |{
        |   "isAnOrganisation" : true,
@@ -173,7 +173,7 @@ trait DesStubs {
        |         "addressLine3" : "Town Centre",
        |         "addressLine4" : "Telford",
        |         "postalCode" : "TF3 4ER",
-       |         "countryCode" : "GB",
+       |         "countryCode" : "${if(overseas)"NZ" else "GB"}",
        |         "addressLine1" : "Matheson House"
        |      },
        |      "agencyName" : "ABC Accountants",

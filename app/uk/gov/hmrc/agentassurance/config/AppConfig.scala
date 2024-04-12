@@ -31,7 +31,6 @@ class AppConfig @Inject()(servicesConfig: ServicesConfig) {
 
   val authBaseUrl: String = baseUrl("auth")
   val desBaseUrl: String = baseUrl("des")
-  val acaBaseUrl: String = baseUrl("agent-client-authorisation")
   val esProxyUrl: String = baseUrl("enrolment-store-proxy")
 
   val minimumIRPAYEClients: Int = servicesConfig.getInt("minimumIRPAYEClients")

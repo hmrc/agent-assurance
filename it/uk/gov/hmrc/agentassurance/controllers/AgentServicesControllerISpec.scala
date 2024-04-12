@@ -8,7 +8,7 @@ import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.stubs.{AgentClientAuthorisationStub, DesStubs}
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 
@@ -20,7 +20,6 @@ class AgentServicesControllerISpec extends PlaySpec
   with AgentAuthStubs
   with GuiceOneServerPerSuite
   with WireMockSupport
-  with AgentClientAuthorisationStub
   with DesStubs {
 
 

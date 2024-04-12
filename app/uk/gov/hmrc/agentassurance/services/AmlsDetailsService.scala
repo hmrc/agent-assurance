@@ -39,7 +39,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
   def getAmlsDetailsByArn(arn: Arn)(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
     getAmlsDetails(arn).map {
       case None => // No AMLS record found
-        handleNoAmlsDetails() // Scenarios: #1, #2
+        handleNoAmlsDetails(arn) // Scenarios: #1, #2
       case Some(overseasAmlsDetails: OverseasAmlsDetails) =>
         Future.successful((AmlsStatus.ValidAmlsNonUK, Some(overseasAmlsDetails))) // Scenario #7
       case Some(ukAmlsDetails: UkAmlsDetails) =>
@@ -67,8 +67,8 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     optRenewalDate.exists(renewalDate => LocalDate.now().isAfter(renewalDate) || LocalDate.now().equals(renewalDate))
 
   // User has no AMLS record with us, if their agency is based in the UK then we deem them as UK
-  private def handleNoAmlsDetails()(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
-    agencyDetailsService.agencyDetailsHasUkAddress().map { isUk =>
+  private def handleNoAmlsDetails(arn: Arn)(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
+    agencyDetailsService.agencyDetailsHasUkAddress(arn).map { isUk =>
       (
         if (isUk) AmlsStatus.NoAmlsDetailsUK // Scenario #1
         else AmlsStatus.NoAmlsDetailsNonUK, // Scenario #2

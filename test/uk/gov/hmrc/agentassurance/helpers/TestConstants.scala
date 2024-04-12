@@ -62,14 +62,18 @@ object TestConstants {
   val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(testArn, testOverseasAmlsDetails, None)
   val testUKAmlsRequest: AmlsRequest = AmlsRequest(ukRecord = true, "supervisory", "0123456789", Some(membershipExpiresOnDate))
   val testOverseasAmlsRequest: AmlsRequest = AmlsRequest(ukRecord = false, "supervisory", "0123456789", Some(membershipExpiresOnDate))
-  val agencyDetails:AgencyDetails = AgencyDetails(Some("agencyName"), Some("agencyEmail"), Some("agencyTelephone"), Some(BusinessAddress("addressLine1", None, None, None, None, "GB" )))
-  val testAgentDetailsDesEmptyResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(None, None, None)
-  val testAgentDetailsDesAddressUtrResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(uniqueTaxReference = Some(testUtr), agencyDetails = Some(agencyDetails), suspensionDetails = None)
-  val testAgentDetailsDesResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(uniqueTaxReference = Some(testUtr), agencyDetails = None, suspensionDetails = None)
-  val testAgentDetailsDesResponseNoUtr: AgentDetailsDesResponse = testAgentDetailsDesResponse.copy(uniqueTaxReference = None)
 
+  //DES Agent Record
   val agencyDetailsUk: AgencyDetails = AgencyDetails(None, None, None,
     Some(BusinessAddress("line1", None, None, None, None, "GB")))
   val agencyDetailsOverseas: AgencyDetails = AgencyDetails(None, None, None,
     Some(BusinessAddress("line1", None, None, None, None, "US")))
+  val agencyDetails:AgencyDetails = AgencyDetails(Some("agencyName"), Some("agencyEmail"), Some("agencyTelephone"), Some(BusinessAddress("addressLine1", None, None, None, None, "GB" )))
+  val testAgentDetailsDesEmptyResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(None, None, None)
+  val testAgentDetailsDesAddressUtrResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(uniqueTaxReference = Some(testUtr), agencyDetails = Some(agencyDetails), suspensionDetails = None)
+  val testAgentDetailsDesOverseas: AgentDetailsDesResponse = testAgentDetailsDesAddressUtrResponse.copy(agencyDetails = Some(agencyDetailsOverseas))
+  val testAgentDetailsDesResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(uniqueTaxReference = Some(testUtr), agencyDetails = None, suspensionDetails = None)
+  val testAgentDetailsDesResponseNoUtr: AgentDetailsDesResponse = testAgentDetailsDesResponse.copy(uniqueTaxReference = None)
+
+
 }
