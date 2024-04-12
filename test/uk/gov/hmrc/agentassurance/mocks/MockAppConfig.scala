@@ -28,6 +28,9 @@ trait MockAppConfig extends MockFactory {
   (mockServiceConfig.baseUrl(_: String)).expects(*).atLeastOnce().returning("some-url")
   (mockServiceConfig.getConfString(_: String, _: String)).expects(*, *).atLeastOnce().returning("some-string")
   (mockServiceConfig.getString(_: String)).expects("stride.roles.agent-assurance").atLeastOnce().returning("maintain_agent_manually_assure")
+  (mockServiceConfig.getString(_: String)).expects("internal-auth.token").atLeastOnce().returning("YWdlbnQtYXNzdXJhbmNl")
+  (mockServiceConfig.getBoolean(_: String)).expects("internal-auth-token-enabled").atLeastOnce().returning(false)
+  (mockServiceConfig.getString(_: String)).expects(*).atLeastOnce().returning("other-string")
 
   val mockAppConfig: AppConfig = new AppConfig(mockServiceConfig)
 }
