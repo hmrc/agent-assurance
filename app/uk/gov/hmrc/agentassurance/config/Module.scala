@@ -17,12 +17,25 @@
 package uk.gov.hmrc.agentassurance.config
 
 import com.google.inject.AbstractModule
+import play.api.{Configuration, Environment}
 
 import java.time.{Clock, ZoneOffset}
 
-class Module extends AbstractModule {
+class Module(environment: Environment, configuration: Configuration) extends AbstractModule {
 
   override def configure(): Unit = {
     bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
+
+    val internalAuthTokenEnabled: Boolean = configuration.get[Boolean]("internal-auth-token-enabled")
+
+    if (internalAuthTokenEnabled) {
+      bind(classOf[InternalAuthTokenInitialiser])
+        .to(classOf[InternalAuthTokenInitialiserImpl])
+        .asEagerSingleton()
+    } else {
+      bind(classOf[InternalAuthTokenInitialiser])
+        .to(classOf[NoOpInternalAuthTokenInitialiser])
+        .asEagerSingleton()
+    }
   }
 }
