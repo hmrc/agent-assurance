@@ -53,7 +53,8 @@ class AgentAssuranceControllerISpec extends IntegrationSpec
         "minimumIRSAClients" -> 6,
         "minimumVatDecOrgClients" -> 6,
         "minimumIRCTClients" -> 6,
-        "stride.roles.agent-assurance" -> "maintain_agent_manually_assure")
+        "stride.roles.agent-assurance" -> "maintain_agent_manually_assure",
+        "internal-auth-token-enabled" -> false)
       .overrides(moduleWithOverrides)
 
   implicit val hc: HeaderCarrier = new HeaderCarrier

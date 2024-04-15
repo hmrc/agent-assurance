@@ -33,7 +33,8 @@ class EnrolmentStoreProxyConnectorISpec extends UnitSpec with GuiceOneAppPerSuit
         "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "auditing.consumer.baseUri.host" -> wireMockHost,
-        "auditing.consumer.baseUri.port" -> wireMockPort
+        "auditing.consumer.baseUri.port" -> wireMockPort,
+        "internal-auth-token-enabled" -> false
       ).overrides(moduleWithOverrides)
 
   lazy val moduleWithOverrides: AbstractModule = new AbstractModule {

@@ -35,7 +35,8 @@ class AgentAssuranceControllerOSISpec extends IntegrationSpec with AgentAuthStub
       .configure("microservice.services.auth.host" -> wireMockHost,
         "microservice.services.auth.port" -> wireMockPort,
         "auditing.enabled" -> false,
-        "stride.roles.agent-assurance" -> "maintain_agent_manually_assure")
+        "stride.roles.agent-assurance" -> "maintain_agent_manually_assure",
+        "internal-auth-token-enabled" -> false)
       .overrides(moduleWithOverrides)
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]

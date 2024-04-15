@@ -40,6 +40,28 @@ class AppConfig @Inject()(servicesConfig: ServicesConfig) {
 
   val manuallyAssuredStrideRole: String = servicesConfig.getString("stride.roles.agent-assurance")
 
+  val internalAuthBaseUrl: String = servicesConfig.baseUrl("internal-auth")
+  val internalAuthToken: String  = servicesConfig.getString("internal-auth.token")
+  val internalAuthTokenEnabled: Boolean = servicesConfig.getBoolean("internal-auth-token-enabled")
+
+  private val dmsBaseUrl: String                    = servicesConfig.baseUrl("dms-submission")
+  private val appBaseUrl: String                    = servicesConfig.baseUrl("self")
+  private val dmsSubmissionCallbackEndpoint: String =
+    servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.callbackEndpoint")
+
+  val dmsSubmissionBusinessArea: String                      =
+    servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.businessArea")
+  val dmsSubmissionCallbackUrl: String                       = s"$appBaseUrl/$appName/$dmsSubmissionCallbackEndpoint"
+  val dmsSubmissionClassificationType: String                =
+    servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.classificationType")
+  val dmsSubmissionCustomerId: String                        =
+    servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.customerId")
+  val dmsSubmissionFormId: String                            =
+    servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.formId")
+  val dmsSubmissionSource: String                            =
+    servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.source")
+  val dmsSubmissionUrl: String                               = dmsBaseUrl + "/dms-submission/submit"
+
   val desEnv: String = getConf("des.environment")
   val desAuthToken: String = getConf("des.authorization-token")
 }

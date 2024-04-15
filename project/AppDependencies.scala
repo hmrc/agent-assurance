@@ -4,13 +4,16 @@ object AppDependencies {
 
   private val mongoVer: String      = "1.6.0"
   private val bootstrapVer: String  = "7.23.0"
+  private val openHtmlToPdfVersion = "1.0.10"
 
   lazy val compile = Seq(
-    "uk.gov.hmrc"       %% "bootstrap-backend-play-28" % bootstrapVer,
-    "uk.gov.hmrc"       %% "agent-mtd-identifiers"     % "1.15.0",
-    "uk.gov.hmrc"       %% "agent-kenshoo-monitoring"  % "5.5.0" exclude("uk.gov.hmrc", "bootstrap-backend-play-28"),
-    "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-28"        % mongoVer,
-    "org.julienrf"      %% "play-json-derived-codecs"  % "7.0.0"
+    "uk.gov.hmrc"       %% "bootstrap-backend-play-28"    % bootstrapVer,
+    "uk.gov.hmrc"       %% "agent-mtd-identifiers"        % "1.15.0",
+    "uk.gov.hmrc"       %% "agent-kenshoo-monitoring"     % "5.5.0" exclude("uk.gov.hmrc", "bootstrap-backend-play-28"),
+    "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-28"           % mongoVer,
+    "org.julienrf"      %% "play-json-derived-codecs"     % "7.0.0",
+    "uk.gov.hmrc"       %% "internal-auth-client-play-28" % "2.0.0",
+    "com.openhtmltopdf"  % "openhtmltopdf-pdfbox"         % openHtmlToPdfVersion
   )
 
   lazy val test = Seq(

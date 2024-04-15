@@ -28,6 +28,15 @@ trait MockAppConfig extends MockFactory {
   (mockServiceConfig.baseUrl(_: String)).expects(*).atLeastOnce().returning("some-url")
   (mockServiceConfig.getConfString(_: String, _: String)).expects(*, *).atLeastOnce().returning("some-string")
   (mockServiceConfig.getString(_: String)).expects("stride.roles.agent-assurance").atLeastOnce().returning("maintain_agent_manually_assure")
+  (mockServiceConfig.getString(_: String)).expects("internal-auth.token").atLeastOnce().returning("YWdlbnQtYXNzdXJhbmNl")
+  (mockServiceConfig.getBoolean(_: String)).expects("internal-auth-token-enabled").atLeastOnce().returning(false)
+  (mockServiceConfig.getString(_: String)).expects("microservice.services.dms-submission.contact-details-submission.callbackEndpoint").atLeastOnce().returning("callbackEndpoint")
+  (mockServiceConfig.getString(_: String)).expects("microservice.services.dms-submission.contact-details-submission.businessArea").atLeastOnce().returning("businessArea")
+//  (mockServiceConfig.getString(_: String)).expects("microservice.services.dms-submission.contact-details-submission.classificationType)").atLeastOnce().returning("classificationType")
+  (mockServiceConfig.getString(_: String)).expects("microservice.services.dms-submission.contact-details-submission.customerId").atLeastOnce().returning("customerId")
+//  (mockServiceConfig.getString(_: String)).expects("microservice.services.dms-submission.contact-details-submission.formId)").atLeastOnce().returning("formId")
+  (mockServiceConfig.getString(_: String)).expects("microservice.services.dms-submission.contact-details-submission.source").atLeastOnce().returning("source")
+  (mockServiceConfig.getString(_: String)).expects(*).atLeastOnce().returning("other-string")
 
   val mockAppConfig: AppConfig = new AppConfig(mockServiceConfig)
 }
