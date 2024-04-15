@@ -124,7 +124,8 @@ class DmsService @Inject()(
         .map(_ => DmsResponce(now, ""))
         .recover {
           case error @ UpstreamErrorResponse(message, code, _, _) =>
-          throw UpstreamErrorResponse(message, code, code)
-          case NonFatal(e) => throw new InternalServerException(s"send PDF failed with error:${e.getCause}")
+            throw UpstreamErrorResponse(message, code, code)
+          case NonFatal(e) =>
+            throw new InternalServerException(s"send PDF failed with error:${e.getCause}")
         }
 }

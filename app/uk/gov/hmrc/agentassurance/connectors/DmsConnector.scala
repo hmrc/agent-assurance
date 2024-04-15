@@ -39,7 +39,7 @@ class DmsConnector @Inject()(
 )(implicit ec: ExecutionContext)
     extends BaseConnector {
 
-  private val dmsHeaders: (String, String) = HeaderNames.authorisation -> appConfig.internalAuthToken
+  private def dmsHeaders: (String, String) = HeaderNames.authorisation -> appConfig.internalAuthToken
 
   def sendPdf(
     body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed]

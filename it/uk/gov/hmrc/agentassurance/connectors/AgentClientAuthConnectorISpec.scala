@@ -37,7 +37,8 @@ class AgentClientAuthConnectorISpec extends UnitSpec with GuiceOneAppPerSuite wi
         "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "auditing.consumer.baseUri.host" -> wireMockHost,
-        "auditing.consumer.baseUri.port" -> wireMockPort
+        "auditing.consumer.baseUri.port" -> wireMockPort,
+        "internal-auth-token-enabled" -> false
       )
       .bindings(bind[AgentClientAuthConnectorImpl].toInstance(acaConnector))
 
