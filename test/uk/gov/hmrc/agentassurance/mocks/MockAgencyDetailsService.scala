@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentassurance.mocks
 
 import org.scalamock.scalatest.MockFactory
 import uk.gov.hmrc.agentassurance.services.AgencyDetailsService
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,8 +28,8 @@ trait MockAgencyDetailsService extends MockFactory {
   val mockAgencyDetailsService = mock[AgencyDetailsService]
 
   def mockIsUkAddress()(response: Boolean) =
-    (mockAgencyDetailsService.agencyDetailsHasUkAddress()( _: ExecutionContext, _: HeaderCarrier))
-      .expects(*,*)
+    (mockAgencyDetailsService.agencyDetailsHasUkAddress(_: Arn)( _: ExecutionContext, _: HeaderCarrier))
+      .expects(*,*,*)
       .returning(Future.successful(response))
 
 }
