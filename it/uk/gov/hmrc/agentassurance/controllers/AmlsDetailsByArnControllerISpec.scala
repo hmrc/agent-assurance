@@ -10,7 +10,7 @@ import play.api.libs.ws.{BodyWritable, WSClient}
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories._
-import uk.gov.hmrc.agentassurance.stubs.{AgentClientAuthorisationStub, DesStubs}
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
 import uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, InstantClockTestSupport, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -27,7 +27,6 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
   with WireMockSupport
   with CleanMongoCollectionSupport
   with InstantClockTestSupport
-  with AgentClientAuthorisationStub
   with DesStubs {
 
 
@@ -55,8 +54,6 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
     new GuiceApplicationBuilder()
       .configure("microservice.services.auth.host" -> wireMockHost,
         "microservice.services.auth.port" -> wireMockPort,
-        "microservice.services.agent-client-authorisation.host" -> wireMockHost,
-        "microservice.services.agent-client-authorisation.port" -> wireMockPort,
         "microservice.services.des.host" -> wireMockHost,
         "microservice.services.des.port" -> wireMockPort,
         "auditing.enabled" -> false,
@@ -108,12 +105,20 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
   val amlsEntity: UkAmlsEntity = UkAmlsEntity(utr = Some(testUtr), amlsDetails = testAmlsDetails, arn = Some(arn), createdOn = testCreatedDate, amlsSource = AmlsSource.Subscription)
 
   "GET /amls/arn/:arn" should {
-    s"return OK with status when no AMLS records found for the ARN" in {
+    s"return OK with status NoAmlsDetailsUK when no AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
-      getAgentDetails(Json.toJson(agentDetails()), OK)
+      givenDESGetAgentRecord(arn, Some(testUtr))
       val response = doRequest()
       response.status mustBe OK
       response.json mustBe Json.obj("status" -> "NoAmlsDetailsUK")
+    }
+
+    s"return OK with status NoAmlsDetailsNonUK when no AMLS records found for the ARN" in {
+      isLoggedInAsStride("stride")
+      givenDESGetAgentRecord(arn, Some(testUtr), overseas = true)
+      val response = doRequest()
+      response.status mustBe OK
+      response.json mustBe Json.obj("status" -> "NoAmlsDetailsNonUK")
     }
 
     s"return OK with status when UK AMLS records found for the ARN" in {

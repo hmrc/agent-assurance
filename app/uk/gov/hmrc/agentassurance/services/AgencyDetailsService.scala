@@ -17,16 +17,16 @@
 package uk.gov.hmrc.agentassurance.services
 
 import play.api.Logging
-import uk.gov.hmrc.agentassurance.connectors.AgentClientAuthConnector
+import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AgencyDetailsService @Inject()(acaConnector: AgentClientAuthConnector) extends Logging {
+class AgencyDetailsService @Inject()(desConnector: DesConnector) extends Logging {
 
-  def agencyDetailsHasUkAddress()(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Boolean] =
-   acaConnector.getAgencyDetails().map(_.exists(_.hasUkAddress))
-
+  def agencyDetailsHasUkAddress(arn: Arn)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Boolean] =
+   desConnector.getAgentRecord(arn).map(_.agencyDetails.exists(_.hasUkAddress))
 }
