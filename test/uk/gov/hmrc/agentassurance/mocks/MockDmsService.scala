@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models
+package uk.gov.hmrc.agentassurance.mocks
 
-import play.api.libs.json.{Json, OFormat}
+import org.scalamock.scalatest.MockFactory
+import uk.gov.hmrc.agentassurance.models.{DmsResponse, DmsSubmissionReference}
+import uk.gov.hmrc.agentassurance.services.DmsService
+import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.Instant
+import scala.concurrent.Future
 
-case class DmsResponce(
-                         processingDate: Instant,
-                         reference: String
-                       )
+trait MockDmsService extends MockFactory {
 
-object DmsResponce {
-  implicit val format: OFormat[DmsResponce] = Json.format[DmsResponce]
+  val mockDmsService = mock[DmsService]
+
+  def mockSubmitToDmsSuccess =
+  (mockDmsService.submitToDms(_: Option[String], _: Instant, _: DmsSubmissionReference)(_: HeaderCarrier))
+    .expects(*,*,*,*).returning(Future successful DmsResponse(Instant.now(), ""))
+
 }
-
-

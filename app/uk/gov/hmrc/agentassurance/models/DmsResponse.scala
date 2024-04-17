@@ -18,13 +18,15 @@ package uk.gov.hmrc.agentassurance.models
 
 import play.api.libs.json.{Json, OFormat}
 
-import scala.util.Random
+import java.time.Instant
 
-case class DmsSubmissionReference(submissionReference:String) extends Product
+case class DmsResponse(
+                         processingDate: Instant,
+                         reference: String
+                       )
 
-object DmsSubmissionReference {
-  def create: DmsSubmissionReference = DmsSubmissionReference(Random.alphanumeric.take(10).mkString.map(_.toUpper))
-  implicit val format: OFormat[DmsSubmissionReference] = Json.format[DmsSubmissionReference]
+object DmsResponse {
+  implicit val format: OFormat[DmsResponse] = Json.format[DmsResponse]
 }
 
 

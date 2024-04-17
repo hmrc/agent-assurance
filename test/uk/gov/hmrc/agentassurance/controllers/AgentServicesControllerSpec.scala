@@ -23,7 +23,7 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
-import uk.gov.hmrc.agentassurance.mocks.{MockAppConfig, MockAuthConnector, MockDesConnector}
+import uk.gov.hmrc.agentassurance.mocks.{MockAppConfig, MockAuthConnector, MockDesConnector, MockDmsService}
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{affinityGroup, allEnrolments, credentials}
@@ -35,9 +35,10 @@ class AgentServicesControllerSpec extends PlaySpec
   with MockAuthConnector
   with MockAppConfig
   with MockDesConnector
+  with MockDmsService
   with BeforeAndAfterEach with ScalaFutures {
 
-  val controller = new AgentServicesController(mockDesConnector, mockAuthConnector, stubControllerComponents())(mockAppConfig, ExecutionContext.global)
+  val controller = new AgentServicesController(mockDesConnector, mockAuthConnector, mockDmsService, stubControllerComponents())(mockAppConfig, ExecutionContext.global)
 
   "getAgencyDetails" should {
     "return forbidden" when {
@@ -102,6 +103,21 @@ class AgentServicesControllerSpec extends PlaySpec
 
     }
 
+  }
+
+  "PostAgencyDetails" should {
+    "return Created when successful" in {
+      inSequence {
+        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+        mockSubmitToDmsSuccess
+      }
+
+      val response = controller.postAgencyDetails(testArn)(FakeRequest()
+        .withJsonBody(Json.toJson(""))
+        .withHeaders(CONTENT_TYPE -> "application/json"))
+
+      status(response) mustBe CREATED
+    }
   }
 
 }
