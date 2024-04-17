@@ -32,3 +32,4 @@ GET           /amls/arn/:arn                                                    
 POST          /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.postAmlsDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
 
 GET           /agent/agency-details/arn/:arn                                                @uk.gov.hmrc.agentassurance.controllers.AgentServicesController.getAgencyDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
+POST          /agent/agency-details/arn/:arn                                                @uk.gov.hmrc.agentassurance.controllers.AgentServicesController.postAgencyDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)

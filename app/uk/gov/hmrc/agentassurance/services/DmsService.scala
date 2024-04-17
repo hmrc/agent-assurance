@@ -23,7 +23,7 @@ import play.api.mvc.MultipartFormData
 import play.api.mvc.MultipartFormData.{DataPart, FilePart}
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DmsConnector
-import uk.gov.hmrc.agentassurance.models.{DmsResponce, DmsSubmissionReference}
+import uk.gov.hmrc.agentassurance.models.{DmsResponse, DmsSubmissionReference}
 import uk.gov.hmrc.agentassurance.utils.PdfGenerator.buildPdf
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, UpstreamErrorResponse}
 
@@ -48,7 +48,7 @@ class DmsService @Inject()(
                   now: Instant,
                   submissionReference: DmsSubmissionReference)(
     implicit hc: HeaderCarrier
-  ): Future[DmsResponce] =
+  ): Future[DmsResponse] =
     for {
       pdf      <- createPdf(base64EncodedDmsSubmissionHtml)
       body     <- createBody(pdf, now,submissionReference)
@@ -98,7 +98,7 @@ class DmsService @Inject()(
     Source(
       Seq(
         DataPart("callbackUrl", appConfig.dmsSubmissionCallbackUrl),
-        MultipartFormData.DataPart("submissionReference", submissionReference.submissionReference),
+        DataPart("submissionReference", submissionReference.submissionReference),
         DataPart("metadata.source", appConfig.dmsSubmissionSource),
         DataPart("metadata.timeOfReceipt", dateOfReceipt),
         DataPart("metadata.formId", appConfig.dmsSubmissionFormId),
@@ -118,10 +118,10 @@ class DmsService @Inject()(
   def sendPdf(
     body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed],
     now: Instant
-  )(implicit hc: HeaderCarrier): Future[DmsResponce] =
+  )(implicit hc: HeaderCarrier): Future[DmsResponse] =
       dmsConnector
         .sendPdf(body)
-        .map(_ => DmsResponce(now, ""))
+        .map(_ => DmsResponse(now, ""))
         .recover {
           case error @ UpstreamErrorResponse(message, code, _, _) =>
             throw UpstreamErrorResponse(message, code, code)

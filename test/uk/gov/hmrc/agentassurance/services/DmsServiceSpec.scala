@@ -20,7 +20,7 @@ import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.mocks._
-import uk.gov.hmrc.agentassurance.models.{DmsResponce, DmsSubmissionReference}
+import uk.gov.hmrc.agentassurance.models.{DmsResponse, DmsSubmissionReference}
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, UpstreamErrorResponse}
 
 import java.time.{Instant, LocalDateTime, ZoneId}
@@ -53,7 +53,7 @@ class DmsServiceSpec extends PlaySpec
 
       val result = await(service.submitToDms(Some(encoded), timestamp, DmsSubmissionReference("DmsSubmissionReference"))(hc))
 
-      result mustBe DmsResponce(timestamp, "")
+      result mustBe DmsResponse(timestamp, "")
     }
 
     "return upstream error if submission fails" in {
