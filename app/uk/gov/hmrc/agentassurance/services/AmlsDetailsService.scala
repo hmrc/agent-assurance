@@ -21,7 +21,8 @@ import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, ArchivedAmlsRepository, OverseasAmlsRepository}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
+import uk.gov.hmrc.http.UpstreamErrorResponse.Upstream5xxResponse
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, UpstreamErrorResponse}
 
 import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
@@ -46,8 +47,9 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
         if (ukAmlsDetails.supervisoryBodyIsHmrc) {
           ukAmlsDetails.membershipNumber.map { membershipNumber =>
             //this call may have update ASA AMLS expiry date side-effect
-            processUkHmrcAmlsDetails(arn, membershipNumber, ukAmlsDetails).map { amlsStatus =>
-              (amlsStatus, Some(ukAmlsDetails)) // Scenarios: #5a, #5b, #6a, #6b #8, #9
+            processUkHmrcAmlsDetails(arn, membershipNumber, ukAmlsDetails).map {
+              amlsStatus =>
+                (amlsStatus, Some(ukAmlsDetails)) // Scenarios: #5a, #5b, #6a, #6b #8, #9
             }
           }.getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, Some(ukAmlsDetails)))) // Scenario #10
         } else { // supervisoryBodyIsNotHmrc
@@ -77,6 +79,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     }
   }
 
+  // TODO - Add test when upgrading play to test private methods
   private def processUkHmrcAmlsDetails(arn: Arn, membershipNumber: String, asaAmlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[AmlsStatus] = {
     desConnector.getAmlsSubscriptionStatus(membershipNumber).map {
       desAmlsRecord =>
@@ -93,6 +96,13 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
             // catch all where we won't use the ETMP record and just use ASA
             if (hasRenewalDateExpired(asaAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
         }
+    }.recover {
+      case error: UpstreamErrorResponse if UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
+        logger.warn(s"DES API#1028 returned the following response - status: ${error.statusCode}, message: ${error.message}")
+        AmlsStatus.NoAmlsDetailsUK
+      case Upstream5xxResponse(error) if error.statusCode == 503 && (error.message.contains("REGIME") | error.message.contains("Technical")) =>
+        logger.warn(s"DES API#1028 returned the following response - status: ${error.statusCode}, message: ${error.message}")
+        AmlsStatus.NoAmlsDetailsUK
     }
   }
 
@@ -144,15 +154,15 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
           getOrRetrieveUtr(arn)
             .flatMap(mUtr =>
               amlsRepository.createOrUpdate( // this method returns old document BEFORE updating it
-            arn,
-            UkAmlsEntity(
-              utr = mUtr,
-              amlsDetails = ukAmlsDetails,
-              arn = Some(arn),
-              createdOn = LocalDate.now,
-              amlsSource = amlsSource
-            )
-          ))
+                arn,
+                UkAmlsEntity(
+                  utr = mUtr,
+                  amlsDetails = ukAmlsDetails,
+                  arn = Some(arn),
+                  createdOn = LocalDate.now,
+                  amlsSource = amlsSource
+                )
+              ))
         case overseasAmlsDetails: OverseasAmlsDetails =>
           overseasAmlsRepository.createOrUpdate( // this method returns old document BEFORE updating it
             OverseasAmlsEntity(
@@ -178,7 +188,7 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
   private def getOrRetrieveUtr(arn: Arn)(implicit hc: HeaderCarrier): Future[Option[Utr]] =
     for {
       a <- amlsRepository.getUtr(arn)
-      b <- if(a.isEmpty) desConnector.getAgentRecord(arn).map(_.uniqueTaxReference) else Future.successful(a)
+      b <- if (a.isEmpty) desConnector.getAgentRecord(arn).map(_.uniqueTaxReference) else Future.successful(a)
     } yield b
 
 
