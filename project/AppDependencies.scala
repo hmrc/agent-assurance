@@ -13,7 +13,8 @@ object AppDependencies {
     "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-28"           % mongoVer,
     "org.julienrf"      %% "play-json-derived-codecs"     % "7.0.0",
     "uk.gov.hmrc"       %% "internal-auth-client-play-28" % "2.0.0",
-    "com.openhtmltopdf"  % "openhtmltopdf-pdfbox"         % openHtmlToPdfVersion
+    "com.openhtmltopdf"  % "openhtmltopdf-pdfbox"         % openHtmlToPdfVersion,
+    "com.beachape"      %% "enumeratum-play-json"         % "1.8.0",
   )
 
   lazy val test = Seq(
