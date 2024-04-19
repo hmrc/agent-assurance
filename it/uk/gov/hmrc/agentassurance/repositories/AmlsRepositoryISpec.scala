@@ -24,7 +24,7 @@ class AmlsRepositoryISpec extends PlaySpec with DefaultPlayMongoRepositorySuppor
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
-      .configure("internal-auth-token-enabled" -> false)
+      .configure("internal-auth-token-enabled-on-start" -> false)
       .overrides(moduleWithOverrides)
   override lazy val repository = new AmlsRepositoryImpl(mongoComponent)
 

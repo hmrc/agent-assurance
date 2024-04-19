@@ -47,7 +47,7 @@ class PropertiesControllerISpec extends UnitSpec
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "auditing.consumer.baseUri.host" -> wireMockHost,
         "auditing.consumer.baseUri.port" -> wireMockPort,
-        "internal-auth-token-enabled" -> false)
+        "internal-auth-token-enabled-on-start" -> false)
       .overrides(moduleWithOverrides)
 
   override implicit lazy val app: Application = appBuilder.build()
