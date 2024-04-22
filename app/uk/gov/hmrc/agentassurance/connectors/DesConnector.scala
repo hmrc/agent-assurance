@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentassurance.connectors
 
 import java.net.URL
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -138,7 +139,8 @@ class DesConnectorImpl @Inject() (httpGet: HttpClientV2, metrics: Metrics)(impli
   def getAmlsSubscriptionStatus(
       amlsRegistrationNumber: String
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord] = {
-    val url = new URL(s"$baseUrl/anti-money-laundering/subscription/$amlsRegistrationNumber/status")
+    val encodedRegNumber = UriEncoding.encodePathSegment(amlsRegistrationNumber, UTF_8.name)
+    val url              = new URL(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status")
     getWithDesHeaders[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
   }
 
