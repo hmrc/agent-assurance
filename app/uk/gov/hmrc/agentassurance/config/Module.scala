@@ -26,7 +26,7 @@ class Module(environment: Environment, configuration: Configuration) extends Abs
   override def configure(): Unit = {
     bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
 
-    val internalAuthTokenEnabled: Boolean = configuration.get[Boolean]("internal-auth-token-enabled")
+    val internalAuthTokenEnabled: Boolean = configuration.get[Boolean]("internal-auth-token-enabled-on-start")
 
     if (internalAuthTokenEnabled) {
       bind(classOf[InternalAuthTokenInitialiser])

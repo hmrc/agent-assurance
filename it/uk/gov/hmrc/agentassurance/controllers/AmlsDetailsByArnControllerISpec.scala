@@ -58,7 +58,7 @@ class AmlsDetailsByArnControllerISpec extends PlaySpec
         "microservice.services.des.port" -> wireMockPort,
         "auditing.enabled" -> false,
         "stride.roles.agent-assurance" -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled" -> false
+        "internal-auth-token-enabled-on-start" -> false
       )
       .overrides(moduleWithOverrides)
 

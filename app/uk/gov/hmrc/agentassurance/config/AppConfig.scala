@@ -42,7 +42,7 @@ class AppConfig @Inject()(servicesConfig: ServicesConfig) {
 
   val internalAuthBaseUrl: String = servicesConfig.baseUrl("internal-auth")
   val internalAuthToken: String  = servicesConfig.getString("internal-auth.token")
-  val internalAuthTokenEnabled: Boolean = servicesConfig.getBoolean("internal-auth-token-enabled")
+  val internalAuthTokenEnabled: Boolean = servicesConfig.getBoolean("internal-auth-token-enabled-on-start")
 
   private val dmsBaseUrl: String                    = servicesConfig.baseUrl("dms-submission")
   private val appBaseUrl: String                    = servicesConfig.baseUrl("self")

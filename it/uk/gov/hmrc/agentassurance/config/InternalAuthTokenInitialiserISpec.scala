@@ -13,7 +13,7 @@ class InternalAuthTokenInitialiserISpec extends UnitSpec with WireMockSupport wi
 
 /*  override def fakeApplication(): Application = GuiceApplicationBuilder()
     .configure(
-      "internal-auth-token-enabled" -> true,
+      "internal-auth-token-enabled-on-start" -> true,
       "internal-auth.token" -> authToken,
       "microservice.services.internal-auth.host" -> wireMockHost,
       "microservice.services.internal-auth.port" -> wireMockPort
@@ -40,7 +40,7 @@ class InternalAuthTokenInitialiserISpec extends UnitSpec with WireMockSupport wi
 
       GuiceApplicationBuilder()
         .configure(
-          "internal-auth-token-enabled" -> true,
+          "internal-auth-token-enabled-on-start" -> true,
           "internal-auth.token" -> authToken,
           "microservice.services.internal-auth.host" -> wireMockHost,
           "microservice.services.internal-auth.port" -> wireMockPort
