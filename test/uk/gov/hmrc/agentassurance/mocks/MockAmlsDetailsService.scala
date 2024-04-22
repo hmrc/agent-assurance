@@ -16,21 +16,26 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import scala.concurrent.Future
+
 import org.scalamock.handlers.CallHandler2
 import org.scalamock.scalatest.MockFactory
-import uk.gov.hmrc.agentassurance.models.{AmlsDetails, AmlsStatus}
+import org.scalatest.TestSuite
+import uk.gov.hmrc.agentassurance.models.AmlsDetails
+import uk.gov.hmrc.agentassurance.models.AmlsStatus
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.Future
-
-trait MockAmlsDetailsService extends MockFactory {
+trait MockAmlsDetailsService extends MockFactory { this: TestSuite =>
 
   val mockAmlsDetailsService: AmlsDetailsService = mock[AmlsDetailsService]
 
-  def mockGetAmlsDetailsByArn(arn: Arn)(response: Future[(AmlsStatus, Option[AmlsDetails])]): CallHandler2[Arn, HeaderCarrier, Future[(AmlsStatus, Option[AmlsDetails])]] = {
-    (mockAmlsDetailsService.getAmlsDetailsByArn(_: Arn)(_: HeaderCarrier))
+  def mockGetAmlsDetailsByArn(arn: Arn)(
+      response: Future[(AmlsStatus, Option[AmlsDetails])]
+  ): CallHandler2[Arn, HeaderCarrier, Future[(AmlsStatus, Option[AmlsDetails])]] = {
+    (mockAmlsDetailsService
+      .getAmlsDetailsByArn(_: Arn)(_: HeaderCarrier))
       .expects(arn, *)
       .returning(response)
   }

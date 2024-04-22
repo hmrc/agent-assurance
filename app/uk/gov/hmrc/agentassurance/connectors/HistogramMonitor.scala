@@ -16,18 +16,22 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import com.codahale.metrics.MetricRegistry
-
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.util.Success
+
+import com.codahale.metrics.MetricRegistry
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 trait HistogramMonitor {
 
-  val kenshooRegistry: MetricRegistry
+  val metrics: Metrics
+  val registry: MetricRegistry = metrics.defaultRegistry
 
   def reportHistogramValue[T](name: String)(function: => Future[Int])(implicit ec: ExecutionContext): Future[Int] =
     function.andThen {
-      case Success(c) => kenshooRegistry.getHistograms.getOrDefault(histogramName(name), kenshooRegistry.histogram(histogramName(name))).update(c)
+      case Success(c) =>
+        registry.getHistograms.getOrDefault(histogramName(name), registry.histogram(histogramName(name))).update(c)
     }
 
   def histogramName[T](counterName: String): String = {

@@ -16,29 +16,32 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{JsValue, Json}
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-
 import java.time.temporal.ChronoUnit
-import java.time.{Instant, LocalDate}
+import java.time.Instant
+import java.time.LocalDate
+
+import play.api.libs.json.Format
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 case class ArchivedAmlsEntity(
-                               ukRecord: Boolean,
-                               createdAt: JsValue = Json.obj("$date" -> Instant.now().truncatedTo(ChronoUnit.SECONDS)),
-                               arn: Arn,
-                               utr: Option[Utr],
-                               supervisoryBody: String,
-                               originalCreatedOn: Option[LocalDate], //when the record was created in the other collection
-                               membershipNumber: Option[String],
-                               amlsSafeId: Option[String],
-                               agentBprSafeId: Option[String],
-                               appliedOn: Option[LocalDate], //when they applied for HMRC AMLS
-                               membershipExpiresOn: Option[LocalDate],
-                             )
-
+    ukRecord: Boolean,
+    createdAt: JsValue = Json.obj("$date" -> Instant.now().truncatedTo(ChronoUnit.SECONDS)),
+    arn: Arn,
+    utr: Option[Utr],
+    supervisoryBody: String,
+    originalCreatedOn: Option[LocalDate], // when the record was created in the other collection
+    membershipNumber: Option[String],
+    amlsSafeId: Option[String],
+    agentBprSafeId: Option[String],
+    appliedOn: Option[LocalDate], // when they applied for HMRC AMLS
+    membershipExpiresOn: Option[LocalDate],
+)
 
 object ArchivedAmlsEntity {
-  implicit val format = Json.format[ArchivedAmlsEntity]
+  implicit val format: Format[ArchivedAmlsEntity] = Json.format[ArchivedAmlsEntity]
 
   def apply(arn: Arn, amlsEntity: AmlsEntity): ArchivedAmlsEntity = {
     amlsEntity match {
@@ -54,7 +57,8 @@ object ArchivedAmlsEntity {
           amlsSafeId = amlsDetails.amlsSafeId,
           agentBprSafeId = amlsDetails.agentBPRSafeId,
           appliedOn = amlsDetails.appliedOn,
-          membershipExpiresOn = amlsDetails.membershipExpiresOn)
+          membershipExpiresOn = amlsDetails.membershipExpiresOn
+        )
       case os: OverseasAmlsEntity =>
         val amlsDetails = os.amlsDetails
         ArchivedAmlsEntity(
@@ -75,11 +79,12 @@ object ArchivedAmlsEntity {
 }
 
 // for the ASA AMLS journey (using POST /amls/arn/:arn)
-case class AmlsRequest(ukRecord: Boolean,
-                       supervisoryBody: String,
-                       membershipNumber: String,
-                       membershipExpiresOn: Option[LocalDate]
-                      ) {
+case class AmlsRequest(
+    ukRecord: Boolean,
+    supervisoryBody: String,
+    membershipNumber: String,
+    membershipExpiresOn: Option[LocalDate]
+) {
   def toAmlsEntity(amlsRequest: AmlsRequest): AmlsDetails = {
     if (amlsRequest.ukRecord)
       UkAmlsDetails(
@@ -93,10 +98,11 @@ case class AmlsRequest(ukRecord: Boolean,
     else
       OverseasAmlsDetails(
         supervisoryBody = amlsRequest.supervisoryBody,
-        membershipNumber = Some(amlsRequest.membershipNumber))
+        membershipNumber = Some(amlsRequest.membershipNumber)
+      )
   }
 }
 
 object AmlsRequest {
-  implicit val format = Json.format[AmlsRequest]
+  implicit val format: Format[AmlsRequest] = Json.format[AmlsRequest]
 }

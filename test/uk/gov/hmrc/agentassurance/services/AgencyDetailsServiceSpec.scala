@@ -16,17 +16,20 @@
 
 package uk.gov.hmrc.agentassurance.services
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentassurance.helpers.TestConstants.{testAgentDetailsDesAddressUtrResponse, testAgentDetailsDesOverseas, testAgentDetailsDesResponse, testArn}
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesAddressUtrResponse
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesOverseas
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn
 import uk.gov.hmrc.agentassurance.mocks.MockDesConnector
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 class AgencyDetailsServiceSpec extends PlaySpec with MockDesConnector {
 
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val hc: HeaderCarrier    = HeaderCarrier()
   val service: AgencyDetailsService = new AgencyDetailsService(mockDesConnector)
 
   "isUkAddress" should {

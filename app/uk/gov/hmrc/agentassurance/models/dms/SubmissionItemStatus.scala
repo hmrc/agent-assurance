@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.agentassurance.models.dms
 
-import enumeratum.{Enum, EnumEntry}
+import enumeratum.Enum
+import enumeratum.EnumEntry
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentassurance.utils.EnumFormat
 

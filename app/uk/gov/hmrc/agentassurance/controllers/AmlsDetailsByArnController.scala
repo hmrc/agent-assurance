@@ -16,25 +16,39 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import play.api.libs.json.{JsError, JsSuccess, Json}
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import play.api.libs.json.JsError
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.Json
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.{AmlsRequest, OverseasAmlsDetails, OverseasAmlsDetailsResponse, UkAmlsDetails, UkAmlsDetailsResponse}
+import uk.gov.hmrc.agentassurance.models.AmlsRequest
+import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
+import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetailsResponse
+import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
+import uk.gov.hmrc.agentassurance.models.UkAmlsDetailsResponse
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
-
 @Singleton
-class AmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsService,
-                                           val authConnector: AuthConnector,
-                                           override val controllerComponents: ControllerComponents
-                                          )(implicit val appConfig: AppConfig, ec: ExecutionContext) extends BackendController(controllerComponents) with AuthActions {
+class AmlsDetailsByArnController @Inject() (
+    amlsDetailsService: AmlsDetailsService,
+    val authConnector: AuthConnector,
+    override val controllerComponents: ControllerComponents
+)(implicit val appConfig: AppConfig, ec: ExecutionContext)
+    extends BackendController(controllerComponents)
+    with AuthActions {
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
@@ -50,20 +64,27 @@ class AmlsDetailsByArnController @Inject()(amlsDetailsService: AmlsDetailsServic
       }
     }
 
-  def postAmlsDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgent {
-    implicit request =>
-      request.body.asJson.map {
+  def postAmlsDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgent { implicit request =>
+    request.body.asJson
+      .map {
         _.validate[AmlsRequest] match {
           case JsSuccess(amlsRequest, _) =>
             amlsDetailsService.storeAmlsRequest(arn, amlsRequest).map {
               case Right(_) => Created
               case Left(error) =>
-                throw new InternalServerException(s"[AmlsDetailsByArnController][postAmlsDetails] failed to store new AMLS details. Error - ${error.toString}")
+                throw new InternalServerException(
+                  s"[AmlsDetailsByArnController][postAmlsDetails] failed to store new AMLS details. Error - ${error.toString}"
+                )
             }
           case JsError(errors) =>
-            Future.successful(BadRequest(s"[AmlsDetailsByArnController][postAmlsDetails] Could not parse JSON body: $errors"))
+            Future.successful(
+              BadRequest(s"[AmlsDetailsByArnController][postAmlsDetails] Could not parse JSON body: $errors")
+            )
         }
-      }.getOrElse(Future.successful(BadRequest("[AmlsDetailsByArnController][postAmlsDetails] No JSON found in request")))
+      }
+      .getOrElse(
+        Future.successful(BadRequest("[AmlsDetailsByArnController][postAmlsDetails] No JSON found in request"))
+      )
   }
 
 }

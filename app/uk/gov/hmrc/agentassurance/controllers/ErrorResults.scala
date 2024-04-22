@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
-import play.api.libs.json.{JsValue, Json, Writes}
+import play.api.libs.json.Writes
 import play.api.mvc.Results.Forbidden
 
 object ErrorResults {
@@ -28,5 +30,7 @@ object ErrorResults {
     override def writes(body: ErrorBody): JsValue = Json.obj("code" -> body.code, "message" -> body.message)
   }
 
-  val NoPermission = Forbidden(toJson(ErrorBody("NO_PERMISSION", "The logged in user is not permitted to perform the operation.")))
+  val NoPermission = Forbidden(
+    toJson(ErrorBody("NO_PERMISSION", "The logged in user is not permitted to perform the operation."))
+  )
 }

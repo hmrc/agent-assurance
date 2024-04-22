@@ -16,16 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.utils
 
+import java.io.ByteArrayOutputStream
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 
-
-import java.io.ByteArrayOutputStream
-
 object PdfGenerator {
   def buildPdf(html: String): ByteArrayOutputStream = {
-    val os       = new ByteArrayOutputStream()
-    val builder  = new PdfRendererBuilder
+    val os      = new ByteArrayOutputStream()
+    val builder = new PdfRendererBuilder
     val renderer = builder
       .useFont(() => getClass.getResourceAsStream("/pdf/arial.ttf"), "Arial")
       .usePdfUaAccessbility(true)

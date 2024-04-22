@@ -16,39 +16,47 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import java.time.LocalDate
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
 import play.api.mvc.Result
-import play.api.test.Helpers._
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks._
-import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsRecordExists, AmlsUnexpectedMongoError, UniqueKeyViolationError}
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsRecordExists
+import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.AmlsError.UniqueKeyViolationError
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{affinityGroup, allEnrolments, credentials}
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.affinityGroup
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.credentials
+import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
 import uk.gov.hmrc.auth.core.syntax.retrieved.authSyntaxForRetrieved
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.LocalDate
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-
-class AgentAssuranceControllerSpec extends PlaySpec
-  with MockFactory
-  with MockAuthConnector
-  with MockAmlsRepository
-  with MockOverseasAmlsRepository
-  with MockEnrolmentStoreProxyConnector
-  with MockDesConnector
-  with MockAppConfig
-  with BeforeAndAfterEach {
+class AgentAssuranceControllerSpec
+    extends PlaySpec
+    with MockFactory
+    with MockAuthConnector
+    with MockAmlsRepository
+    with MockOverseasAmlsRepository
+    with MockEnrolmentStoreProxyConnector
+    with MockDesConnector
+    with MockAppConfig
+    with BeforeAndAfterEach {
 
   implicit val appConfig: AppConfig = mockAppConfig
 
@@ -156,13 +164,17 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
       val utr = Utr("7000000002")
 
-      def doRequest(): Future[Result] = controller.getAmlsDetails(utr)(FakeRequest()
-        .withHeaders(CONTENT_TYPE -> "application/json"))
+      def doRequest(): Future[Result] = controller.getAmlsDetails(utr)(
+        FakeRequest()
+          .withHeaders(CONTENT_TYPE -> "application/json")
+      )
 
       "not an agent or stride should return forbidden" in {
 
         inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithoutIrSAAgent and None and None)
+          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+            enrolmentsWithoutIrSAAgent.and(None).and(None)
+          )
         }
 
         val response = doRequest()
@@ -173,7 +185,9 @@ class AgentAssuranceControllerSpec extends PlaySpec
       "an agent with non existing utr record should return not found" in {
 
         inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+            enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+          )
           mockGetAmls(utr)(None)
         }
 
@@ -184,8 +198,19 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
       "an agent with existing aml record should return amls details" in {
         inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
-          mockGetAmls(utr)(Some(UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
+          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+            enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+          )
+          mockGetAmls(utr)(
+            Some(
+              UkAmlsDetails(
+                "supervisory",
+                membershipNumber = Some("0123456789"),
+                appliedOn = None,
+                membershipExpiresOn = Some(LocalDate.now())
+              )
+            )
+          )
         }
 
         val response = doRequest()
@@ -195,7 +220,9 @@ class AgentAssuranceControllerSpec extends PlaySpec
       "a stride user with non existing utr record user should return not found" in {
 
         inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithStride and None and Some(Credentials("", "PrivilegedApplication")))
+          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+            enrolmentsWithStride.and(None).and(Some(Credentials("", "PrivilegedApplication")))
+          )
           mockGetAmls(utr)(None)
         }
 
@@ -205,8 +232,19 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
       "a stride user with existing aml record should return amls details" in {
         inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithStride and None and Some(Credentials("", "PrivilegedApplication")))
-          mockGetAmls(utr)(Some(UkAmlsDetails("abc", membershipNumber = Some("001"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
+          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+            enrolmentsWithStride.and(None).and(Some(Credentials("", "PrivilegedApplication")))
+          )
+          mockGetAmls(utr)(
+            Some(
+              UkAmlsDetails(
+                "abc",
+                membershipNumber = Some("001"),
+                appliedOn = None,
+                membershipExpiresOn = Some(LocalDate.now())
+              )
+            )
+          )
         }
 
         val response = doRequest()
@@ -217,19 +255,27 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
     "storeAmlsDetails" should {
 
-      val amlsDetails = UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))
+      val amlsDetails = UkAmlsDetails(
+        "supervisory",
+        membershipNumber = Some("0123456789"),
+        appliedOn = None,
+        membershipExpiresOn = Some(LocalDate.now())
+      )
       val createAmlsRequest = CreateAmlsRequest(testUtr, amlsDetails)
 
       def doRequest(createAmlsRequest: CreateAmlsRequest = createAmlsRequest) =
-        controller.storeAmlsDetails()(FakeRequest()
-          .withJsonBody(Json.toJson(createAmlsRequest))
-          .withHeaders(CONTENT_TYPE -> "application/json")
+        controller.storeAmlsDetails()(
+          FakeRequest()
+            .withJsonBody(Json.toJson(createAmlsRequest))
+            .withHeaders(CONTENT_TYPE -> "application/json")
         )
 
       "store amlsDetails successfully in mongo" in {
 
         inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+            enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+          )
           mockCreateAmls(createAmlsRequest)(Right(()))
         }
         val response = doRequest()
@@ -240,7 +286,9 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
         val amlsRequestWithInvalidUtr = createAmlsRequest.copy(utr = Utr("61122334455"))
 
-        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+        mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+          enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+        )
 
         val response = doRequest(amlsRequestWithInvalidUtr)
         status(response) mustBe BAD_REQUEST
@@ -249,7 +297,9 @@ class AgentAssuranceControllerSpec extends PlaySpec
       "handle mongo errors during storing amlsDetails" in {
 
         inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+            enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+          )
           mockCreateAmls(createAmlsRequest)(Left(AmlsUnexpectedMongoError))
         }
         val response = doRequest()
@@ -258,16 +308,24 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
       "handle invalid amlsDetails json case in the request" in {
 
-        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+        mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+          enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+        )
 
-        val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
+        val response = controller.storeAmlsDetails()(
+          FakeRequest()
+            .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
+            .withHeaders(CONTENT_TYPE -> "application/json")
+        )
 
         status(response) mustBe BAD_REQUEST
       }
 
       "handle no json case in the request" in {
 
-        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+        mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+          enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+        )
 
         val response = controller.storeAmlsDetails()(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
@@ -275,11 +333,18 @@ class AgentAssuranceControllerSpec extends PlaySpec
       }
 
       "accept registered AMLS details without a date (APB-5382)" in {
-        val amlsDetailsNoDateR = UkAmlsDetails("supervisoryBody", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = None)
+        val amlsDetailsNoDateR = UkAmlsDetails(
+          "supervisoryBody",
+          membershipNumber = Some("0123456789"),
+          appliedOn = None,
+          membershipExpiresOn = None
+        )
         val createAmlsRequestNoDateR = CreateAmlsRequest(testUtr, amlsDetailsNoDateR)
 
         inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+            enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+          )
           mockCreateAmls(createAmlsRequestNoDateR)(Right(()))
         }
 
@@ -289,11 +354,18 @@ class AgentAssuranceControllerSpec extends PlaySpec
       }
 
       "accept pending AMLS details without a date (APB-5382)" in {
-        val amlsDetailsNoDateL = UkAmlsDetails("supervisoryBody", membershipNumber = Some(testValidApplicationReferenceNumber), appliedOn = None, membershipExpiresOn = None)
+        val amlsDetailsNoDateL = UkAmlsDetails(
+          "supervisoryBody",
+          membershipNumber = Some(testValidApplicationReferenceNumber),
+          appliedOn = None,
+          membershipExpiresOn = None
+        )
         val createAmlsRequestNoDateL = CreateAmlsRequest(testUtr, amlsDetailsNoDateL)
 
         inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+            enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+          )
           mockCreateAmls(createAmlsRequestNoDateL)(Right(()))
         }
 
@@ -303,11 +375,18 @@ class AgentAssuranceControllerSpec extends PlaySpec
       }
 
       "accept pending AMLS details without a reference number" in {
-        val amlsDetailsNoDateL = UkAmlsDetails("supervisoryBody", membershipNumber = None, appliedOn = Some(LocalDate.now()), membershipExpiresOn = None)
+        val amlsDetailsNoDateL = UkAmlsDetails(
+          "supervisoryBody",
+          membershipNumber = None,
+          appliedOn = Some(LocalDate.now()),
+          membershipExpiresOn = None
+        )
         val createAmlsRequestNoDateL = CreateAmlsRequest(testUtr, amlsDetailsNoDateL)
 
         inSequence {
-          mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+            enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+          )
           mockCreateAmls(createAmlsRequestNoDateL)(Right(()))
         }
 
@@ -323,16 +402,26 @@ class AgentAssuranceControllerSpec extends PlaySpec
       val arn = Arn("AARN0000002")
 
       def doRequest(): Future[Result] =
-        controller.updateAmlsDetails(utr)(FakeRequest()
-          .withJsonBody(Json.toJson(arn))
-          .withHeaders(CONTENT_TYPE -> "application/json")
+        controller.updateAmlsDetails(utr)(
+          FakeRequest()
+            .withJsonBody(Json.toJson(arn))
+            .withHeaders(CONTENT_TYPE -> "application/json")
         )
 
       "update existing amlsDetails successfully in mongo" in {
 
         inSequence {
           mockAgentAuth()(Right(()))
-          mockUpdateAmls(utr, arn)(Right(UkAmlsDetails("supervisory", membershipNumber = Some("0123456789"), appliedOn = None, membershipExpiresOn = Some(LocalDate.now()))))
+          mockUpdateAmls(utr, arn)(
+            Right(
+              UkAmlsDetails(
+                "supervisory",
+                membershipNumber = Some("0123456789"),
+                appliedOn = None,
+                membershipExpiresOn = Some(LocalDate.now())
+              )
+            )
+          )
         }
         val response = doRequest()
         status(response) mustBe OK
@@ -360,25 +449,39 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
       "handle Arns which don't match the ARN pattern json case in the request" in {
 
-        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+        mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+          enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+        )
 
-        val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
+        val response = controller.storeAmlsDetails()(
+          FakeRequest()
+            .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
+            .withHeaders(CONTENT_TYPE -> "application/json")
+        )
 
         status(response) mustBe BAD_REQUEST
       }
 
       "handle invalid Arn json case in the request" in {
 
-        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+        mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+          enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+        )
 
-        val response = controller.storeAmlsDetails()(FakeRequest().withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
+        val response = controller.storeAmlsDetails()(
+          FakeRequest()
+            .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
+            .withHeaders(CONTENT_TYPE -> "application/json")
+        )
 
         status(response) mustBe BAD_REQUEST
       }
 
       "handle no json case in the request" in {
 
-        mockAuthWithNoRetrievals(allEnrolments and affinityGroup and credentials)(enrolmentsWithNoIrSAAgent and Some(AffinityGroup.Agent) and Some(Credentials("", "GovernmentGateway")))
+        mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+          enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+        )
 
         val response = controller.storeAmlsDetails()(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
@@ -390,13 +493,14 @@ class AgentAssuranceControllerSpec extends PlaySpec
     "storeOverseasAmlsDetails" should {
       val arn = Arn("AARN0000002")
 
-      val amlsDetails = OverseasAmlsDetails("supervisoryBody", Some("0123456789"))
+      val amlsDetails        = OverseasAmlsDetails("supervisoryBody", Some("0123456789"))
       val overseasAmlsEntity = OverseasAmlsEntity(arn, amlsDetails, None)
 
       def doRequest(request: OverseasAmlsEntity = overseasAmlsEntity) =
-        controller.storeOverseasAmlsDetails(FakeRequest()
-          .withJsonBody(Json.toJson(request))
-          .withHeaders(CONTENT_TYPE -> "application/json")
+        controller.storeOverseasAmlsDetails(
+          FakeRequest()
+            .withJsonBody(Json.toJson(request))
+            .withHeaders(CONTENT_TYPE -> "application/json")
         )
 
       "store amlsDetails successfully in mongo" in {
@@ -444,8 +548,11 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
         mockAgentAuth()(Right(()))
 
-        val response = controller.storeOverseasAmlsDetails(FakeRequest()
-          .withJsonBody(Json.toJson("""{"invalid": "amls-json"}""")).withHeaders(CONTENT_TYPE -> "application/json"))
+        val response = controller.storeOverseasAmlsDetails(
+          FakeRequest()
+            .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
+            .withHeaders(CONTENT_TYPE -> "application/json")
+        )
 
         status(response) mustBe BAD_REQUEST
       }
@@ -454,7 +561,8 @@ class AgentAssuranceControllerSpec extends PlaySpec
 
         mockAgentAuth()(Right(()))
 
-        val response = controller.storeOverseasAmlsDetails(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
+        val response =
+          controller.storeOverseasAmlsDetails(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
         status(response) mustBe BAD_REQUEST
       }

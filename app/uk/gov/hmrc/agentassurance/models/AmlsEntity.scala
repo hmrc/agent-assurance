@@ -16,35 +16,39 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Format, Json}
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
 
-import java.time.{Clock, Instant, LocalDate}
+import play.api.libs.json.Format
+import play.api.libs.json.Json
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 sealed trait AmlsEntity
 
-
-case class UkAmlsEntity(utr: Option[Utr],
-                        amlsDetails: UkAmlsDetails,
-                        arn: Option[Arn] = None,
-                        createdOn: LocalDate,
-                        updatedArnOn: Option[LocalDate] = None,
-                        amlsSource: AmlsSource
-                       ) extends AmlsEntity
+case class UkAmlsEntity(
+    utr: Option[Utr],
+    amlsDetails: UkAmlsDetails,
+    arn: Option[Arn] = None,
+    createdOn: LocalDate,
+    updatedArnOn: Option[LocalDate] = None,
+    amlsSource: AmlsSource
+) extends AmlsEntity
 
 object UkAmlsEntity {
 
-  import play.api.libs.json._
   import play.api.libs.functional.syntax._
+  import play.api.libs.json._
 
-  val jsonReads: Reads[UkAmlsEntity] = (
-    (__ \ "utr").readNullable[Utr]  and
-      (__ \ "amlsDetails").read[UkAmlsDetails]  and
-      (__ \ "arn").readNullable[Arn]  and
-      (__ \ "createdOn").read[LocalDate]  and
-      (__ \ "updatedArnOn").readNullable[LocalDate]  and
-      (__ \ "amlsSource").readWithDefault[AmlsSource](AmlsSource.Subscription)
-    )(UkAmlsEntity.apply _)
+  val jsonReads: Reads[UkAmlsEntity] =
+    (__ \ "utr")
+      .readNullable[Utr]
+      .and((__ \ "amlsDetails").read[UkAmlsDetails])
+      .and((__ \ "arn").readNullable[Arn])
+      .and((__ \ "createdOn").read[LocalDate])
+      .and((__ \ "updatedArnOn").readNullable[LocalDate])
+      .and((__ \ "amlsSource").readWithDefault[AmlsSource](AmlsSource.Subscription))(UkAmlsEntity.apply _)
 
   val jsonWrites: OWrites[UkAmlsEntity] = Json.writes[UkAmlsEntity]
 
@@ -52,10 +56,10 @@ object UkAmlsEntity {
 
 }
 
-case class OverseasAmlsEntity(arn: Arn,
-                              amlsDetails: OverseasAmlsDetails,
-                              createdDate: Option[Instant]) extends AmlsEntity {
-  def withDefaultCreatedDate(implicit clock: Clock): OverseasAmlsEntity = copy(createdDate = Some(createdDate.getOrElse(Instant.now(clock))))
+case class OverseasAmlsEntity(arn: Arn, amlsDetails: OverseasAmlsDetails, createdDate: Option[Instant])
+    extends AmlsEntity {
+  def withDefaultCreatedDate(implicit clock: Clock): OverseasAmlsEntity =
+    copy(createdDate = Some(createdDate.getOrElse(Instant.now(clock))))
 }
 
 object OverseasAmlsEntity {

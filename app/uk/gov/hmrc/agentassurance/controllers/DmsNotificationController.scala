@@ -16,21 +16,26 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import play.api.libs.json.JsError
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.JsValue
+import play.api.mvc.Action
+import play.api.mvc.ControllerComponents
 import play.api.Logging
-import play.api.libs.json.{JsError, JsSuccess, JsValue}
-import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.dms.{DmsNotification, SubmissionItemStatus}
+import uk.gov.hmrc.agentassurance.models.dms.DmsNotification
+import uk.gov.hmrc.agentassurance.models.dms.SubmissionItemStatus
 import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import javax.inject.{Inject, Singleton}
-
 @Singleton
-class DmsNotificationController @Inject()(
-  cc: ControllerComponents,
-  auth: BackendAuthComponents,
-  appConfig: AppConfig
+class DmsNotificationController @Inject() (
+    cc: ControllerComponents,
+    auth: BackendAuthComponents,
+    appConfig: AppConfig
 ) extends BackendController(cc)
     with Logging {
 
@@ -50,7 +55,7 @@ class DmsNotificationController @Inject()(
         if (notification.status == SubmissionItemStatus.Failed) {
           logger.error(
             s"DMS notification error received for ${notification.id} with error: ${notification.failureReason
-              .getOrElse("")}"
+                .getOrElse("")}"
           )
         } else {
           logger.info(
@@ -58,7 +63,7 @@ class DmsNotificationController @Inject()(
           )
         }
         Ok
-      case JsError(_)                 =>
+      case JsError(_) =>
         BadRequest
     }
   }

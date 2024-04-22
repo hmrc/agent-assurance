@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.models.dms
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 final case class DmsNotification(
-                                  id: String,
-                                  status: SubmissionItemStatus,
-                                  failureReason: Option[String]
-                                )
+    id: String,
+    status: SubmissionItemStatus,
+    failureReason: Option[String]
+)
 
 object DmsNotification {
   implicit val format: OFormat[DmsNotification] = Json.format[DmsNotification]

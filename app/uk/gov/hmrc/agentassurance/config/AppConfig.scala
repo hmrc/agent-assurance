@@ -16,11 +16,12 @@
 
 package uk.gov.hmrc.agentassurance.config
 
-import com.google.inject.{Inject, Singleton}
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton
-class AppConfig @Inject()(servicesConfig: ServicesConfig) {
+class AppConfig @Inject() (servicesConfig: ServicesConfig) {
 
   val appName = "agent-assurance"
 
@@ -30,38 +31,38 @@ class AppConfig @Inject()(servicesConfig: ServicesConfig) {
   private def baseUrl(key: String) = servicesConfig.baseUrl(key)
 
   val authBaseUrl: String = baseUrl("auth")
-  val desBaseUrl: String = baseUrl("des")
-  val esProxyUrl: String = baseUrl("enrolment-store-proxy")
+  val desBaseUrl: String  = baseUrl("des")
+  val esProxyUrl: String  = baseUrl("enrolment-store-proxy")
 
-  val minimumIRPAYEClients: Int = servicesConfig.getInt("minimumIRPAYEClients")
-  val minimumIRSAClients: Int = servicesConfig.getInt("minimumIRSAClients")
+  val minimumIRPAYEClients: Int    = servicesConfig.getInt("minimumIRPAYEClients")
+  val minimumIRSAClients: Int      = servicesConfig.getInt("minimumIRSAClients")
   val minimumVatDecOrgClients: Int = servicesConfig.getInt("minimumVatDecOrgClients")
-  val minimumIRCTClients: Int = servicesConfig.getInt("minimumIRCTClients")
+  val minimumIRCTClients: Int      = servicesConfig.getInt("minimumIRCTClients")
 
   val manuallyAssuredStrideRole: String = servicesConfig.getString("stride.roles.agent-assurance")
 
-  val internalAuthBaseUrl: String = servicesConfig.baseUrl("internal-auth")
-  val internalAuthToken: String  = servicesConfig.getString("internal-auth.token")
+  val internalAuthBaseUrl: String       = servicesConfig.baseUrl("internal-auth")
+  val internalAuthToken: String         = servicesConfig.getString("internal-auth.token")
   val internalAuthTokenEnabled: Boolean = servicesConfig.getBoolean("internal-auth-token-enabled")
 
-  private val dmsBaseUrl: String                    = servicesConfig.baseUrl("dms-submission")
-  private val appBaseUrl: String                    = servicesConfig.baseUrl("self")
+  private val dmsBaseUrl: String = servicesConfig.baseUrl("dms-submission")
+  private val appBaseUrl: String = servicesConfig.baseUrl("self")
   private val dmsSubmissionCallbackEndpoint: String =
     servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.callbackEndpoint")
 
-  val dmsSubmissionBusinessArea: String                      =
+  val dmsSubmissionBusinessArea: String =
     servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.businessArea")
-  val dmsSubmissionCallbackUrl: String                       = s"$appBaseUrl/$appName/$dmsSubmissionCallbackEndpoint"
-  val dmsSubmissionClassificationType: String                =
+  val dmsSubmissionCallbackUrl: String = s"$appBaseUrl/$appName/$dmsSubmissionCallbackEndpoint"
+  val dmsSubmissionClassificationType: String =
     servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.classificationType")
-  val dmsSubmissionCustomerId: String                        =
+  val dmsSubmissionCustomerId: String =
     servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.customerId")
-  val dmsSubmissionFormId: String                            =
+  val dmsSubmissionFormId: String =
     servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.formId")
-  val dmsSubmissionSource: String                            =
+  val dmsSubmissionSource: String =
     servicesConfig.getString("microservice.services.dms-submission.contact-details-submission.source")
-  val dmsSubmissionUrl: String                               = dmsBaseUrl + "/dms-submission/submit"
+  val dmsSubmissionUrl: String = dmsBaseUrl + "/dms-submission/submit"
 
-  val desEnv: String = getConf("des.environment")
+  val desEnv: String       = getConf("des.environment")
   val desAuthToken: String = getConf("des.authorization-token")
 }

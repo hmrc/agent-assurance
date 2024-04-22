@@ -16,18 +16,25 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import com.codahale.metrics.MetricRegistry
-import com.google.inject.ImplementedBy
-import com.kenshoo.play.metrics.Metrics
-import play.api.libs.json.Json.{format, fromJson}
-import play.api.libs.json.{Format, JsValue}
-import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
-import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
+import javax.inject.Inject
+import javax.inject.Singleton
 
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.util.Try
+
+import com.google.inject.ImplementedBy
+import play.api.libs.json.Format
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json.format
+import play.api.libs.json.Json.fromJson
+import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpReads
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 case class ClientAllocation(friendlyName: String, state: String)
 
@@ -43,10 +50,10 @@ trait EnrolmentStoreProxyConnector {
 }
 
 @Singleton
-class EnrolmentStoreProxyConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit appConfig: AppConfig) extends
-  EnrolmentStoreProxyConnector with HttpAPIMonitor with HistogramMonitor {
-
-  override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+class EnrolmentStoreProxyConnectorImpl @Inject() (httpGet: HttpClientV2, val metrics: Metrics)(
+    implicit appConfig: AppConfig
+) extends EnrolmentStoreProxyConnector
+    with HistogramMonitor {
 
   private val emacBaseUrl: String = s"${appConfig.esProxyUrl}/enrolment-store-proxy/enrolment-store"
 
@@ -55,7 +62,11 @@ class EnrolmentStoreProxyConnectorImpl @Inject()(httpGet: HttpClient, metrics: M
       Try(response.status match {
         case 200 => ClientAllocationResponse(parseClients((response.json \ "enrolments").get))
         case 204 => ClientAllocationResponse(Seq.empty)
-      }).getOrElse(throw new RuntimeException(s"Error retrieving client list from $url: status ${response.status} body ${response.body}"))
+      }).getOrElse(
+        throw new RuntimeException(
+          s"Error retrieving client list from $url: status ${response.status} body ${response.body}"
+        )
+      )
     }
   }
 
@@ -63,17 +74,21 @@ class EnrolmentStoreProxyConnectorImpl @Inject()(httpGet: HttpClient, metrics: M
     val clientListUrl = s"$emacBaseUrl/users/$userId/enrolments?type=delegated&service=$service"
 
     reportHistogramValue(s"Size-ESP-ES2-GetAgentClientList-$service") {
-      monitor(s"ConsumedAPI-ESP-ES2-GetAgentClientList-$service-GET") {
-        httpGet.GET[ClientAllocationResponse](clientListUrl).map{
-          _.clients.count{
+      val timer = metrics.defaultRegistry.timer(s"ConsumedAPI-ESP-ES2-GetAgentClientList-$service-GET")
+      timer.time()
+      httpGet
+        .get(url"$clientListUrl")
+        .execute[ClientAllocationResponse]
+        .map(result => {
+          timer.time().stop
+          result.clients.count {
             _.state.toLowerCase match {
               case "activated" => true
-              case "unknown" => true
-              case _ => false
+              case "unknown"   => true
+              case _           => false
             }
           }
-        }
-      }
+        })
     }
   }
 

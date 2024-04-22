@@ -16,13 +16,17 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import play.api.http.Status._
-import play.api.libs.json.{JsResult, Reads}
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.client.RequestBuilder
-import uk.gov.hmrc.http.{HttpResponse, Retries, UpstreamErrorResponse}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-import scala.concurrent.{ExecutionContext, Future}
+import play.api.http.Status._
+import play.api.libs.json.JsResult
+import play.api.libs.json.Reads
+import uk.gov.hmrc.http.client.RequestBuilder
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.Retries
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
 trait BaseConnector extends Retries {
   def retryCondition: PartialFunction[Exception, Boolean] = {

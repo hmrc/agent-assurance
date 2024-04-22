@@ -16,52 +16,64 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import play.api.Logging
+import java.time.temporal.ChronoUnit
+import java.time.Instant
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
+import play.api.Logging
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentassurance.models.{AgentDetailsDesResponse, AgentDetailsResponse, DmsSubmissionReference}
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.models.AgentDetailsResponse
+import uk.gov.hmrc.agentassurance.models.DmsSubmissionReference
 import uk.gov.hmrc.agentassurance.services.DmsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
-
 @Singleton
-class AgentServicesController @Inject()(
-                                         desConnector: DesConnector,
-                                         val authConnector: AuthConnector,
-                                         dmsService: DmsService,
-                                         cc: ControllerComponents
-                                       )
-(implicit val appConfig: AppConfig, ec: ExecutionContext) extends BackendController(cc) with AuthActions with Logging{
+class AgentServicesController @Inject() (
+    desConnector: DesConnector,
+    val authConnector: AuthConnector,
+    dmsService: DmsService,
+    cc: ControllerComponents
+)(implicit val appConfig: AppConfig, ec: ExecutionContext)
+    extends BackendController(cc)
+    with AuthActions
+    with Logging {
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
-  def getAgencyDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) {  implicit request =>
+  def getAgencyDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
     desConnector
       .getAgentRecord(arn)
       .map {
-      case _@AgentDetailsDesResponse(optUtr, Some(agencyDetails), _) => Ok(Json.toJson(AgentDetailsResponse(agencyDetails, optUtr)))
-      case _ => NoContent
-    }
+        case _ @AgentDetailsDesResponse(optUtr, Some(agencyDetails), _) =>
+          Ok(Json.toJson(AgentDetailsResponse(agencyDetails, optUtr)))
+        case _ => NoContent
+      }
   }
 
   def postAgencyDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) {
     implicit request =>
       for {
-      dmsResponse <- dmsService.submitToDms(
-        request.body.asText,
-        Instant.now().truncatedTo(ChronoUnit.SECONDS),
-        DmsSubmissionReference.create)
+        dmsResponse <- dmsService.submitToDms(
+          request.body.asText,
+          Instant.now().truncatedTo(ChronoUnit.SECONDS),
+          DmsSubmissionReference.create
+        )
       } yield {
-        logger.info(s"Dms Submission successful for ${arn.value}: ${dmsResponse.reference} at ${dmsResponse.processingDate}")
+        logger.info(
+          s"Dms Submission successful for ${arn.value}: ${dmsResponse.reference} at ${dmsResponse.processingDate}"
+        )
         Created
       }
   }

@@ -16,26 +16,37 @@
 
 package uk.gov.hmrc.agentassurance.services
 
+import java.time.LocalDate
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.collection.immutable.::
+import scala.collection.immutable.Nil
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, ArchivedAmlsRepository, OverseasAmlsRepository}
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
+import uk.gov.hmrc.agentassurance.repositories.ArchivedAmlsRepository
+import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.InternalServerException
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse.Upstream5xxResponse
-import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, UpstreamErrorResponse}
-
-import java.time.LocalDate
-import javax.inject.{Inject, Singleton}
-import scala.collection.immutable.{::, Nil}
-import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepository,
-                                   amlsRepository: AmlsRepository,
-                                   archivedAmlsRepository: ArchivedAmlsRepository,
-                                   desConnector: DesConnector,
-                                   agencyDetailsService: AgencyDetailsService
-                                  )(implicit ec: ExecutionContext) extends Logging {
+class AmlsDetailsService @Inject() (
+    overseasAmlsRepository: OverseasAmlsRepository,
+    amlsRepository: AmlsRepository,
+    archivedAmlsRepository: ArchivedAmlsRepository,
+    desConnector: DesConnector,
+    agencyDetailsService: AgencyDetailsService
+)(implicit ec: ExecutionContext)
+    extends Logging {
 
   def getAmlsDetailsByArn(arn: Arn)(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
     getAmlsDetails(arn).map {
@@ -45,26 +56,30 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
         Future.successful((AmlsStatus.ValidAmlsNonUK, Some(overseasAmlsDetails))) // Scenario #7
       case Some(ukAmlsDetails: UkAmlsDetails) =>
         if (ukAmlsDetails.supervisoryBodyIsHmrc) {
-          ukAmlsDetails.membershipNumber.map { membershipNumber =>
-            //this call may have update ASA AMLS expiry date side-effect
-            processUkHmrcAmlsDetails(arn, membershipNumber, ukAmlsDetails).map {
-              amlsStatus =>
+          ukAmlsDetails.membershipNumber
+            .map { membershipNumber =>
+              // this call may have update ASA AMLS expiry date side-effect
+              processUkHmrcAmlsDetails(arn, membershipNumber, ukAmlsDetails).map { amlsStatus =>
                 (amlsStatus, Some(ukAmlsDetails)) // Scenarios: #5a, #5b, #6a, #6b #8, #9
+              }
             }
-          }.getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, Some(ukAmlsDetails)))) // Scenario #10
-        } else { // supervisoryBodyIsNotHmrc
-          Future.successful((
-            if (hasRenewalDateExpired(ukAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK // Scenarios: #4a, #4b
-            else AmlsStatus.ValidAmlsDetailsUK, // Scenario #3
-            Some(ukAmlsDetails)
-          ))
+            .getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, Some(ukAmlsDetails)))) // Scenario #10
+        } else {                                                                             // supervisoryBodyIsNotHmrc
+          Future.successful(
+            (
+              if (hasRenewalDateExpired(ukAmlsDetails.membershipExpiresOn))
+                AmlsStatus.ExpiredAmlsDetailsUK   // Scenarios: #4a, #4b
+              else AmlsStatus.ValidAmlsDetailsUK, // Scenario #3
+              Some(ukAmlsDetails)
+            )
+          )
         }
     }.flatten
   }
 
   // if today's date >= renewal date then it has expired
   // if no renewal date or today's date < renewal date then it has not expired
-  //TODO make private when we upgrade play and can test private methods
+  // TODO make private when we upgrade play and can test private methods
   def hasRenewalDateExpired(optRenewalDate: Option[LocalDate]): Boolean =
     optRenewalDate.exists(renewalDate => LocalDate.now().isAfter(renewalDate) || LocalDate.now().equals(renewalDate))
 
@@ -73,16 +88,19 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     agencyDetailsService.agencyDetailsHasUkAddress(arn).map { isUk =>
       (
         if (isUk) AmlsStatus.NoAmlsDetailsUK // Scenario #1
-        else AmlsStatus.NoAmlsDetailsNonUK, // Scenario #2
+        else AmlsStatus.NoAmlsDetailsNonUK,  // Scenario #2
         None
       )
     }
   }
 
   // TODO - Add test when upgrading play to test private methods
-  private def processUkHmrcAmlsDetails(arn: Arn, membershipNumber: String, asaAmlsDetails: UkAmlsDetails)(implicit hc: HeaderCarrier): Future[AmlsStatus] = {
-    desConnector.getAmlsSubscriptionStatus(membershipNumber).map {
-      desAmlsRecord =>
+  private def processUkHmrcAmlsDetails(arn: Arn, membershipNumber: String, asaAmlsDetails: UkAmlsDetails)(
+      implicit hc: HeaderCarrier
+  ): Future[AmlsStatus] = {
+    desConnector
+      .getAmlsSubscriptionStatus(membershipNumber)
+      .map { desAmlsRecord =>
         (asaAmlsDetails.isPending, desAmlsRecord.formBundleStatus) match {
           case (true, "Pending") => // Scenario #8
             AmlsStatus.PendingAmlsDetails
@@ -90,25 +108,38 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
             AmlsStatus.PendingAmlsDetailsRejected
           case (_, "Approved" | "ApprovedWithConditions") =>
             // check if ETMP has more recent expiry date
-            val amlsExpiryDate = findCorrectExpiryDate(arn, desAmlsRecord.currentRegYearEndDate, asaAmlsDetails.membershipExpiresOn)
-            if (hasRenewalDateExpired(amlsExpiryDate)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
+            val amlsExpiryDate =
+              findCorrectExpiryDate(arn, desAmlsRecord.currentRegYearEndDate, asaAmlsDetails.membershipExpiresOn)
+            if (hasRenewalDateExpired(amlsExpiryDate)) AmlsStatus.ExpiredAmlsDetailsUK
+            else AmlsStatus.ValidAmlsDetailsUK
           case (_, _) =>
             // catch all where we won't use the ETMP record and just use ASA
-            if (hasRenewalDateExpired(asaAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK else AmlsStatus.ValidAmlsDetailsUK
+            if (hasRenewalDateExpired(asaAmlsDetails.membershipExpiresOn)) AmlsStatus.ExpiredAmlsDetailsUK
+            else AmlsStatus.ValidAmlsDetailsUK
         }
-    }.recover {
-      case error: UpstreamErrorResponse if UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
-        logger.warn(s"DES API#1028 returned the following response - status: ${error.statusCode}, message: ${error.message}")
-        AmlsStatus.NoAmlsDetailsUK
-      case Upstream5xxResponse(error) if error.statusCode == 503 && (error.message.contains("REGIME") | error.message.contains("Technical")) =>
-        logger.warn(s"DES API#1028 returned the following response - status: ${error.statusCode}, message: ${error.message}")
-        AmlsStatus.NoAmlsDetailsUK
-    }
+      }
+      .recover {
+        case error: UpstreamErrorResponse if UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
+          logger.warn(
+            s"DES API#1028 returned the following response - status: ${error.statusCode}, message: ${error.message}"
+          )
+          AmlsStatus.NoAmlsDetailsUK
+        case Upstream5xxResponse(error)
+            if error.statusCode == 503 && (error.message.contains("REGIME") | error.message.contains("Technical")) =>
+          logger.warn(
+            s"DES API#1028 returned the following response - status: ${error.statusCode}, message: ${error.message}"
+          )
+          AmlsStatus.NoAmlsDetailsUK
+      }
   }
 
   // we have two potential optional dates to use so this logic will select the correct date
-  //TODO make private when we upgrade play and can test private methods
-  def findCorrectExpiryDate(arn: Arn, maybeDesAmlsExpiry: Option[LocalDate], maybeAsaAmlsExpiry: Option[LocalDate]): Option[LocalDate] = {
+  // TODO make private when we upgrade play and can test private methods
+  def findCorrectExpiryDate(
+      arn: Arn,
+      maybeDesAmlsExpiry: Option[LocalDate],
+      maybeAsaAmlsExpiry: Option[LocalDate]
+  ): Option[LocalDate] = {
     (maybeDesAmlsExpiry, maybeAsaAmlsExpiry) match {
       case (Some(desAmlsExpiry), Some(asaAmlsExpiry)) =>
         if (desAmlsExpiry.isAfter(asaAmlsExpiry)) {
@@ -128,23 +159,28 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
   }
 
   private def getAmlsDetails(arn: Arn): Future[Option[AmlsDetails]] = {
-    Future.sequence(
-      Seq(
-        amlsRepository.getAmlsDetailsByArn(arn),
-        overseasAmlsRepository.getOverseasAmlsDetailsByArn(arn)
+    Future
+      .sequence(
+        Seq(
+          amlsRepository.getAmlsDetailsByArn(arn),
+          overseasAmlsRepository.getOverseasAmlsDetailsByArn(arn)
+        )
       )
-    ).map(_.flatten).collect {
-      case (amlsDetails: UkAmlsDetails) :: Nil => Some(amlsDetails)
-      case (overseasAmlsDetails: OverseasAmlsDetails) :: Nil => Some(overseasAmlsDetails)
-      case Nil => None
-      case _ =>
-        throw new InternalServerException("[AmlsDetailsService][getAmlsDetailsByArn] ARN has both Overseas and UK AMLS details")
-    }
+      .map(_.flatten)
+      .collect {
+        case (amlsDetails: UkAmlsDetails) :: Nil               => Some(amlsDetails)
+        case (overseasAmlsDetails: OverseasAmlsDetails) :: Nil => Some(overseasAmlsDetails)
+        case Nil                                               => None
+        case _ =>
+          throw new InternalServerException(
+            "[AmlsDetailsService][getAmlsDetailsByArn] ARN has both Overseas and UK AMLS details"
+          )
+      }
   }
 
-  def storeAmlsRequest(arn: Arn,
-                       amlsRequest: AmlsRequest,
-                       amlsSource: AmlsSource = AmlsSource.Subscription)(implicit hc: HeaderCarrier): Future[Either[AmlsError, AmlsDetails]] = {
+  def storeAmlsRequest(arn: Arn, amlsRequest: AmlsRequest, amlsSource: AmlsSource = AmlsSource.Subscription)(
+      implicit hc: HeaderCarrier
+  ): Future[Either[AmlsError, AmlsDetails]] = {
 
     val newAmlsDetails: AmlsDetails = amlsRequest.toAmlsEntity(amlsRequest)
 
@@ -162,7 +198,8 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
                   createdOn = LocalDate.now,
                   amlsSource = amlsSource
                 )
-              ))
+              )
+            )
         case overseasAmlsDetails: OverseasAmlsDetails =>
           overseasAmlsRepository.createOrUpdate( // this method returns old document BEFORE updating it
             OverseasAmlsEntity(
@@ -174,9 +211,11 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
       }
     }.flatMap {
       case Some(oldAmlsEntity) =>
-        logger.info(s"[AmlsDetailsService][storeNewAmlsRequest] Old AMLS record archived, stored and returned new record")
+        logger.info(
+          s"[AmlsDetailsService][storeNewAmlsRequest] Old AMLS record archived, stored and returned new record"
+        )
         archivedAmlsRepository.create(ArchivedAmlsEntity(arn, oldAmlsEntity)).map {
-          case Right(_) => Right(newAmlsDetails)
+          case Right(_)    => Right(newAmlsDetails)
           case Left(error) => Left(error)
         }
       case None =>
@@ -190,6 +229,5 @@ class AmlsDetailsService @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
       a <- amlsRepository.getUtr(arn)
       b <- if (a.isEmpty) desConnector.getAgentRecord(arn).map(_.uniqueTaxReference) else Future.successful(a)
     } yield b
-
 
 }

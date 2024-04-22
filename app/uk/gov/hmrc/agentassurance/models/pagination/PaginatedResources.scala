@@ -16,14 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.models.pagination
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
-case class PaginatedResources(
-                             _links: PaginationLinks,
-                             page: Int,
-                             pageSize: Int,
-                             total: Int,
-                             resources: Seq[String])
+case class PaginatedResources(_links: PaginationLinks, page: Int, pageSize: Int, total: Int, resources: Seq[String])
 
 object PaginatedResources {
 

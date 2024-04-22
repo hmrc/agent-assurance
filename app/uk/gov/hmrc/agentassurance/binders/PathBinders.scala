@@ -17,16 +17,18 @@
 package uk.gov.hmrc.agentassurance.binders
 
 import play.api.mvc.PathBindable
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-import uk.gov.hmrc.domain.{Nino, SaAgentReference}
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.domain.SaAgentReference
 
 object PathBinders {
-  implicit object NinoBinder extends SimpleObjectBinder[Nino](Nino.apply, _.value)
+  implicit object NinoBinder             extends SimpleObjectBinder[Nino](Nino.apply, _.value)
   implicit object SaAgentReferenceBinder extends SimpleObjectBinder[SaAgentReference](SaAgentReference.apply, _.value)
 
   implicit val utrBinder: PathBindable[Utr] = new PathBindable[Utr] {
     override def bind(key: String, value: String): Either[String, Utr] = {
-      if(Utr.isValid(value)) Right(Utr(value)) else Left("Invalid UTR")
+      if (Utr.isValid(value)) Right(Utr(value)) else Left("Invalid UTR")
     }
 
     override def unbind(key: String, utr: Utr): String = utr.value
@@ -34,7 +36,7 @@ object PathBinders {
 
   implicit val arnBinder: PathBindable[Arn] = new PathBindable[Arn] {
     override def bind(key: String, value: String): Either[String, Arn] = {
-      if(Arn.isValid(value)) Right(Arn(value)) else Left("Invalid ARN")
+      if (Arn.isValid(value)) Right(Arn(value)) else Left("Invalid ARN")
     }
 
     override def unbind(key: String, arn: Arn): String = arn.value

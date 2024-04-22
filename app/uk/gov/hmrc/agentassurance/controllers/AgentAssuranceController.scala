@@ -16,44 +16,55 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import play.api.Logger
-import play.api.libs.json.{JsError, JsSuccess, Json}
+import javax.inject._
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import play.api.libs.json.JsError
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.Json
 import play.api.mvc._
+import play.api.Logger
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.connectors.{DesConnector, EnrolmentStoreProxyConnector}
-import uk.gov.hmrc.agentassurance.models.AmlsError._
+import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import uk.gov.hmrc.agentassurance.connectors.EnrolmentStoreProxyConnector
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, OverseasAmlsRepository}
+import uk.gov.hmrc.agentassurance.models.AmlsError._
+import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
+import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
 import uk.gov.hmrc.agentassurance.util.toFuture
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.domain.SaAgentReference
+import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import javax.inject._
-import scala.concurrent.{ExecutionContext, Future}
-
 @Singleton
-class AgentAssuranceController @Inject()(override val authConnector: AuthConnector,
-                                          val desConnector: DesConnector,
-                                          val espConnector: EnrolmentStoreProxyConnector,
-                                          val overseasAmlsRepository: OverseasAmlsRepository,
-                                          cc: ControllerComponents,
-                                          val amlsRepository: AmlsRepository)(implicit val appConfig: AppConfig, ec: ExecutionContext) extends BackendController(cc) with AuthActions {
+class AgentAssuranceController @Inject() (
+    override val authConnector: AuthConnector,
+    val desConnector: DesConnector,
+    val espConnector: EnrolmentStoreProxyConnector,
+    val overseasAmlsRepository: OverseasAmlsRepository,
+    cc: ControllerComponents,
+    val amlsRepository: AmlsRepository
+)(implicit val appConfig: AppConfig, ec: ExecutionContext)
+    extends BackendController(cc)
+    with AuthActions {
 
-  private val minimumIRPAYEClients = appConfig.minimumIRPAYEClients
-  private val minimumIRSAClients = appConfig.minimumIRSAClients
+  private val minimumIRPAYEClients    = appConfig.minimumIRPAYEClients
+  private val minimumIRSAClients      = appConfig.minimumIRSAClients
   private val minimumVatDecOrgClients = appConfig.minimumVatDecOrgClients
-  private val minimumIRCTClients = appConfig.minimumIRCTClients
-  private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
+  private val minimumIRCTClients      = appConfig.minimumIRCTClients
+  private val strideRoles             = Seq(appConfig.manuallyAssuredStrideRole)
 
   private val logger = Logger(this.getClass)
 
-  def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { _ =>
-    _ => Future successful NoContent
-  }
+  def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { _ => _ => Future.successful(NoContent) }
 
   def activeCesaRelationshipWithUtr(utr: Utr, saAgentReference: SaAgentReference): Action[AnyContent] =
     activeCesaRelationship(utr, saAgentReference)
@@ -61,11 +72,14 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
   def activeCesaRelationshipWithNino(nino: Nino, saAgentReference: SaAgentReference): Action[AnyContent] =
     activeCesaRelationship(nino, saAgentReference)
 
-  private def activeCesaRelationship(identifier: TaxIdentifier, saAgentReference: SaAgentReference): Action[AnyContent] =
+  private def activeCesaRelationship(
+      identifier: TaxIdentifier,
+      saAgentReference: SaAgentReference
+  ): Action[AnyContent] =
     BasicAuth { implicit request =>
-      desConnector.getActiveCesaAgentRelationships(identifier).map{
-        case Some(agentRefs) if (agentRefs.contains(saAgentReference)) => Ok
-        case _ => Forbidden
+      desConnector.getActiveCesaAgentRelationships(identifier).map {
+        case Some(agentRefs) if agentRefs.contains(saAgentReference) => Ok
+        case _                                                       => Forbidden
       }
     }
 
@@ -73,19 +87,19 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
 
   def acceptableNumberOfIRSAClients = acceptableNumberOfClients("IR-SA", minimumIRSAClients)
 
-  def acceptableNumberOfVatDecOrgClients: Action[AnyContent] = acceptableNumberOfClients("HMCE-VATDEC-ORG", minimumVatDecOrgClients)
+  def acceptableNumberOfVatDecOrgClients: Action[AnyContent] =
+    acceptableNumberOfClients("HMCE-VATDEC-ORG", minimumVatDecOrgClients)
 
   def acceptableNumberOfIRCTClients: Action[AnyContent] = acceptableNumberOfClients("IR-CT", minimumIRCTClients)
 
   def acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
-    AuthorisedWithUserId { implicit request =>
-      implicit userId =>
-        espConnector.getClientCount(service, userId).flatMap { count =>
-          if (count >= minimumAcceptableNumberOfClients)
-            Future successful NoContent
-          else
-            Future successful Forbidden
-        }
+    AuthorisedWithUserId { implicit request => implicit userId =>
+      espConnector.getClientCount(service, userId).flatMap { count =>
+        if (count >= minimumAcceptableNumberOfClients)
+          Future.successful(NoContent)
+        else
+          Future.successful(Forbidden)
+      }
     }
 
   def storeAmlsDetails: Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
@@ -97,7 +111,7 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
             case Left(error) =>
               error match {
                 case ArnAlreadySetError => Forbidden
-                case _ => InternalServerError
+                case _                  => InternalServerError
               }
           }
         } else {
@@ -110,12 +124,12 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
     }
   }
 
-  def storeOverseasAmlsDetails: Action[AnyContent] =  withAffinityGroupAgent { implicit request =>
+  def storeOverseasAmlsDetails: Action[AnyContent] = withAffinityGroupAgent { implicit request =>
     request.body.asJson.map(_.validate[OverseasAmlsEntity]) match {
       case Some(JsSuccess(amlsEntity, _)) =>
         if (Arn.isValid(amlsEntity.arn.value)) {
           overseasAmlsRepository.create(amlsEntity).map {
-            case Right(_) => Created
+            case Right(_)               => Created
             case Left(AmlsRecordExists) => Conflict
             case Left(error) =>
               logger.warn(s"Creating overseas amls details failed with error: $error")
@@ -144,14 +158,15 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
   }
 
   def getAmlsDetails(utr: Utr): Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) { _ =>
-    amlsRepository.getAmlDetails(utr)
+    amlsRepository
+      .getAmlDetails(utr)
       .map {
         case Some(details) => Ok(Json.toJson(details))
-        case _ => NotFound
+        case _             => NotFound
       }
   }
 
-  def updateAmlsDetails(utr: Utr): Action[AnyContent] =  withAffinityGroupAgent { implicit request =>
+  def updateAmlsDetails(utr: Utr): Action[AnyContent] = withAffinityGroupAgent { implicit request =>
     request.body.asJson.map(_.validate[Arn]) match {
       case Some(JsSuccess(arn, _)) =>
         if (Arn.isValid(arn.value)) {
@@ -159,10 +174,10 @@ class AgentAssuranceController @Inject()(override val authConnector: AuthConnect
             case Right(updated) => Ok(Json.toJson(updated))
             case Left(error) =>
               error match {
-                case ArnAlreadySetError => Forbidden
-                case NoExistingAmlsError => NotFound
+                case ArnAlreadySetError      => Forbidden
+                case NoExistingAmlsError     => NotFound
                 case UniqueKeyViolationError => BadRequest
-                case _ => InternalServerError
+                case _                       => InternalServerError
               }
           }
         } else {

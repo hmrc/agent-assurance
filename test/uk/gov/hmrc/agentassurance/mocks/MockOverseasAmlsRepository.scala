@@ -16,41 +16,47 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import scala.concurrent.Future
+
 import org.scalamock.scalatest.MockFactory
-import uk.gov.hmrc.agentassurance.models.{AmlsError, OverseasAmlsDetails, OverseasAmlsEntity}
+import org.scalatest.TestSuite
+import uk.gov.hmrc.agentassurance.models.AmlsError
+import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
+import uk.gov.hmrc.agentassurance.models.OverseasAmlsEntity
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
 import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
-import scala.concurrent.Future
-
-trait MockOverseasAmlsRepository extends MockFactory {
+trait MockOverseasAmlsRepository extends MockFactory { this: TestSuite =>
 
   val mockOverseasAmlsRepository = mock[OverseasAmlsRepository]
 
   def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError, Unit]) = {
-    (mockOverseasAmlsRepository.create(_: OverseasAmlsEntity))
+    (mockOverseasAmlsRepository
+      .create(_: OverseasAmlsEntity))
       .expects(amlsEntity)
       .returning(toFuture(response))
   }
 
   def mockGetOverseasAmlsDetailsByArn(arn: Arn)(response: Option[OverseasAmlsDetails]) = {
-    (mockOverseasAmlsRepository.getOverseasAmlsDetailsByArn(_: Arn))
+    (mockOverseasAmlsRepository
+      .getOverseasAmlsDetailsByArn(_: Arn))
       .expects(arn)
       .returning(toFuture(response))
   }
 
   def mockGetOverseasAmlsDetailsByArnFuture(arn: Arn)(response: Future[Option[OverseasAmlsDetails]]) = {
-    (mockOverseasAmlsRepository.getOverseasAmlsDetailsByArn(_: Arn))
+    (mockOverseasAmlsRepository
+      .getOverseasAmlsDetailsByArn(_: Arn))
       .expects(arn)
       .returning(response)
   }
 
   def mockCreateOrUpdate(amlsEntity: OverseasAmlsEntity)(response: Option[OverseasAmlsEntity]) = {
-    (mockOverseasAmlsRepository.createOrUpdate(_: OverseasAmlsEntity))
+    (mockOverseasAmlsRepository
+      .createOrUpdate(_: OverseasAmlsEntity))
       .expects(amlsEntity)
       .returning(toFuture(response))
   }
-
 
 }

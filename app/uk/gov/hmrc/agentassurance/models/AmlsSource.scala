@@ -16,15 +16,15 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.Format
 import julienrf.json.derived
+import play.api.libs.json.Format
 
 sealed trait AmlsSource
 
 object AmlsSource {
   implicit val formatAmlsSource: Format[AmlsSource] = derived.oformat[AmlsSource]()
 
-  final case object Subscription extends AmlsSource
-  final case object AutomaticUpdate extends AmlsSource
+  final case object Subscription        extends AmlsSource
+  final case object AutomaticUpdate     extends AmlsSource
   final case object ManageAccountUpdate extends AmlsSource
 }

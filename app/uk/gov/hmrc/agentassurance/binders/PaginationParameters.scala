@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.agentassurance.binders
 
-import play.api.mvc.QueryStringBindable
-
 import scala.util.Try
+
+import play.api.mvc.QueryStringBindable
 
 case class PaginationParameters(page: Int, pageSize: Int) {
   require(pageSize > 0, "The pageSize should be greater than zero")
@@ -29,15 +29,17 @@ case class PaginationParameters(page: Int, pageSize: Int) {
 
 object PaginationParameters {
 
-  implicit def queryStringBinder(implicit intBinder: QueryStringBindable[Int]): QueryStringBindable[PaginationParameters] = new QueryStringBindable[PaginationParameters] {
+  implicit def queryStringBinder(
+      implicit intBinder: QueryStringBindable[Int]
+  ): QueryStringBindable[PaginationParameters] = new QueryStringBindable[PaginationParameters] {
     override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, PaginationParameters]] = {
       Try(for {
-        page <- intBinder.bind("page", params)
+        page     <- intBinder.bind("page", params)
         pageSize <- intBinder.bind("pageSize", params)
       } yield {
         (page, pageSize) match {
           case (Right(page), Right(size)) => Right(PaginationParameters(page, size))
-          case _ => Left("Unable to bind Pagination Parameters")
+          case _                          => Left("Unable to bind Pagination Parameters")
         }
       }).recover {
         case _ => Some(Left("Invalid pagination parameters"))
