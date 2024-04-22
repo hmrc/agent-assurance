@@ -58,7 +58,7 @@ class AgentServicesControllerISpec
         "microservice.services.dms-submission.port" -> wireMockPort,
         "auditing.enabled"                          -> false,
         "stride.roles.agent-assurance"              -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled"               -> false,
+        "internal-auth-token-enabled-on-start"      -> false,
         "http-verbs.retries.intervals"              -> List("1ms")
       )
 

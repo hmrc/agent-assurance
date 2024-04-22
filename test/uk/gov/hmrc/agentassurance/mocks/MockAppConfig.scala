@@ -38,7 +38,11 @@ trait MockAppConfig extends MockFactory { this: TestSuite =>
     .expects("internal-auth.token")
     .atLeastOnce()
     .returning("YWdlbnQtYXNzdXJhbmNl")
-  (mockServiceConfig.getBoolean(_: String)).expects("internal-auth-token-enabled").atLeastOnce().returning(false)
+  (mockServiceConfig
+    .getBoolean(_: String))
+    .expects("internal-auth-token-enabled-on-start")
+    .atLeastOnce()
+    .returning(false)
   (mockServiceConfig
     .getString(_: String))
     .expects("microservice.services.dms-submission.contact-details-submission.callbackEndpoint")

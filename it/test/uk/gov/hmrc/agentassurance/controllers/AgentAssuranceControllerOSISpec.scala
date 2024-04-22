@@ -59,11 +59,11 @@ class AgentAssuranceControllerOSISpec
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        "microservice.services.auth.host" -> wireMockHost,
-        "microservice.services.auth.port" -> wireMockPort,
-        "auditing.enabled"                -> false,
-        "stride.roles.agent-assurance"    -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled"     -> false
+        "microservice.services.auth.host"      -> wireMockHost,
+        "microservice.services.auth.port"      -> wireMockPort,
+        "auditing.enabled"                     -> false,
+        "stride.roles.agent-assurance"         -> "maintain_agent_manually_assure",
+        "internal-auth-token-enabled-on-start" -> false
       )
       .overrides(moduleWithOverrides)
 

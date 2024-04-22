@@ -72,7 +72,7 @@ class DesConnectorISpec
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "auditing.consumer.baseUri.host"                   -> wireMockHost,
         "auditing.consumer.baseUri.port"                   -> wireMockPort,
-        "internal-auth-token-enabled"                      -> false
+        "internal-auth-token-enabled-on-start"             -> false
       )
       .bindings(bind[DesConnector].toInstance(desConnector))
 

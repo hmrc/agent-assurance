@@ -70,7 +70,7 @@ class DmsConnectorISpec
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        "internal-auth-token-enabled"                                                        -> false,
+        "internal-auth-token-enabled-on-start"                                               -> false,
         "microservice.services.internal-auth.host"                                           -> wireMockHost,
         "microservice.services.internal-auth.port"                                           -> wireMockPort,
         "microservice.services.dms-submission.port"                                          -> wireMockPort,
