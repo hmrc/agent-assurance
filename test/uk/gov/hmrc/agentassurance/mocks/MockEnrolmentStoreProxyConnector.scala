@@ -17,9 +17,10 @@
 package uk.gov.hmrc.agentassurance.mocks
 
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
 import uk.gov.hmrc.agentassurance.connectors.EnrolmentStoreProxyConnector
 
-trait MockEnrolmentStoreProxyConnector extends MockFactory {
+trait MockEnrolmentStoreProxyConnector extends MockFactory { this: TestSuite =>
 
   val mockEspConnector = mock[EnrolmentStoreProxyConnector]
 

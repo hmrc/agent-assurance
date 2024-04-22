@@ -16,26 +16,37 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import com.codahale.metrics.MetricRegistry
-import com.google.inject.ImplementedBy
-import com.kenshoo.play.metrics.Metrics
-import play.api.Logging
-import play.api.http.Status.{NOT_FOUND, OK}
-import play.api.libs.json.Reads._
-import play.api.libs.json._
-import play.utils.UriEncoding
-import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
-import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.{AgentDetailsDesResponse, AmlsSubscriptionRecord}
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
-import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpReads, HttpResponse, UpstreamErrorResponse}
-
 import java.net.URL
 import java.util.UUID
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import com.google.inject.ImplementedBy
+import play.api.http.Status.NOT_FOUND
+import play.api.http.Status.OK
+import play.api.libs.json._
+import play.api.libs.json.Reads._
+import play.api.Logging
+import play.utils.UriEncoding
+import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.domain.SaAgentReference
+import uk.gov.hmrc.domain.TaxIdentifier
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.Authorization
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpReads
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 case class ClientRelationship(agents: Seq[Agent])
 
@@ -45,7 +56,8 @@ object ClientRelationship {
   implicit val agentReads: Reads[Agent] = Json.reads[Agent]
 
   implicit val readClientRelationship: Reads[ClientRelationship] =
-    (JsPath \ "agents").readNullable[Seq[Agent]]
+    (JsPath \ "agents")
+      .readNullable[Seq[Agent]]
       .map(optionalAgents => ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
 }
 
@@ -57,80 +69,104 @@ object RegistrationRelationshipResponse {
 
 @ImplementedBy(classOf[DesConnectorImpl])
 trait DesConnector {
-  def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Seq[SaAgentReference]]]
-  def getAmlsSubscriptionStatus(amlsRegistrationNumber: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord]
+  def getActiveCesaAgentRelationships(
+      clientIdentifier: TaxIdentifier
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Seq[SaAgentReference]]]
+  def getAmlsSubscriptionStatus(
+      amlsRegistrationNumber: String
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord]
 
   def getAgentRecord(arn: Arn)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse]
 }
 
 @Singleton
-class DesConnectorImpl @Inject()(httpGet: HttpClient, metrics: Metrics)(implicit appConfig: AppConfig)
-  extends DesConnector with HttpAPIMonitor with Logging {
+class DesConnectorImpl @Inject() (httpGet: HttpClientV2, metrics: Metrics)(implicit appConfig: AppConfig)
+    extends DesConnector
+    with Logging {
 
-  override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
-
-  private val baseUrl = appConfig.desBaseUrl
+  private val baseUrl            = appConfig.desBaseUrl
   private val authorizationToken = appConfig.desAuthToken
-  private val environment = appConfig.desEnv
+  private val environment        = appConfig.desEnv
 
-  private val Environment = "Environment"
-  private val CorrelationId = "CorrelationId"
+  private val Environment    = "Environment"
+  private val CorrelationId  = "CorrelationId"
   private val Authorization_ = "Authorization"
 
   private def explicitHeaders =
     Seq(
-      Environment   -> s"$environment",
-      CorrelationId -> UUID.randomUUID().toString,
+      Environment    -> s"$environment",
+      CorrelationId  -> UUID.randomUUID().toString,
       Authorization_ -> s"Bearer $authorizationToken"
     )
 
-
-
-  def getActiveCesaAgentRelationships(clientIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Seq[SaAgentReference]]] = {
+  def getActiveCesaAgentRelationships(
+      clientIdentifier: TaxIdentifier
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Seq[SaAgentReference]]] = {
     val encodedClientId = UriEncoding.encodePathSegment(clientIdentifier.value, "UTF-8")
     val encodedClientType: String = {
       val clientType = clientIdentifier match {
         case nino @ Nino(_) => nino.name
-        case _ @ Utr(_) => "utr"
-        case e => throw new RuntimeException(s"Unacceptable taxIdentifier: $e")
+        case _ @Utr(_)      => "utr"
+        case e              => throw new RuntimeException(s"Unacceptable taxIdentifier: $e")
       }
       UriEncoding.encodePathSegment(clientType, "UTF-8")
     }
 
     val url = new URL(s"$baseUrl/registration/relationship/$encodedClientType/$encodedClientId")
 
-    getWithDesHeaders[HttpResponse]("GetStatusAgentRelationship", url).map(response => response.status match{
-      case OK => response.json.asOpt[ClientRelationship].map(
-          _.agents
-          .filter(agent => agent.hasAgent && agent.
-            agentCeasedDate.isEmpty)
-          .flatMap(_.agentId)
-      )
-      case NOT_FOUND => logger.warn(s" NOT_FOUND GET legacy relationship response: 404 ")
-                None
-      case _ =>
-      throw UpstreamErrorResponse(s" error GET legacy relationship response: ${response.status}", response.status)
+    getWithDesHeaders[HttpResponse]("GetStatusAgentRelationship", url).map(response =>
+      response.status match {
+        case OK =>
+          response.json
+            .asOpt[ClientRelationship]
+            .map(
+              _.agents
+                .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
+                .flatMap(_.agentId)
+            )
+        case NOT_FOUND =>
+          logger.warn(s" NOT_FOUND GET legacy relationship response: 404 ")
+          None
+        case _ =>
+          throw UpstreamErrorResponse(s" error GET legacy relationship response: ${response.status}", response.status)
 
-  })
+      }
+    )
   }
 
-  //API #1028 Get Subscription Status
-  def getAmlsSubscriptionStatus(amlsRegistrationNumber: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord] = {
+  // API #1028 Get Subscription Status
+  def getAmlsSubscriptionStatus(
+      amlsRegistrationNumber: String
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord] = {
     val url = new URL(s"$baseUrl/anti-money-laundering/subscription/$amlsRegistrationNumber/status")
     getWithDesHeaders[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
   }
 
-  override def getAgentRecord(arn: Arn)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse] = {
+  override def getAgentRecord(
+      arn: Arn
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse] = {
     val url = new URL(s"$baseUrl/registration/personal-details/arn/${arn.value}")
     getWithDesHeaders[AgentDetailsDesResponse]("GetAgentRecord", url)
   }
 
-  private def getWithDesHeaders[A: HttpReads](apiName: String, url: URL)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
+  private def getWithDesHeaders[A: HttpReads](
+      apiName: String,
+      url: URL
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
     val desHeaderCarrier = hc.copy(
       authorization = Some(Authorization(s"Bearer $authorizationToken")),
-      extraHeaders = hc.extraHeaders :+ "Environment" -> environment)
-    monitor(s"ConsumedAPI-DES-$apiName-GET") {
-      httpGet.GET[A](url.toString, headers = explicitHeaders)(implicitly[HttpReads[A]], desHeaderCarrier, ec)
-    }
+      extraHeaders = hc.extraHeaders :+ "Environment" -> environment
+    )
+
+    val timer = metrics.defaultRegistry.timer(s"ConsumedAPI-DES-$apiName-GET")
+    timer.time()
+    httpGet
+      .get(url)(desHeaderCarrier)
+      .setHeader(explicitHeaders: _*)
+      .execute[A]
+      .map(result => {
+        timer.time().stop()
+        result
+      })
   }
 }

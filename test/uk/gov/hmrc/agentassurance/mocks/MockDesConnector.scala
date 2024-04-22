@@ -16,39 +16,49 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import org.scalamock.handlers.CallHandler3
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentassurance.models.{AgentDetailsDesResponse, AmlsSubscriptionRecord}
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
 import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.domain.{SaAgentReference, TaxIdentifier}
+import uk.gov.hmrc.domain.SaAgentReference
+import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.{ExecutionContext, Future}
-
-trait MockDesConnector extends MockFactory {
+trait MockDesConnector extends MockFactory { this: TestSuite =>
 
   val mockDesConnector = mock[DesConnector]
 
-  def mockGetActiveCesaAgentRelationships(ti: TaxIdentifier)(response: Either[String, Option[Seq[SaAgentReference]]]): CallHandler3[TaxIdentifier, HeaderCarrier, ExecutionContext, Future[Option[Seq[SaAgentReference]]]] = {
-    (mockDesConnector.getActiveCesaAgentRelationships(_: TaxIdentifier)(_: HeaderCarrier, _: ExecutionContext))
+  def mockGetActiveCesaAgentRelationships(ti: TaxIdentifier)(
+      response: Either[String, Option[Seq[SaAgentReference]]]
+  ): CallHandler3[TaxIdentifier, HeaderCarrier, ExecutionContext, Future[Option[Seq[SaAgentReference]]]] = {
+    (mockDesConnector
+      .getActiveCesaAgentRelationships(_: TaxIdentifier)(_: HeaderCarrier, _: ExecutionContext))
       .expects(ti, *, *)
-      .returning(response.fold[Future[Option[Seq[SaAgentReference]]]](e => Future.failed(new Exception(e)), r => toFuture(r)))
+      .returning(
+        response.fold[Future[Option[Seq[SaAgentReference]]]](e => Future.failed(new Exception(e)), r => toFuture(r))
+      )
   }
 
-  def mockGetAmlsSubscriptionStatus(registrationNumber: String)(response: Future[AmlsSubscriptionRecord]): CallHandler3[String, HeaderCarrier, ExecutionContext, Future[AmlsSubscriptionRecord]] = {
-    (mockDesConnector.getAmlsSubscriptionStatus(_: String)(_: HeaderCarrier, _: ExecutionContext))
+  def mockGetAmlsSubscriptionStatus(registrationNumber: String)(
+      response: Future[AmlsSubscriptionRecord]
+  ): CallHandler3[String, HeaderCarrier, ExecutionContext, Future[AmlsSubscriptionRecord]] = {
+    (mockDesConnector
+      .getAmlsSubscriptionStatus(_: String)(_: HeaderCarrier, _: ExecutionContext))
       .expects(registrationNumber, *, *)
       .returning(response)
   }
 
   def mockGetAgentRecord(arn: Arn)(response: AgentDetailsDesResponse) =
-    (mockDesConnector.getAgentRecord(_: Arn)(_: HeaderCarrier, _: ExecutionContext))
+    (mockDesConnector
+      .getAgentRecord(_: Arn)(_: HeaderCarrier, _: ExecutionContext))
       .expects(arn, *, *)
-      .returning(Future successful response)
-
-
-
+      .returning(Future.successful(response))
 
 }

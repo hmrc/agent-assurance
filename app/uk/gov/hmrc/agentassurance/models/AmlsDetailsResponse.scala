@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
 case class UkAmlsDetailsResponse(status: String, details: Option[UkAmlsDetails] = None)
 

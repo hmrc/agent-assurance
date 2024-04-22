@@ -16,24 +16,41 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
+import java.time.LocalDate
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import com.google.inject.ImplementedBy
 import com.mongodb.client.model.ReturnDocument
-import org.mongodb.scala.MongoWriteException
+import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.model.FindOneAndReplaceOptions
+import org.mongodb.scala.model.IndexModel
+import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.{Filters, FindOneAndReplaceOptions, IndexModel, IndexOptions, ReplaceOptions, Updates}
+import org.mongodb.scala.model.ReplaceOptions
+import org.mongodb.scala.model.Updates
 import org.mongodb.scala.result.UpdateResult
+import org.mongodb.scala.MongoWriteException
 import play.api.Logging
-import uk.gov.hmrc.agentassurance.models.AmlsError.{AmlsUnexpectedMongoError, ArnAlreadySetError, NoExistingAmlsError, UniqueKeyViolationError}
-import uk.gov.hmrc.agentassurance.models.{AmlsError, AmlsSource, CreateAmlsRequest, UkAmlsDetails, UkAmlsEntity}
+import uk.gov.hmrc.agentassurance.models.AmlsError
+import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.AmlsError.ArnAlreadySetError
+import uk.gov.hmrc.agentassurance.models.AmlsError.NoExistingAmlsError
+import uk.gov.hmrc.agentassurance.models.AmlsError.UniqueKeyViolationError
+import uk.gov.hmrc.agentassurance.models.AmlsSource
+import uk.gov.hmrc.agentassurance.models.CreateAmlsRequest
+import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
+import uk.gov.hmrc.agentassurance.models.UkAmlsEntity
 import uk.gov.hmrc.agentassurance.util._
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.mongo.play.json.Codecs
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
-
-import java.time.LocalDate
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[AmlsRepositoryImpl])
 trait AmlsRepository {
@@ -54,31 +71,36 @@ trait AmlsRepository {
 }
 
 @Singleton
-class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: ExecutionContext)
-  extends PlayMongoRepository[UkAmlsEntity](
-    mongoComponent = mongo,
-    collectionName = "agent-amls",
-    domainFormat = UkAmlsEntity.amlsEntityFormat,
-    indexes = Seq(
-      IndexModel(ascending("utr"),
-        IndexOptions()
-          .unique(true)
-          .name("utrIndex")
-          .sparse(true)),
-      IndexModel(ascending("arn"),
-        IndexOptions()
-          .unique(true)
-          .name("arnIndex")
-          .sparse(true))
-    ),
-    extraCodecs = Seq(
-      Codecs.playFormatCodec(CreateAmlsRequest.format)
-    ),
-    replaceIndexes = true //TODO WG - remove that
-  ) with AmlsRepository with Logging {
+class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
+    extends PlayMongoRepository[UkAmlsEntity](
+      mongoComponent = mongo,
+      collectionName = "agent-amls",
+      domainFormat = UkAmlsEntity.amlsEntityFormat,
+      indexes = Seq(
+        IndexModel(
+          ascending("utr"),
+          IndexOptions()
+            .unique(true)
+            .name("utrIndex")
+            .sparse(true)
+        ),
+        IndexModel(
+          ascending("arn"),
+          IndexOptions()
+            .unique(true)
+            .name("arnIndex")
+            .sparse(true)
+        )
+      ),
+      extraCodecs = Seq(
+        Codecs.playFormatCodec(CreateAmlsRequest.format)
+      ),
+      replaceIndexes = true // TODO WG - remove that
+    )
+    with AmlsRepository
+    with Logging {
 
   override lazy val requiresTtlIndex: Boolean = false
-
 
   override def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError, Unit]] = {
 
@@ -91,18 +113,21 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
         case Some(amlsEntity) if amlsEntity.arn.isDefined => Left(ArnAlreadySetError)
         case _ =>
           collection
-            .replaceOne(equal("utr", utr),
+            .replaceOne(
+              equal("utr", utr),
               UkAmlsEntity(
                 utr = Option(Utr(utr)),
                 amlsDetails = createAmlsRequest.amlsDetails,
                 arn = None,
                 createdOn = LocalDate.now(),
-                amlsSource = AmlsSource.Subscription),
-              ReplaceOptions().upsert(true))
+                amlsSource = AmlsSource.Subscription
+              ),
+              ReplaceOptions().upsert(true)
+            )
             .toFuture()
             .map {
               case updateResult if updateResult.getModifiedCount < 2L => Right(())
-              case _ => Left(AmlsUnexpectedMongoError)
+              case _                                                  => Left(AmlsUnexpectedMongoError)
             }
       }
   }
@@ -112,7 +137,8 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
       .findOneAndReplace(
         equal("arn", arn.value),
         amlsEntity,
-        FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE))
+        FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE)
+      )
       .headOption()
   }
 
@@ -121,31 +147,36 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
       .find(equal("utr", utr.value))
       .headOption()
       .flatMap {
-        case Some(existingEntity) => existingEntity.arn match {
-          case Some(existingArn) =>
-            if (existingArn.value == arn.value) Right(existingEntity.amlsDetails)
-            else Left(ArnAlreadySetError)
-          case None =>
-            val toUpdate = existingEntity.copy(arn = Some(arn)).copy(updatedArnOn = Some(LocalDate.now()))
-            collection
-              .replaceOne(equal("utr", utr.value), toUpdate)
-              .toFuture()
-              .map {
-                case updateResult => if (updateResult.getModifiedCount == 1L) Right(toUpdate.amlsDetails)
-                else {
-                  logger.warn(s"error updating AMLS record with ARN - acknowledged: " +
-                    s"${updateResult.wasAcknowledged()}, modified count: ${updateResult.getModifiedCount}")
-                  Left(AmlsUnexpectedMongoError)
+        case Some(existingEntity) =>
+          existingEntity.arn match {
+            case Some(existingArn) =>
+              if (existingArn.value == arn.value) Right(existingEntity.amlsDetails)
+              else Left(ArnAlreadySetError)
+            case None =>
+              val toUpdate = existingEntity.copy(arn = Some(arn)).copy(updatedArnOn = Some(LocalDate.now()))
+              collection
+                .replaceOne(equal("utr", utr.value), toUpdate)
+                .toFuture()
+                .map {
+                  case updateResult =>
+                    if (updateResult.getModifiedCount == 1L) Right(toUpdate.amlsDetails)
+                    else {
+                      logger.warn(
+                        s"error updating AMLS record with ARN - acknowledged: " +
+                          s"${updateResult.wasAcknowledged()}, modified count: ${updateResult.getModifiedCount}"
+                      )
+                      Left(AmlsUnexpectedMongoError)
+                    }
                 }
-              }.recover {
-                case e: MongoWriteException if e.getError.getCode == 11000 =>
-                  Left(UniqueKeyViolationError)
-                case e => {
-                  logger.warn(s"unexpected error when updating AMLS record with ARN ${e.getMessage}")
-                  Left(AmlsUnexpectedMongoError)
+                .recover {
+                  case e: MongoWriteException if e.getError.getCode == 11000 =>
+                    Left(UniqueKeyViolationError)
+                  case e => {
+                    logger.warn(s"unexpected error when updating AMLS record with ARN ${e.getMessage}")
+                    Left(AmlsUnexpectedMongoError)
+                  }
                 }
-              }
-        }
+          }
         case None => Left(NoExistingAmlsError)
       }
   }
@@ -176,7 +207,8 @@ class AmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: Execution
           Updates.set("amlsDetails.membershipExpiresOn", date.toString),
           Updates.set("amlsSource.Subscription", "AutomaticUpdate")
         )
-      ).toFuture()
+      )
+      .toFuture()
   }
 
 }

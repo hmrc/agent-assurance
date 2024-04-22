@@ -16,33 +16,35 @@
 
 package uk.gov.hmrc.agentassurance.services
 
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.Base64
+
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.mocks._
-import uk.gov.hmrc.agentassurance.models.{DmsResponse, DmsSubmissionReference}
-import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, UpstreamErrorResponse}
+import uk.gov.hmrc.agentassurance.models.DmsResponse
+import uk.gov.hmrc.agentassurance.models.DmsSubmissionReference
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.InternalServerException
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
-import java.time.{Instant, LocalDateTime, ZoneId}
-import java.util.Base64
-import scala.concurrent.ExecutionContext.Implicits.global
+class DmsServiceSpec extends PlaySpec with MockDmsConnector with MockAppConfig {
 
-class DmsServiceSpec extends PlaySpec
-  with MockDmsConnector
-  with MockAppConfig {
-
-
-
-  val html                           = "<html><head></head><body></body></html>"
-  val now: Instant                   = Instant.now
+  val html                          = "<html><head></head><body></body></html>"
+  val now: Instant                  = Instant.now
   implicit val appConfig: AppConfig = mockAppConfig
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val hc: HeaderCarrier    = HeaderCarrier()
 
   val service = new DmsService(mockDmsConnector, appConfig)
 
   "submitToDms" should {
     "return correct value when the submission is successful" in {
-      val encoded          = Base64.getEncoder.encodeToString(html.getBytes)
+      val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
       val timestamp = LocalDateTime
         .of(2022, 3, 2, 12, 30, 45)
@@ -51,7 +53,8 @@ class DmsServiceSpec extends PlaySpec
 
       mocksendPdfAccepted()
 
-      val result = await(service.submitToDms(Some(encoded), timestamp, DmsSubmissionReference("DmsSubmissionReference"))(hc))
+      val result =
+        await(service.submitToDms(Some(encoded), timestamp, DmsSubmissionReference("DmsSubmissionReference"))(hc))
 
       result mustBe DmsResponse(timestamp, "")
     }

@@ -16,14 +16,15 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 case class AgencyDetails(
-                          agencyName: Option[String],
-                          agencyEmail: Option[String],
-                          agencyTelephone: Option[String],
-                          agencyAddress: Option[BusinessAddress]
-                        ) {
+    agencyName: Option[String],
+    agencyEmail: Option[String],
+    agencyTelephone: Option[String],
+    agencyAddress: Option[BusinessAddress]
+) {
   val hasUkAddress: Boolean = agencyAddress.exists(_.countryCode == "GB")
 }
 object AgencyDetails {
@@ -31,13 +32,13 @@ object AgencyDetails {
 }
 
 case class BusinessAddress(
-                            addressLine1: String,
-                            addressLine2: Option[String],
-                            addressLine3: Option[String] = None,
-                            addressLine4: Option[String] = None,
-                            postalCode: Option[String],
-                            countryCode: String
-                          )
+    addressLine1: String,
+    addressLine2: Option[String],
+    addressLine3: Option[String] = None,
+    addressLine4: Option[String] = None,
+    postalCode: Option[String],
+    countryCode: String
+)
 
 object BusinessAddress {
   implicit val format: OFormat[BusinessAddress] = Json.format

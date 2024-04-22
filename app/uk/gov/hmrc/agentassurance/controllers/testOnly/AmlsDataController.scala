@@ -16,70 +16,86 @@
 
 package uk.gov.hmrc.agentassurance.controllers.testOnly
 
-import play.api.libs.json.{Format, JsSuccess, Json}
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import java.time.LocalDate
+import javax.inject.Inject
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import play.api.libs.json.Format
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.Json
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
-import uk.gov.hmrc.agentassurance.models.{CreateAmlsRequest, OverseasAmlsDetails, OverseasAmlsEntity, UkAmlsDetails}
-import uk.gov.hmrc.agentassurance.repositories.{AmlsRepository, OverseasAmlsRepository}
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import uk.gov.hmrc.agentassurance.models.CreateAmlsRequest
+import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
+import uk.gov.hmrc.agentassurance.models.OverseasAmlsEntity
+import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
+import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
+import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import java.time.LocalDate
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
-
-class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepository,
-                                   cc: ControllerComponents,
-                                   amlsRepository: AmlsRepository,
-                                   override val authConnector: AuthConnector
-                                  )(implicit ex: ExecutionContext) extends BackendController(cc) with AuthActions {
+class AmlsDataController @Inject() (
+    overseasAmlsRepository: OverseasAmlsRepository,
+    cc: ControllerComponents,
+    amlsRepository: AmlsRepository,
+    override val authConnector: AuthConnector
+)(implicit ex: ExecutionContext)
+    extends BackendController(cc)
+    with AuthActions {
 
   def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request => arn: Arn =>
     request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match {
       case Some(JsSuccess(amlsRequest, _)) =>
-        if(amlsRequest.isUk) {
+        if (amlsRequest.isUk) {
           createUkAmlsRecord(arn, amlsRequest).map {
             case Right(_) => Created
-            case _ => InternalServerError
+            case _        => InternalServerError
           }
         } else {
           createOverseasAmlsRecord(arn, amlsRequest.membershipNumber).map {
             case Right(_) => Created
-            case _ => InternalServerError
+            case _        => InternalServerError
           }
         }
-      case _ => Future successful BadRequest
+      case _ => Future.successful(BadRequest)
     }
 
   }
 
   private def createUkAmlsRecord(arn: Arn, amlsRequest: AmlsDataRequest) = {
-    val body = if(amlsRequest.isHmrc) "HM Revenue and Customs (HMRC)" else "Law Society of Scotland"
-    val maybeMembershipNumber = if(amlsRequest.membershipNumber.isEmpty) None else Some(amlsRequest.membershipNumber)
+    val body                  = if (amlsRequest.isHmrc) "HM Revenue and Customs (HMRC)" else "Law Society of Scotland"
+    val maybeMembershipNumber = if (amlsRequest.membershipNumber.isEmpty) None else Some(amlsRequest.membershipNumber)
     val dateExpiredOn = amlsRequest.isExpired match {
-      case Some(true) => Some(LocalDate.now())
+      case Some(true)  => Some(LocalDate.now())
       case Some(false) => Some(LocalDate.now().plusMonths(12))
-      case _ => None
+      case _           => None
     }
-    val utr: String = Math.random().*(1000000000).toString.substring(2,12)
+    val utr: String = Math.random().*(1000000000).toString.substring(2, 12)
 
-    amlsRepository.createOrUpdate(
-      CreateAmlsRequest(
-        Utr(utr),
-        UkAmlsDetails(
-          supervisoryBody = body,
-          membershipNumber = maybeMembershipNumber,
-          appliedOn = amlsRequest.appliedOn,
-          membershipExpiresOn = dateExpiredOn
+    amlsRepository
+      .createOrUpdate(
+        CreateAmlsRequest(
+          Utr(utr),
+          UkAmlsDetails(
+            supervisoryBody = body,
+            membershipNumber = maybeMembershipNumber,
+            appliedOn = amlsRequest.appliedOn,
+            membershipExpiresOn = dateExpiredOn
+          )
         )
       )
-    ).flatMap(_ => amlsRepository.updateArn(Utr(utr), arn))
+      .flatMap(_ => amlsRepository.updateArn(Utr(utr), arn))
 
   }
 
   private def createOverseasAmlsRecord(arn: Arn, membershipNumber: String) = {
-    val maybeMembershipNumber = if(membershipNumber.isEmpty) None else Some(membershipNumber)
+    val maybeMembershipNumber = if (membershipNumber.isEmpty) None else Some(membershipNumber)
 
     overseasAmlsRepository.create(
       OverseasAmlsEntity(
@@ -93,16 +109,16 @@ class AmlsDataController @Inject()(overseasAmlsRepository: OverseasAmlsRepositor
     )
   }
 
-  case class AmlsDataRequest(isUk: Boolean,
-                              membershipNumber: String, // if pending membership number could be blank - isExpired would be None
-                              isHmrc: Boolean, // ignored if isUK = false
-                              isExpired: Option[Boolean], // ignored if isUK = false
-                              appliedOn: Option[LocalDate] = None)
+  case class AmlsDataRequest(
+      isUk: Boolean,
+      membershipNumber: String,   // if pending membership number could be blank - isExpired would be None
+      isHmrc: Boolean,            // ignored if isUK = false
+      isExpired: Option[Boolean], // ignored if isUK = false
+      appliedOn: Option[LocalDate] = None
+  )
 
   object AmlsDataRequest {
     implicit val format: Format[AmlsDataRequest] = Json.format[AmlsDataRequest]
   }
-
-
 
 }

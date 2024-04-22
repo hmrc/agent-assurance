@@ -16,43 +16,52 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import org.mongodb.scala._
-import org.mongodb.scala.model.Aggregates.{filter, limit, skip}
-import org.mongodb.scala.model.Filters.{and, equal}
+import org.mongodb.scala.model.Aggregates.filter
+import org.mongodb.scala.model.Aggregates.limit
+import org.mongodb.scala.model.Aggregates.skip
+import org.mongodb.scala.model.Filters.and
+import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.Indexes.ascending
 import uk.gov.hmrc.agentassurance.models.Property
-import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
-
+import uk.gov.hmrc.mongo.MongoComponent
 
 @Singleton
 class PropertiesRepository @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
-  extends PlayMongoRepository[Property](
-    mongoComponent = mongo,
-    collectionName = "agent-assurance",
-    domainFormat = Property.propertyFormat,
-    indexes = Seq(
-      IndexModel(ascending("key"))
-    )
+    extends PlayMongoRepository[Property](
+      mongoComponent = mongo,
+      collectionName = "agent-assurance",
+      domainFormat = Property.propertyFormat,
+      indexes = Seq(
+        IndexModel(ascending("key"))
+      )
     ) {
 
   override lazy val requiresTtlIndex: Boolean = false
 
-  def findProperties(key: String, page:Int, pageSize: Int): Future[(Int, Seq[String])] = {
+  def findProperties(key: String, page: Int, pageSize: Int): Future[(Int, Seq[String])] = {
 
     val skipDuePageNumber = pageSize * (page - 1)
 
     val collectionSize = collection.find(equal("key", key)).toFuture().map(_.size)
     // TODO improve this query e.g. by using a facet to get total before a projection, skip & limit.
-    val utrsForPage = collection.aggregate(Seq(
-      filter(equal("key", key)),
-      skip(skipDuePageNumber),
-      limit(pageSize)
-    )).toFuture()
+    val utrsForPage = collection
+      .aggregate(
+        Seq(
+          filter(equal("key", key)),
+          skip(skipDuePageNumber),
+          limit(pageSize)
+        )
+      )
+      .toFuture()
       .map(_.map(_.value))
 
     for {
@@ -62,8 +71,10 @@ class PropertiesRepository @Inject() (mongo: MongoComponent)(implicit ec: Execut
   }
 
   def propertyExists(property: Property): Future[Boolean] = {
-    collection.find(and(equal("key", property.key), equal("value", property.value)))
-      .headOption().map(_.isDefined)
+    collection
+      .find(and(equal("key", property.key), equal("value", property.value)))
+      .headOption()
+      .map(_.isDefined)
   }
 
   def createProperty(property: Property): Future[Unit] = {
@@ -71,7 +82,9 @@ class PropertiesRepository @Inject() (mongo: MongoComponent)(implicit ec: Execut
   }
 
   def deleteProperty(property: Property): Future[Unit] = {
-    collection.deleteOne(and(equal("key", property.key), equal("value", property.value)))
-      .toFuture().map(_ => ())
+    collection
+      .deleteOne(and(equal("key", property.key), equal("value", property.value)))
+      .toFuture()
+      .map(_ => ())
   }
 }

@@ -1,46 +1,53 @@
+import uk.gov.hmrc.{DefaultBuildSettings, SbtAutoBuildPlugin}
 
-lazy val root = Project("agent-assurance", file("."))
+val appName = "agent-assurance"
+
+ThisBuild / name := appName
+ThisBuild / majorVersion := 2
+ThisBuild / scalaVersion := "2.13.12"
+
+
+lazy val root = (project in file("."))
   .settings(
-    name := "agent-assurance",
     organization := "uk.gov.hmrc",
-    majorVersion := 1,
-    scalaVersion := "2.13.10",
     PlayKeys.playDefaultPort := 9565,
-    scalacOptions ++= Seq(
-      "-Yrangepos",
-      "-Xfatal-warnings",
-      "-Xlint:-missing-interpolator,_",
-      "-Xlint:-byname-implicit",
-      "-Ywarn-dead-code",
-      "-deprecation",
-      "-feature",
-      "-unchecked",
-      "-language:implicitConversions",
-      "-Wconf:src=target/.*:s", // silence warnings from compiled files
-      "-Wconf:src=Routes/.*:s"  // silence warnings from routes files
-    ),
-    resolvers ++= Seq(
-      Resolver.typesafeRepo("releases"),
-      Resolver.url("HMRC-open-artefacts-ivy", url("https://open.artefacts.tax.service.gov.uk/ivy2"))(Resolver.ivyStylePatterns),
-      "HMRC-open-artefacts-maven" at "https://open.artefacts.tax.service.gov.uk/maven2"
-    ),
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
-    routesImport ++= Seq("uk.gov.hmrc.agentassurance.binders.PathBinders._")
+    resolvers ++= Seq(Resolver.typesafeRepo("releases")),
+    routesImport ++= Seq("uk.gov.hmrc.agentassurance.binders.PathBinders._"),
+    scalacOptions ++= scalaCOptions,
+    Compile / scalafmtOnCompile := true,
+    Test / scalafmtOnCompile := true,
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
+    Compile / scalafmtOnCompile := true,
+    Test / scalafmtOnCompile := true
   )
   .settings(
-    CodeCoverageSettings.scoverageSettings,
-    Test / parallelExecution := false
+    Test / parallelExecution := false,
+    CodeCoverageSettings.scoverageSettings
   )
-  .configs(IntegrationTest)
-  .settings(
-    //fix for scoverage compile errors for scala 2.13.10
-    libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always)
-  )
-  .settings(
-    IntegrationTest / Keys.fork := false,
-    Defaults.itSettings,
-    IntegrationTest / unmanagedSourceDirectories += baseDirectory(_ / "it").value,
-    IntegrationTest / parallelExecution := false
-  )
-  .enablePlugins(Seq(PlayScala,SbtDistributablesPlugin) : _*)
+  .enablePlugins(PlayScala, SbtAutoBuildPlugin, SbtDistributablesPlugin)
+  .disablePlugins(JUnitXmlReportPlugin)
 
+val scalaCOptions = Seq(
+  "-Yrangepos",
+  "-Xfatal-warnings",
+  "-Xlint:-missing-interpolator,_",
+  "-Xlint:-byname-implicit",
+  "-Ywarn-dead-code",
+  "-deprecation",
+  "-feature",
+  "-unchecked",
+  "-language:implicitConversions",
+  "-Wconf:src=target/.*:s", // silence warnings from compiled files
+  "-Wconf:src=Routes/.*:s"  // silence warnings from routes files
+)
+
+lazy val it = project
+  .enablePlugins(PlayScala)
+  .dependsOn(root % "test->test") // the "test->test" allows reusing test code and test dependencies
+  .settings(DefaultBuildSettings.itSettings())
+  .settings(libraryDependencies ++= AppDependencies.test)
+  .settings(
+    Compile / scalafmtOnCompile := true,
+    Test / scalafmtOnCompile := true
+  )

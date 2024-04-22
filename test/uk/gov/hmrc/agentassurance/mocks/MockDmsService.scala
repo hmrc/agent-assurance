@@ -16,20 +16,25 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import java.time.Instant
+
+import scala.concurrent.Future
+
 import org.scalamock.scalatest.MockFactory
-import uk.gov.hmrc.agentassurance.models.{DmsResponse, DmsSubmissionReference}
+import org.scalatest.TestSuite
+import uk.gov.hmrc.agentassurance.models.DmsResponse
+import uk.gov.hmrc.agentassurance.models.DmsSubmissionReference
 import uk.gov.hmrc.agentassurance.services.DmsService
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.Instant
-import scala.concurrent.Future
-
-trait MockDmsService extends MockFactory {
+trait MockDmsService extends MockFactory { this: TestSuite =>
 
   val mockDmsService = mock[DmsService]
 
   def mockSubmitToDmsSuccess =
-  (mockDmsService.submitToDms(_: Option[String], _: Instant, _: DmsSubmissionReference)(_: HeaderCarrier))
-    .expects(*,*,*,*).returning(Future successful DmsResponse(Instant.now(), ""))
+    (mockDmsService
+      .submitToDms(_: Option[String], _: Instant, _: DmsSubmissionReference)(_: HeaderCarrier))
+      .expects(*, *, *, *)
+      .returning(Future.successful(DmsResponse(Instant.now(), "")))
 
 }

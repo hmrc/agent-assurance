@@ -16,10 +16,12 @@
 
 package uk.gov.hmrc.agentassurance.config
 
-import com.google.inject.AbstractModule
-import play.api.{Configuration, Environment}
+import java.time.Clock
+import java.time.ZoneOffset
 
-import java.time.{Clock, ZoneOffset}
+import com.google.inject.AbstractModule
+import play.api.Configuration
+import play.api.Environment
 
 class Module(environment: Environment, configuration: Configuration) extends AbstractModule {
 

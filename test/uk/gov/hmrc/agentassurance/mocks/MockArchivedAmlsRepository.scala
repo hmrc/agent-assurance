@@ -16,20 +16,22 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
-import org.scalamock.scalatest.MockFactory
-import uk.gov.hmrc.agentassurance.models.{AmlsError, ArchivedAmlsEntity}
-import uk.gov.hmrc.agentassurance.repositories.ArchivedAmlsRepository
-
 import scala.concurrent.Future
 
-trait MockArchivedAmlsRepository extends MockFactory {
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
+import uk.gov.hmrc.agentassurance.models.AmlsError
+import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
+import uk.gov.hmrc.agentassurance.repositories.ArchivedAmlsRepository
+
+trait MockArchivedAmlsRepository extends MockFactory { this: TestSuite =>
 
   val mockArchivedAmlsRepository = mock[ArchivedAmlsRepository]
   def mockCreate(entity: ArchivedAmlsEntity)(response: Either[AmlsError, Unit]) = {
     (mockArchivedAmlsRepository
       .create(_: ArchivedAmlsEntity))
       .expects(entity)
-      .returning(Future successful response)
+      .returning(Future.successful(response))
   }
 
 }

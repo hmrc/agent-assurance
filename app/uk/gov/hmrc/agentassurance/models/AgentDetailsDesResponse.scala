@@ -16,15 +16,19 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Json, Reads}
-import uk.gov.hmrc.agentmtdidentifiers.model.{SuspensionDetails, Utr}
+import play.api.libs.json.Json
+import play.api.libs.json.Reads
+import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
-
-case class AgentDetailsDesResponse(uniqueTaxReference: Option[Utr], agencyDetails: Option[AgencyDetails], suspensionDetails: Option[SuspensionDetails])
+case class AgentDetailsDesResponse(
+    uniqueTaxReference: Option[Utr],
+    agencyDetails: Option[AgencyDetails],
+    suspensionDetails: Option[SuspensionDetails]
+)
 
 object AgentDetailsDesResponse {
   implicit val agencyDetailsRead: Reads[AgencyDetails] = Json.reads
 
   implicit val agentRecordDetailsRead: Reads[AgentDetailsDesResponse] = Json.reads
 }
-

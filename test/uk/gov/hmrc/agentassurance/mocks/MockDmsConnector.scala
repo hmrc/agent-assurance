@@ -16,38 +16,44 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
-import akka.NotUsed
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import org.scalamock.scalatest.MockFactory
-import play.api.mvc.MultipartFormData
-import play.api.test.Helpers.{ACCEPTED, BAD_GATEWAY}
-import uk.gov.hmrc.agentassurance.connectors.DmsConnector
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
-
 import scala.concurrent.Future
 
-trait MockDmsConnector extends MockFactory {
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
+import org.apache.pekko.NotUsed
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
+import play.api.mvc.MultipartFormData
+import play.api.test.Helpers.ACCEPTED
+import play.api.test.Helpers.BAD_GATEWAY
+import uk.gov.hmrc.agentassurance.connectors.DmsConnector
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
+
+trait MockDmsConnector extends MockFactory { this: TestSuite =>
 
   val mockDmsConnector = mock[DmsConnector]
 
   def mocksendPdfAccepted() = {
-    (mockDmsConnector.sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
+    (mockDmsConnector
+      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
       .expects(*, *)
-      .returning(Future successful HttpResponse.apply(ACCEPTED, ""))
+      .returning(Future.successful(HttpResponse.apply(ACCEPTED, "")))
   }
 
   def mocksendPdfUpstreamErrorResponse() = {
-    (mockDmsConnector.sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
+    (mockDmsConnector
+      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
       .expects(*, *)
-      .returning(Future failed UpstreamErrorResponse.apply("Error message", BAD_GATEWAY))
+      .returning(Future.failed(UpstreamErrorResponse.apply("Error message", BAD_GATEWAY)))
   }
 
   def mocksendPdfNonFatal() = {
-    (mockDmsConnector.sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
+    (mockDmsConnector
+      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
       .expects(*, *)
-      .returning(Future failed new Exception("Error message"))
+      .returning(Future.failed(new Exception("Error message")))
   }
-
 
 }

@@ -16,22 +16,25 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Format, Json}
-
 import java.time.LocalDate
+
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
 sealed trait AmlsDetails
 
-case class UkAmlsDetails(supervisoryBody: String,
-                         membershipNumber: Option[String],
-                         amlsSafeId: Option[String] = None,
-                         agentBPRSafeId: Option[String] = None,
-                         appliedOn: Option[LocalDate],
-                         membershipExpiresOn: Option[LocalDate]) extends AmlsDetails {
-  val isPending: Boolean = appliedOn.nonEmpty && membershipExpiresOn.isEmpty
-  val isRegistered: Boolean = membershipExpiresOn.nonEmpty
+case class UkAmlsDetails(
+    supervisoryBody: String,
+    membershipNumber: Option[String],
+    amlsSafeId: Option[String] = None,
+    agentBPRSafeId: Option[String] = None,
+    appliedOn: Option[LocalDate],
+    membershipExpiresOn: Option[LocalDate]
+) extends AmlsDetails {
+  val isPending: Boolean             = appliedOn.nonEmpty && membershipExpiresOn.isEmpty
+  val isRegistered: Boolean          = membershipExpiresOn.nonEmpty
   val supervisoryBodyIsHmrc: Boolean = supervisoryBody.equals("HM Revenue and Customs (HMRC)")
-  val isExpired: Boolean = membershipExpiresOn.forall(LocalDate.now.isAfter(_))
+  val isExpired: Boolean             = membershipExpiresOn.forall(LocalDate.now.isAfter(_))
 }
 
 object UkAmlsDetails {
@@ -43,4 +46,3 @@ case class OverseasAmlsDetails(supervisoryBody: String, membershipNumber: Option
 object OverseasAmlsDetails {
   implicit val format: Format[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]
 }
-

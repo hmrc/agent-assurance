@@ -16,22 +16,27 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
+import java.time.Clock
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import com.google.inject.ImplementedBy
 import com.mongodb.client.model.ReturnDocument
-import org.mongodb.scala.MongoException
 import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.model.FindOneAndReplaceOptions
+import org.mongodb.scala.model.IndexModel
+import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.{FindOneAndReplaceOptions, IndexModel, IndexOptions}
+import org.mongodb.scala.MongoException
 import play.api.Logging
-import uk.gov.hmrc.agentassurance.models.AmlsError._
 import uk.gov.hmrc.agentassurance.models._
+import uk.gov.hmrc.agentassurance.models.AmlsError._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-
-import java.time.Clock
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.mongo.MongoComponent
 
 @ImplementedBy(classOf[OverseasAmlsRepositoryImpl])
 trait OverseasAmlsRepository {
@@ -44,15 +49,17 @@ trait OverseasAmlsRepository {
 }
 
 @Singleton
-class OverseasAmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: ExecutionContext, clock: Clock)
-  extends PlayMongoRepository[OverseasAmlsEntity](
-    mongoComponent = mongo,
-    collectionName ="overseas-agent-amls",
-    domainFormat = OverseasAmlsEntity.format,
-    indexes = Seq(
-      IndexModel(ascending("arn"), IndexOptions().name("arnIndex").unique(true))
+class OverseasAmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext, clock: Clock)
+    extends PlayMongoRepository[OverseasAmlsEntity](
+      mongoComponent = mongo,
+      collectionName = "overseas-agent-amls",
+      domainFormat = OverseasAmlsEntity.format,
+      indexes = Seq(
+        IndexModel(ascending("arn"), IndexOptions().name("arnIndex").unique(true))
+      )
     )
-    ) with OverseasAmlsRepository with Logging {
+    with OverseasAmlsRepository
+    with Logging {
 
   override lazy val requiresTtlIndex: Boolean = false
 
@@ -60,24 +67,25 @@ class OverseasAmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: E
     collection
       .find(equal("arn", amlsEntity.arn.value))
       .headOption()
-      .flatMap{
-        case Some(_) => Future successful Left(AmlsRecordExists)
-        case _  =>
+      .flatMap {
+        case Some(_) => Future.successful(Left(AmlsRecordExists))
+        case _ =>
           collection
-          .insertOne(amlsEntity.withDefaultCreatedDate)
+            .insertOne(amlsEntity.withDefaultCreatedDate)
             .toFuture()
-            .map{
-              case insertOneResult if insertOneResult.wasAcknowledged() =>  Right(())
+            .map {
+              case insertOneResult if insertOneResult.wasAcknowledged() => Right(())
               case e =>
                 logger.warn(s"Error inserting overseas AMLS record ${e}")
                 Left(AmlsUnexpectedMongoError)
             }
-          }.recover {
-            case e: MongoException =>
-              logger.warn(s"Mongo exception when inserting overseas AMLS record $e")
-              Left(AmlsUnexpectedMongoError)
-          }
       }
+      .recover {
+        case e: MongoException =>
+          logger.warn(s"Mongo exception when inserting overseas AMLS record $e")
+          Left(AmlsUnexpectedMongoError)
+      }
+  }
 
   override def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]] =
     collection
@@ -90,7 +98,8 @@ class OverseasAmlsRepositoryImpl @Inject()(mongo: MongoComponent)(implicit ec: E
       .findOneAndReplace(
         equal("arn", amlsEntity.arn.value),
         amlsEntity.withDefaultCreatedDate,
-        FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE))
+        FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE)
+      )
       .headOption()
   }
 

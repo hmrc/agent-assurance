@@ -16,33 +16,38 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import akka.NotUsed
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import com.typesafe.config.Config
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
+import org.apache.pekko.NotUsed
 import play.api.http.Status.ACCEPTED
 import play.api.mvc.MultipartFormData
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, StringContextOps}
-
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderNames
+import uk.gov.hmrc.http.StringContextOps
 
 @Singleton
-class DmsConnector @Inject()(
-  httpClient: HttpClientV2,
-  appConfig: AppConfig,
-  override val configuration: Config,
-  override val actorSystem: ActorSystem
+class DmsConnector @Inject() (
+    httpClient: HttpClientV2,
+    appConfig: AppConfig,
+    override val configuration: Config,
+    override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
     extends BaseConnector {
 
   private def dmsHeaders: (String, String) = HeaderNames.authorisation -> appConfig.internalAuthToken
 
   def sendPdf(
-    body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed]
+      body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed]
   )(implicit hc: HeaderCarrier): Future[Unit] =
     retryFor[Unit]("DMS submission")(retryCondition) {
       httpClient

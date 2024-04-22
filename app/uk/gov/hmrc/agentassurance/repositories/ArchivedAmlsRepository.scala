@@ -16,19 +16,25 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import com.google.inject.ImplementedBy
-import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.{IndexModel, IndexOptions}
-import play.api.Logging
-import play.api.libs.json.Format
-import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
-import uk.gov.hmrc.agentassurance.models.{AmlsError, ArchivedAmlsEntity}
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
+import javax.inject.Inject
+import javax.inject.Singleton
 
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import com.google.inject.ImplementedBy
+import org.mongodb.scala.model.IndexModel
+import org.mongodb.scala.model.IndexOptions
+import org.mongodb.scala.model.Indexes.ascending
+import play.api.libs.json.Format
+import play.api.Logging
+import uk.gov.hmrc.agentassurance.models.AmlsError
+import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.mongo.play.json.Codecs
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.mongo.MongoComponent
 
 @ImplementedBy(classOf[ArchivedAmlsRepositoryImpl])
 trait ArchivedAmlsRepository {
@@ -36,31 +42,33 @@ trait ArchivedAmlsRepository {
 }
 
 @Singleton
-class ArchivedAmlsRepositoryImpl @Inject()(mongoComponent: MongoComponent)(
-  implicit ec: ExecutionContext) extends PlayMongoRepository[ArchivedAmlsEntity](
-  mongoComponent = mongoComponent,
-  collectionName = "archived-amls",
-  domainFormat = ArchivedAmlsEntity.format,
-  indexes = Seq(
-    IndexModel(ascending("arn"),
-      IndexOptions()
-        .name("arnIndex"))
-  ),
-  extraCodecs = Seq(
-    Codecs.playFormatCodec(Format(Arn.arnReads, Arn.arnWrites))
-  )
-) with ArchivedAmlsRepository with Logging {
+class ArchivedAmlsRepositoryImpl @Inject() (mongoComponent: MongoComponent)(implicit ec: ExecutionContext)
+    extends PlayMongoRepository[ArchivedAmlsEntity](
+      mongoComponent = mongoComponent,
+      collectionName = "archived-amls",
+      domainFormat = ArchivedAmlsEntity.format,
+      indexes = Seq(
+        IndexModel(
+          ascending("arn"),
+          IndexOptions()
+            .name("arnIndex")
+        )
+      ),
+      extraCodecs = Seq(
+        Codecs.playFormatCodec(Format(Arn.arnReads, Arn.arnWrites))
+      )
+    )
+    with ArchivedAmlsRepository
+    with Logging {
 
-
-override def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]] = {
-  collection
-    .insertOne(archivedAmlsEntity)
-    .toFuture()
-    .map(
-      result =>
-        if(result.wasAcknowledged()) Right(())
-          else
-            Left(AmlsUnexpectedMongoError)
-          )
-    }
+  override def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]] = {
+    collection
+      .insertOne(archivedAmlsEntity)
+      .toFuture()
+      .map(result =>
+        if (result.wasAcknowledged()) Right(())
+        else
+          Left(AmlsUnexpectedMongoError)
+      )
+  }
 }

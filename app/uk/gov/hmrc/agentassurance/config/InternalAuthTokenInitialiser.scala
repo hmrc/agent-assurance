@@ -16,17 +16,22 @@
 
 package uk.gov.hmrc.agentassurance.config
 
-import akka.Done
-import play.api.Logging
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import org.apache.pekko.Done
 import play.api.http.Status.CREATED
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+import play.api.Logging
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
-
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, ExecutionContext, Future}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+import uk.gov.hmrc.http.StringContextOps
 
 abstract class InternalAuthTokenInitialiser {
   val initialised: Future[Done]
@@ -39,17 +44,15 @@ class NoOpInternalAuthTokenInitialiser @Inject() () extends InternalAuthTokenIni
 
 @Singleton
 class InternalAuthTokenInitialiserImpl @Inject() (
-  appConfig: AppConfig,
-  httpClient: HttpClientV2
+    appConfig: AppConfig,
+    httpClient: HttpClientV2
 )(implicit ec: ExecutionContext)
     extends InternalAuthTokenInitialiser
     with Logging {
 
-
   override val initialised: Future[Done] = for {
     _ <- ensureAuthToken()
   } yield Done
-
 
   Await.result(initialised, 30.seconds)
 
@@ -69,18 +72,18 @@ class InternalAuthTokenInitialiserImpl @Inject() (
       .post(url"${appConfig.internalAuthBaseUrl}/test-only/token")(HeaderCarrier())
       .withBody(
         Json.parse(s"""
-             |{
-             | "token": "${appConfig.internalAuthToken}",
-             | "principal": "${appConfig.appName}",
-             | "permissions": [
-             |   {
-             |    "resourceType": "dms-submission",
-             |    "resourceLocation": "submit",
-             |    "actions": ["WRITE"]
-             |   }
-             | ]
-             |}
-          |""".stripMargin)
+                      |{
+                      | "token": "${appConfig.internalAuthToken}",
+                      | "principal": "${appConfig.appName}",
+                      | "permissions": [
+                      |   {
+                      |    "resourceType": "dms-submission",
+                      |    "resourceLocation": "submit",
+                      |    "actions": ["WRITE"]
+                      |   }
+                      | ]
+                      |}
+                      |""".stripMargin)
       )
       .execute
       .flatMap { response =>

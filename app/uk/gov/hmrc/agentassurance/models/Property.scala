@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
 case class Property(key: String, value: String)
 
@@ -32,11 +33,3 @@ object Value {
 
   implicit val valueFormat: Format[Value] = Json.format[Value]
 }
-
-
-
-
-
-
-
-
