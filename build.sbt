@@ -2,13 +2,13 @@ import uk.gov.hmrc.{DefaultBuildSettings, SbtAutoBuildPlugin}
 
 val appName = "agent-assurance"
 
-ThisBuild / name := appName
 ThisBuild / majorVersion := 2
 ThisBuild / scalaVersion := "2.13.12"
 
 
 lazy val root = (project in file("."))
   .settings(
+    name := appName,
     organization := "uk.gov.hmrc",
     PlayKeys.playDefaultPort := 9565,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
