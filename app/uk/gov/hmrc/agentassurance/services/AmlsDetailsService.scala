@@ -63,8 +63,8 @@ class AmlsDetailsService @Inject() (
                 (amlsStatus, Some(ukAmlsDetails)) // Scenarios: #5a, #5b, #6a, #6b #8, #9
               }
             }
-            .getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, Some(ukAmlsDetails)))) // Scenario #10
-        } else {                                                                             // supervisoryBodyIsNotHmrc
+            .getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, None))) // Scenario #10
+        } else {                                                              // supervisoryBodyIsNotHmrc
           Future.successful(
             (
               if (hasRenewalDateExpired(ukAmlsDetails.membershipExpiresOn))

@@ -111,7 +111,7 @@ class AmlsDetailsServiceSpec
 
         val result = service.getAmlsDetailsByArn(testArn)
 
-        await(result) mustBe (AmlsStatus.NoAmlsDetailsUK, Some(testHmrcAmlsDetailsNoMembershipNumber))
+        await(result) mustBe (AmlsStatus.NoAmlsDetailsUK, None)
       }
       "return (ExpiredAMLSDetailsUK, UkAmlsDetails) if the record has expired - Scenario #5" in {
         val testDate = LocalDate.now().minusWeeks(2)
