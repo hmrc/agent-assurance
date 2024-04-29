@@ -26,15 +26,20 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import com.google.inject.ImplementedBy
+import com.typesafe.config.Config
+import org.apache.pekko.actor.ActorSystem
 import play.api.http.Status.NOT_FOUND
 import play.api.http.Status.OK
 import play.api.libs.json._
 import play.api.libs.json.Reads._
+import play.api.mvc.Request
 import play.api.Logging
 import play.utils.UriEncoding
 import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesCheckResponse
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
+import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.Nino
@@ -78,11 +83,22 @@ trait DesConnector {
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord]
 
   def getAgentRecord(arn: Arn)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse]
+
+  def getAgentRecordCached(
+      arn: Arn
+  )(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesCheckResponse]
 }
 
 @Singleton
-class DesConnectorImpl @Inject() (httpGet: HttpClientV2, metrics: Metrics)(implicit appConfig: AppConfig)
+class DesConnectorImpl @Inject() (
+    httpGet: HttpClientV2,
+    metrics: Metrics,
+    agentCacheProvider: CacheProvider,
+    override val configuration: Config,
+    override val actorSystem: ActorSystem
+)(implicit appConfig: AppConfig)
     extends DesConnector
+    with BaseConnector
     with Logging {
 
   private val baseUrl            = appConfig.desBaseUrl
@@ -151,6 +167,16 @@ class DesConnectorImpl @Inject() (httpGet: HttpClientV2, metrics: Metrics)(impli
     getWithDesHeaders[AgentDetailsDesResponse]("GetAgentRecord", url)
   }
 
+  // API #1170 (API#4) Get Agent Record
+  override def getAgentRecordCached(
+      arn: Arn
+  )(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesCheckResponse] = {
+    val url = new URL(s"$baseUrl/registration/personal-details/arn/${arn.value}")
+    agentCacheProvider.agentDetailsCache(arn.value) {
+      getWithDesHeadersWithRetry[AgentDetailsDesCheckResponse]("GetAgentRecordCached", url)
+    }
+  }
+
   private def getWithDesHeaders[A: HttpReads](
       apiName: String,
       url: URL
@@ -171,4 +197,27 @@ class DesConnectorImpl @Inject() (httpGet: HttpClientV2, metrics: Metrics)(impli
         result
       })
   }
+
+  private def getWithDesHeadersWithRetry[A: HttpReads](
+      apiName: String,
+      url: URL
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext, x: Reads[A]): Future[A] = {
+    val desHeaderCarrier = hc.copy(
+      authorization = Some(Authorization(s"Bearer $authorizationToken")),
+      extraHeaders = hc.extraHeaders :+ "Environment" -> environment
+    )
+    retryFor[A](s"$apiName connector get $url")(retryCondition) {
+      val timer = metrics.defaultRegistry.timer(s"ConsumedAPI-DES-$apiName-GET")
+      timer.time()
+      httpGet
+        .get(url)(desHeaderCarrier)
+        .setHeader(explicitHeaders: _*)
+        .executeAndDeserialise[A]
+        .map(result => {
+          timer.time().stop()
+          result
+        })
+    }
+  }
+
 }

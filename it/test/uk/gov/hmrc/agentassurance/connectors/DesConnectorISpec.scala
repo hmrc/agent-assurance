@@ -18,11 +18,17 @@ package test.uk.gov.hmrc.agentassurance.connectors
 
 import scala.concurrent.ExecutionContext
 
+import com.typesafe.config.Config
+import org.apache.pekko.actor.ActorSystem
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.Request
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.Application
+import play.api.Configuration
 import test.uk.gov.hmrc.agentassurance.stubs.DataStreamStub
 import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
 import test.uk.gov.hmrc.agentassurance.support.MetricTestSupport
@@ -32,8 +38,12 @@ import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnectorImpl
 import uk.gov.hmrc.agentassurance.models.AgencyDetails
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesCheckResponse
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.BusinessAddress
+import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
+import uk.gov.hmrc.agentassurance.services.AgencyDetailsCache
+import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -42,6 +52,9 @@ import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.mongo.cache.DataKey
+import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
+import uk.gov.hmrc.mongo.CurrentTimestampSupport
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 class DesConnectorISpec
@@ -50,14 +63,33 @@ class DesConnectorISpec
     with WireMockSupport
     with DesStubs
     with DataStreamStub
+    with CleanMongoCollectionSupport
     with MetricTestSupport {
+
+  private implicit val hc: HeaderCarrier                        = HeaderCarrier()
+  private implicit val ec: ExecutionContext                     = ExecutionContext.global
+  private implicit val request: Request[AnyContentAsEmpty.type] = FakeRequest()
+  private implicit val appConfig: AppConfig                     = app.injector.instanceOf[AppConfig]
+  private implicit val config: Config                           = app.injector.instanceOf[Config]
+  private implicit lazy val as: ActorSystem                     = ActorSystem()
+
+  protected val agentDataCache: AgencyDetailsCacheRepository =
+    new AgencyDetailsCacheRepository(mongoComponent, new CurrentTimestampSupport)
 
   implicit override lazy val app: Application = appBuilder
     .build()
 
-  implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+  val agencyDetailsCache = new AgencyDetailsCache(agentDataCache, app.injector.instanceOf[Metrics])
 
-  val desConnector = new DesConnectorImpl(app.injector.instanceOf[HttpClientV2], app.injector.instanceOf[Metrics])
+  val cacheProvider = new CacheProvider(agencyDetailsCache, app.injector.instanceOf[Configuration])
+
+  val desConnector = new DesConnectorImpl(
+    app.injector.instanceOf[HttpClientV2],
+    app.injector.instanceOf[Metrics],
+    cacheProvider,
+    config,
+    as
+  )
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -72,12 +104,39 @@ class DesConnectorISpec
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "auditing.consumer.baseUri.host"                   -> wireMockHost,
         "auditing.consumer.baseUri.port"                   -> wireMockPort,
-        "internal-auth-token-enabled-on-start"             -> false
+        "internal-auth-token-enabled-on-start"             -> false,
+//        "http-verbs.retries.intervals"                     -> List("500ms"),
+        "agent.cache.enabled" -> true
       )
       .bindings(bind[DesConnector].toInstance(desConnector))
 
-  private implicit val hc: HeaderCarrier    = HeaderCarrier()
-  private implicit val ec: ExecutionContext = ExecutionContext.global
+  val agentDetailsDesResponse = AgentDetailsDesResponse(
+    Some(Utr("0123456789")),
+    Some(
+      AgencyDetails(
+        Some("ABC Accountants"),
+        Some("abc@xyz.com"),
+        Some("07345678901"),
+        Some(
+          BusinessAddress(
+            "Matheson House",
+            Some("Grange Central"),
+            Some("Town Centre"),
+            Some("Telford"),
+            Some("TF3 4ER"),
+            "GB"
+          )
+        )
+      )
+    ),
+    Some(SuspensionDetails(suspensionStatus = false, None))
+  )
+
+  val agentDetailsDesCachedResponse = AgentDetailsDesCheckResponse(
+    Some(Utr("0123456789")),
+    Some(false),
+    Some(SuspensionDetails(suspensionStatus = false, None))
+  )
 
   val arn = Arn("AARN00012345")
 
@@ -94,30 +153,39 @@ class DesConnectorISpec
 
       givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
 
-      val result = await(desConnector.getAgentRecord(arn))
-      result shouldBe
-        AgentDetailsDesResponse(
-          Some(Utr("0123456789")),
-          Some(
-            AgencyDetails(
-              Some("ABC Accountants"),
-              Some("abc@xyz.com"),
-              Some("07345678901"),
-              Some(
-                BusinessAddress(
-                  "Matheson House",
-                  Some("Grange Central"),
-                  Some("Town Centre"),
-                  Some("Telford"),
-                  Some("TF3 4ER"),
-                  "GB"
-                )
-              )
-            )
-          ),
-          Some(SuspensionDetails(suspensionStatus = false, None))
-        )
+      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
     }
+  }
+
+  "DesConnector getAgentRecordCached" should {
+    "return agency details cached for a given ARN and save record to cache" in {
+      val dataKey = DataKey[AgentDetailsDesCheckResponse](arn.value)
+      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
+
+      await(agentDataCache.get("agentDetails")(dataKey)) shouldBe None
+      await(desConnector.getAgentRecordCached(arn)) shouldBe agentDetailsDesCachedResponse
+      await(agentDataCache.get("agentDetails")(dataKey)) shouldBe Some(agentDetailsDesCachedResponse)
+
+    }
+
+    "return agency details cached for a given ARN,  second from cache" in {
+      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
+      await(desConnector.getAgentRecordCached(arn)) shouldBe agentDetailsDesCachedResponse
+      Thread.sleep(500) // TODO - not sure how fix it . Otherwise flaky test
+      await(desConnector.getAgentRecordCached(arn)) shouldBe agentDetailsDesCachedResponse
+
+    }
+
+    "must fail when the server returns another 5xx status" in {
+      givenDesReturnsServerError
+      an[Exception] should be thrownBy await(desConnector.getAgentRecordCached(arn))
+    }
+
+    "must fail when the server returns agent unknown status" in {
+      givenAgentIsUnknown404(Arn(arn.value))
+      an[Exception] should be thrownBy await(desConnector.getAgentRecordCached(arn))
+    }
+
   }
 
   private def aCheckEndpoint(identifier: TaxIdentifier) = {
