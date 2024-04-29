@@ -163,7 +163,9 @@ class DesConnectorISpec
       givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
 
       await(agentDataCache.get("agentDetails")(dataKey)) shouldBe None
+      Thread.sleep(500) // TODO - not sure how fix it . Otherwise flaky test
       await(desConnector.getAgentRecordCached(arn)) shouldBe agentDetailsDesCachedResponse
+      Thread.sleep(500) // TODO - not sure how fix it . Otherwise flaky test
       await(agentDataCache.get("agentDetails")(dataKey)) shouldBe Some(agentDetailsDesCachedResponse)
 
     }
