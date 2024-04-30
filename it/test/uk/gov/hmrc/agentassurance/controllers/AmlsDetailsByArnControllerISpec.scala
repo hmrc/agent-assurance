@@ -79,7 +79,8 @@ class AmlsDetailsByArnControllerISpec
         "microservice.services.des.port"       -> wireMockPort,
         "auditing.enabled"                     -> false,
         "stride.roles.agent-assurance"         -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled-on-start" -> false
+        "internal-auth-token-enabled-on-start" -> false,
+        "agent.cache.enabled"                  -> false
       )
       .overrides(moduleWithOverrides)
 
