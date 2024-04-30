@@ -19,6 +19,8 @@ package uk.gov.hmrc.agentassurance.config
 import java.time.Clock
 import java.time.ZoneOffset
 
+import scala.concurrent.duration.Duration
+
 import com.google.inject.AbstractModule
 import play.api.Configuration
 import play.api.Environment
@@ -39,5 +41,8 @@ class Module(environment: Environment, configuration: Configuration) extends Abs
         .to(classOf[NoOpInternalAuthTokenInitialiser])
         .asEagerSingleton()
     }
+
+    val cacheExpires = Duration.create(configuration.underlying.getString("agent.cache.expires"))
+    bind(classOf[Duration]).toInstance(cacheExpires)
   }
 }

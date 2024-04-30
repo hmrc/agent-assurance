@@ -22,6 +22,7 @@ import scala.concurrent.Future
 import org.scalamock.handlers.CallHandler3
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
+import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
@@ -57,8 +58,8 @@ trait MockDesConnector extends MockFactory { this: TestSuite =>
 
   def mockGetAgentRecord(arn: Arn)(response: AgentDetailsDesResponse) =
     (mockDesConnector
-      .getAgentRecord(_: Arn)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(arn, *, *)
+      .getAgentRecord(_: Arn)(_: Request[_], _: HeaderCarrier, _: ExecutionContext))
+      .expects(arn, *, *, *)
       .returning(Future.successful(response))
 
 }

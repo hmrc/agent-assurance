@@ -36,7 +36,6 @@ import play.api.mvc.Request
 import play.api.Logging
 import play.utils.UriEncoding
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesCheckResponse
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
 import uk.gov.hmrc.agentassurance.services.CacheProvider
@@ -82,11 +81,9 @@ trait DesConnector {
       amlsRegistrationNumber: String
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord]
 
-  def getAgentRecord(arn: Arn)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse]
-
-  def getAgentRecordCached(
+  def getAgentRecord(
       arn: Arn
-  )(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesCheckResponse]
+  )(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse]
 }
 
 @Singleton
@@ -160,20 +157,13 @@ class DesConnectorImpl @Inject() (
     getWithDesHeaders[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
   }
 
+  // API #1170 (API#4) Get Agent Record
   override def getAgentRecord(
       arn: Arn
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse] = {
-    val url = new URL(s"$baseUrl/registration/personal-details/arn/${arn.value}")
-    getWithDesHeaders[AgentDetailsDesResponse]("GetAgentRecord", url)
-  }
-
-  // API #1170 (API#4) Get Agent Record
-  override def getAgentRecordCached(
-      arn: Arn
-  )(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesCheckResponse] = {
+  )(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse] = {
     val url = new URL(s"$baseUrl/registration/personal-details/arn/${arn.value}")
     agentCacheProvider.agentDetailsCache(arn.value) {
-      getWithDesHeadersWithRetry[AgentDetailsDesCheckResponse]("GetAgentRecordCached", url)
+      getWithDesHeadersWithRetry[AgentDetailsDesResponse]("GetAgentRecordCached", url)
     }
   }
 

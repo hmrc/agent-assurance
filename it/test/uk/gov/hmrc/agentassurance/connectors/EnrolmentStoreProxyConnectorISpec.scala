@@ -60,7 +60,9 @@ class EnrolmentStoreProxyConnectorISpec
         "microservice.services.internal-auth.port"         -> wireMockPort,
         "auditing.consumer.baseUri.host"                   -> wireMockHost,
         "auditing.consumer.baseUri.port"                   -> wireMockPort,
-        "internal-auth-token-enabled-on-start"             -> false
+        "internal-auth-token-enabled-on-start"             -> false,
+        "agent.cache.enabled"                              -> true,
+        "agent.cache.expires"                              -> "1 hour"
       )
       .overrides(moduleWithOverrides)
 

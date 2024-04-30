@@ -16,20 +16,27 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import uk.gov.hmrc.mongo.cache.{CacheIdType, MongoCacheRepository}
-import uk.gov.hmrc.mongo.{MongoComponent, TimestampSupport}
+import javax.inject.Inject
+import javax.inject.Singleton
 
-import javax.inject.{Inject, Singleton}
+import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.DurationInt
+
+import uk.gov.hmrc.mongo.cache.CacheIdType
+import uk.gov.hmrc.mongo.cache.MongoCacheRepository
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.TimestampSupport
 
 @Singleton
-class AgencyDetailsCacheRepository @Inject()(mongoComponent: MongoComponent,
-                                             timestampSupport: TimestampSupport)(implicit ec: ExecutionContext)
-extends MongoCacheRepository(
-  mongoComponent = mongoComponent,
-  collectionName = "agency-details",
-  ttl = 24.hours, //sessions can last for a maximum of 4 hours
-  timestampSupport = timestampSupport,
-  cacheIdType = CacheIdType.SimpleCacheId
-)
+class AgencyDetailsCacheRepository @Inject() (
+    mongoComponent: MongoComponent,
+    timestampSupport: TimestampSupport,
+    expires: Duration
+)(implicit ec: ExecutionContext)
+    extends MongoCacheRepository(
+      mongoComponent = mongoComponent,
+      collectionName = "agency-details",
+      ttl = expires,
+      timestampSupport = timestampSupport,
+      cacheIdType = CacheIdType.SimpleCacheId
+    )

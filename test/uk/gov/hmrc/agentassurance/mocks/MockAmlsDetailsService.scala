@@ -18,9 +18,9 @@ package uk.gov.hmrc.agentassurance.mocks
 
 import scala.concurrent.Future
 
-import org.scalamock.handlers.CallHandler2
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
+import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.models.AmlsDetails
 import uk.gov.hmrc.agentassurance.models.AmlsStatus
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
@@ -33,10 +33,10 @@ trait MockAmlsDetailsService extends MockFactory { this: TestSuite =>
 
   def mockGetAmlsDetailsByArn(arn: Arn)(
       response: Future[(AmlsStatus, Option[AmlsDetails])]
-  ): CallHandler2[Arn, HeaderCarrier, Future[(AmlsStatus, Option[AmlsDetails])]] = {
+  ) = {
     (mockAmlsDetailsService
-      .getAmlsDetailsByArn(_: Arn)(_: HeaderCarrier))
-      .expects(arn, *)
+      .getAmlsDetailsByArn(_: Arn)(_: HeaderCarrier, _: Request[_]))
+      .expects(arn, *, *)
       .returning(response)
   }
 

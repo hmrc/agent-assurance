@@ -16,6 +16,7 @@
 
 package test.uk.gov.hmrc.agentassurance.connectors
 
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.ExecutionContext
 
 import com.typesafe.config.Config
@@ -38,7 +39,6 @@ import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnectorImpl
 import uk.gov.hmrc.agentassurance.models.AgencyDetails
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesCheckResponse
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.BusinessAddress
 import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
@@ -74,7 +74,7 @@ class DesConnectorISpec
   private implicit lazy val as: ActorSystem                     = ActorSystem()
 
   protected val agentDataCache: AgencyDetailsCacheRepository =
-    new AgencyDetailsCacheRepository(mongoComponent, new CurrentTimestampSupport)
+    new AgencyDetailsCacheRepository(mongoComponent, new CurrentTimestampSupport, 1.second)
 
   implicit override lazy val app: Application = appBuilder
     .build()
@@ -129,13 +129,8 @@ class DesConnectorISpec
         )
       )
     ),
-    Some(SuspensionDetails(suspensionStatus = false, None))
-  )
-
-  val agentDetailsDesCachedResponse = AgentDetailsDesCheckResponse(
-    Some(Utr("0123456789")),
-    Some(false),
-    Some(SuspensionDetails(suspensionStatus = false, None))
+    Some(SuspensionDetails(suspensionStatus = false, None)),
+    Some(false)
   )
 
   val arn = Arn("AARN00012345")
@@ -157,35 +152,35 @@ class DesConnectorISpec
     }
   }
 
-  "DesConnector getAgentRecordCached" should {
+  "DesConnector getAgentRecord caching check" should {
     "return agency details cached for a given ARN and save record to cache" in {
-      val dataKey = DataKey[AgentDetailsDesCheckResponse](arn.value)
+      val dataKey = DataKey[AgentDetailsDesResponse](arn.value)
       givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
 
       await(agentDataCache.get("agentDetails")(dataKey)) shouldBe None
       Thread.sleep(500) // TODO - not sure how fix it . Otherwise flaky test
-      await(desConnector.getAgentRecordCached(arn)) shouldBe agentDetailsDesCachedResponse
+      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
       Thread.sleep(500) // TODO - not sure how fix it . Otherwise flaky test
-      await(agentDataCache.get("agentDetails")(dataKey)) shouldBe Some(agentDetailsDesCachedResponse)
+      await(agentDataCache.get("agentDetails")(dataKey)) shouldBe Some(agentDetailsDesResponse)
 
     }
 
     "return agency details cached for a given ARN,  second from cache" in {
       givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
-      await(desConnector.getAgentRecordCached(arn)) shouldBe agentDetailsDesCachedResponse
+      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
       Thread.sleep(500) // TODO - not sure how fix it . Otherwise flaky test
-      await(desConnector.getAgentRecordCached(arn)) shouldBe agentDetailsDesCachedResponse
+      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
 
     }
 
     "must fail when the server returns another 5xx status" in {
       givenDesReturnsServerError
-      an[Exception] should be thrownBy await(desConnector.getAgentRecordCached(arn))
+      an[Exception] should be thrownBy await(desConnector.getAgentRecord(arn))
     }
 
     "must fail when the server returns agent unknown status" in {
       givenAgentIsUnknown404(Arn(arn.value))
-      an[Exception] should be thrownBy await(desConnector.getAgentRecordCached(arn))
+      an[Exception] should be thrownBy await(desConnector.getAgentRecord(arn))
     }
 
   }

@@ -16,38 +16,47 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import play.api.Configuration
-import play.api.libs.json.{Reads, Writes}
-import play.api.mvc.Request
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesCheckResponse
-import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
-import uk.gov.hmrc.mongo.cache.{DataKey, MongoCacheRepository}
-import uk.gov.hmrc.play.bootstrap.metrics.Metrics
+import javax.inject.Inject
+import javax.inject.Singleton
 
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.util.Success
 
+import play.api.libs.json.Reads
+import play.api.libs.json.Writes
+import play.api.mvc.Request
+import play.api.Configuration
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
+import uk.gov.hmrc.mongo.cache.DataKey
+import uk.gov.hmrc.mongo.cache.MongoCacheRepository
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
+
 trait Cache[T] {
-  def apply(key: String)(body: => Future[T])
-               (implicit request: Request[_], ec: ExecutionContext,reads: Reads[T], writes: Writes[T]): Future[T]
+  def apply(key: String)(
+      body: => Future[T]
+  )(implicit request: Request[_], ec: ExecutionContext, reads: Reads[T], writes: Writes[T]): Future[T]
 }
 
 class DoNotCache[T] extends Cache[T] {
-  def apply(key: String)(body: => Future[T])
-               (implicit request: Request[_], ec: ExecutionContext,reads: Reads[T], writes: Writes[T]): Future[T] = body
+  def apply(key: String)(
+      body: => Future[T]
+  )(implicit request: Request[_], ec: ExecutionContext, reads: Reads[T], writes: Writes[T]): Future[T] = body
 }
 
 trait CacheSupport[T] extends Cache[T] {
 
   val cacheRepository: MongoCacheRepository[String]
   val metrics: Metrics
-  val cacheId:String
+  val cacheId: String
 
   val record = metrics.defaultRegistry
 
-  def apply(key: String)(body: => Future[T])
-                    (implicit request: Request[_], ec: ExecutionContext,reads: Reads[T], writes: Writes[T]): Future[T] = {
+  def apply(key: String)(
+      body: => Future[T]
+  )(implicit request: Request[_], ec: ExecutionContext, reads: Reads[T], writes: Writes[T]): Future[T] = {
     val dataKey = DataKey[T](key)
     cacheRepository.get(cacheId)(dataKey).flatMap {
       case Some(v) =>
@@ -65,21 +74,19 @@ trait CacheSupport[T] extends Cache[T] {
 }
 
 @Singleton
-class AgencyDetailsCache @Inject()(val cacheRepository: AgencyDetailsCacheRepository,
-                                   val metrics: Metrics) extends CacheSupport[AgentDetailsDesCheckResponse] {
+class AgencyDetailsCache @Inject() (val cacheRepository: AgencyDetailsCacheRepository, val metrics: Metrics)
+    extends CacheSupport[AgentDetailsDesResponse] {
   override val cacheId: String = "agentDetails"
 }
 
-
 @Singleton
-  class CacheProvider @Inject()(agencyDetailsCache: AgencyDetailsCache,
-                                configuration: Configuration) {
+class CacheProvider @Inject() (agencyDetailsCache: AgencyDetailsCache, configuration: Configuration) {
 
   val cacheEnabled = configuration.underlying.getBoolean("agent.cache.enabled")
+  val cacheExpires = Duration.create(configuration.underlying.getString("agent.cache.expires"))
 
-  val agentDetailsCache: Cache[AgentDetailsDesCheckResponse] =
+  val agentDetailsCache: Cache[AgentDetailsDesResponse] =
     if (cacheEnabled) agencyDetailsCache
-    else new DoNotCache[AgentDetailsDesCheckResponse]
-
+    else new DoNotCache[AgentDetailsDesResponse]
 
 }
