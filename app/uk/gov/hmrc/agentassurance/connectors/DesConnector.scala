@@ -45,8 +45,8 @@ import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.Authorization
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HttpResponse
@@ -102,16 +102,8 @@ class DesConnectorImpl @Inject() (
   private val authorizationToken = appConfig.desAuthToken
   private val environment        = appConfig.desEnv
 
-  private val Environment    = "Environment"
-  private val CorrelationId  = "CorrelationId"
-  private val Authorization_ = "Authorization"
-
-  private def explicitHeaders =
-    Seq(
-      Environment    -> s"$environment",
-      CorrelationId  -> UUID.randomUUID().toString,
-      Authorization_ -> s"Bearer $authorizationToken"
-    )
+  private val Environment   = "Environment"
+  private val CorrelationId = "CorrelationId"
 
   def getActiveCesaAgentRelationships(
       clientIdentifier: TaxIdentifier
@@ -171,16 +163,14 @@ class DesConnectorImpl @Inject() (
       apiName: String,
       url: URL
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
-    val desHeaderCarrier = hc.copy(
-      authorization = Some(Authorization(s"Bearer $authorizationToken")),
-      extraHeaders = hc.extraHeaders :+ "Environment" -> environment
-    )
+
+    val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
 
     val timer = metrics.defaultRegistry.timer(s"ConsumedAPI-DES-$apiName-GET")
     timer.time()
     httpGet
-      .get(url)(desHeaderCarrier)
-      .setHeader(explicitHeaders: _*)
+      .get(url)
+      .setHeader(desHeaders(authorizationToken, environment, isInternalHost): _*)
       .execute[A]
       .map(result => {
         timer.time().stop()
@@ -192,22 +182,43 @@ class DesConnectorImpl @Inject() (
       apiName: String,
       url: URL
   )(implicit hc: HeaderCarrier, ec: ExecutionContext, x: Reads[A]): Future[A] = {
-    val desHeaderCarrier = hc.copy(
-      authorization = Some(Authorization(s"Bearer $authorizationToken")),
-      extraHeaders = hc.extraHeaders :+ "Environment" -> environment
-    )
+
+    val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
+
     retryFor[A](s"$apiName connector get $url")(retryCondition) {
       val timer = metrics.defaultRegistry.timer(s"ConsumedAPI-DES-$apiName-GET")
       timer.time()
       httpGet
-        .get(url)(desHeaderCarrier)
-        .setHeader(explicitHeaders: _*)
+        .get(url)
+        .setHeader(desHeaders(authorizationToken, environment, isInternalHost): _*)
         .executeAndDeserialise[A]
         .map(result => {
           timer.time().stop()
           result
         })
     }
+  }
+
+  /*
+   * If the service being called is external (e.g. DES/IF in QA or Prod):
+   * headers from HeaderCarrier are removed (except user-agent header).
+   * Therefore, required headers must be explicitly set.
+   * See https://github.com/hmrc/http-verbs?tab=readme-ov-file#propagation-of-headers
+   * */
+
+  def desHeaders(authToken: String, env: String, isInternalHost: Boolean)(
+      implicit hc: HeaderCarrier
+  ): Seq[(String, String)] = {
+
+    val additionalHeaders =
+      if (isInternalHost) Seq.empty
+      else
+        Seq(
+          HeaderNames.authorisation -> s"Bearer $authToken",
+          HeaderNames.xRequestId    -> hc.requestId.map(_.value).getOrElse(UUID.randomUUID().toString)
+        ) ++ hc.sessionId.fold(Seq.empty[(String, String)])(x => Seq(HeaderNames.xSessionId -> x.value))
+    val commonHeaders = Seq(Environment -> env, CorrelationId -> UUID.randomUUID().toString)
+    commonHeaders ++ additionalHeaders
   }
 
 }

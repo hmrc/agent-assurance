@@ -16,14 +16,19 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+//import org.mockito.ArgumentMatchers.{ eq => eqs }
+//import org.mockito.ArgumentMatchers.any
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
+import play.api.ConfigLoader
+import play.api.Configuration
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 trait MockAppConfig extends MockFactory { this: TestSuite =>
 
   val mockServiceConfig: ServicesConfig = mock[ServicesConfig]
+  val mockConfig: Configuration         = mock[Configuration]
 
   (mockServiceConfig.getInt(_: String)).expects(*).atLeastOnce().returning(1)
   (mockServiceConfig.baseUrl(_: String)).expects(*).atLeastOnce().returning("some-url")
@@ -67,5 +72,11 @@ trait MockAppConfig extends MockFactory { this: TestSuite =>
     .returning("source")
   (mockServiceConfig.getString(_: String)).expects(*).atLeastOnce().returning("other-string")
 
-  val mockAppConfig: AppConfig = new AppConfig(mockServiceConfig)
+  (mockConfig
+    .get[Seq[String]](_: String)(_: ConfigLoader[Seq[String]]))
+    .expects("internalServiceHostPatterns", *)
+    .atLeastOnce()
+    .returning(Seq("^.*\\.service$", "^.*\\.mdtp$", "^localhost$"))
+
+  val mockAppConfig: AppConfig = new AppConfig(mockConfig, mockServiceConfig)
 }

@@ -16,12 +16,15 @@
 
 package uk.gov.hmrc.agentassurance.config
 
+import scala.util.matching.Regex
+
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton
-class AppConfig @Inject() (servicesConfig: ServicesConfig) {
+class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig) {
 
   val appName = "agent-assurance"
 
@@ -65,4 +68,6 @@ class AppConfig @Inject() (servicesConfig: ServicesConfig) {
 
   val desEnv: String       = getConf("des.environment")
   val desAuthToken: String = getConf("des.authorization-token")
+
+  val internalHostPatterns: Seq[Regex] = config.get[Seq[String]]("internalServiceHostPatterns").map(_.r)
 }
