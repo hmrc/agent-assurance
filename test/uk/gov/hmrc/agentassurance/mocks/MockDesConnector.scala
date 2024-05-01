@@ -37,13 +37,13 @@ trait MockDesConnector extends MockFactory { this: TestSuite =>
   val mockDesConnector = mock[DesConnector]
 
   def mockGetActiveCesaAgentRelationships(ti: TaxIdentifier)(
-      response: Either[String, Option[Seq[SaAgentReference]]]
-  ): CallHandler3[TaxIdentifier, HeaderCarrier, ExecutionContext, Future[Option[Seq[SaAgentReference]]]] = {
+      response: Either[String, Seq[SaAgentReference]]
+  ): CallHandler3[TaxIdentifier, HeaderCarrier, ExecutionContext, Future[Seq[SaAgentReference]]] = {
     (mockDesConnector
       .getActiveCesaAgentRelationships(_: TaxIdentifier)(_: HeaderCarrier, _: ExecutionContext))
       .expects(ti, *, *)
       .returning(
-        response.fold[Future[Option[Seq[SaAgentReference]]]](e => Future.failed(new Exception(e)), r => toFuture(r))
+        response.fold[Future[Seq[SaAgentReference]]](e => Future.failed(new Exception(e)), r => toFuture(r))
       )
   }
 

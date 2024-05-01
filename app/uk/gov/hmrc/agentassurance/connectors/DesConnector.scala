@@ -28,8 +28,6 @@ import scala.concurrent.Future
 import com.google.inject.ImplementedBy
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
-import play.api.http.Status.NOT_FOUND
-import play.api.http.Status.OK
 import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.mvc.Request
@@ -49,7 +47,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
@@ -76,7 +73,7 @@ object RegistrationRelationshipResponse {
 trait DesConnector {
   def getActiveCesaAgentRelationships(
       clientIdentifier: TaxIdentifier
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Seq[SaAgentReference]]]
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]]
   def getAmlsSubscriptionStatus(
       amlsRegistrationNumber: String
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord]
@@ -107,7 +104,7 @@ class DesConnectorImpl @Inject() (
 
   def getActiveCesaAgentRelationships(
       clientIdentifier: TaxIdentifier
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[Seq[SaAgentReference]]] = {
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
     val encodedClientId = UriEncoding.encodePathSegment(clientIdentifier.value, "UTF-8")
     val encodedClientType: String = {
       val clientType = clientIdentifier match {
@@ -120,24 +117,17 @@ class DesConnectorImpl @Inject() (
 
     val url = new URL(s"$baseUrl/registration/relationship/$encodedClientType/$encodedClientId")
 
-    getWithDesHeaders[HttpResponse]("GetStatusAgentRelationship", url).map(response =>
-      response.status match {
-        case OK =>
-          response.json
-            .asOpt[ClientRelationship]
-            .map(
-              _.agents
-                .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
-                .flatMap(_.agentId)
-            )
-        case NOT_FOUND =>
+    getWithDesHeadersWithRetry[ClientRelationship]("GetStatusAgentRelationship", url)
+      .map(
+        _.agents
+          .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
+          .flatMap(_.agentId)
+      )
+      .recoverWith {
+        case e: UpstreamErrorResponse if e.statusCode == 404 =>
           logger.warn(s" NOT_FOUND GET legacy relationship response: 404 ")
-          None
-        case _ =>
-          throw UpstreamErrorResponse(s" error GET legacy relationship response: ${response.status}", response.status)
-
+          Future.successful(Seq.empty[SaAgentReference])
       }
-    )
   }
 
   // API #1028 Get Subscription Status
@@ -146,7 +136,7 @@ class DesConnectorImpl @Inject() (
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[AmlsSubscriptionRecord] = {
     val encodedRegNumber = UriEncoding.encodePathSegment(amlsRegistrationNumber, UTF_8.name)
     val url              = new URL(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status")
-    getWithDesHeaders[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
+    getWithDesHeadersWithRetry[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
   }
 
   // API #1170 (API#4) Get Agent Record
@@ -157,25 +147,6 @@ class DesConnectorImpl @Inject() (
     agentCacheProvider.agentDetailsCache(arn.value) {
       getWithDesHeadersWithRetry[AgentDetailsDesResponse]("GetAgentRecordCached", url)
     }
-  }
-
-  private def getWithDesHeaders[A: HttpReads](
-      apiName: String,
-      url: URL
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
-
-    val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
-
-    val timer = metrics.defaultRegistry.timer(s"ConsumedAPI-DES-$apiName-GET")
-    timer.time()
-    httpGet
-      .get(url)
-      .setHeader(desHeaders(authorizationToken, environment, isInternalHost): _*)
-      .execute[A]
-      .map(result => {
-        timer.time().stop()
-        result
-      })
   }
 
   private def getWithDesHeadersWithRetry[A: HttpReads](

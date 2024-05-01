@@ -84,7 +84,9 @@ class AgentAssuranceControllerISpec
         "minimumVatDecOrgClients"                          -> 6,
         "minimumIRCTClients"                               -> 6,
         "stride.roles.agent-assurance"                     -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled-on-start"             -> false
+        "internal-auth-token-enabled-on-start"             -> false,
+        "http-verbs.retries.intervals"                     -> List("1ms"),
+        "agent.cache.enabled"                              -> true
       )
       .overrides(moduleWithOverrides)
 
