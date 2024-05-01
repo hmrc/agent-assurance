@@ -478,6 +478,17 @@ curl -v -X PUT http://localhost:9565/agent-assurance/amls/utr/7000000002 -H 'Con
 {"utr":"7000000002","supervisoryBody":"supervisory","membershipNumber":"0123456789","membershipExpiresOn":"2018-11-26","arn":"AARN0000002"}
 ```
 
+#### Get Agent's suspension status
+```
+GET     /agent-assurance/agent/verify-entity
+```
+Response Code(s)
+
+| Status Code | Description      |
+|---|------------------|
+| 200 | Default response |
+
+
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
