@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
-//import org.mockito.ArgumentMatchers.{ eq => eqs }
-//import org.mockito.ArgumentMatchers.any
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.ConfigLoader
