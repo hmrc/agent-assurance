@@ -21,6 +21,7 @@ import scala.concurrent.Future
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
+import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.services.AgencyDetailsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.http.HeaderCarrier
@@ -31,8 +32,8 @@ trait MockAgencyDetailsService extends MockFactory { this: TestSuite =>
 
   def mockIsUkAddress()(response: Boolean) =
     (mockAgencyDetailsService
-      .agencyDetailsHasUkAddress(_: Arn)(_: ExecutionContext, _: HeaderCarrier))
-      .expects(*, *, *)
+      .agencyDetailsHasUkAddress(_: Arn)(_: ExecutionContext, _: HeaderCarrier, _: Request[_]))
+      .expects(*, *, *, *)
       .returning(Future.successful(response))
 
 }

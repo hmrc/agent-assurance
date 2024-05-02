@@ -78,8 +78,8 @@ class AgentAssuranceController @Inject() (
   ): Action[AnyContent] =
     BasicAuth { implicit request =>
       desConnector.getActiveCesaAgentRelationships(identifier).map {
-        case Some(agentRefs) if agentRefs.contains(saAgentReference) => Ok
-        case _                                                       => Forbidden
+        case agentRefs if agentRefs.contains(saAgentReference) => Ok
+        case _                                                 => Forbidden
       }
     }
 

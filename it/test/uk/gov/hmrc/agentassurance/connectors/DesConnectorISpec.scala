@@ -16,13 +16,20 @@
 
 package test.uk.gov.hmrc.agentassurance.connectors
 
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.ExecutionContext
 
+import com.typesafe.config.Config
+import org.apache.pekko.actor.ActorSystem
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.Request
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.Application
+import play.api.Configuration
 import test.uk.gov.hmrc.agentassurance.stubs.DataStreamStub
 import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
 import test.uk.gov.hmrc.agentassurance.support.MetricTestSupport
@@ -34,6 +41,9 @@ import uk.gov.hmrc.agentassurance.connectors.DesConnectorImpl
 import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.BusinessAddress
+import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
+import uk.gov.hmrc.agentassurance.services.AgencyDetailsCache
+import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -42,6 +52,9 @@ import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.mongo.cache.DataKey
+import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
+import uk.gov.hmrc.mongo.CurrentTimestampSupport
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 class DesConnectorISpec
@@ -50,14 +63,33 @@ class DesConnectorISpec
     with WireMockSupport
     with DesStubs
     with DataStreamStub
+    with CleanMongoCollectionSupport
     with MetricTestSupport {
+
+  private implicit val hc: HeaderCarrier                        = HeaderCarrier()
+  private implicit val ec: ExecutionContext                     = ExecutionContext.global
+  private implicit val request: Request[AnyContentAsEmpty.type] = FakeRequest()
+  private implicit val appConfig: AppConfig                     = app.injector.instanceOf[AppConfig]
+  private implicit val config: Config                           = app.injector.instanceOf[Config]
+  private implicit lazy val as: ActorSystem                     = ActorSystem()
+
+  protected val agentDataCache: AgencyDetailsCacheRepository =
+    new AgencyDetailsCacheRepository(mongoComponent, new CurrentTimestampSupport, 1.second)
 
   implicit override lazy val app: Application = appBuilder
     .build()
 
-  implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+  val agencyDetailsCache = new AgencyDetailsCache(agentDataCache, app.injector.instanceOf[Metrics])
 
-  val desConnector = new DesConnectorImpl(app.injector.instanceOf[HttpClientV2], app.injector.instanceOf[Metrics])
+  val cacheProvider = new CacheProvider(agencyDetailsCache, app.injector.instanceOf[Configuration])
+
+  val desConnector = new DesConnectorImpl(
+    app.injector.instanceOf[HttpClientV2],
+    app.injector.instanceOf[Metrics],
+    cacheProvider,
+    config,
+    as
+  )
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -72,12 +104,34 @@ class DesConnectorISpec
         "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
         "auditing.consumer.baseUri.host"                   -> wireMockHost,
         "auditing.consumer.baseUri.port"                   -> wireMockPort,
-        "internal-auth-token-enabled-on-start"             -> false
+        "internal-auth-token-enabled-on-start"             -> false,
+        "http-verbs.retries.intervals"                     -> List("1ms"),
+        "agent.cache.enabled"                              -> true
       )
       .bindings(bind[DesConnector].toInstance(desConnector))
 
-  private implicit val hc: HeaderCarrier    = HeaderCarrier()
-  private implicit val ec: ExecutionContext = ExecutionContext.global
+  val agentDetailsDesResponse = AgentDetailsDesResponse(
+    Some(Utr("0123456789")),
+    Some(
+      AgencyDetails(
+        Some("ABC Accountants"),
+        Some("abc@xyz.com"),
+        Some("07345678901"),
+        Some(
+          BusinessAddress(
+            "Matheson House",
+            Some("Grange Central"),
+            Some("Town Centre"),
+            Some("Telford"),
+            Some("TF3 4ER"),
+            "GB"
+          )
+        )
+      )
+    ),
+    Some(SuspensionDetails(suspensionStatus = false, None)),
+    Some(false)
+  )
 
   val arn = Arn("AARN00012345")
 
@@ -94,30 +148,39 @@ class DesConnectorISpec
 
       givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
 
-      val result = await(desConnector.getAgentRecord(arn))
-      result shouldBe
-        AgentDetailsDesResponse(
-          Some(Utr("0123456789")),
-          Some(
-            AgencyDetails(
-              Some("ABC Accountants"),
-              Some("abc@xyz.com"),
-              Some("07345678901"),
-              Some(
-                BusinessAddress(
-                  "Matheson House",
-                  Some("Grange Central"),
-                  Some("Town Centre"),
-                  Some("Telford"),
-                  Some("TF3 4ER"),
-                  "GB"
-                )
-              )
-            )
-          ),
-          Some(SuspensionDetails(suspensionStatus = false, None))
-        )
+      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
     }
+  }
+
+  "DesConnector getAgentRecord caching check" should {
+    "return agency details cached for a given ARN and save record to cache" in {
+      val dataKey = DataKey[AgentDetailsDesResponse](arn.value)
+      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
+
+      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
+      Thread.sleep(500)
+      await(agentDataCache.get("agentDetails")(dataKey)) shouldBe Some(agentDetailsDesResponse)
+
+    }
+
+    "return agency details cached for a given ARN,  second from cache" in {
+      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
+      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
+      Thread.sleep(500)
+      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
+      verifyDESGetAgentRecord(arn, 1)
+    }
+
+    "must fail when the server returns another 5xx status" in {
+      givenDesReturnsServerError()
+      an[Exception] should be thrownBy await(desConnector.getAgentRecord(arn))
+    }
+
+    "must fail when the server returns agent unknown status" in {
+      givenAgentIsUnknown404(Arn(arn.value))
+      an[Exception] should be thrownBy await(desConnector.getAgentRecord(arn))
+    }
+
   }
 
   private def aCheckEndpoint(identifier: TaxIdentifier) = {
@@ -125,32 +188,32 @@ class DesConnectorISpec
       val agentId = SaAgentReference("bar")
       givenClientHasRelationshipWithAgentInCESA(identifier, agentId)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Some(Seq(agentId))
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Seq(agentId)
     }
 
     "return multiple Agents when client has multiple active agents" in {
-      val agentIds = Option(Seq("001", "002", "003", "004", "005", "005", "007").map(SaAgentReference.apply))
-      givenClientHasRelationshipWithMultipleAgentsInCESA(identifier, agentIds.get)
+      val agentIds = Seq("001", "002", "003", "004", "005", "005", "007").map(SaAgentReference.apply)
+      givenClientHasRelationshipWithMultipleAgentsInCESA(identifier, agentIds)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)).get should contain theSameElementsAs agentIds.get
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) should contain theSameElementsAs agentIds
     }
 
     "return empty seq when client has no active relationship with an agent" in {
       givenClientHasNoActiveRelationshipWithAgentInCESA(identifier)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)).get shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Seq.empty[SaAgentReference]
     }
 
     "return empty seq when client has/had no relationship with any agent" in {
       givenClientHasNoRelationshipWithAnyAgentInCESA(identifier)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)).get shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Seq.empty[SaAgentReference]
     }
 
     "return empty seq when client relationship with agent ceased" in {
       givenClientRelationshipWithAgentCeasedInCESA(identifier, "foo")
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)).get shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Seq.empty[SaAgentReference]
     }
 
     "return empty seq when all client's relationships with agents ceased" in {
@@ -159,43 +222,37 @@ class DesConnectorISpec
         Seq("001", "002", "003", "004", "005", "005", "007")
       )
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)).get shouldBe empty
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Seq.empty[SaAgentReference]
     }
 
     "fail when client id is invalid" in {
       givenClientIdentifierIsInvalid(identifier)
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier)).get
-    }
-
-    "fail when client is unknown" in {
-      givenClientIsUnknownInCESAFor(identifier)
-      givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier)).get
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
     }
 
     "When NOT_FOUND(404) occurs return None" in {
       givenClientIsUnknown404(identifier)
       givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe None
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Seq.empty[SaAgentReference]
     }
 
     "fail when DES is unavailable" in {
       givenDesReturnsServiceUnavailable()
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier)).get
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
     }
 
     "return 502 when DES returns BadGateway error" in {
       givenDesReturnBadGateway()
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier)).get
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
     }
 
     "fail when DES is throwing errors" in {
       givenDesReturnsServerError()
       givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier)).get
+      an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
     }
 
     "record metrics for GetStatusAgentRelationship" in {

@@ -35,5 +35,6 @@ GET           /agent/agency-details/arn/:arn                                    
 POST          /agent/agency-details/arn/:arn                                                @uk.gov.hmrc.agentassurance.controllers.AgentServicesController.postAgencyDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
 
 GET           /agent/verify-entity                                                          @uk.gov.hmrc.agentassurance.controllers.EntityCheckController.agentVerifyEntity()
+GET           /client/verify-entity                                                          @uk.gov.hmrc.agentassurance.controllers.EntityCheckController.clientVerifyEntity()
 
 POST          /dms-agent-callback                                                           @uk.gov.hmrc.agentassurance.controllers.DmsNotificationController.dmsCallback()

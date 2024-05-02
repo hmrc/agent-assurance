@@ -24,6 +24,8 @@ import scala.concurrent.Future
 import com.mongodb.client.result.UpdateResult
 import org.scalatest.PrivateMethodTester
 import org.scalatestplus.play.PlaySpec
+import play.api.mvc.Request
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks._
@@ -42,7 +44,9 @@ class AmlsDetailsServiceSpec
     with MockDesConnector
     with MockAgencyDetailsService {
 
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val hc: HeaderCarrier     = HeaderCarrier()
+  implicit val request: Request[Any] = FakeRequest()
+
   val service = new AmlsDetailsService(
     mockOverseasAmlsRepository,
     mockAmlsRepository,
