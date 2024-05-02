@@ -29,4 +29,8 @@ class EntityCheckController @Inject() (cc: ControllerComponents) extends Backend
   def agentVerifyEntity: Action[AnyContent] = Action { _ =>
     Ok("")
   }
+
+  def clientVerifyEntity: Action[AnyContent] = Action { _ =>
+    Ok("")
+  }
 }

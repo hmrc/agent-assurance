@@ -488,6 +488,15 @@ Response Code(s)
 |---|------------------|
 | 200 | Default response |
 
+#### Get Client's suspension status
+```
+GET     /agent-assurance/client/verify-entity
+```
+Response Code(s)
+
+| Status Code | Description      |
+|---|------------------|
+| 200 | Default response |
 
 ### License
 
