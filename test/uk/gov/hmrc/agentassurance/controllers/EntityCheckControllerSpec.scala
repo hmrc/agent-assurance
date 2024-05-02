@@ -34,4 +34,16 @@ class EntityCheckControllerSpec extends PlaySpec with DefaultAwaitTimeout with G
       }
     }
   }
+
+  "clientVerifyEntity" should {
+    "return OK" when {
+      "a GET request to /agent/verify-entity" in {
+        val controller = inject[EntityCheckController]
+
+        val result = controller.clientVerifyEntity().apply(FakeRequest(GET, "/client/verify-entity"))
+
+        status(result) mustBe OK
+      }
+    }
+  }
 }
