@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.binders
+package uk.gov.hmrc.agentassurance.controllers
 
-import play.api.mvc.PathBindable
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class SimpleObjectBinder[T](bind: String => T, unbind: T => String)(implicit m: Manifest[T]) extends PathBindable[T] {
-  override def bind(key: String, value: String): Either[String, T] = try {
-    Right(bind(value))
-  } catch {
-    case e: Throwable => Left(s"Cannot parse parameter '$key' with value '$value' as '${m.runtimeClass.getSimpleName}'")
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+@Singleton
+class EntityCheckController @Inject() (cc: ControllerComponents) extends BackendController(cc) {
+  def agentVerifyEntity: Action[AnyContent] = Action { _ =>
+    Ok("")
   }
-
-  def unbind(key: String, value: T): String = unbind(value)
 }

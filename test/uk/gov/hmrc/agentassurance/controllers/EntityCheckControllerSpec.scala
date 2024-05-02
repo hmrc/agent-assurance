@@ -16,21 +16,22 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json
-import play.api.libs.json.Json.toJson
-import play.api.libs.json.Writes
-import play.api.mvc.Results.Forbidden
+import org.scalatestplus.play.guice.GuiceOneAppPerTest
+import org.scalatestplus.play.PlaySpec
+import play.api.test._
+import play.api.test.Helpers._
 
-object ErrorResults {
+class EntityCheckControllerSpec extends PlaySpec with DefaultAwaitTimeout with GuiceOneAppPerTest with Injecting {
 
-  case class ErrorBody(code: String, message: String)
+  "agentVerifyEntity" should {
+    "return OK" when {
+      "a GET request to /agent/verify-entity" in {
+        val controller = inject[EntityCheckController]
 
-  implicit val errorBodyWrites: Writes[ErrorBody] = new Writes[ErrorBody] {
-    override def writes(body: ErrorBody): JsValue = Json.obj("code" -> body.code, "message" -> body.message)
+        val result = controller.agentVerifyEntity().apply(FakeRequest(GET, "/agent/verify-entity"))
+
+        status(result) mustBe OK
+      }
+    }
   }
-
-  val NoPermission = Forbidden(
-    toJson(ErrorBody("NO_PERMISSION", "The logged in user is not permitted to perform the operation."))
-  )
 }
