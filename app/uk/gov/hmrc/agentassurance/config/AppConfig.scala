@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.config
 
+import scala.concurrent.duration.Duration
 import scala.util.matching.Regex
 
 import com.google.inject.Inject
@@ -70,4 +71,6 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig
   val desAuthToken: String = getConf("des.authorization-token")
 
   val internalHostPatterns: Seq[Regex] = config.get[Seq[String]]("internalServiceHostPatterns").map(_.r)
+
+  val entityChecksLockExpires: Duration = servicesConfig.getDuration("agent.entity-check.lock.expires")
 }
