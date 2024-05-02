@@ -25,6 +25,7 @@ import scala.collection.immutable.Nil
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
+import play.api.mvc.Request
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models._
@@ -48,7 +49,9 @@ class AmlsDetailsService @Inject() (
 )(implicit ec: ExecutionContext)
     extends Logging {
 
-  def getAmlsDetailsByArn(arn: Arn)(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
+  def getAmlsDetailsByArn(
+      arn: Arn
+  )(implicit hc: HeaderCarrier, request: Request[_]): Future[(AmlsStatus, Option[AmlsDetails])] = {
     getAmlsDetails(arn).map {
       case None => // No AMLS record found
         handleNoAmlsDetails(arn) // Scenarios: #1, #2
@@ -84,7 +87,9 @@ class AmlsDetailsService @Inject() (
     optRenewalDate.exists(renewalDate => LocalDate.now().isAfter(renewalDate) || LocalDate.now().equals(renewalDate))
 
   // User has no AMLS record with us, if their agency is based in the UK then we deem them as UK
-  private def handleNoAmlsDetails(arn: Arn)(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] = {
+  private def handleNoAmlsDetails(
+      arn: Arn
+  )(implicit hc: HeaderCarrier, request: Request[_]): Future[(AmlsStatus, Option[AmlsDetails])] = {
     agencyDetailsService.agencyDetailsHasUkAddress(arn).map { isUk =>
       (
         if (isUk) AmlsStatus.NoAmlsDetailsUK // Scenario #1
@@ -179,7 +184,8 @@ class AmlsDetailsService @Inject() (
   }
 
   def storeAmlsRequest(arn: Arn, amlsRequest: AmlsRequest, amlsSource: AmlsSource = AmlsSource.Subscription)(
-      implicit hc: HeaderCarrier
+      implicit hc: HeaderCarrier,
+      request: Request[_]
   ): Future[Either[AmlsError, AmlsDetails]] = {
 
     val newAmlsDetails: AmlsDetails = amlsRequest.toAmlsEntity(amlsRequest)
@@ -224,7 +230,7 @@ class AmlsDetailsService @Inject() (
     }
   }
 
-  private def getOrRetrieveUtr(arn: Arn)(implicit hc: HeaderCarrier): Future[Option[Utr]] =
+  private def getOrRetrieveUtr(arn: Arn)(implicit hc: HeaderCarrier, request: Request[_]): Future[Option[Utr]] =
     for {
       a <- amlsRepository.getUtr(arn)
       b <- if (a.isEmpty) desConnector.getAgentRecord(arn).map(_.uniqueTaxReference) else Future.successful(a)

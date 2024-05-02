@@ -59,7 +59,8 @@ class AgentServicesControllerISpec
         "auditing.enabled"                          -> false,
         "stride.roles.agent-assurance"              -> "maintain_agent_manually_assure",
         "internal-auth-token-enabled-on-start"      -> false,
-        "http-verbs.retries.intervals"              -> List("1ms")
+        "http-verbs.retries.intervals"              -> List("1ms"),
+        "agent.cache.enabled"                       -> false
       )
 
   val arn = Arn("AARN0000002")

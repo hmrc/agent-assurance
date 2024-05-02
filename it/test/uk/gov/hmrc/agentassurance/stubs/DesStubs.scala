@@ -18,6 +18,10 @@ package test.uk.gov.hmrc.agentassurance.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import org.scalatest.concurrent.Eventually.eventually
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
+import org.scalatest.time.Seconds
+import org.scalatest.time.Span
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.Nino
@@ -191,6 +195,24 @@ trait DesStubs {
             .withBody(personalDetailsResponseBodyWithValidData(utr, overseas))
         )
     )
+
+  def givenAgentIsUnknown404(arn: Arn) = {
+    stubFor(
+      get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
+        .willReturn(
+          aResponse()
+            .withStatus(404)
+        )
+    )
+  }
+
+  def verifyDESGetAgentRecord(arn: Arn, count: Int = 1): Unit =
+    eventually(Timeout(Span(5, Seconds))) {
+      verify(
+        count,
+        getRequestedFor(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
+      )
+    }
 
   def givenNoDESGetAgentRecord(arn: Arn, optUtr: Option[Utr]): StubMapping =
     stubFor(

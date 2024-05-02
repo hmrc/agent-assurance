@@ -14,25 +14,29 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.services
+package uk.gov.hmrc.agentassurance.repositories
 
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 
-import play.api.mvc.Request
-import play.api.Logging
-import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.mongo.cache.CacheIdType
+import uk.gov.hmrc.mongo.cache.MongoCacheRepository
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.TimestampSupport
 
 @Singleton
-class AgencyDetailsService @Inject() (desConnector: DesConnector) extends Logging {
-
-  def agencyDetailsHasUkAddress(
-      arn: Arn
-  )(implicit ec: ExecutionContext, hc: HeaderCarrier, request: Request[_]): Future[Boolean] =
-    desConnector.getAgentRecord(arn).map(_.agencyDetails.exists(_.hasUkAddress))
-}
+class AgencyDetailsCacheRepository @Inject() (
+    mongoComponent: MongoComponent,
+    timestampSupport: TimestampSupport,
+    expires: Duration
+)(implicit ec: ExecutionContext)
+    extends MongoCacheRepository(
+      mongoComponent = mongoComponent,
+      collectionName = "agency-details",
+      ttl = expires,
+      timestampSupport = timestampSupport,
+      cacheIdType = CacheIdType.SimpleCacheId
+    )

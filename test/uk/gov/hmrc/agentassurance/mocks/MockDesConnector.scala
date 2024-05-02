@@ -22,6 +22,7 @@ import scala.concurrent.Future
 import org.scalamock.handlers.CallHandler3
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
+import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
@@ -36,13 +37,13 @@ trait MockDesConnector extends MockFactory { this: TestSuite =>
   val mockDesConnector = mock[DesConnector]
 
   def mockGetActiveCesaAgentRelationships(ti: TaxIdentifier)(
-      response: Either[String, Option[Seq[SaAgentReference]]]
-  ): CallHandler3[TaxIdentifier, HeaderCarrier, ExecutionContext, Future[Option[Seq[SaAgentReference]]]] = {
+      response: Either[String, Seq[SaAgentReference]]
+  ): CallHandler3[TaxIdentifier, HeaderCarrier, ExecutionContext, Future[Seq[SaAgentReference]]] = {
     (mockDesConnector
       .getActiveCesaAgentRelationships(_: TaxIdentifier)(_: HeaderCarrier, _: ExecutionContext))
       .expects(ti, *, *)
       .returning(
-        response.fold[Future[Option[Seq[SaAgentReference]]]](e => Future.failed(new Exception(e)), r => toFuture(r))
+        response.fold[Future[Seq[SaAgentReference]]](e => Future.failed(new Exception(e)), r => toFuture(r))
       )
   }
 
@@ -57,8 +58,8 @@ trait MockDesConnector extends MockFactory { this: TestSuite =>
 
   def mockGetAgentRecord(arn: Arn)(response: AgentDetailsDesResponse) =
     (mockDesConnector
-      .getAgentRecord(_: Arn)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(arn, *, *)
+      .getAgentRecord(_: Arn)(_: Request[_], _: HeaderCarrier, _: ExecutionContext))
+      .expects(arn, *, *, *)
       .returning(Future.successful(response))
 
 }
