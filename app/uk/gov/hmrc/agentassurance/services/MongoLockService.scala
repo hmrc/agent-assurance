@@ -16,15 +16,19 @@
 
 package uk.gov.hmrc.agentassurance.services
 
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.mongo.lock.{MongoLockRepository, TimePeriodLockService}
-
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.mongo.lock.MongoLockRepository
+import uk.gov.hmrc.mongo.lock.TimePeriodLockService
 
 @Singleton
-class MongoLockService @Inject()(mongoLockRepository: MongoLockRepository)(implicit appConfig: AppConfig) {
+class MongoLockService @Inject() (mongoLockRepository: MongoLockRepository)(implicit appConfig: AppConfig) {
   def tryLock[T](arn: Arn)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] = {
     val lockService = TimePeriodLockService(
       mongoLockRepository,

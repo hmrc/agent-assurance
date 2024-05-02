@@ -16,22 +16,21 @@
 
 package uk.gov.hmrc.agentassurance.services
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.mongo.CurrentTimestampSupport
 import uk.gov.hmrc.mongo.lock.MongoLockRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
+import uk.gov.hmrc.mongo.CurrentTimestampSupport
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+class MongoLockServiceSpec extends PlaySpec with CleanMongoCollectionSupport with MockAppConfig {
 
-class MongoLockServiceSpec extends PlaySpec with  CleanMongoCollectionSupport with MockAppConfig{
-
-
-  val mongoLockRepository = new MongoLockRepository(mongoComponent,new CurrentTimestampSupport)
+  val mongoLockRepository    = new MongoLockRepository(mongoComponent, new CurrentTimestampSupport)
   implicit val ac: AppConfig = mockAppConfig
 
   val service = new MongoLockService(mongoLockRepository)

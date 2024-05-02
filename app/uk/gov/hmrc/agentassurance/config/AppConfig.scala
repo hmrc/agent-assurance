@@ -72,6 +72,5 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig
 
   val internalHostPatterns: Seq[Regex] = config.get[Seq[String]]("internalServiceHostPatterns").map(_.r)
 
-//  val entityChecksLockExpires: Duration = Duration.create(servicesConfig.getString("agent.entity-check.lock.expires"))
   val entityChecksLockExpires: Duration = servicesConfig.getDuration("agent.entity-check.lock.expires")
 }
