@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import scala.concurrent.duration.DurationInt
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.ConfigLoader
@@ -75,6 +77,12 @@ trait MockAppConfig extends MockFactory { this: TestSuite =>
     .expects("internalServiceHostPatterns", *)
     .atLeastOnce()
     .returning(Seq("^.*\\.service$", "^.*\\.mdtp$", "^localhost$"))
+
+  (mockServiceConfig
+    .getDuration(_: String))
+    .expects("agent.entity-check.lock.expires")
+    .atLeastOnce()
+    .returning(1.second)
 
   val mockAppConfig: AppConfig = new AppConfig(mockConfig, mockServiceConfig)
 }
