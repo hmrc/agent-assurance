@@ -43,7 +43,7 @@ class EmailService @Inject() (
         parameters = Map(
           "agencyName"   -> entityCheckNotification.agencyName,
           "arn"          -> entityCheckNotification.arn.value,
-          "utr"          -> entityCheckNotification.utr.getOrElse(""),
+          "utr"          -> entityCheckNotification.utr,
           "failedChecks" -> entityCheckNotification.failedChecks,
           "dateTime"     -> entityCheckNotification.dateTime
         )

@@ -47,7 +47,7 @@ class EmailServiceISpec(implicit tjs: Writes[EmailInformation])
     "be successful when request is valid" in {
       val entityChecks = EntityCheckNotification(
         arn = Arn("238799"),
-        utr = Some("1248798"),
+        utr = "1248798",
         agencyName = "Test Agent",
         failedChecks = "Agent is on the 'Refuse To Deal With' list",
         dateTime = "1 May 2024 1:56pm"
@@ -59,7 +59,7 @@ class EmailServiceISpec(implicit tjs: Writes[EmailInformation])
           templateId = "entity_check_notification",
           parameters = Map(
             "arn"          -> entityChecks.arn.value,
-            "utr"          -> entityChecks.utr.getOrElse(""),
+            "utr"          -> entityChecks.utr,
             "agencyName"   -> entityChecks.agencyName,
             "failedChecks" -> entityChecks.failedChecks,
             "dateTime"     -> entityChecks.dateTime

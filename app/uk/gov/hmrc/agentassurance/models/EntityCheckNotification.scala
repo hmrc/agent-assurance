@@ -22,7 +22,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 case class EntityCheckNotification(
     arn: Arn,
-    utr: Option[String],
+    utr: String,
     agencyName: String,
     failedChecks: String,
     dateTime: String
