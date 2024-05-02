@@ -488,7 +488,7 @@ Response Code(s)
 |---|------------------|
 | 200 | Default response |
 
-#### Get Client's suspension status
+#### Get Agent's suspension status on behalf of Clients
 ```
 GET     /agent-assurance/client/verify-entity
 ```
