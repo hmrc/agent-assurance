@@ -22,16 +22,16 @@ import scala.concurrent.Future
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.Request
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.http.HeaderCarrier
 
 trait MockEntityCheckService extends MockFactory { this: TestSuite =>
 
   val mockEntityCheckService: EntityCheckService = mock[EntityCheckService]
 
-  def mockVerifyEntitySuccess(arn: Arn)(returns: Option[SuspensionDetails]) =
+  def mockVerifyEntitySuccess(arn: Arn)(returns: AgentDetailsDesResponse) =
     (mockEntityCheckService
       .verifyAgent(_: Arn)(_: Request[_], _: HeaderCarrier, _: ExecutionContext))
       .expects(arn, *, *, *)
