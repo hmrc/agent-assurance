@@ -32,9 +32,9 @@ import play.api.mvc.Result
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -78,9 +78,10 @@ class EntityCheckController @Inject() (
     }
   }
 
-  private val createResponse: Option[SuspensionDetails] => Result = {
-    case None                                                           => NoContent
-    case Some(suspensionDetails) if !suspensionDetails.suspensionStatus => NoContent
-    case suspensionDetails                                              => Ok(Json.toJson(suspensionDetails))
-  }
+  private val createResponse: AgentDetailsDesResponse => Result = (agentRecord: AgentDetailsDesResponse) =>
+    agentRecord.suspensionDetails match {
+      case None                                                           => NoContent
+      case Some(suspensionDetails) if !suspensionDetails.suspensionStatus => NoContent
+      case suspensionDetails                                              => Ok(Json.toJson(suspensionDetails))
+    }
 }

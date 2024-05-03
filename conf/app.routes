@@ -38,3 +38,5 @@ POST           /agent/verify-entity                                             
 POST           /client/verify-entity                                                         @uk.gov.hmrc.agentassurance.controllers.EntityCheckController.clientVerifyEntity()
 
 POST          /dms-agent-callback                                                           @uk.gov.hmrc.agentassurance.controllers.DmsNotificationController.dmsCallback()
+
+GET          /agent-record-with-checks                                                     @uk.gov.hmrc.agentassurance.controllers.GetAgentRecordWithEntityChecksController.get()

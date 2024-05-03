@@ -32,6 +32,7 @@ import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
 import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.internalauth.client.test.BackendAuthComponentsStub
@@ -69,7 +70,7 @@ class EntityCheckControllerSpec
 
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
 
-        mockVerifyEntitySuccess(testArn)(None)
+        mockVerifyEntitySuccess(testArn)(AgentDetailsDesResponse(Some(testUtr), None, None, None))
 
         val result = controller
           .agentVerifyEntity()
@@ -89,7 +90,14 @@ class EntityCheckControllerSpec
 
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
 
-        mockVerifyEntitySuccess(testArn)(Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))))
+        mockVerifyEntitySuccess(testArn)(
+          AgentDetailsDesResponse(
+            Some(testUtr),
+            None,
+            Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
+            None
+          )
+        )
 
         val result = controller
           .agentVerifyEntity()
@@ -114,7 +122,7 @@ class EntityCheckControllerSpec
           .expects(*, *)
           .returning(Future.unit)
 
-        mockVerifyEntitySuccess(testArn)(None)
+        mockVerifyEntitySuccess(testArn)(AgentDetailsDesResponse(Some(testUtr), None, None, None))
 
         val result = controller
           .clientVerifyEntity()
@@ -136,7 +144,14 @@ class EntityCheckControllerSpec
             .expects(*, *)
             .returning(Future.unit)
 
-          mockVerifyEntitySuccess(testArn)(Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))))
+          mockVerifyEntitySuccess(testArn)(
+            AgentDetailsDesResponse(
+              Some(testUtr),
+              None,
+              Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
+              None
+            )
+          )
 
           val result = controller
             .clientVerifyEntity()

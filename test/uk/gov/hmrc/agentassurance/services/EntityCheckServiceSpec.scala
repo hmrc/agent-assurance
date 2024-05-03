@@ -37,7 +37,7 @@ class EntityCheckServiceSpec extends PlaySpec with MockDesConnector {
   implicit val req: Request[_]      = FakeRequest()
 
   "verifyAgent" should {
-    "return Some(SuspensionDetails) when the agent is suspended" in {
+    "return AgentDetailsDesResponse " in {
 
       mockGetAgentRecord(testArn)(
         AgentDetailsDesResponse(
@@ -50,23 +50,12 @@ class EntityCheckServiceSpec extends PlaySpec with MockDesConnector {
 
       val result = await(service.verifyAgent(testArn))
 
-      result mustBe Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA"))))
-    }
-
-    "return None when the agent is not suspended" in {
-
-      mockGetAgentRecord(testArn)(
-        AgentDetailsDesResponse(
-          uniqueTaxReference = None,
-          agencyDetails = None,
-          suspensionDetails = None,
-          isAnIndividual = None
-        )
+      result mustBe AgentDetailsDesResponse(
+        uniqueTaxReference = None,
+        agencyDetails = None,
+        suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
+        isAnIndividual = None
       )
-
-      val result = await(service.verifyAgent(testArn))
-
-      result mustBe None
     }
   }
 

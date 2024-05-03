@@ -24,8 +24,8 @@ import scala.concurrent.Future
 
 import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
@@ -33,10 +33,9 @@ class EntityCheckService @Inject() (desConnector: DesConnector) {
 
   def verifyAgent(
       arn: Arn
-  )(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[Option[SuspensionDetails]] = {
+  )(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse] = {
     desConnector
       .getAgentRecord(arn)
-      .map(_.suspensionDetails)
   }
 
 }
