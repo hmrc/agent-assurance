@@ -186,13 +186,37 @@ trait DesStubs {
     )
   }
 
-  def givenDESGetAgentRecord(arn: Arn, utr: Option[Utr], overseas: Boolean = false): StubMapping =
+  def givenDESGetAgentRecord(
+      arn: Arn,
+      utr: Option[Utr],
+      overseas: Boolean = false
+  ): StubMapping =
     stubFor(
       get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
         .willReturn(
           aResponse()
             .withStatus(200)
             .withBody(personalDetailsResponseBodyWithValidData(utr, overseas))
+        )
+    )
+
+  def givenDESGetAgentRecordSuspendedAgent(arn: Arn, utr: Option[Utr], isIndividual: Boolean = true): StubMapping =
+    stubFor(
+      get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withBody(suspendedAgentRecord(utr, isIndividual))
+        )
+    )
+
+  def givenDESGetAgentRecordNoSuspensionDetails(arn: Arn, utr: Option[Utr], isIndividual: Boolean = true): StubMapping =
+    stubFor(
+      get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withBody(noSuspendedDetailsAgentRecord(utr, isIndividual))
         )
     )
 
@@ -281,6 +305,54 @@ trait DesStubs {
          |   "agentReferenceNumber" : "TestARN"
          |}
             """.stripMargin
+
+  def suspendedAgentRecord(optUtr: Option[Utr], isIndividual: Boolean) = {
+
+    s"""
+       |{
+       |  "isIndividual": $isIndividual,""".stripMargin ++
+      optUtr.map(utr => s""" "uniqueTaxReference": "${utr.value}",""".stripMargin).getOrElse("") ++
+      s""" "agencyDetails" : {
+         |      "agencyAddress" : {
+         |         "addressLine2" : "Grange Central",
+         |         "addressLine3" : "Town Centre",
+         |         "addressLine4" : "Telford",
+         |         "postalCode" : "TF3 4ER",
+         |         "countryCode" : "GB",
+         |         "addressLine1" : "Matheson House"
+         |      },
+         |      "agencyName" : "ABC Accountants",
+         |      "agencyEmail" : "abc@xyz.com",
+         |      "agencyTelephone" : "07345678901"
+         |   },
+         |  "suspensionDetails": {
+         |    "suspensionStatus": true,
+         |     "regimes": ["ITSA"]
+         |  }
+         | }""".stripMargin
+  }
+
+  def noSuspendedDetailsAgentRecord(optUtr: Option[Utr], isIndividual: Boolean) = {
+
+    s"""
+       |{
+       |  "isIndividual": $isIndividual,""".stripMargin ++
+      optUtr.map(utr => s""" "uniqueTaxReference": "${utr.value}",""".stripMargin).getOrElse("") ++
+      s""" "agencyDetails" : {
+         |      "agencyAddress" : {
+         |         "addressLine2" : "Grange Central",
+         |         "addressLine3" : "Town Centre",
+         |         "addressLine4" : "Telford",
+         |         "postalCode" : "TF3 4ER",
+         |         "countryCode" : "GB",
+         |         "addressLine1" : "Matheson House"
+         |      },
+         |      "agencyName" : "ABC Accountants",
+         |      "agencyEmail" : "abc@xyz.com",
+         |      "agencyTelephone" : "07345678901"
+         |   }
+         | }""".stripMargin
+  }
 
   def noPersonalDetailsResponseBodyWithValidData(optUtr: Option[Utr]) =
     s"""

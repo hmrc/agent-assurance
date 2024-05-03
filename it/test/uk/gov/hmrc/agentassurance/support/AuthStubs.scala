@@ -17,6 +17,7 @@
 package test.uk.gov.hmrc.agentassurance.support
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 trait BasicUserAuthStubs { WiremockAware =>
   def isNotLoggedIn = {
@@ -203,6 +204,35 @@ trait AgentAuthStubs extends BasicUserAuthStubs {
                         |}""".stripMargin)
         )
         .willReturn(aResponse().withStatus(200).withBody("{}"))
+    )
+    this
+  }
+
+  def isLoggedInAsASAgent(arn: Arn): AgentAuthStubs = {
+    stubFor(
+      post(urlPathEqualTo(s"/auth/authorise")).willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(
+            s"""
+               |{
+               |  "affinityGroup": "Agent",
+               |  "allEnrolments": [
+               |    {
+               |      "key": "HMRC-AS-AGENT",
+               |      "identifiers": [
+               |        {
+               |          "key": "AgentReferenceNumber",
+               |          "value": "${arn.value}"
+               |        }
+               |      ],
+               |      "state": "Activated"
+               |    }
+               |  ]
+               |}
+       """.stripMargin
+          )
+      )
     )
     this
   }
