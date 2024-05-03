@@ -22,9 +22,7 @@ import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.time.Seconds
 import org.scalatest.time.Span
-import play.api.libs.json.Json
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
@@ -202,6 +200,26 @@ trait DesStubs {
         )
     )
 
+  def givenDESGetAgentRecordSuspendedAgent(arn: Arn, utr: Option[Utr], isIndividual: Boolean = true): StubMapping =
+    stubFor(
+      get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withBody(suspendedAgentRecord(utr, isIndividual))
+        )
+    )
+
+  def givenDESGetAgentRecordNoSuspensionDetails(arn: Arn, utr: Option[Utr], isIndividual: Boolean = true): StubMapping =
+    stubFor(
+      get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withBody(noSuspendedDetailsAgentRecord(utr, isIndividual))
+        )
+    )
+
   def givenAgentIsUnknown404(arn: Arn) = {
     stubFor(
       get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
@@ -287,6 +305,54 @@ trait DesStubs {
          |   "agentReferenceNumber" : "TestARN"
          |}
             """.stripMargin
+
+  def suspendedAgentRecord(optUtr: Option[Utr], isIndividual: Boolean) = {
+
+    s"""
+       |{
+       |  "isIndividual": $isIndividual,""".stripMargin ++
+      optUtr.map(utr => s""" "uniqueTaxReference": "${utr.value}",""".stripMargin).getOrElse("") ++
+      s""" "agencyDetails" : {
+         |      "agencyAddress" : {
+         |         "addressLine2" : "Grange Central",
+         |         "addressLine3" : "Town Centre",
+         |         "addressLine4" : "Telford",
+         |         "postalCode" : "TF3 4ER",
+         |         "countryCode" : "GB",
+         |         "addressLine1" : "Matheson House"
+         |      },
+         |      "agencyName" : "ABC Accountants",
+         |      "agencyEmail" : "abc@xyz.com",
+         |      "agencyTelephone" : "07345678901"
+         |   },
+         |  "suspensionDetails": {
+         |    "suspensionStatus": true,
+         |     "regimes": ["ITSA"]
+         |  }
+         | }""".stripMargin
+  }
+
+  def noSuspendedDetailsAgentRecord(optUtr: Option[Utr], isIndividual: Boolean) = {
+
+    s"""
+       |{
+       |  "isIndividual": $isIndividual,""".stripMargin ++
+      optUtr.map(utr => s""" "uniqueTaxReference": "${utr.value}",""".stripMargin).getOrElse("") ++
+      s""" "agencyDetails" : {
+         |      "agencyAddress" : {
+         |         "addressLine2" : "Grange Central",
+         |         "addressLine3" : "Town Centre",
+         |         "addressLine4" : "Telford",
+         |         "postalCode" : "TF3 4ER",
+         |         "countryCode" : "GB",
+         |         "addressLine1" : "Matheson House"
+         |      },
+         |      "agencyName" : "ABC Accountants",
+         |      "agencyEmail" : "abc@xyz.com",
+         |      "agencyTelephone" : "07345678901"
+         |   }
+         | }""".stripMargin
+  }
 
   def noPersonalDetailsResponseBodyWithValidData(optUtr: Option[Utr]) =
     s"""

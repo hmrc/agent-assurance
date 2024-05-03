@@ -54,15 +54,17 @@ class EntityCheckControllerISpec
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        "microservice.services.auth.host"      -> wireMockHost,
-        "microservice.services.auth.port"      -> wireMockPort,
-        "microservice.services.des.host"       -> wireMockHost,
-        "microservice.services.des.port"       -> wireMockPort,
-        "auditing.enabled"                     -> false,
-        "stride.roles.agent-assurance"         -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled-on-start" -> false,
-        "http-verbs.retries.intervals"         -> List("1ms"),
-        "agent.cache.enabled"                  -> false
+        "microservice.services.auth.host"          -> wireMockHost,
+        "microservice.services.auth.port"          -> wireMockPort,
+        "microservice.services.des.host"           -> wireMockHost,
+        "microservice.services.des.port"           -> wireMockPort,
+        "microservice.services.internal-auth.port" -> wireMockPort,
+        "microservice.services.internal-auth.host" -> wireMockHost,
+        "auditing.enabled"                         -> false,
+        "stride.roles.agent-assurance"             -> "maintain_agent_manually_assure",
+        "internal-auth-token-enabled-on-start"     -> false,
+        "http-verbs.retries.intervals"             -> List("1ms"),
+        "agent.cache.enabled"                      -> false
       )
 
   val arn       = Arn("AARN0000002")
@@ -75,7 +77,7 @@ class EntityCheckControllerISpec
     Await.result(
       wsClient
         .url(clientUrl)
-        .withHttpHeaders("Authorization" -> "test", CONTENT_TYPE -> "application/json")
+        .withHttpHeaders("Authorization" -> "internal auth token", CONTENT_TYPE -> "application/json")
         .post(Json.toJson(body)),
       15.seconds
     )
@@ -93,12 +95,14 @@ class EntityCheckControllerISpec
     "return suspension details when agent record contains suspension details" in {
 
       stubInternalAuthorised()
-      givenDESGetAgentRecord(arn, Some(testUtr))
-
-      val response = doClientPostRequest(VerifyEntityRequest(arn))
+      givenDESGetAgentRecordSuspendedAgent(
+        testArn,
+        Some(testUtr)
+      )
+      val response = doClientPostRequest(VerifyEntityRequest(testArn))
+      response.json mustBe Json.obj("suspensionStatus" -> true, "regimes" -> Set("ITSA"))
 
       response.status mustBe OK
-
     }
   }
 
@@ -113,10 +117,23 @@ class EntityCheckControllerISpec
       response.status mustBe NO_CONTENT
     }
 
+    "return NO_CONTENT when agent record contains no suspension details" in {
+
+      isLoggedInAsASAgent(testArn)
+      givenDESGetAgentRecordNoSuspensionDetails(
+        testArn,
+        Some(testUtr)
+      )
+
+      val response = doAgentPostRequest()
+
+      response.status mustBe NO_CONTENT
+    }
+
     "return suspension details when agent record contains suspension details" in {
 
       isLoggedInAsASAgent(testArn)
-      givenDESGetAgentRecord(
+      givenDESGetAgentRecordSuspendedAgent(
         testArn,
         Some(testUtr)
       )
@@ -124,7 +141,7 @@ class EntityCheckControllerISpec
       val response = doAgentPostRequest()
 
       response.status mustBe OK
-
+      response.json mustBe Json.obj("suspensionStatus" -> true, "regimes" -> Set("ITSA"))
     }
   }
 
