@@ -22,7 +22,9 @@ import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.time.Seconds
 import org.scalatest.time.Span
+import play.api.libs.json.Json
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
@@ -186,7 +188,11 @@ trait DesStubs {
     )
   }
 
-  def givenDESGetAgentRecord(arn: Arn, utr: Option[Utr], overseas: Boolean = false): StubMapping =
+  def givenDESGetAgentRecord(
+      arn: Arn,
+      utr: Option[Utr],
+      overseas: Boolean = false
+  ): StubMapping =
     stubFor(
       get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
         .willReturn(

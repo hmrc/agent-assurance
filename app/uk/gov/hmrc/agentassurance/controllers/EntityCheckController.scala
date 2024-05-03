@@ -19,18 +19,68 @@ package uk.gov.hmrc.agentassurance.controllers
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
+import play.api.mvc.Result
+import uk.gov.hmrc.agentassurance.auth.AuthActions
+import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.services.EntityCheckService
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
-class EntityCheckController @Inject() (cc: ControllerComponents) extends BackendController(cc) {
-  def agentVerifyEntity: Action[AnyContent] = Action { _ =>
-    Ok("")
+class EntityCheckController @Inject() (
+    cc: ControllerComponents,
+    entityCheckService: EntityCheckService,
+    val authConnector: AuthConnector,
+    auth: BackendAuthComponents
+)(implicit ec: ExecutionContext, appConfig: AppConfig)
+    extends BackendController(cc)
+    with AuthActions {
+
+  private val predicate = Predicate.Permission(
+    resource = Resource(
+      resourceType = ResourceType(appConfig.appName),
+      resourceLocation = ResourceLocation("client/verify-entity")
+    ),
+    action = IAAction("WRITE")
+  )
+
+  val internalAuth = auth.authorizedAction(predicate)
+
+  // only for agents
+  def agentVerifyEntity: Action[AnyContent] = AuthorisedWithArn { implicit request => arn: Arn =>
+    entityCheckService
+      .verifyAgent(arn)
+      .map(createResponse)
+
   }
 
-  def clientVerifyEntity: Action[AnyContent] = Action { _ =>
-    Ok("")
+  // only for clients or stride
+  def clientVerifyEntity: Action[JsValue] = internalAuth.async(parse.json) { implicit request =>
+    request.body.validate[VerifyEntityRequest] match {
+      case JsSuccess(value, _) =>
+        entityCheckService
+          .verifyAgent(value.identifier)
+          .map(createResponse)
+      case _ => Future.successful(BadRequest("Invalid Arn"))
+    }
+  }
+
+  private val createResponse: Option[SuspensionDetails] => Result = {
+    case None                                                           => NoContent
+    case Some(suspensionDetails) if !suspensionDetails.suspensionStatus => NoContent
+    case suspensionDetails                                              => Ok(Json.toJson(suspensionDetails))
   }
 }

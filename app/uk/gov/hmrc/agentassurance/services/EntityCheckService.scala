@@ -20,14 +20,23 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-import uk.gov.hmrc.agentassurance.models.audit.AgentCheckAuditEvent
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import play.api.mvc.Request
+import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
+import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
-class AuditService @Inject() (auditConnector: AuditConnector) {
+class EntityCheckService @Inject() (desConnector: DesConnector) {
 
-  def sendAgentCheckAuditEvent(agentCheckAuditEvent: AgentCheckAuditEvent)(implicit ec: ExecutionContext) =
-    auditConnector.sendExtendedEvent(agentCheckAuditEvent)
+  def verifyAgent(
+      arn: Arn
+  )(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[Option[SuspensionDetails]] = {
+    desConnector
+      .getAgentRecord(arn)
+      .map(_.suspensionDetails)
+  }
 
 }

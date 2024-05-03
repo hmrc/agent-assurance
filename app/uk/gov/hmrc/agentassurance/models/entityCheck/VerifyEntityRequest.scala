@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models
+package uk.gov.hmrc.agentassurance.models.entityCheck
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
-case class AgentCheckOutcome(agentCheckType: String, isSuccessful: Boolean, failureReason: Option[String])
+case class VerifyEntityRequest(identifier: Arn)
 
-object AgentCheckOutcome {
-  implicit val format: Format[AgentCheckOutcome] = Json.format[AgentCheckOutcome]
+object VerifyEntityRequest {
+  implicit val format: Format[VerifyEntityRequest] = Json.format[VerifyEntityRequest]
 }
