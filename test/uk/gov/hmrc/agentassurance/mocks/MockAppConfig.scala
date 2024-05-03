@@ -84,5 +84,11 @@ trait MockAppConfig extends MockFactory { this: TestSuite =>
     .atLeastOnce()
     .returning(1.second)
 
+  (mockConfig
+    .get[String](_: String)(_: ConfigLoader[String]))
+    .expects("agent-maintainer-email", *)
+    .atLeastOnce()
+    .returning("test@example.com")
+
   val mockAppConfig: AppConfig = new AppConfig(mockConfig, mockServiceConfig)
 }

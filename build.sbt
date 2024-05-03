@@ -17,9 +17,7 @@ lazy val root = (project in file("."))
     scalacOptions ++= scalaCOptions,
     Compile / scalafmtOnCompile := true,
     Test / scalafmtOnCompile := true,
-    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
-    Compile / scalafmtOnCompile := true,
-    Test / scalafmtOnCompile := true
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources"
   )
   .settings(
     Test / parallelExecution := false,
@@ -44,7 +42,7 @@ val scalaCOptions = Seq(
 
 lazy val it = project
   .enablePlugins(PlayScala)
-  .dependsOn(root % "test->test") // the "test->test" allows reusing test code and test dependencies
+  .dependsOn(root % "compile->compile;test->test") // the "test->test" allows reusing test code and test dependencies
   .settings(DefaultBuildSettings.itSettings())
   .settings(libraryDependencies ++= AppDependencies.test)
   .settings(
