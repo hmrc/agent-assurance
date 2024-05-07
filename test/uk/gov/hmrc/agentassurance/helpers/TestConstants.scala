@@ -26,6 +26,7 @@ import uk.gov.hmrc.auth.core.EnrolmentIdentifier
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
+import uk.gov.hmrc.domain.SaUtr
 
 object TestConstants {
 
@@ -58,9 +59,13 @@ object TestConstants {
 
   val testNino: Nino                         = Nino("AA000000A")
   val testUtr: Utr                           = Utr("7000000002")
+  val testSaUtr: SaUtr                       = SaUtr(testUtr.value)
   val testSaAgentReference: SaAgentReference = SaAgentReference("IRSA-123")
   val testValidApplicationReferenceNumber    = "XAML00000123456"
   val testArn: Arn                           = Arn("ARN123")
+  val testArn1: Arn                          = Arn("ARN1231")
+  val testArn2: Arn                          = Arn("ARN1232")
+  val testArn3: Arn                          = Arn("ARN1233")
   val today: LocalDate                       = LocalDate.now
 
   val membershipExpiresOnDate: LocalDate = LocalDate.parse("2024-01-12")

@@ -84,6 +84,12 @@ trait MockAppConfig extends MockFactory { this: TestSuite =>
     .atLeastOnce()
     .returning(1.second)
 
+  (mockServiceConfig
+    .getDuration(_: String))
+    .expects("agent.entity-check.email.lock.expires")
+    .atLeastOnce()
+    .returning(1.second)
+
   (mockConfig
     .get[String](_: String)(_: ConfigLoader[String]))
     .expects("agent-maintainer-email", *)

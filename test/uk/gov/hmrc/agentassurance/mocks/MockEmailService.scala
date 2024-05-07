@@ -16,25 +16,22 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
-import play.api.mvc.Request
-import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
-import uk.gov.hmrc.agentassurance.services.EntityCheckService
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
+import uk.gov.hmrc.agentassurance.services.EmailService
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockEntityCheckService extends MockFactory { this: TestSuite =>
+import scala.concurrent.{ExecutionContext, Future}
 
-  val mockEntityCheckService: EntityCheckService = mock[EntityCheckService]
+trait MockEmailService extends MockFactory { this: TestSuite =>
 
-  def mockVerifyEntitySuccess(arn: Arn)(returns: EntityCheckResult) =
-    (mockEntityCheckService
-      .verifyAgent(_: Arn)(_: Request[_], _: HeaderCarrier, _: ExecutionContext))
-      .expects(arn, *, *, *)
-      .returning(Future.successful(returns))
+  val mockMockEmailService = mock[EmailService]
+
+  def mockSendEntityCheckNotification(entityCheckNotification: EntityCheckNotification) = {
+    (mockMockEmailService
+      .sendEntityCheckNotification(_: EntityCheckNotification)(_:ExecutionContext, _: HeaderCarrier))
+      .expects(entityCheckNotification, *, *)
+      .returning(Future.successful(()))  }
 
 }

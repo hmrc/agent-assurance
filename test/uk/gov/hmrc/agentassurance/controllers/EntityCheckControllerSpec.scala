@@ -31,7 +31,9 @@ import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
-import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.internalauth.client.test.BackendAuthComponentsStub
@@ -69,7 +71,7 @@ class EntityCheckControllerSpec
 
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
 
-        mockVerifyEntitySuccess(testArn)(None)
+        mockVerifyEntitySuccess(testArn)(EntityCheckResult(None, Seq.empty[EntityCheckException]))
 
         val result = controller
           .agentVerifyEntity()
@@ -89,7 +91,12 @@ class EntityCheckControllerSpec
 
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
 
-        mockVerifyEntitySuccess(testArn)(Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))))
+        mockVerifyEntitySuccess(testArn)(
+          EntityCheckResult(
+            Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))),
+            Seq.empty[EntityCheckException]
+          )
+        )
 
         val result = controller
           .agentVerifyEntity()
@@ -114,7 +121,7 @@ class EntityCheckControllerSpec
           .expects(*, *)
           .returning(Future.unit)
 
-        mockVerifyEntitySuccess(testArn)(None)
+        mockVerifyEntitySuccess(testArn)(EntityCheckResult(None, Seq.empty[EntityCheckException]))
 
         val result = controller
           .clientVerifyEntity()
@@ -136,7 +143,12 @@ class EntityCheckControllerSpec
             .expects(*, *)
             .returning(Future.unit)
 
-          mockVerifyEntitySuccess(testArn)(Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))))
+          mockVerifyEntitySuccess(testArn)(
+            EntityCheckResult(
+              Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))),
+              Seq.empty[EntityCheckException]
+            )
+          )
 
           val result = controller
             .clientVerifyEntity()

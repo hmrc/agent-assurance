@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entitycheck
+package uk.gov.hmrc.agentassurance.helpers
 
-import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
+import java.time._
 
+trait InstantClockTestSupport /*extends AnyFeatureSpec with GuiceOneServerPerSuite*/ {
+  lazy val localDateTime: LocalDateTime = LocalDateTime.now()
+  lazy val instant: Instant             = localDateTime.toInstant(ZoneOffset.UTC)
+  lazy val frozenInstant: Instant       = instant
 
-case class EntityCheckResult(
-                              suspensionDetails: Option[SuspensionDetails],
-                              entityCheckExceptions: Seq[EntityCheckException]
-                            )
-//object EntityCheckResult {
-//  implicit val format: Format[EntityCheckResult] = Json.format[EntityCheckResult]
-//}
+  implicit val clock: Clock = Clock.fixed(frozenInstant, ZoneId.of("UTC"))
+
+}

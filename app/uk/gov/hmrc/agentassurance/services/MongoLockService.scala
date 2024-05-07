@@ -23,17 +23,26 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.mongo.lock.MongoLockRepository
 import uk.gov.hmrc.mongo.lock.TimePeriodLockService
 
 @Singleton
 class MongoLockService @Inject() (mongoLockRepository: MongoLockRepository)(implicit appConfig: AppConfig) {
-  def tryLock[T](arn: Arn)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] = {
+  def dailyLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] = {
     val lockService = TimePeriodLockService(
       mongoLockRepository,
-      lockId = s"verify-arn-${arn.value}",
+      lockId = s"verify-utr-daily-${utr.value}",
       ttl = appConfig.entityChecksLockExpires
+    )
+    lockService.withRenewedLock(body)
+  }
+
+  def emailLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] = {
+    val lockService = TimePeriodLockService(
+      mongoLockRepository,
+      lockId = s"verify-utr-email-${utr.value}",
+      ttl = appConfig.entityChecksEmailLockExpires
     )
     lockService.withRenewedLock(body)
   }

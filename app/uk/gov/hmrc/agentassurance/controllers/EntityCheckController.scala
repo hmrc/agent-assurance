@@ -31,7 +31,7 @@ import play.api.mvc.ControllerComponents
 import play.api.mvc.Result
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
@@ -63,7 +63,7 @@ class EntityCheckController @Inject() (
   def agentVerifyEntity: Action[AnyContent] = AuthorisedWithArn { implicit request => arn: Arn =>
     entityCheckService
       .verifyAgent(arn)
-      .map(createResponse)
+      .map(x => createResponse(x.suspensionDetails))
 
   }
 
@@ -73,7 +73,7 @@ class EntityCheckController @Inject() (
       case JsSuccess(value, _) =>
         entityCheckService
           .verifyAgent(value.identifier)
-          .map(createResponse)
+          .map(x => createResponse(x.suspensionDetails))
       case _ => Future.successful(BadRequest("Invalid Arn"))
     }
   }
