@@ -63,7 +63,7 @@ class EntityCheckController @Inject() (
   def agentVerifyEntity: Action[AnyContent] = AuthorisedWithArn { implicit request => arn: Arn =>
     entityCheckService
       .verifyAgent(arn)
-      .map(x => createResponse(x.suspensionDetails))
+      .map(x => createResponse(x.agentRecord.suspensionDetails))
 
   }
 
@@ -73,7 +73,7 @@ class EntityCheckController @Inject() (
       case JsSuccess(value, _) =>
         entityCheckService
           .verifyAgent(value.identifier)
-          .map(x => createResponse(x.suspensionDetails))
+          .map(x => createResponse(x.agentRecord.suspensionDetails))
       case _ => Future.successful(BadRequest("Invalid Arn"))
     }
   }

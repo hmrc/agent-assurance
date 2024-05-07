@@ -68,49 +68,54 @@ class EntityCheckServiceSpec
   "verifyAgent" should {
     "return Some(SuspensionDetails) when the agent is suspended" in {
 
+      val agentDetailsDesResponse = AgentDetailsDesResponse(
+        uniqueTaxReference = None,
+        agencyDetails = None,
+        suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
+        isAnIndividual = None
+      )
+
       mockGetAgentRecord(testArn)(
-        AgentDetailsDesResponse(
-          uniqueTaxReference = None,
-          agencyDetails = None,
-          suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
-          isAnIndividual = None
-        )
+        agentDetailsDesResponse
       )
 
       val result = await(service.verifyAgent(testArn))
 
       result mustBe EntityCheckResult(
-        Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
+        agentDetailsDesResponse,
         Seq.empty[EntityCheckException]
       )
     }
 
     "return None when the agent is not suspended" in {
 
+      val agentDetailsDesResponse = AgentDetailsDesResponse(
+        uniqueTaxReference = None,
+        agencyDetails = None,
+        suspensionDetails = None,
+        isAnIndividual = None
+      )
       mockGetAgentRecord(testArn)(
-        AgentDetailsDesResponse(
-          uniqueTaxReference = None,
-          agencyDetails = None,
-          suspensionDetails = None,
-          isAnIndividual = None
-        )
+        agentDetailsDesResponse
       )
 
       val result = await(service.verifyAgent(testArn))
 
-      result mustBe EntityCheckResult(None, Seq.empty[EntityCheckException])
+      result mustBe EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException])
     }
 
     "return Some(SuspensionDetails) and do entityChecks and do not sent email" in {
 
       val utr = Utr("1234567")
+      val agentDetailsDesResponse = AgentDetailsDesResponse(
+        uniqueTaxReference = Some(utr),
+        agencyDetails = None,
+        suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
+        isAnIndividual = None
+      )
+
       mockGetAgentRecord(testArn)(
-        AgentDetailsDesResponse(
-          uniqueTaxReference = Some(utr),
-          agencyDetails = None,
-          suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
-          isAnIndividual = None
-        )
+        agentDetailsDesResponse
       )
 
       mockGetCitizenDeceasedFlag(SaUtr(utr.value))(None)
@@ -118,7 +123,7 @@ class EntityCheckServiceSpec
       val result = await(service.verifyAgent(testArn))
 
       result mustBe EntityCheckResult(
-        Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
+        agentDetailsDesResponse,
         Seq.empty[EntityCheckException]
       )
     }
@@ -129,13 +134,14 @@ class EntityCheckServiceSpec
       val dateTime  = formatter.format(LocalDateTime.now())
 
       val utr = Utr("1234567")
+      val agentDetailsDesResponse = AgentDetailsDesResponse(
+        uniqueTaxReference = Some(utr),
+        agencyDetails = None,
+        suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
+        isAnIndividual = None
+      )
       mockGetAgentRecord(testArn)(
-        AgentDetailsDesResponse(
-          uniqueTaxReference = Some(utr),
-          agencyDetails = None,
-          suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
-          isAnIndividual = None
-        )
+        agentDetailsDesResponse
       )
 
       mockGetCitizenDeceasedFlag(SaUtr(utr.value))(Some(EntityDeceasedCheckFailed))
@@ -153,7 +159,7 @@ class EntityCheckServiceSpec
       val result = await(service.verifyAgent(testArn))
 
       result mustBe EntityCheckResult(
-        Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
+        agentDetailsDesResponse,
         List(EntityDeceasedCheckFailed)
       )
     }

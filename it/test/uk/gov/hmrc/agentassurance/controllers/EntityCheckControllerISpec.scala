@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
+
 import scala.concurrent.Await
 
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
@@ -40,6 +43,7 @@ import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn3
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testSaUtr
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testUtr
 import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.stubs.CitizenDetailsStubs
 import uk.gov.hmrc.agentassurance.stubs.EmailStub
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -134,6 +138,9 @@ class EntityCheckControllerISpec
 
     "return suspension details and send email" in {
       Thread.sleep(1000) // To make sure cache expires
+      val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
+      val dateTime  = formatter.format(LocalDateTime.now())
+
       stubInternalAuthorised()
       givenDESGetAgentRecordSuspendedAgent(
         testArn,
@@ -142,7 +149,24 @@ class EntityCheckControllerISpec
 
       givenCitizenReturnDeceasedFlag(testSaUtr, true)
 
+      givenEmailSent(emailInformation =
+        EmailInformation(
+          to = Seq("test@example.com"),
+          templateId = "entity_check_notification",
+          parameters = Map(
+            "arn"          -> "ARN123",
+            "dateTime"     -> dateTime,
+            "agencyName"   -> "ABC Accountants",
+            "failedChecks" -> "Checks that failed: Agent is deceased.",
+            "utr"          -> "7000000002"
+          ),
+          force = true
+        )
+      )
+
       val response = doClientPostRequest(VerifyEntityRequest(testArn))
+
+      verifyEmailRequestWasSent(1)
       response.json mustBe Json.obj("suspensionStatus" -> true, "regimes" -> Set("ITSA"))
       response.status mustBe OK
 

@@ -16,12 +16,11 @@
 
 package uk.gov.hmrc.agentassurance.models.entitycheck
 
-import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 
 
 case class EntityCheckResult(
-                              suspensionDetails: Option[SuspensionDetails],
+                              agentRecord: AgentDetailsDesResponse,
                               entityCheckExceptions: Seq[EntityCheckException]
                             )
 //object EntityCheckResult {

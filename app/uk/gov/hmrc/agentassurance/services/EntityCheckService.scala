@@ -102,7 +102,7 @@ class EntityCheckService @Inject() (
         .getOrElse(Future.successful(Seq.empty[EntityCheckException]))
       _ <- sendEmail(agentRecord, entityChecksResult)
     } yield EntityCheckResult(
-      agentRecord.suspensionDetails,
+      agentRecord,
       entityChecksResult
     )
 

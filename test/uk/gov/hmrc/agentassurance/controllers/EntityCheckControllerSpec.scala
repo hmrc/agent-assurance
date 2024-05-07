@@ -34,6 +34,7 @@ import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.internalauth.client.test.BackendAuthComponentsStub
@@ -71,7 +72,14 @@ class EntityCheckControllerSpec
 
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
 
-        mockVerifyEntitySuccess(testArn)(EntityCheckResult(None, Seq.empty[EntityCheckException]))
+        val agentDetailsDesResponse = AgentDetailsDesResponse(
+          uniqueTaxReference = None,
+          agencyDetails = None,
+          suspensionDetails = None,
+          isAnIndividual = None
+        )
+
+        mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException]))
 
         val result = controller
           .agentVerifyEntity()
@@ -91,9 +99,17 @@ class EntityCheckControllerSpec
 
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
 
+        val agentDetailsDesResponse =
+          AgentDetailsDesResponse(
+            uniqueTaxReference = None,
+            agencyDetails = None,
+            suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))),
+            isAnIndividual = None
+          )
+
         mockVerifyEntitySuccess(testArn)(
           EntityCheckResult(
-            Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))),
+            agentDetailsDesResponse,
             Seq.empty[EntityCheckException]
           )
         )
@@ -121,7 +137,15 @@ class EntityCheckControllerSpec
           .expects(*, *)
           .returning(Future.unit)
 
-        mockVerifyEntitySuccess(testArn)(EntityCheckResult(None, Seq.empty[EntityCheckException]))
+        val agentDetailsDesResponse =
+          AgentDetailsDesResponse(
+            uniqueTaxReference = None,
+            agencyDetails = None,
+            suspensionDetails = None,
+            isAnIndividual = None
+          )
+
+        mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException]))
 
         val result = controller
           .clientVerifyEntity()
@@ -143,9 +167,17 @@ class EntityCheckControllerSpec
             .expects(*, *)
             .returning(Future.unit)
 
+          val agentDetailsDesResponse =
+            AgentDetailsDesResponse(
+              uniqueTaxReference = None,
+              agencyDetails = None,
+              suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))),
+              isAnIndividual = None
+            )
+
           mockVerifyEntitySuccess(testArn)(
             EntityCheckResult(
-              Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))),
+              agentDetailsDesResponse,
               Seq.empty[EntityCheckException]
             )
           )

@@ -16,18 +16,26 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import scala.concurrent.ExecutionContext
+
 import org.scalamock.scalatest.MockFactory
-import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
+import org.scalatestplus.play.PlaySpec
 import play.api.http.Status.OK
-import play.api.test.{DefaultAwaitTimeout, FakeRequest}
-import play.api.test.Helpers.{GET, status, stubControllerComponents}
-import uk.gov.hmrc.agentassurance.helpers.TestConstants.{enrolmentsWithNoIrSAAgent, testArn, testUtr}
-import uk.gov.hmrc.agentassurance.mocks.{MockAuthConnector, MockEntityCheckService}
+import play.api.test.DefaultAwaitTimeout
+import play.api.test.FakeRequest
+import play.api.test.Helpers.status
+import play.api.test.Helpers.stubControllerComponents
+import play.api.test.Helpers.GET
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.enrolmentsWithNoIrSAAgent
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testUtr
+import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
+import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.http.HeaderNames
-
-import scala.concurrent.ExecutionContext
 
 class GetAgentRecordWithEntityChecksControllerSpec
     extends PlaySpec
@@ -37,7 +45,7 @@ class GetAgentRecordWithEntityChecksControllerSpec
     with MockEntityCheckService
     with MockFactory {
 
-  implicit val ec: ExecutionContext    = ExecutionContext.Implicits.global
+  implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
   val controller = new GetAgentRecordWithEntityChecksController(
     stubControllerComponents(),
@@ -49,8 +57,19 @@ class GetAgentRecordWithEntityChecksControllerSpec
     "return OK" in {
 
       mockAuth()(Right(enrolmentsWithNoIrSAAgent))
-
-      mockVerifyEntitySuccess(testArn)(AgentDetailsDesResponse(Some(testUtr), None, None, None))
+      val agentDetailsDesResponse =
+        AgentDetailsDesResponse(
+          uniqueTaxReference = Some(testUtr),
+          agencyDetails = None,
+          suspensionDetails = None,
+          isAnIndividual = None
+        )
+      mockVerifyEntitySuccess(testArn)(
+        EntityCheckResult(
+          agentDetailsDesResponse,
+          Seq.empty[EntityCheckException]
+        )
+      )
 
       val result = controller
         .get()
