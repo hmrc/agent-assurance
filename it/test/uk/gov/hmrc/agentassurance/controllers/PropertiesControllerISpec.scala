@@ -38,6 +38,7 @@ import test.uk.gov.hmrc.agentassurance.support.UnitSpec
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
+import uk.gov.hmrc.agentassurance.repositories.PropertiesRepositoryImpl
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 class PropertiesControllerISpec
@@ -48,7 +49,7 @@ class PropertiesControllerISpec
     with WireMockSupport
     with DefaultPlayMongoRepositorySupport[Property] {
 
-  override lazy val repository = new PropertiesRepository(mongoComponent)
+  override lazy val repository = new PropertiesRepositoryImpl(mongoComponent)
 
   val moduleWithOverrides: AbstractModule = new AbstractModule() {
     override def configure(): Unit = {

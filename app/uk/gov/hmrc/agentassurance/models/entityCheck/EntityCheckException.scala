@@ -31,16 +31,16 @@ object DeceasedCheckException {
   case class CitizenConnectorRequestFailed(code: Int) extends DeceasedCheckException
 
   case object EntityDeceasedCheckFailed extends DeceasedCheckException with EmailCheckExceptions {
-    override val failedChecksText: String = "Agent is deceased."
+    override val failedChecksText: String = "Agent is deceased"
   }
 }
 
 sealed trait RefusalCheckException extends EntityCheckException
 
 object RefusalCheckException {
-  case class XConnectorRequestFailed(code: Status) extends RefusalCheckException
+  case class ConnectorRequestFailed(code: Status) extends RefusalCheckException
 
-  case object RefusalCheckFailed extends RefusalCheckException with EmailCheckExceptions {
-    override val failedChecksText: String = "Agent is on the 'Refuse To Deal With' list."
+  case object AgentIsOnRefuseToDealList extends RefusalCheckException with EmailCheckExceptions {
+    override val failedChecksText: String = "Agent is on the 'Refuse To Deal With' list"
   }
 }
