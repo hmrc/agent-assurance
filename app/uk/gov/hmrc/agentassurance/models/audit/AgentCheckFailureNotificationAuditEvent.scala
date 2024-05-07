@@ -16,18 +16,26 @@
 
 package uk.gov.hmrc.agentassurance.models.audit
 
+import java.time.LocalDateTime
+
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
-import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
-case class AgentCheckAuditEvent(agentReferenceNumber: Arn, utr: Option[Utr], agentCheckOutcomes: Seq[AgentCheckOutcome])
-    extends AuditDetail {
-  val auditType = "AgentCheck"
+case class EmailData(failedCheck: Seq[String], dateChecked: LocalDateTime)
+
+object EmailData {
+  implicit val writes: OWrites[EmailData] = Json.writes
+}
+case class AgentCheckFailureNotificationAuditEvent(
+    agentReferenceNumber: Arn,
+    utr: String,
+    email: String,
+    emailData: EmailData
+) extends AuditDetail {
+  val auditType = "AgentCheckFailureNotificationSent"
 }
 
-object AgentCheckAuditEvent {
-  implicit val writes: OWrites[AgentCheckAuditEvent] = Json.writes
-
+object AgentCheckFailureNotificationAuditEvent {
+  implicit val writes: OWrites[AgentCheckFailureNotificationAuditEvent] = Json.writes
 }
