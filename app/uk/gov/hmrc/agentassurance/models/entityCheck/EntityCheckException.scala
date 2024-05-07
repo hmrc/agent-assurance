@@ -40,9 +40,9 @@ object DeceasedCheckException {
 sealed trait RefusalCheckException extends EntityCheckException
 
 object RefusalCheckException {
-  case class XConnectorRequestFailed(code: Status) extends RefusalCheckException
+  case class ConnectorRequestFailed(code: Status) extends RefusalCheckException
 
-  case object RefusalCheckFailed extends RefusalCheckException with EmailCheckExceptions {
+  case object AgentIsOnRefuseToDealList extends RefusalCheckException with EmailCheckExceptions {
     override val failedChecksText: String = "Agent is on the 'Refuse To Deal With' list."
   }
 }

@@ -20,7 +20,9 @@ import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
 
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
 
+import com.google.inject.AbstractModule
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
@@ -36,17 +38,17 @@ import test.uk.gov.hmrc.agentassurance.stubs.InternalAuthStub
 import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
-import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn
-import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn1
-import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn2
-import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn3
-import uk.gov.hmrc.agentassurance.helpers.TestConstants.testSaUtr
-import uk.gov.hmrc.agentassurance.helpers.TestConstants.testUtr
+import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.models.EmailInformation
+import uk.gov.hmrc.agentassurance.models.Property
+import uk.gov.hmrc.agentassurance.models.Value
+import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
+import uk.gov.hmrc.agentassurance.repositories.PropertiesRepositoryImpl
 import uk.gov.hmrc.agentassurance.stubs.CitizenDetailsStubs
 import uk.gov.hmrc.agentassurance.stubs.EmailStub
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
 class EntityCheckControllerISpec
@@ -62,6 +64,15 @@ class EntityCheckControllerISpec
     with EmailStub {
 
   implicit override lazy val app: Application = appBuilder.build()
+
+  protected val propertiesRepository: PlayMongoRepository[Property] =
+    new PropertiesRepositoryImpl(mongoComponent)
+
+  val moduleWithOverrides: AbstractModule = new AbstractModule() {
+    override def configure(): Unit = {
+      bind(classOf[PropertiesRepository]).toInstance(propertiesRepository.asInstanceOf[PropertiesRepositoryImpl])
+    }
+  }
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -85,6 +96,7 @@ class EntityCheckControllerISpec
         "agent.entity-check.lock.expires"            -> "1 second",
         "agent.entity-check.email.lock.expires"      -> "1 seconds"
       )
+      .overrides(moduleWithOverrides)
 
   val arn       = Arn("AARN0000002")
   val clientUrl = s"http://localhost:$port/agent-assurance/client/verify-entity"
@@ -136,7 +148,7 @@ class EntityCheckControllerISpec
 
     }
 
-    "return suspension details and send email" in {
+    "return suspension details and send email for deceased" in {
       Thread.sleep(1000) // To make sure cache expires
       val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
       val dateTime  = formatter.format(LocalDateTime.now())
@@ -158,6 +170,46 @@ class EntityCheckControllerISpec
             "dateTime"     -> dateTime,
             "agencyName"   -> "ABC Accountants",
             "failedChecks" -> "Checks that failed: Agent is deceased.",
+            "utr"          -> "7000000002"
+          ),
+          force = true
+        )
+      )
+
+      val response = doClientPostRequest(VerifyEntityRequest(testArn))
+
+      verifyEmailRequestWasSent(1)
+      response.json mustBe Json.obj("suspensionStatus" -> true, "regimes" -> Set("ITSA"))
+      response.status mustBe OK
+
+    }
+
+    "return suspension details and send email for refuse to deal with" in {
+      Thread.sleep(1000) // To make sure cache expires
+      val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
+      val dateTime  = formatter.format(LocalDateTime.now())
+
+      stubInternalAuthorised()
+      givenDESGetAgentRecordSuspendedAgent(
+        testArn,
+        Some(testUtr)
+      )
+
+      givenCitizenReturnDeceasedFlag(testSaUtr, false)
+      propertiesRepository.collection
+        .insertOne(Value(testSaUtr.value).toProperty("refusal-to-deal-with"))
+        .toFuture()
+        .futureValue
+
+      givenEmailSent(emailInformation =
+        EmailInformation(
+          to = Seq("test@example.com"),
+          templateId = "entity_check_notification",
+          parameters = Map(
+            "arn"          -> "ARN123",
+            "dateTime"     -> dateTime,
+            "agencyName"   -> "ABC Accountants",
+            "failedChecks" -> "Checks that failed: Agent is on the 'Refuse To Deal With' list.",
             "utr"          -> "7000000002"
           ),
           force = true

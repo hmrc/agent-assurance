@@ -28,15 +28,14 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.helpers.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
-import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
-import uk.gov.hmrc.agentassurance.mocks.MockCitizenDetailsConnector
-import uk.gov.hmrc.agentassurance.mocks.MockDesConnector
-import uk.gov.hmrc.agentassurance.mocks.MockEmailService
+import uk.gov.hmrc.agentassurance.mocks._
 import uk.gov.hmrc.agentassurance.models.entitycheck.DeceasedCheckException.EntityDeceasedCheckFailed
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException.AgentIsOnRefuseToDealList
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
+import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.SaUtr
@@ -52,7 +51,8 @@ class EntityCheckServiceSpec
     with MockCitizenDetailsConnector
     with InstantClockTestSupport
     with MockAppConfig
-    with MockEmailService {
+    with MockEmailService
+    with MockPropertiesRepository {
 
   implicit val ac: AppConfig        = mockAppConfig
   implicit val hc: HeaderCarrier    = HeaderCarrier()
@@ -63,7 +63,13 @@ class EntityCheckServiceSpec
   val mongoLockService    = new MongoLockService(mongoLockRepository)
 
   val service =
-    new EntityCheckService(mockDesConnector, mockCitizenDetailsConnector, mongoLockService, mockMockEmailService)
+    new EntityCheckService(
+      mockDesConnector,
+      mockCitizenDetailsConnector,
+      mongoLockService,
+      mockMockEmailService,
+      mockPropertiesRepository
+    )
 
   "verifyAgent" should {
     "return Some(SuspensionDetails) when the agent is suspended" in {
@@ -119,6 +125,7 @@ class EntityCheckServiceSpec
       )
 
       mockGetCitizenDeceasedFlag(SaUtr(utr.value))(None)
+      mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(false)
 
       val result = await(service.verifyAgent(testArn))
 
@@ -128,7 +135,7 @@ class EntityCheckServiceSpec
       )
     }
 
-    "return Some(SuspensionDetails) and do entityChecks and sent email" in {
+    "return Some(SuspensionDetails) and do entityChecks and sent email with deceased failed" in {
 
       val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
       val dateTime  = formatter.format(LocalDateTime.now())
@@ -145,6 +152,7 @@ class EntityCheckServiceSpec
       )
 
       mockGetCitizenDeceasedFlag(SaUtr(utr.value))(Some(EntityDeceasedCheckFailed))
+      mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(false)
 
       mockSendEntityCheckNotification(
         EntityCheckNotification(
@@ -161,6 +169,43 @@ class EntityCheckServiceSpec
       result mustBe EntityCheckResult(
         agentDetailsDesResponse,
         List(EntityDeceasedCheckFailed)
+      )
+    }
+
+    "return Some(SuspensionDetails) and do entityChecks and sent email with refusal to do list" in {
+
+      val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
+      val dateTime  = formatter.format(LocalDateTime.now())
+
+      val utr = Utr("1234567")
+      val agentDetailsDesResponse = AgentDetailsDesResponse(
+        uniqueTaxReference = Some(utr),
+        agencyDetails = None,
+        suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
+        isAnIndividual = None
+      )
+      mockGetAgentRecord(testArn)(
+        agentDetailsDesResponse
+      )
+
+      mockGetCitizenDeceasedFlag(SaUtr(utr.value))(None)
+      mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(true)
+
+      mockSendEntityCheckNotification(
+        EntityCheckNotification(
+          arn = testArn,
+          utr = utr.value,
+          agencyName = "",
+          failedChecks = "Checks that failed: Agent is on the 'Refuse To Deal With' list.",
+          dateTime = dateTime
+        )
+      )
+
+      val result = await(service.verifyAgent(testArn))
+
+      result mustBe EntityCheckResult(
+        agentDetailsDesResponse,
+        List(AgentIsOnRefuseToDealList)
       )
     }
 

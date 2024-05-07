@@ -22,6 +22,7 @@ import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
+import com.google.inject.ImplementedBy
 import org.mongodb.scala._
 import org.mongodb.scala.model.Aggregates.filter
 import org.mongodb.scala.model.Aggregates.limit
@@ -34,8 +35,20 @@ import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent
 
+@ImplementedBy(classOf[PropertiesRepositoryImpl])
+trait PropertiesRepository {
+
+  def findProperties(key: String, page: Int, pageSize: Int): Future[(Int, Seq[String])]
+
+  def propertyExists(property: Property): Future[Boolean]
+
+  def createProperty(property: Property): Future[Unit]
+
+  def deleteProperty(property: Property): Future[Unit]
+}
+
 @Singleton
-class PropertiesRepository @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
+class PropertiesRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
     extends PlayMongoRepository[Property](
       mongoComponent = mongo,
       collectionName = "agent-assurance",
@@ -43,11 +56,12 @@ class PropertiesRepository @Inject() (mongo: MongoComponent)(implicit ec: Execut
       indexes = Seq(
         IndexModel(ascending("key"))
       )
-    ) {
+    )
+    with PropertiesRepository {
 
   override lazy val requiresTtlIndex: Boolean = false
 
-  def findProperties(key: String, page: Int, pageSize: Int): Future[(Int, Seq[String])] = {
+  override def findProperties(key: String, page: Int, pageSize: Int): Future[(Int, Seq[String])] = {
 
     val skipDuePageNumber = pageSize * (page - 1)
 
@@ -70,18 +84,18 @@ class PropertiesRepository @Inject() (mongo: MongoComponent)(implicit ec: Execut
     } yield (size, utrs)
   }
 
-  def propertyExists(property: Property): Future[Boolean] = {
+  override def propertyExists(property: Property): Future[Boolean] = {
     collection
       .find(and(equal("key", property.key), equal("value", property.value)))
       .headOption()
       .map(_.isDefined)
   }
 
-  def createProperty(property: Property): Future[Unit] = {
+  override def createProperty(property: Property): Future[Unit] = {
     collection.insertOne(property).toFuture().map(_ => ())
   }
 
-  def deleteProperty(property: Property): Future[Unit] = {
+  override def deleteProperty(property: Property): Future[Unit] = {
     collection
       .deleteOne(and(equal("key", property.key), equal("value", property.value)))
       .toFuture()

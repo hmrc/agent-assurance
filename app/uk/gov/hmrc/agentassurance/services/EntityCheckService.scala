@@ -31,8 +31,11 @@ import uk.gov.hmrc.agentassurance.models.entitycheck.EmailCheckExceptions
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException
+import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException.AgentIsOnRefuseToDealList
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
+import uk.gov.hmrc.agentassurance.models.Value
+import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.SaUtr
@@ -44,6 +47,7 @@ class EntityCheckService @Inject() (
     citizenConnector: CitizenDetailsConnector,
     mongoLockService: MongoLockService,
     emailService: EmailService,
+    repository: PropertiesRepository
 ) {
 
   def verifyAgent(
@@ -54,8 +58,12 @@ class EntityCheckService @Inject() (
       citizenConnector
         .getCitizenDeceasedFlag(saUtr)
 
-    // TODO WG - to be implement
-    def refusalToDealCheck(saUtr: SaUtr): Future[Option[RefusalCheckException]] = Future.successful(None)
+    def refusalToDealCheck(saUtr: SaUtr): Future[Option[RefusalCheckException]] = {
+      repository.propertyExists(Value(saUtr.value).toProperty("refusal-to-deal-with")).map {
+        case true  => Some(AgentIsOnRefuseToDealList)
+        case false => None
+      }
+    }
 
     def entityChecks(utr: Utr): Future[Seq[EntityCheckException]] = {
       mongoLockService
@@ -68,7 +76,10 @@ class EntityCheckService @Inject() (
         .map(_.getOrElse(Seq.empty[EntityCheckException]))
     }
 
-    def sendEmail(agentRecord: AgentDetailsDesResponse, entityCheckExceptions: Seq[EntityCheckException]) = {
+    def sendEmail(
+        agentRecord: AgentDetailsDesResponse,
+        entityCheckExceptions: Seq[EntityCheckException]
+    ): Future[Unit] = {
       val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
 
       val failedChecks: Seq[String] = entityCheckExceptions.collect {
