@@ -173,16 +173,21 @@ class EntityCheckControllerSpec
       "return Bad request" when {
         "invalid request" in {
 
+          (mockStubBehaviour
+            .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+            .expects(*, *)
+            .returning(Future.unit)
+
           val result = controller
             .clientVerifyEntity()
             .apply(
               FakeRequest(POST, "/client/verify-entity")
                 .withHeaders(HeaderNames.authorisation -> "Some auth token", "Content-Type" -> "application/json")
-                .withBody("""{"invalid": "invalid"}""")
+                .withBody(Json.parse("""{"invalid": "invalid"}"""))
             )
 
           status(result) mustBe BAD_REQUEST
-
+          contentAsString(result) mustBe "Invalid Arn"
         }
       }
     }

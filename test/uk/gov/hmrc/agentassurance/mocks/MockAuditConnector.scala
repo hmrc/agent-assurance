@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.services
-
-import javax.inject.Inject
-import javax.inject.Singleton
+package uk.gov.hmrc.agentassurance.mocks
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-import play.api.mvc.Request
-import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
-@Singleton
-class EntityCheckService @Inject() (desConnector: DesConnector, auditService: AuditService) {
+trait MockAuditConnector extends MockFactory { this: TestSuite =>
 
-  def verifyAgent(
-      arn: Arn
-  )(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[AgentDetailsDesResponse] = {
-    for {
-      des <- desConnector.getAgentRecord(arn)
-    } yield des
-  }
+  val mockAuditConnector: AuditConnector = mock[AuditConnector]
+
+  def mockSendExtendedEvent(result: AuditResult) =
+    (mockAuditConnector
+      .sendExtendedEvent(_: ExtendedDataEvent)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(*, *, *)
+      .returning(Future.successful(result))
+
 }

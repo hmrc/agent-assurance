@@ -23,14 +23,15 @@ import play.api.mvc.Request
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
+import uk.gov.hmrc.agentassurance.mocks.MockAuditService
 import uk.gov.hmrc.agentassurance.mocks.MockDesConnector
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.http.HeaderCarrier
 
-class EntityCheckServiceSpec extends PlaySpec with MockDesConnector {
+class EntityCheckServiceSpec extends PlaySpec with MockDesConnector with MockAuditService {
 
-  val service = new EntityCheckService(mockDesConnector)
+  val service = new EntityCheckService(mockDesConnector, mockAuditService)
 
   implicit val hc: HeaderCarrier    = HeaderCarrier()
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
