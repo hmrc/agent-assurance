@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entitycheck
+package uk.gov.hmrc.agentassurance.helpers
 
-import play.api.libs.json.Format
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import java.time._
 
-case class VerifyEntityRequest(identifier: Arn)
+trait InstantClockTestSupport /*extends AnyFeatureSpec with GuiceOneServerPerSuite*/ {
+  lazy val localDateTime: LocalDateTime = LocalDateTime.now()
+  lazy val instant: Instant             = localDateTime.toInstant(ZoneOffset.UTC)
+  lazy val frozenInstant: Instant       = instant
 
-object VerifyEntityRequest {
-  implicit val format: Format[VerifyEntityRequest] = Json.format[VerifyEntityRequest]
+  implicit val clock: Clock = Clock.fixed(frozenInstant, ZoneId.of("UTC"))
+
 }

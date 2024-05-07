@@ -21,20 +21,20 @@ import scala.concurrent.Future
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
-import play.api.mvc.Request
-import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
-import uk.gov.hmrc.agentassurance.services.EntityCheckService
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.connectors.CitizenDetailsConnector
+import uk.gov.hmrc.agentassurance.models.entitycheck.DeceasedCheckException
+import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockEntityCheckService extends MockFactory { this: TestSuite =>
+trait MockCitizenDetailsConnector extends MockFactory { this: TestSuite =>
 
-  val mockEntityCheckService: EntityCheckService = mock[EntityCheckService]
+  val mockCitizenDetailsConnector = mock[CitizenDetailsConnector]
 
-  def mockVerifyEntitySuccess(arn: Arn)(returns: EntityCheckResult) =
-    (mockEntityCheckService
-      .verifyAgent(_: Arn)(_: Request[_], _: HeaderCarrier, _: ExecutionContext))
-      .expects(arn, *, *, *)
-      .returning(Future.successful(returns))
+  def mockGetCitizenDeceasedFlag(saUtr: SaUtr)(response: Option[DeceasedCheckException]) = {
+    (mockCitizenDetailsConnector
+      .getCitizenDeceasedFlag(_: SaUtr)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(saUtr, *, *)
+      .returning(Future.successful(response))
+  }
 
 }

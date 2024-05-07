@@ -34,9 +34,10 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig
 
   private def baseUrl(key: String) = servicesConfig.baseUrl(key)
 
-  val authBaseUrl: String = baseUrl("auth")
-  val desBaseUrl: String  = baseUrl("des")
-  val esProxyUrl: String  = baseUrl("enrolment-store-proxy")
+  val authBaseUrl: String           = baseUrl("auth")
+  val desBaseUrl: String            = baseUrl("des")
+  val esProxyUrl: String            = baseUrl("enrolment-store-proxy")
+  val citizenDetailsBaseUrl: String = baseUrl("citizen-details")
 
   val minimumIRPAYEClients: Int    = servicesConfig.getInt("minimumIRPAYEClients")
   val minimumIRSAClients: Int      = servicesConfig.getInt("minimumIRSAClients")
@@ -72,7 +73,8 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig
 
   val internalHostPatterns: Seq[Regex] = config.get[Seq[String]]("internalServiceHostPatterns").map(_.r)
 
-  val entityChecksLockExpires: Duration = servicesConfig.getDuration("agent.entity-check.lock.expires")
+  val entityChecksLockExpires: Duration      = servicesConfig.getDuration("agent.entity-check.lock.expires")
+  val entityChecksEmailLockExpires: Duration = servicesConfig.getDuration("agent.entity-check.email.lock.expires")
 
   val emailBaseUrl: String         = baseUrl("email")
   val agentMaintainerEmail: String = config.get[String]("agent-maintainer-email")

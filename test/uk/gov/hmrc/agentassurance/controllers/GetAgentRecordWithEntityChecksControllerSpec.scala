@@ -32,6 +32,8 @@ import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testUtr
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.http.HeaderNames
 
@@ -55,8 +57,19 @@ class GetAgentRecordWithEntityChecksControllerSpec
     "return OK" in {
 
       mockAuth()(Right(enrolmentsWithNoIrSAAgent))
-
-      mockVerifyEntitySuccess(testArn)(AgentDetailsDesResponse(Some(testUtr), None, None, None))
+      val agentDetailsDesResponse =
+        AgentDetailsDesResponse(
+          uniqueTaxReference = Some(testUtr),
+          agencyDetails = None,
+          suspensionDetails = None,
+          isAnIndividual = None
+        )
+      mockVerifyEntitySuccess(testArn)(
+        EntityCheckResult(
+          agentDetailsDesResponse,
+          Seq.empty[EntityCheckException]
+        )
+      )
 
       val result = controller
         .get()

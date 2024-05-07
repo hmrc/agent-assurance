@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
+
 import scala.concurrent.Await
 
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
@@ -34,8 +37,15 @@ import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn1
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn2
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn3
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testSaUtr
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testUtr
-import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.EmailInformation
+import uk.gov.hmrc.agentassurance.stubs.CitizenDetailsStubs
+import uk.gov.hmrc.agentassurance.stubs.EmailStub
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
@@ -47,24 +57,33 @@ class EntityCheckControllerISpec
     with CleanMongoCollectionSupport
     with InstantClockTestSupport
     with DesStubs
-    with InternalAuthStub {
+    with InternalAuthStub
+    with CitizenDetailsStubs
+    with EmailStub {
 
   implicit override lazy val app: Application = appBuilder.build()
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        "microservice.services.auth.host"          -> wireMockHost,
-        "microservice.services.auth.port"          -> wireMockPort,
-        "microservice.services.des.host"           -> wireMockHost,
-        "microservice.services.des.port"           -> wireMockPort,
-        "microservice.services.internal-auth.port" -> wireMockPort,
-        "microservice.services.internal-auth.host" -> wireMockHost,
-        "auditing.enabled"                         -> false,
-        "stride.roles.agent-assurance"             -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled-on-start"     -> false,
-        "http-verbs.retries.intervals"             -> List("1ms"),
-        "agent.cache.enabled"                      -> false
+        "microservice.services.auth.host"            -> wireMockHost,
+        "microservice.services.auth.port"            -> wireMockPort,
+        "microservice.services.des.host"             -> wireMockHost,
+        "microservice.services.des.port"             -> wireMockPort,
+        "microservice.services.citizen-details.host" -> wireMockHost,
+        "microservice.services.citizen-details.port" -> wireMockPort,
+        "microservice.services.internal-auth.port"   -> wireMockPort,
+        "microservice.services.internal-auth.host"   -> wireMockHost,
+        "microservice.services.email.port"           -> wireMockPort,
+        "microservice.services.email.host"           -> wireMockHost,
+        "auditing.enabled"                           -> false,
+        "stride.roles.agent-assurance"               -> "maintain_agent_manually_assure",
+        "internal-auth-token-enabled-on-start"       -> false,
+        "http-verbs.retries.intervals"               -> List("1ms"),
+        "agent.cache.enabled"                        -> true,
+        "agent.cache.expires"                        -> "1 second",
+        "agent.entity-check.lock.expires"            -> "1 second",
+        "agent.entity-check.email.lock.expires"      -> "1 seconds"
       )
 
   val arn       = Arn("AARN0000002")
@@ -92,25 +111,75 @@ class EntityCheckControllerISpec
     )
 
   "POST /agent-assurance/client/verify-entity" should {
+
     "return suspension details when agent record contains suspension details" in {
+      Thread.sleep(1000) // To make sure cache expires
+      stubInternalAuthorised()
+      givenDESGetAgentRecordSuspendedAgent(
+        testArn,
+        Some(testUtr)
+      )
+
+      givenCitizenReturnDeceasedFlag(testSaUtr, false)
+
+      val response = doClientPostRequest(VerifyEntityRequest(testArn))
+      response.json mustBe Json.obj("suspensionStatus" -> true, "regimes" -> Set("ITSA"))
+      response.status mustBe OK
+
+      // TODO WG - flaky test - fix
+//      val response2 = doClientPostRequest(VerifyEntityRequest(testArn))
+//      response2.json mustBe Json.obj("suspensionStatus" -> true, "regimes" -> Set("ITSA"))
+//      response2.status mustBe OK
+//
+//      verifyCitizenDetailsWasCalled(testSaUtr, 1)
+//      verifyDESGetAgentRecord(testArn, 1)
+
+    }
+
+    "return suspension details and send email" in {
+      Thread.sleep(1000) // To make sure cache expires
+      val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
+      val dateTime  = formatter.format(LocalDateTime.now())
 
       stubInternalAuthorised()
       givenDESGetAgentRecordSuspendedAgent(
         testArn,
         Some(testUtr)
       )
-      val response = doClientPostRequest(VerifyEntityRequest(testArn))
-      response.json mustBe Json.obj("suspensionStatus" -> true, "regimes" -> Set("ITSA"))
 
+      givenCitizenReturnDeceasedFlag(testSaUtr, true)
+
+      givenEmailSent(emailInformation =
+        EmailInformation(
+          to = Seq("test@example.com"),
+          templateId = "entity_check_notification",
+          parameters = Map(
+            "arn"          -> "ARN123",
+            "dateTime"     -> dateTime,
+            "agencyName"   -> "ABC Accountants",
+            "failedChecks" -> "Checks that failed: Agent is deceased.",
+            "utr"          -> "7000000002"
+          ),
+          force = true
+        )
+      )
+
+      val response = doClientPostRequest(VerifyEntityRequest(testArn))
+
+      verifyEmailRequestWasSent(1)
+      response.json mustBe Json.obj("suspensionStatus" -> true, "regimes" -> Set("ITSA"))
       response.status mustBe OK
+
     }
+
   }
 
   "POST /agent-assurance/agent/verify-entity" should {
     "return NO_CONTENT when agent record contains suspension status false" in {
 
-      isLoggedInAsASAgent(testArn)
-      givenDESGetAgentRecord(testArn, Some(testUtr))
+      isLoggedInAsASAgent(testArn1)
+      givenDESGetAgentRecord(testArn1, Some(testUtr))
+      givenCitizenReturnDeceasedFlag(testSaUtr, false)
 
       val response = doAgentPostRequest()
 
@@ -119,11 +188,12 @@ class EntityCheckControllerISpec
 
     "return NO_CONTENT when agent record contains no suspension details" in {
 
-      isLoggedInAsASAgent(testArn)
+      isLoggedInAsASAgent(testArn2)
       givenDESGetAgentRecordNoSuspensionDetails(
-        testArn,
+        testArn2,
         Some(testUtr)
       )
+      givenCitizenReturnDeceasedFlag(testSaUtr, false)
 
       val response = doAgentPostRequest()
 
@@ -132,11 +202,12 @@ class EntityCheckControllerISpec
 
     "return suspension details when agent record contains suspension details" in {
 
-      isLoggedInAsASAgent(testArn)
+      isLoggedInAsASAgent(testArn3)
       givenDESGetAgentRecordSuspendedAgent(
-        testArn,
+        testArn3,
         Some(testUtr)
       )
+      givenCitizenReturnDeceasedFlag(testSaUtr, false)
 
       val response = doAgentPostRequest()
 

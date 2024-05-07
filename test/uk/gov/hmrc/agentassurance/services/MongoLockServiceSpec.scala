@@ -23,7 +23,7 @@ import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.mongo.lock.MongoLockRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 import uk.gov.hmrc.mongo.CurrentTimestampSupport
@@ -35,24 +35,24 @@ class MongoLockServiceSpec extends PlaySpec with CleanMongoCollectionSupport wit
 
   val service = new MongoLockService(mongoLockRepository)
 
-  val arn1 = Arn("1234567")
-  val arn2 = Arn("1234567")
+  val utr1 = Utr("1234567")
+  val utr2 = Utr("1234567")
 
   "MongoLockServiceSpec" should {
     "return Some(value) when not locked" in {
-      await(service.tryLock(arn1)(Future.successful(()))) mustBe Some(())
+      await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
     }
     "return None when locked" in {
-      await(service.tryLock(arn1)(Future.successful(()))) mustBe Some(())
-      await(service.tryLock(arn1)(Future.successful(()))) mustBe None
+      await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
+      await(service.dailyLock(utr1)(Future.successful(()))) mustBe None
     }
 
     "return Some(value) after TTL 1 second when locked" in {
-      await(service.tryLock(arn1)(Future.successful(()))) mustBe Some(())
+      await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
       Thread.sleep(500)
-      await(service.tryLock(arn1)(Future.successful(()))) mustBe None
+      await(service.dailyLock(utr1)(Future.successful(()))) mustBe None
       Thread.sleep(600)
-      await(service.tryLock(arn1)(Future.successful(()))) mustBe Some(())
+      await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
     }
 
   }

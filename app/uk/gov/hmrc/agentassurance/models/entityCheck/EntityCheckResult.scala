@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entityCheck
+package uk.gov.hmrc.agentassurance.models.entitycheck
 
-import play.api.libs.json.Format
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 
-case class EntityCheckResult(suspensionDetails: SuspensionDetails)
 
-object EntityCheckResult {
-  implicit val format: Format[EntityCheckResult] = Json.format[EntityCheckResult]
-}
+case class EntityCheckResult(
+                              agentRecord: AgentDetailsDesResponse,
+                              entityCheckExceptions: Seq[EntityCheckException]
+                            )
+//object EntityCheckResult {
+//  implicit val format: Format[EntityCheckResult] = Json.format[EntityCheckResult]
+//}
