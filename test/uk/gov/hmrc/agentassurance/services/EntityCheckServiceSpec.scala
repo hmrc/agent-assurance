@@ -159,7 +159,7 @@ class EntityCheckServiceSpec
           arn = testArn,
           utr = utr.value,
           agencyName = "",
-          failedChecks = "Agent is deceased.",
+          failedChecks = "Agent is deceased",
           dateTime = dateTime
         )
       )
@@ -196,7 +196,7 @@ class EntityCheckServiceSpec
           arn = testArn,
           utr = utr.value,
           agencyName = "",
-          failedChecks = "Checks that failed: Agent is on the 'Refuse To Deal With' list.",
+          failedChecks = "Agent is on the 'Refuse To Deal With' list",
           dateTime = dateTime
         )
       )

@@ -169,7 +169,7 @@ class EntityCheckControllerISpec
             "arn"          -> "ARN123",
             "dateTime"     -> dateTime,
             "agencyName"   -> "ABC Accountants",
-            "failedChecks" -> "Checks that failed: Agent is deceased.",
+            "failedChecks" -> "Agent is deceased",
             "utr"          -> "7000000002"
           ),
           force = true
@@ -209,7 +209,7 @@ class EntityCheckControllerISpec
             "arn"          -> "ARN123",
             "dateTime"     -> dateTime,
             "agencyName"   -> "ABC Accountants",
-            "failedChecks" -> "Checks that failed: Agent is on the 'Refuse To Deal With' list.",
+            "failedChecks" -> "Agent is on the 'Refuse To Deal With' list",
             "utr"          -> "7000000002"
           ),
           force = true

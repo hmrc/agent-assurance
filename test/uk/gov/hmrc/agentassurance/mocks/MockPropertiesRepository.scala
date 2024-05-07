@@ -22,7 +22,7 @@ import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.util.toFuture
 
-trait MockPropertiesRepository extends MockFactory  { this: TestSuite =>
+trait MockPropertiesRepository extends MockFactory { this: TestSuite =>
 
   val mockPropertiesRepository = mock[PropertiesRepository]
 
