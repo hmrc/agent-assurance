@@ -18,30 +18,21 @@ package uk.gov.hmrc.agentassurance.services
 
 import scala.concurrent.ExecutionContext
 
-import org.scalamock.scalatest.MockFactory
 import org.scalatestplus.play.PlaySpec
-import play.api.libs.json.Writes
 import play.api.test.DefaultAwaitTimeout
 import play.api.test.Helpers.await
-import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.connectors.EmailConnector
+import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
+import uk.gov.hmrc.agentassurance.mocks.MockEmailConnector
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
-import uk.gov.hmrc.agentassurance.stubs.EmailStub
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
-class EmailServiceISpec(implicit tjs: Writes[EmailInformation])
-    extends PlaySpec
-    with MockFactory
-    with DefaultAwaitTimeout
-    with EmailStub {
+class EmailServiceSpec extends PlaySpec with DefaultAwaitTimeout with MockEmailConnector with MockAppConfig {
 
   implicit val hc: HeaderCarrier    = HeaderCarrier()
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
-  implicit val appConfig: AppConfig = mock[AppConfig]
-  val mockConnector: EmailConnector = mock[EmailConnector]
-  val service: EmailService         = new EmailService(mockConnector, appConfig)
+  val service: EmailService         = new EmailService(mockEmailConnector, mockAppConfig)
 
   "sendEntityCheckEmail" should {
     "be successful when request is valid" in {
@@ -53,7 +44,7 @@ class EmailServiceISpec(implicit tjs: Writes[EmailInformation])
         dateTime = "1 May 2024 1:56pm"
       )
 
-      givenEmailSent(
+      mockSendEmail(
         EmailInformation(
           to = Seq("test@example.com"),
           templateId = "entity_check_notification",

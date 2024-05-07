@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.Format
 import play.api.libs.json.Json
+import play.api.libs.json.OWrites
 
 case class EmailInformation(
     to: Seq[String],
@@ -27,5 +27,5 @@ case class EmailInformation(
 )
 
 object EmailInformation {
-  implicit val format: Format[EmailInformation] = Json.format[EmailInformation]
+  implicit val writes: OWrites[EmailInformation] = Json.writes
 }

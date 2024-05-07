@@ -19,11 +19,10 @@ package uk.gov.hmrc.agentassurance.models.entitycheck
 import play.api.http.Status
 
 sealed trait EmailCheckExceptions {
-  def failedChecksText:String
+  def failedChecksText: String
 }
 
 sealed trait EntityCheckException extends Product with Serializable
-
 
 sealed trait DeceasedCheckException extends EntityCheckException
 
@@ -35,7 +34,6 @@ object DeceasedCheckException {
     override val failedChecksText: String = "Agent is deceased."
   }
 }
-
 
 sealed trait RefusalCheckException extends EntityCheckException
 
