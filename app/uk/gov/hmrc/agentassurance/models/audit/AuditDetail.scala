@@ -16,18 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.models.audit
 
-import play.api.libs.json.Json
-import play.api.libs.json.OWrites
-import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-
-case class AgentCheckAuditEvent(agentReferenceNumber: Arn, utr: Option[Utr], agentCheckOutcomes: Seq[AgentCheckOutcome])
-    extends AuditDetail {
-  val auditType = "AgentCheck"
-}
-
-object AgentCheckAuditEvent {
-  implicit val writes: OWrites[AgentCheckAuditEvent] = Json.writes
-
+trait AuditDetail {
+  val auditType: String
 }
