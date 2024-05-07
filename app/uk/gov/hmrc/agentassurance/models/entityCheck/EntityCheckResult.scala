@@ -18,11 +18,10 @@ package uk.gov.hmrc.agentassurance.models.entitycheck
 
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 
-
 case class EntityCheckResult(
-                              agentRecord: AgentDetailsDesResponse,
-                              entityCheckExceptions: Seq[EntityCheckException]
-                            )
+    agentRecord: AgentDetailsDesResponse,
+    entityCheckExceptions: Seq[EntityCheckException]
+)
 //object EntityCheckResult {
 //  implicit val format: Format[EntityCheckResult] = Json.format[EntityCheckResult]
 //}

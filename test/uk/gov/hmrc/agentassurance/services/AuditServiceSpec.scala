@@ -16,16 +16,20 @@
 
 package uk.gov.hmrc.agentassurance.services
 
+import java.time.temporal.ChronoUnit
+import java.time.LocalDateTime
+
+import scala.concurrent.ExecutionContext
+
 import org.scalatestplus.play.PlaySpec
-import uk.gov.hmrc.agentassurance.helpers.TestConstants.{testArn, testUtr}
-import uk.gov.hmrc.agentassurance.mocks.{MockAppConfig, MockAuditConnector}
-import uk.gov.hmrc.agentassurance.models.{AgentCheckOutcome, EntityCheckNotification}
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testUtr
+import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
+import uk.gov.hmrc.agentassurance.mocks.MockAuditConnector
+import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
+import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
-
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
-import scala.concurrent.ExecutionContext
 
 class AuditServiceSpec extends PlaySpec with MockAppConfig with MockAuditConnector {
 

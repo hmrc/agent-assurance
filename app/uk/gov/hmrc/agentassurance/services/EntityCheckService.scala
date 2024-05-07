@@ -81,7 +81,7 @@ class EntityCheckService @Inject() (
             arn = arn,
             utr = utr.value,
             agencyName = agentRecord.agencyDetails.flatMap(_.agencyName).getOrElse(""),
-            failedChecks = nonEmptyFailedChecks.mkString("Checks that failed: ", " ", ""),
+            failedChecks = nonEmptyFailedChecks.mkString("|"),
             dateTime = formatter.format(LocalDateTime.now())
           )
 

@@ -16,39 +16,43 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import scala.concurrent.ExecutionContext
-
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Application
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Writes
 import play.api.test.Helpers._
-import play.api.Application
 import test.uk.gov.hmrc.agentassurance.stubs.DataStreamStub
-import test.uk.gov.hmrc.agentassurance.support.UnitSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import test.uk.gov.hmrc.agentassurance.support.{UnitSpec, WireMockSupport}
+import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.stubs.EmailStub
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
-class EmailConnectorISpec(implicit tjs: Writes[EmailInformation])
+import scala.concurrent.ExecutionContext
+
+class EmailConnectorISpec
     extends UnitSpec
+    with GuiceOneAppPerSuite
     with WireMockSupport
     with DataStreamStub
     with EmailStub {
 
-  implicit lazy val app: Application = appBuilder
+  implicit override lazy val app: Application = appBuilder
     .build()
-  val connector: EmailConnector             = app.injector.instanceOf[EmailConnector]
+  val appConfig: AppConfig                  = app.injector.instanceOf[AppConfig]
+  val httpClient: HttpClient                = app.injector.instanceOf[HttpClient]
+  val metrics: Metrics                      = app.injector.instanceOf[Metrics]
+  val connector: EmailConnector             = new EmailConnectorImpl(appConfig, httpClient, metrics)
   private implicit val hc: HeaderCarrier    = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.global
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        "internal-auth-token-enabled-on-start"     -> false,
-        "microservice.services.internal-auth.host" -> wireMockHost,
-        "microservice.services.internal-auth.port" -> wireMockPort,
-        "agent-maintainer-email"                   -> "test@example.com"
+        "microservice.services.email.host" -> wireMockHost,
+        "microservice.services.email.port" -> wireMockPort,
+        "agent-maintainer-email"           -> "test@example.com"
       )
       .bindings(bind[EmailConnector].toInstance(connector))
 
@@ -57,6 +61,7 @@ class EmailConnectorISpec(implicit tjs: Writes[EmailInformation])
     templateId = "template-id",
     parameters = Map("param1" -> "foo", "param2" -> "bar")
   )
+
   "sendEmail" should {
 
     "return Unit when the email service responds" in {
@@ -66,6 +71,7 @@ class EmailConnectorISpec(implicit tjs: Writes[EmailInformation])
 
       result shouldBe (())
     }
+
     "not throw an Exception when the email service throws an Exception" in {
       givenEmailReturns500
 
