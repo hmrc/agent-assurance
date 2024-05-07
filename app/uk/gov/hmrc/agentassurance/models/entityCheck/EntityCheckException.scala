@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.models.entitycheck
 
-import play.api.http.Status
-
 sealed trait EmailCheckExceptions {
   def failedChecksText: String
 }
@@ -38,7 +36,6 @@ object DeceasedCheckException {
 sealed trait RefusalCheckException extends EntityCheckException
 
 object RefusalCheckException {
-  case class ConnectorRequestFailed(code: Status) extends RefusalCheckException
 
   case object AgentIsOnRefuseToDealList extends RefusalCheckException with EmailCheckExceptions {
     override val failedChecksText: String = "Agent is on the 'Refuse To Deal With' list"

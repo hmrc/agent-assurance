@@ -52,7 +52,8 @@ class EntityCheckServiceSpec
     with InstantClockTestSupport
     with MockAppConfig
     with MockEmailService
-    with MockPropertiesRepository {
+    with MockPropertiesRepository
+    with MockAuditService {
 
   implicit val ac: AppConfig        = mockAppConfig
   implicit val hc: HeaderCarrier    = HeaderCarrier()
@@ -68,7 +69,8 @@ class EntityCheckServiceSpec
       mockCitizenDetailsConnector,
       mongoLockService,
       mockMockEmailService,
-      mockPropertiesRepository
+      mockPropertiesRepository,
+      mockAuditService
     )
 
   "verifyAgent" should {
@@ -126,6 +128,7 @@ class EntityCheckServiceSpec
 
       mockGetCitizenDeceasedFlag(SaUtr(utr.value))(None)
       mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(false)
+      mockAuditEntityChecksPerformed
 
       val result = await(service.verifyAgent(testArn))
 
@@ -153,6 +156,8 @@ class EntityCheckServiceSpec
 
       mockGetCitizenDeceasedFlag(SaUtr(utr.value))(Some(EntityDeceasedCheckFailed))
       mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(false)
+      mockAuditEntityChecksPerformed
+      mockAuditEntityCheckFailureNotificationSent
 
       mockSendEntityCheckNotification(
         EntityCheckNotification(
@@ -190,6 +195,8 @@ class EntityCheckServiceSpec
 
       mockGetCitizenDeceasedFlag(SaUtr(utr.value))(None)
       mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(true)
+      mockAuditEntityChecksPerformed
+      mockAuditEntityCheckFailureNotificationSent
 
       mockSendEntityCheckNotification(
         EntityCheckNotification(
