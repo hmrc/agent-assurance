@@ -101,7 +101,7 @@ class EntityCheckService @Inject() (
                 case x @ CitizenConnectorRequestFailed(_) =>
                   AgentCheckOutcome(
                     agentCheckType = "isDeceased",
-                    isSuccessful = true,
+                    isSuccessful = false,
                     failureReason = Some(s"Check failed with error: ${x.code.toString}")
                   )
               }
