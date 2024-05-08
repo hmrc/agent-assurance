@@ -80,7 +80,7 @@ class EntityCheckService @Inject() (
         .map {
           case Some(entityCheckExceptions) =>
             val onRefusalListAgentCheckOutcomes: AgentCheckOutcome = entityCheckExceptions
-              .collect {
+              .collectFirst{
                 case AgentIsOnRefuseToDealList =>
                   AgentCheckOutcome(
                     agentCheckType = "onRefusalList",
@@ -88,11 +88,10 @@ class EntityCheckService @Inject() (
                     failureReason = Some(AgentIsOnRefuseToDealList.failedChecksText)
                   )
               }
-              .headOption
               .getOrElse(AgentCheckOutcome(agentCheckType = "onRefusalList", isSuccessful = true, failureReason = None))
 
             val isDeceasedAgentCheckOutcome: AgentCheckOutcome = entityCheckExceptions
-              .collect {
+              .collectFirst {
                 case EntityDeceasedCheckFailed =>
                   AgentCheckOutcome(
                     agentCheckType = "isDeceased",
@@ -106,7 +105,6 @@ class EntityCheckService @Inject() (
                     failureReason = Some(s"Check failed with error: ${x.code.toString}")
                   )
               }
-              .headOption
               .getOrElse(AgentCheckOutcome(agentCheckType = "isDeceased", isSuccessful = true, failureReason = None))
 
             auditService.auditEntityChecksPerformed(
