@@ -23,8 +23,6 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-import play.api.libs.json.Format
-import play.api.mvc.Request
 import play.api.Configuration
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
@@ -32,47 +30,14 @@ import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
 trait Cache[T] {
   def apply(key: String)(
       body: => Future[T]
-  )(implicit request: Request[_], ec: ExecutionContext, f: Format[T]): Future[T]
+  )(implicit ec: ExecutionContext): Future[T]
 }
 
 class DoNotCache[T] extends Cache[T] {
   def apply(key: String)(
       body: => Future[T]
-  )(implicit request: Request[_], ec: ExecutionContext, f: Format[T]): Future[T] = body
+  )(implicit ec: ExecutionContext): Future[T] = body
 }
-
-//trait CacheSupport[T] extends Cache[T] {
-//
-//  val cacheRepository: MongoCacheRepository[String]
-//  val metrics: Metrics
-//  val cacheId: String
-//
-//  val record = metrics.defaultRegistry
-//
-//  def apply(key: String)(
-//      body: => Future[T]
-//  )(implicit request: Request[_], ec: ExecutionContext, f: Format[T]): Future[T] = {
-//    val dataKey = DataKey[T](key)
-//    cacheRepository.get(cacheId)(dataKey).flatMap {
-//      case Some(v) =>
-//        record.counter("Count-" + cacheId + "-from-cache")
-//        Future.successful(v)
-//      case None =>
-//        body.andThen {
-//          case Success(v) =>
-//            record.counter("Count-" + cacheId + "-from-source")
-//            cacheRepository.put(cacheId)(dataKey, v).map(_ => v)
-//        }
-//    }
-//  }
-//
-//}
-
-//@Singleton
-//class AgencyDetailsCache @Inject() (val cacheRepository: AgencyDetailsCacheRepository, val metrics: Metrics)
-//    extends CacheSupport[AgentDetailsDesResponse] {
-//  override val cacheId: String = "agentDetails"
-//}
 
 @Singleton
 class CacheProvider @Inject() (agencyDetailsCache: AgencyDetailsCacheRepository, configuration: Configuration) {

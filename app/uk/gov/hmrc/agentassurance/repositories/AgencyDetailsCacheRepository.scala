@@ -25,11 +25,11 @@ import scala.concurrent.Future
 import scala.util.Success
 
 import play.api.libs.json.Format
-import play.api.mvc.Request
+import play.api.Configuration
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.services.Cache
 import uk.gov.hmrc.mongo.cache.CacheIdType
-import uk.gov.hmrc.mongo.cache.DataKey
+import uk.gov.hmrc.mongo.cache.EntityCache
 import uk.gov.hmrc.mongo.cache.MongoCacheRepository
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.TimestampSupport
@@ -37,38 +37,39 @@ import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 @Singleton
 class AgencyDetailsCacheRepository @Inject() (
-    mongoComponent: MongoComponent,
+    config: Configuration,
+    mongo: MongoComponent,
     timestampSupport: TimestampSupport,
-    expires: Duration,
     metrics: Metrics
-)(implicit ec: ExecutionContext)
-    extends MongoCacheRepository(
-      mongoComponent = mongoComponent,
-      collectionName = "agency-details",
-      ttl = expires,
-      timestampSupport = timestampSupport,
-      cacheIdType = CacheIdType.SimpleCacheId
-    )
+)(
+    implicit ec: ExecutionContext
+) extends EntityCache[String, AgentDetailsDesResponse]
     with Cache[AgentDetailsDesResponse] {
 
-  val cacheId: String = "agentDetails"
-  val record          = metrics.defaultRegistry
+  lazy val format: Format[AgentDetailsDesResponse] = AgentDetailsDesResponse.agentRecordDetailsFormat
+  lazy val cacheRepo: MongoCacheRepository[String] = new MongoCacheRepository(
+    mongoComponent = mongo,
+    collectionName = "cache-agent-details",
+    ttl = Duration.create(config.underlying.getString("agent.cache.expires")),
+    timestampSupport = timestampSupport,
+    cacheIdType = CacheIdType.SimpleCacheId,
+    replaceIndexes = false
+  )
 
-  override def apply(key: String)(body: => Future[AgentDetailsDesResponse])(
-      implicit request: Request[_],
-      ec: ExecutionContext,
-      f: Format[AgentDetailsDesResponse]
-  ): Future[AgentDetailsDesResponse] = {
-    val dataKey = DataKey[AgentDetailsDesResponse](key)
-    get(cacheId)(dataKey).flatMap {
+  val record = metrics.defaultRegistry
+
+  def apply(
+      key: String
+  )(body: => Future[AgentDetailsDesResponse])(implicit ec: ExecutionContext): Future[AgentDetailsDesResponse] = {
+    getFromCache(key).flatMap {
       case Some(v) =>
-        record.counter("Count-" + cacheId + "-from-cache")
+        record.counter(s"Count-$key-from-cache")
         Future.successful(v)
       case None =>
         body.andThen {
           case Success(v) =>
-            record.counter("Count-" + cacheId + "-from-source")
-            put(cacheId)(dataKey, v).map(_ => v)
+            record.counter(s"Count-$key-from-source")
+            putCache(key)(v).map(_ => v)
         }
     }
   }
