@@ -21,17 +21,26 @@ import javax.inject.Singleton
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.Success
 
+import play.api.libs.json.Format
+import play.api.mvc.Request
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.services.Cache
 import uk.gov.hmrc.mongo.cache.CacheIdType
+import uk.gov.hmrc.mongo.cache.DataKey
 import uk.gov.hmrc.mongo.cache.MongoCacheRepository
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.TimestampSupport
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 @Singleton
 class AgencyDetailsCacheRepository @Inject() (
     mongoComponent: MongoComponent,
     timestampSupport: TimestampSupport,
-    expires: Duration
+    expires: Duration,
+    metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends MongoCacheRepository(
       mongoComponent = mongoComponent,
@@ -40,3 +49,27 @@ class AgencyDetailsCacheRepository @Inject() (
       timestampSupport = timestampSupport,
       cacheIdType = CacheIdType.SimpleCacheId
     )
+    with Cache[AgentDetailsDesResponse] {
+
+  val cacheId: String = "agentDetails"
+  val record          = metrics.defaultRegistry
+
+  override def apply(key: String)(body: => Future[AgentDetailsDesResponse])(
+      implicit request: Request[_],
+      ec: ExecutionContext,
+      f: Format[AgentDetailsDesResponse]
+  ): Future[AgentDetailsDesResponse] = {
+    val dataKey = DataKey[AgentDetailsDesResponse](key)
+    get(cacheId)(dataKey).flatMap {
+      case Some(v) =>
+        record.counter("Count-" + cacheId + "-from-cache")
+        Future.successful(v)
+      case None =>
+        body.andThen {
+          case Success(v) =>
+            record.counter("Count-" + cacheId + "-from-source")
+            put(cacheId)(dataKey, v).map(_ => v)
+        }
+    }
+  }
+}

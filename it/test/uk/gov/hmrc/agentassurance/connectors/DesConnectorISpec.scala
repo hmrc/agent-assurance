@@ -42,7 +42,6 @@ import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.BusinessAddress
 import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
-import uk.gov.hmrc.agentassurance.services.AgencyDetailsCache
 import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
@@ -74,14 +73,17 @@ class DesConnectorISpec
   private implicit lazy val as: ActorSystem                     = ActorSystem()
 
   protected val agentDataCache: AgencyDetailsCacheRepository =
-    new AgencyDetailsCacheRepository(mongoComponent, new CurrentTimestampSupport, 1.second)
+    new AgencyDetailsCacheRepository(
+      mongoComponent,
+      new CurrentTimestampSupport,
+      1.second,
+      app.injector.instanceOf[Metrics]
+    )
 
   implicit override lazy val app: Application = appBuilder
     .build()
 
-  val agencyDetailsCache = new AgencyDetailsCache(agentDataCache, app.injector.instanceOf[Metrics])
-
-  val cacheProvider = new CacheProvider(agencyDetailsCache, app.injector.instanceOf[Configuration])
+  val cacheProvider = new CacheProvider(agentDataCache, app.injector.instanceOf[Configuration])
 
   val desConnector = new DesConnectorImpl(
     app.injector.instanceOf[HttpClientV2],

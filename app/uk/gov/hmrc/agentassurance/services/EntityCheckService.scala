@@ -80,7 +80,7 @@ class EntityCheckService @Inject() (
         .map {
           case Some(entityCheckExceptions) =>
             val onRefusalListAgentCheckOutcomes: AgentCheckOutcome = entityCheckExceptions
-              .collectFirst{
+              .collectFirst {
                 case AgentIsOnRefuseToDealList =>
                   AgentCheckOutcome(
                     agentCheckType = "onRefusalList",
