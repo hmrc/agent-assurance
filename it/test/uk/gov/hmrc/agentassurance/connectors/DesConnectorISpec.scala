@@ -16,46 +16,31 @@
 
 package test.uk.gov.hmrc.agentassurance.connectors
 
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.ExecutionContext
-
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.{Application, Configuration}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.AnyContentAsEmpty
-import play.api.mvc.Request
+import play.api.mvc.{AnyContentAsEmpty, Request}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.Application
-import play.api.Configuration
-import test.uk.gov.hmrc.agentassurance.stubs.DataStreamStub
-import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
-import test.uk.gov.hmrc.agentassurance.support.MetricTestSupport
-import test.uk.gov.hmrc.agentassurance.support.UnitSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import test.uk.gov.hmrc.agentassurance.stubs.{DataStreamStub, DesStubs}
+import test.uk.gov.hmrc.agentassurance.support.{MetricTestSupport, UnitSpec, WireMockSupport}
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentassurance.connectors.DesConnectorImpl
-import uk.gov.hmrc.agentassurance.models.AgencyDetails
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
-import uk.gov.hmrc.agentassurance.models.BusinessAddress
-import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
-import uk.gov.hmrc.agentassurance.services.AgencyDetailsCache
+import uk.gov.hmrc.agentassurance.connectors.{DesConnector, DesConnectorImpl}
+import uk.gov.hmrc.agentassurance.models.{AgencyDetails, AgentDetailsDesResponse, BusinessAddress}
+import uk.gov.hmrc.agentassurance.repositories.AgentDetailsCacheRepositoryImplementation
 import uk.gov.hmrc.agentassurance.services.CacheProvider
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.domain.SaAgentReference
-import uk.gov.hmrc.domain.TaxIdentifier
-import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, SuspensionDetails, Utr}
+import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.mongo.cache.DataKey
-import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.mongo.CurrentTimestampSupport
+import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
+
+import scala.concurrent.ExecutionContext
 
 class DesConnectorISpec
     extends UnitSpec
@@ -71,17 +56,17 @@ class DesConnectorISpec
   private implicit val request: Request[AnyContentAsEmpty.type] = FakeRequest()
   private implicit val appConfig: AppConfig                     = app.injector.instanceOf[AppConfig]
   private implicit val config: Config                           = app.injector.instanceOf[Config]
+  private implicit val configuration: Configuration             = app.injector.instanceOf[Configuration]
+  private implicit val metrics: Metrics                         = app.injector.instanceOf[Metrics]
   private implicit lazy val as: ActorSystem                     = ActorSystem()
-
-  protected val agentDataCache: AgencyDetailsCacheRepository =
-    new AgencyDetailsCacheRepository(mongoComponent, new CurrentTimestampSupport, 1.second)
 
   implicit override lazy val app: Application = appBuilder
     .build()
 
-  val agencyDetailsCache = new AgencyDetailsCache(agentDataCache, app.injector.instanceOf[Metrics])
+  val agentDetailsCacheRepository: AgentDetailsCacheRepositoryImplementation =
+    new AgentDetailsCacheRepositoryImplementation(mongoComponent, new CurrentTimestampSupport, configuration, metrics)
 
-  val cacheProvider = new CacheProvider(agencyDetailsCache, app.injector.instanceOf[Configuration])
+  val cacheProvider = new CacheProvider(agentDetailsCacheRepository, app.injector.instanceOf[Configuration])
 
   val desConnector = new DesConnectorImpl(
     app.injector.instanceOf[HttpClientV2],
@@ -106,7 +91,8 @@ class DesConnectorISpec
         "auditing.consumer.baseUri.port"                   -> wireMockPort,
         "internal-auth-token-enabled-on-start"             -> false,
         "http-verbs.retries.intervals"                     -> List("1ms"),
-        "agent.cache.enabled"                              -> true
+        "agent.cache.enabled"                              -> true,
+        "agent.cache.expires"                              -> "10 minutes"
       )
       .bindings(bind[DesConnector].toInstance(desConnector))
 
@@ -135,7 +121,7 @@ class DesConnectorISpec
 
   val arn = Arn("AARN00012345")
 
-  "DesConnector getActiveCesaAgentRelationships with a valid NINO" should {
+    "DesConnector getActiveCesaAgentRelationships with a valid NINO" should {
     behave.like(aCheckEndpoint(Nino("AB123456C")))
   }
 
@@ -153,13 +139,11 @@ class DesConnectorISpec
   }
 
   "DesConnector getAgentRecord caching check" should {
-    "return agency details cached for a given ARN and save record to cache" in {
-      val dataKey = DataKey[AgentDetailsDesResponse](arn.value)
+        "return agency details cached for a given ARN and save record to cache" in {
       givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
-
       await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
-      Thread.sleep(500)
-      await(agentDataCache.get("agentDetails")(dataKey)) shouldBe Some(agentDetailsDesResponse)
+      Thread.sleep(5000)
+      await(agentDetailsCacheRepository.getFromCache(arn.value)) shouldBe Some(agentDetailsDesResponse)
 
     }
 

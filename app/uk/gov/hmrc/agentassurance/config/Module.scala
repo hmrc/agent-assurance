@@ -17,9 +17,7 @@
 package uk.gov.hmrc.agentassurance.config
 
 import java.time.Clock
-import java.time.ZoneOffset
-
-import scala.concurrent.duration.Duration
+import java.time.ZoneId
 
 import com.google.inject.AbstractModule
 import play.api.Configuration
@@ -28,7 +26,7 @@ import play.api.Environment
 class Module(environment: Environment, configuration: Configuration) extends AbstractModule {
 
   override def configure(): Unit = {
-    bind(classOf[Clock]).toInstance(Clock.systemDefaultZone.withZone(ZoneOffset.UTC))
+    bind(classOf[Clock]).toInstance(Clock.system(ZoneId.systemDefault()))
 
     val internalAuthTokenEnabled: Boolean = configuration.get[Boolean]("internal-auth-token-enabled-on-start")
 
@@ -42,7 +40,5 @@ class Module(environment: Environment, configuration: Configuration) extends Abs
         .asEagerSingleton()
     }
 
-    val cacheExpires = Duration.create(configuration.underlying.getString("agent.cache.expires"))
-    bind(classOf[Duration]).toInstance(cacheExpires)
   }
 }
