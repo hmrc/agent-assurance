@@ -187,7 +187,7 @@ class EntityCheckServiceSpec
         uniqueTaxReference = Some(utr),
         agencyDetails = None,
         suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
-        isAnIndividual = None
+        isAnIndividual = Some(false)
       )
       mockGetAgentRecord(testArn)(
         agentDetailsDesResponse

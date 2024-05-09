@@ -92,8 +92,8 @@ class EntityCheckControllerISpec
         "internal-auth-token-enabled-on-start"       -> false,
         "http-verbs.retries.intervals"               -> List("1ms"),
         "agent.cache.enabled"                        -> true,
-        "agent.cache.expires"                        -> "1 second",
-        "agent.entity-check.lock.expires"            -> "1 second",
+        "agent.cache.expires"                        -> "1 seconds",
+        "agent.entity-check.lock.expires"            -> "1 seconds",
         "agent.entity-check.email.lock.expires"      -> "1 seconds"
       )
       .overrides(moduleWithOverrides)
@@ -149,7 +149,7 @@ class EntityCheckControllerISpec
     }
 
     "return suspension details and send email for deceased" in {
-      Thread.sleep(1100) // To make sure cache expires
+      Thread.sleep(1000) // To make sure cache expires
       val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
       val dateTime  = formatter.format(LocalDateTime.now())
 
