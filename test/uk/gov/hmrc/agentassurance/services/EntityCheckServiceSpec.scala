@@ -119,7 +119,7 @@ class EntityCheckServiceSpec
         uniqueTaxReference = Some(utr),
         agencyDetails = None,
         suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
-        isAnIndividual = None
+        isAnIndividual = Some(true)
       )
 
       mockGetAgentRecord(testArn)(
@@ -127,7 +127,7 @@ class EntityCheckServiceSpec
       )
 
       mockGetCitizenDeceasedFlag(SaUtr(utr.value))(None)
-      mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(false)
+      mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(response = false)
       mockAuditEntityChecksPerformed
 
       val result = await(service.verifyAgent(testArn))
@@ -148,14 +148,14 @@ class EntityCheckServiceSpec
         uniqueTaxReference = Some(utr),
         agencyDetails = None,
         suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
-        isAnIndividual = None
+        isAnIndividual = Some(true)
       )
       mockGetAgentRecord(testArn)(
         agentDetailsDesResponse
       )
 
       mockGetCitizenDeceasedFlag(SaUtr(utr.value))(Some(EntityDeceasedCheckFailed))
-      mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(false)
+      mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(response = false)
       mockAuditEntityChecksPerformed
       mockAuditEntityCheckFailureNotificationSent
 
@@ -193,8 +193,7 @@ class EntityCheckServiceSpec
         agentDetailsDesResponse
       )
 
-      mockGetCitizenDeceasedFlag(SaUtr(utr.value))(None)
-      mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(true)
+      mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(response = true)
       mockAuditEntityChecksPerformed
       mockAuditEntityCheckFailureNotificationSent
 

@@ -132,7 +132,7 @@ class EntityCheckControllerISpec
         Some(testUtr)
       )
 
-      givenCitizenReturnDeceasedFlag(testSaUtr, false)
+      givenCitizenReturnDeceasedFlag(testSaUtr, deceased = false)
 
       val response = doClientPostRequest(VerifyEntityRequest(testArn))
       response.json mustBe Json.obj("suspensionStatus" -> true, "regimes" -> Set("ITSA"))
@@ -149,7 +149,7 @@ class EntityCheckControllerISpec
     }
 
     "return suspension details and send email for deceased" in {
-      Thread.sleep(1000) // To make sure cache expires
+      Thread.sleep(1100) // To make sure cache expires
       val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
       val dateTime  = formatter.format(LocalDateTime.now())
 
@@ -159,7 +159,7 @@ class EntityCheckControllerISpec
         Some(testUtr)
       )
 
-      givenCitizenReturnDeceasedFlag(testSaUtr, true)
+      givenCitizenReturnDeceasedFlag(testSaUtr, deceased = true)
 
       givenEmailSent(emailInformation =
         EmailInformation(

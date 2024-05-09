@@ -62,25 +62,27 @@ class EntityCheckService @Inject() (
       citizenConnector
         .getCitizenDeceasedFlag(saUtr)
 
-    def refusalToDealCheck(saUtr: SaUtr): Future[Option[RefusalCheckException]] = {
-      repository.propertyExists(Value(saUtr.value).toProperty("refusal-to-deal-with")).map {
+    def refusalToDealCheck(utr: Utr): Future[Option[RefusalCheckException]] = {
+      repository.propertyExists(Value(utr.value).toProperty("refusal-to-deal-with")).map {
         case true  => Some(AgentIsOnRefuseToDealList)
         case false => None
       }
     }
 
-    def entityChecks(arn: Arn, utr: Utr): Future[Seq[EntityCheckException]] = {
+    def entityChecks(arn: Arn, utr: Utr, isAnIndividual: Option[Boolean]): Future[Seq[EntityCheckException]] = {
+      val checksRequired = if (isAnIndividual.contains(true)) {
+        Seq(deceasedStatusCheck(SaUtr(utr.value)), refusalToDealCheck(utr))
+      } else Seq(refusalToDealCheck(utr))
       mongoLockService
         .dailyLock(utr) {
-          val saUtr = SaUtr(utr.value)
           Future
-            .sequence(Seq(deceasedStatusCheck(saUtr), refusalToDealCheck(saUtr)))
+            .sequence(checksRequired)
             .map(_.flatten)
         }
         .map {
           case Some(entityCheckExceptions) =>
             val onRefusalListAgentCheckOutcomes: AgentCheckOutcome = entityCheckExceptions
-              .collectFirst{
+              .collectFirst {
                 case AgentIsOnRefuseToDealList =>
                   AgentCheckOutcome(
                     agentCheckType = "onRefusalList",
@@ -153,7 +155,7 @@ class EntityCheckService @Inject() (
     for {
       agentRecord <- desConnector.getAgentRecord(arn)
       entityChecksResult <- agentRecord.uniqueTaxReference
-        .map(entityChecks(arn, _))
+        .map(entityChecks(arn, _, agentRecord.isAnIndividual))
         .getOrElse(Future.successful(Seq.empty[EntityCheckException]))
       _ <- sendEmail(agentRecord, entityChecksResult)
     } yield EntityCheckResult(
