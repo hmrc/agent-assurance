@@ -20,12 +20,11 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.Eventually.eventually
 import play.api.libs.json.Json
-import play.api.libs.json.Writes
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 
 trait EmailStub {
 
-  def givenEmailSent(emailInformation: EmailInformation)(implicit tjs: Writes[EmailInformation]): StubMapping = {
+  def givenEmailSent(emailInformation: EmailInformation): StubMapping = {
     val emailInformationJson = Json.toJson(emailInformation).toString()
 
     stubFor(
@@ -51,9 +50,7 @@ trait EmailStub {
       )
     }
 
-  def verifyEmailRequestWasSentWithEmailInformation(times: Int, emailInformation: EmailInformation)(
-      implicit tjs: Writes[EmailInformation]
-  ): Unit = {
+  def verifyEmailRequestWasSentWithEmailInformation(times: Int, emailInformation: EmailInformation): Unit = {
     val emailInformationJson = Json.toJson(emailInformation).toString()
     eventually {
       verify(
