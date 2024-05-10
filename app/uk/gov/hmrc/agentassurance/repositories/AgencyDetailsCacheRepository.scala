@@ -53,7 +53,7 @@ class AgencyDetailsCacheRepository @Inject() (
     ttl = Duration.create(config.underlying.getString("agent.cache.expires")),
     timestampSupport = timestampSupport,
     cacheIdType = CacheIdType.SimpleCacheId,
-    replaceIndexes = false
+    replaceIndexes = true
   )
 
   val record = metrics.defaultRegistry
