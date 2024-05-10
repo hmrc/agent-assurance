@@ -107,7 +107,8 @@ class DesConnectorISpec
         "internal-auth-token-enabled-on-start"             -> false,
         "http-verbs.retries.intervals"                     -> List("1ms"),
         "agent.cache.enabled"                              -> true,
-        "agent.cache.expires"                              -> "1 second"
+        "agent.cache.expires"                              -> "1 second",
+        "auditing.enabled"                                 -> false
       )
       .bindings(bind[DesConnector].toInstance(desConnector))
 

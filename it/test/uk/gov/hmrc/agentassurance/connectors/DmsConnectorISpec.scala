@@ -82,7 +82,8 @@ class DmsConnectorISpec
         "microservice.services.dms-submission.contact-details-submission.customerId"         -> "customerId",
         "microservice.services.dms-submission.contact-details-submission.businessArea"       -> "businessArea",
         "internal-auth.token"                                                                -> "authKey",
-        "http-verbs.retries.intervals"                                                       -> List("1ms")
+        "http-verbs.retries.intervals"                                                       -> List("1ms"),
+        "auditing.enabled"                                                                   -> false
       )
       .bindings(bind[DmsConnector].toInstance(dmsConnector))
 
