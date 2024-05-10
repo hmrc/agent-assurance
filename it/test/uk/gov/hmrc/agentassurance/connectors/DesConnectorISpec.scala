@@ -16,7 +16,6 @@
 
 package test.uk.gov.hmrc.agentassurance.connectors
 
-import scala.concurrent.duration.DurationInt
 import scala.concurrent.ExecutionContext
 
 import com.typesafe.config.Config
@@ -42,7 +41,6 @@ import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.BusinessAddress
 import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
-import uk.gov.hmrc.agentassurance.services.AgencyDetailsCache
 import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
@@ -52,7 +50,6 @@ import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.mongo.cache.DataKey
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 import uk.gov.hmrc.mongo.CurrentTimestampSupport
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
@@ -73,15 +70,18 @@ class DesConnectorISpec
   private implicit val config: Config                           = app.injector.instanceOf[Config]
   private implicit lazy val as: ActorSystem                     = ActorSystem()
 
-  protected val agentDataCache: AgencyDetailsCacheRepository =
-    new AgencyDetailsCacheRepository(mongoComponent, new CurrentTimestampSupport, 1.second)
+  private val agentDataCache =
+    new AgencyDetailsCacheRepository(
+      app.injector.instanceOf[Configuration],
+      mongoComponent,
+      new CurrentTimestampSupport,
+      app.injector.instanceOf[Metrics]
+    )
 
   implicit override lazy val app: Application = appBuilder
     .build()
 
-  val agencyDetailsCache = new AgencyDetailsCache(agentDataCache, app.injector.instanceOf[Metrics])
-
-  val cacheProvider = new CacheProvider(agencyDetailsCache, app.injector.instanceOf[Configuration])
+  val cacheProvider = new CacheProvider(agentDataCache, app.injector.instanceOf[Configuration])
 
   val desConnector = new DesConnectorImpl(
     app.injector.instanceOf[HttpClientV2],
@@ -106,7 +106,9 @@ class DesConnectorISpec
         "auditing.consumer.baseUri.port"                   -> wireMockPort,
         "internal-auth-token-enabled-on-start"             -> false,
         "http-verbs.retries.intervals"                     -> List("1ms"),
-        "agent.cache.enabled"                              -> true
+        "agent.cache.enabled"                              -> true,
+        "agent.cache.expires"                              -> "1 second",
+        "auditing.enabled"                                 -> false
       )
       .bindings(bind[DesConnector].toInstance(desConnector))
 
@@ -133,7 +135,31 @@ class DesConnectorISpec
     Some(false)
   )
 
-  val arn = Arn("AARN00012345")
+  val agentDetailsDesResponse2 = AgentDetailsDesResponse(
+    Some(Utr("0123456788")),
+    Some(
+      AgencyDetails(
+        Some("ABC Accountants"),
+        Some("abc@xyz.com"),
+        Some("07345678901"),
+        Some(
+          BusinessAddress(
+            "Matheson House",
+            Some("Grange Central"),
+            Some("Town Centre"),
+            Some("Telford"),
+            Some("TF3 4ER"),
+            "GB"
+          )
+        )
+      )
+    ),
+    Some(SuspensionDetails(suspensionStatus = false, None)),
+    Some(false)
+  )
+
+  val arn  = Arn("AARN00012345")
+  val arn2 = Arn("AARN00012346")
 
   "DesConnector getActiveCesaAgentRelationships with a valid NINO" should {
     behave.like(aCheckEndpoint(Nino("AB123456C")))
@@ -151,15 +177,13 @@ class DesConnectorISpec
       await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
     }
   }
-
   "DesConnector getAgentRecord caching check" should {
     "return agency details cached for a given ARN and save record to cache" in {
-      val dataKey = DataKey[AgentDetailsDesResponse](arn.value)
       givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
 
       await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
       Thread.sleep(500)
-      await(agentDataCache.get("agentDetails")(dataKey)) shouldBe Some(agentDetailsDesResponse)
+      await(agentDataCache.getFromCache(arn.value)) shouldBe Some(agentDetailsDesResponse)
 
     }
 
@@ -169,6 +193,29 @@ class DesConnectorISpec
       Thread.sleep(500)
       await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
       verifyDESGetAgentRecord(arn, 1)
+    }
+
+    "return agency details cached for a given ARN and save record to cache for two agents" in {
+      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
+      givenDESGetAgentRecord(Arn(arn2.value), Some(Utr("0123456788")))
+
+      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
+      await(desConnector.getAgentRecord(arn2)) shouldBe agentDetailsDesResponse2
+      Thread.sleep(500)
+      await(agentDataCache.getFromCache(arn.value)) shouldBe Some(agentDetailsDesResponse)
+      await(agentDataCache.getFromCache(arn2.value)) shouldBe Some(agentDetailsDesResponse2)
+    }
+
+    "return agency details cached for a given ARN,  second from cache for two agents" in {
+      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
+      givenDESGetAgentRecord(Arn(arn2.value), Some(Utr("0123456788")))
+      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
+      await(desConnector.getAgentRecord(arn2)) shouldBe agentDetailsDesResponse2
+      Thread.sleep(500)
+      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
+      await(desConnector.getAgentRecord(arn2)) shouldBe agentDetailsDesResponse2
+      verifyDESGetAgentRecord(arn, 1)
+      verifyDESGetAgentRecord(arn2, 1)
     }
 
     "must fail when the server returns another 5xx status" in {

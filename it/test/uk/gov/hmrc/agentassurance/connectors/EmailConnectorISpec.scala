@@ -54,7 +54,8 @@ class EmailConnectorISpec
       .configure(
         "microservice.services.email.host" -> wireMockHost,
         "microservice.services.email.port" -> wireMockPort,
-        "agent-maintainer-email"           -> "test@example.com"
+        "agent-maintainer-email"           -> "test@example.com",
+        "auditing.enabled"                 -> false
       )
       .bindings(bind[EmailConnector].toInstance(connector))
 

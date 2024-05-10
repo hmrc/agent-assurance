@@ -62,7 +62,8 @@ class EnrolmentStoreProxyConnectorISpec
         "auditing.consumer.baseUri.port"                   -> wireMockPort,
         "internal-auth-token-enabled-on-start"             -> false,
         "agent.cache.enabled"                              -> true,
-        "agent.cache.expires"                              -> "1 hour"
+        "agent.cache.expires"                              -> "1 hour",
+        "auditing.enabled"                                 -> false
       )
       .overrides(moduleWithOverrides)
 
