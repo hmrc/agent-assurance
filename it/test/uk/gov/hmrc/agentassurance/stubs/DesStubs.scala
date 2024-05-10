@@ -310,7 +310,7 @@ trait DesStubs {
 
     s"""
        |{
-       |  "isIndividual": $isIndividual,""".stripMargin ++
+       |  "isAnIndividual": $isIndividual,""".stripMargin ++
       optUtr.map(utr => s""" "uniqueTaxReference": "${utr.value}",""".stripMargin).getOrElse("") ++
       s""" "agencyDetails" : {
          |      "agencyAddress" : {
@@ -336,7 +336,7 @@ trait DesStubs {
 
     s"""
        |{
-       |  "isIndividual": $isIndividual,""".stripMargin ++
+       |  "isAnIndividual": $isIndividual,""".stripMargin ++
       optUtr.map(utr => s""" "uniqueTaxReference": "${utr.value}",""".stripMargin).getOrElse("") ++
       s""" "agencyDetails" : {
          |      "agencyAddress" : {

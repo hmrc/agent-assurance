@@ -92,8 +92,8 @@ class EntityCheckControllerISpec
         "internal-auth-token-enabled-on-start"       -> false,
         "http-verbs.retries.intervals"               -> List("1ms"),
         "agent.cache.enabled"                        -> true,
-        "agent.cache.expires"                        -> "1 second",
-        "agent.entity-check.lock.expires"            -> "1 second",
+        "agent.cache.expires"                        -> "1 seconds",
+        "agent.entity-check.lock.expires"            -> "1 seconds",
         "agent.entity-check.email.lock.expires"      -> "1 seconds"
       )
       .overrides(moduleWithOverrides)
@@ -132,7 +132,7 @@ class EntityCheckControllerISpec
         Some(testUtr)
       )
 
-      givenCitizenReturnDeceasedFlag(testSaUtr, false)
+      givenCitizenReturnDeceasedFlag(testSaUtr, deceased = false)
 
       val response = doClientPostRequest(VerifyEntityRequest(testArn))
       response.json mustBe Json.obj("suspensionStatus" -> true, "regimes" -> Set("ITSA"))
@@ -159,7 +159,7 @@ class EntityCheckControllerISpec
         Some(testUtr)
       )
 
-      givenCitizenReturnDeceasedFlag(testSaUtr, true)
+      givenCitizenReturnDeceasedFlag(testSaUtr, deceased = true)
 
       givenEmailSent(emailInformation =
         EmailInformation(
