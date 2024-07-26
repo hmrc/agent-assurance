@@ -26,6 +26,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatestplus.play.PlaySpec
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.agentassurance.helpers.ChangeDesiDetailsPayloads
 import uk.gov.hmrc.agentassurance.mocks._
 import uk.gov.hmrc.agentassurance.models.DmsResponse
 import uk.gov.hmrc.agentassurance.models.DmsSubmissionReference
@@ -43,6 +44,22 @@ class DmsServiceSpec extends PlaySpec with MockDmsConnector with MockAppConfig {
   val service = new DmsService(mockDmsConnector, appConfig)
 
   "submitToDms" should {
+    "handle escaped special chars in desi details changes" in {
+      val encoded = Base64.getEncoder.encodeToString(ChangeDesiDetailsPayloads.specialChars.getBytes)
+
+      val timestamp = LocalDateTime
+        .of(2022, 3, 2, 12, 30, 45)
+        .atZone(ZoneId.of("UTC"))
+        .toInstant
+
+      mocksendPdfAccepted()
+
+      val result =
+        await(service.submitToDms(Some(encoded), timestamp, DmsSubmissionReference("DmsSubmissionReference"))(hc))
+
+      result mustBe DmsResponse(timestamp, "")
+    }
+
     "return correct value when the submission is successful" in {
       val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
