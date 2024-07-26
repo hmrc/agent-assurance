@@ -23,7 +23,7 @@ lazy val root = (project in file("."))
     Test / parallelExecution := false,
     CodeCoverageSettings.scoverageSettings
   )
-  .enablePlugins(PlayScala, SbtAutoBuildPlugin, SbtDistributablesPlugin)
+  .enablePlugins(PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin)
 
 val scalaCOptions = Seq(
