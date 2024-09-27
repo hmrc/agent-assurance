@@ -14,11 +14,24 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entitycheck
+package uk.gov.hmrc.agentassurance.utils
 
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import scala.util.Try
 
-case class EntityCheckResult(
-    agentRecord: AgentDetailsDesResponse,
-    entityCheckExceptions: Seq[EntityCheckException]
-)
+import play.api.libs.json.Format
+import play.api.libs.json.Json
+import play.api.Logging
+
+object StringFormatFallbackSetup extends Logging {
+
+  def stringFormatFallback(format: Format[String]): Format[String] =
+    Format(
+      json =>
+        Try(format.reads(json)).recover {
+          case e: Throwable =>
+            logger.warn(s"[StringFormatFallbackSetup][stringFormatFallback] failed to decrypt string: ${e.getMessage}")
+            Json.fromJson[String](json)
+        }.get,
+      (value: String) => format.writes(value)
+    )
+}

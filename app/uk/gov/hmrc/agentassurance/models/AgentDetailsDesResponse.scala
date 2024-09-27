@@ -16,12 +16,19 @@
 
 package uk.gov.hmrc.agentassurance.models
 
+import scala.Function.unlift
+
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.json.__
+import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import play.api.libs.json.OWrites
-import play.api.libs.json.Reads
+import uk.gov.hmrc.agentassurance.utils.StringFormatFallbackSetup.stringFormatFallback
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.crypto.json.JsonEncryption.stringEncrypterDecrypter
+import uk.gov.hmrc.crypto.Decrypter
+import uk.gov.hmrc.crypto.Encrypter
 
 case class AgentDetailsDesResponse(
     uniqueTaxReference: Option[Utr],
@@ -31,13 +38,19 @@ case class AgentDetailsDesResponse(
 )
 
 object AgentDetailsDesResponse {
-  val agencyDetailsRead: Reads[AgencyDetails]     = Json.reads
-  val agencyDetailsWrites: OWrites[AgencyDetails] = Json.writes
+  implicit val agentRecordDetailsFormat: OFormat[AgentDetailsDesResponse] = Json.format[AgentDetailsDesResponse]
 
-  val agentRecordDetailsRead: Reads[AgentDetailsDesResponse] = Json.reads
-
-  val agentRecordDetailsWrites: OWrites[AgentDetailsDesResponse] = Json.writes
-
-  implicit val agentRecordDetailsFormat: OFormat[AgentDetailsDesResponse] =
-    OFormat(agentRecordDetailsRead, agentRecordDetailsWrites)
+  def agentRecordDatabaseDetailsFormat(implicit crypto: Encrypter with Decrypter): Format[AgentDetailsDesResponse] =
+    (__ \ "uniqueTaxReference")
+      .formatNullable[String](stringFormatFallback(stringEncrypterDecrypter))
+      .bimap[Option[Utr]](
+        _.map(Utr(_)),
+        _.map(_.value)
+      )
+      .and((__ \ "agencyDetails").formatNullable[AgencyDetails](AgencyDetails.agencyDetailsDatabaseFormat))
+      .and((__ \ "suspensionDetails").formatNullable[SuspensionDetails])
+      .and((__ \ "isAnIndividual").formatNullable[Boolean])(
+        AgentDetailsDesResponse.apply,
+        unlift(AgentDetailsDesResponse.unapply)
+      )
 }
