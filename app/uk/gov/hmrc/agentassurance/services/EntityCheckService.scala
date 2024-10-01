@@ -36,6 +36,7 @@ import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException.AgentIsOnRefuseToDealList
 import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.models.EncryptedValue
 import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
 import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
@@ -134,7 +135,7 @@ class EntityCheckService @Inject() (
           val entityCheckNotification = EntityCheckNotification(
             arn = arn,
             utr = utr.value,
-            agencyName = agentRecord.agencyDetails.flatMap(_.agencyName).getOrElse(""),
+            agencyName = agentRecord.agencyDetails.flatMap(_.agencyName).getOrElse(EncryptedValue("")).value,
             failedChecks = nonEmptyFailedChecks.mkString("|"),
             dateTime = formatter.format(LocalDateTime.now())
           )

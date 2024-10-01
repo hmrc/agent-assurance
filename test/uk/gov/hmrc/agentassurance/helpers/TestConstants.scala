@@ -116,7 +116,7 @@ object TestConstants {
   val agencyDetailsOverseas: AgencyDetails =
     AgencyDetails(None, None, None, Some(BusinessAddress("line1", None, None, None, None, "US")))
   val agencyDetails: AgencyDetails = AgencyDetails(
-    Some("agencyName"),
+    Some(EncryptedValue("agencyName")),
     Some("agencyEmail"),
     Some("agencyTelephone"),
     Some(BusinessAddress("addressLine1", None, None, None, None, "GB"))

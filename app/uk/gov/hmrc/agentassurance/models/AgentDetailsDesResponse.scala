@@ -31,13 +31,21 @@ case class AgentDetailsDesResponse(
 )
 
 object AgentDetailsDesResponse {
-  val agencyDetailsRead: Reads[AgencyDetails]     = Json.reads
-  val agencyDetailsWrites: OWrites[AgencyDetails] = Json.writes
 
-  val agentRecordDetailsRead: Reads[AgentDetailsDesResponse] = Json.reads
+  def agentRecordDetailsRead: Reads[AgentDetailsDesResponse] = {
+    implicit val agencyDetails: OFormat[AgencyDetails] = AgencyDetails.agencyDetailsFormat
+    Json.reads
+  }
 
-  val agentRecordDetailsWrites: OWrites[AgentDetailsDesResponse] = Json.writes
+  def agentRecordDetailsWrites: OWrites[AgentDetailsDesResponse] = {
+    implicit val agencyDetails: OFormat[AgencyDetails] = AgencyDetails.agencyDetailsFormat
+    Json.writes
+  }
 
-  implicit val agentRecordDetailsFormat: OFormat[AgentDetailsDesResponse] =
+  def dbFormat(implicit agencyDetails: OFormat[AgencyDetails]): OFormat[AgentDetailsDesResponse] = {
+    Json.format[AgentDetailsDesResponse]
+  }
+
+  implicit def agentRecordDetailsFormat: OFormat[AgentDetailsDesResponse] =
     OFormat(agentRecordDetailsRead, agentRecordDetailsWrites)
 }

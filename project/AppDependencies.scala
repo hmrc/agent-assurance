@@ -14,6 +14,7 @@ object AppDependencies {
     "uk.gov.hmrc"       %% "internal-auth-client-play-30" % "2.0.0",
     "com.openhtmltopdf"  % "openhtmltopdf-pdfbox"         % openHtmlToPdfVersion,
     "com.beachape"      %% "enumeratum-play-json"         % "1.8.0",
+    "uk.gov.hmrc"       %% "crypto-json-play-30"          % "8.1.0"
   )
 
   lazy val test = Seq(

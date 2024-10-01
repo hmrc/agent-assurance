@@ -24,6 +24,7 @@ import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
@@ -31,6 +32,7 @@ import play.api.Logging
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AgentDetailsResponse
 import uk.gov.hmrc.agentassurance.models.DmsSubmissionReference
@@ -50,7 +52,8 @@ class AgentServicesController @Inject() (
     with AuthActions
     with Logging {
 
-  private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
+  implicit val agencyDetailsFormat: OFormat[AgencyDetails] = AgencyDetails.agencyDetailsFormat
+  private val strideRoles                                  = Seq(appConfig.manuallyAssuredStrideRole)
 
   def getAgencyDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
     desConnector

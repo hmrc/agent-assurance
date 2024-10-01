@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentassurance.repositories
 
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 
 import scala.concurrent.duration.Duration
@@ -25,9 +26,13 @@ import scala.concurrent.Future
 import scala.util.Success
 
 import play.api.libs.json.Format
+import play.api.libs.json.OFormat
 import play.api.Configuration
+import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.services.Cache
+import uk.gov.hmrc.crypto.Decrypter
+import uk.gov.hmrc.crypto.Encrypter
 import uk.gov.hmrc.mongo.cache.CacheIdType
 import uk.gov.hmrc.mongo.cache.EntityCache
 import uk.gov.hmrc.mongo.cache.MongoCacheRepository
@@ -42,11 +47,13 @@ class AgencyDetailsCacheRepository @Inject() (
     timestampSupport: TimestampSupport,
     metrics: Metrics
 )(
-    implicit ec: ExecutionContext
+    implicit ec: ExecutionContext,
+    @Named("aes") crypto: Encrypter with Decrypter
 ) extends EntityCache[String, AgentDetailsDesResponse]
     with Cache[AgentDetailsDesResponse] {
 
-  lazy val format: Format[AgentDetailsDesResponse] = AgentDetailsDesResponse.agentRecordDetailsFormat
+  implicit val formatAgentDetails: OFormat[AgencyDetails] = AgencyDetails.agencyDetailsDatabaseFormat
+  lazy val format: Format[AgentDetailsDesResponse]        = AgentDetailsDesResponse.dbFormat
   lazy val cacheRepo: MongoCacheRepository[String] = new MongoCacheRepository(
     mongoComponent = mongo,
     collectionName = "cache-agent-details",
