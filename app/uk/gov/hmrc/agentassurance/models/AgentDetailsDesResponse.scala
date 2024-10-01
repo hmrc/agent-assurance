@@ -16,10 +16,9 @@
 
 package uk.gov.hmrc.agentassurance.models
 
+import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import play.api.libs.json.OWrites
-import play.api.libs.json.Reads
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
@@ -31,21 +30,6 @@ case class AgentDetailsDesResponse(
 )
 
 object AgentDetailsDesResponse {
-
-  def agentRecordDetailsRead: Reads[AgentDetailsDesResponse] = {
-    implicit val agencyDetails: OFormat[AgencyDetails] = AgencyDetails.agencyDetailsFormat
-    Json.reads
-  }
-
-  def agentRecordDetailsWrites: OWrites[AgentDetailsDesResponse] = {
-    implicit val agencyDetails: OFormat[AgencyDetails] = AgencyDetails.agencyDetailsFormat
-    Json.writes
-  }
-
-  def dbFormat(implicit agencyDetails: OFormat[AgencyDetails]): OFormat[AgentDetailsDesResponse] = {
+  implicit def agentRecordDetailsFormat(implicit format: Format[EncryptedValue]): OFormat[AgentDetailsDesResponse] =
     Json.format[AgentDetailsDesResponse]
-  }
-
-  implicit def agentRecordDetailsFormat: OFormat[AgentDetailsDesResponse] =
-    OFormat(agentRecordDetailsRead, agentRecordDetailsWrites)
 }

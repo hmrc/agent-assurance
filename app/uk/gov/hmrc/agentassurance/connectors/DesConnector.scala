@@ -36,6 +36,7 @@ import play.utils.UriEncoding
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
+import uk.gov.hmrc.agentassurance.models.EncryptedValue
 import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -99,8 +100,9 @@ class DesConnectorImpl @Inject() (
   private val authorizationToken = appConfig.desAuthToken
   private val environment        = appConfig.desEnv
 
-  private val Environment   = "Environment"
-  private val CorrelationId = "CorrelationId"
+  private val Environment                     = "Environment"
+  private val CorrelationId                   = "CorrelationId"
+  implicit val format: Format[EncryptedValue] = EncryptedValue.getValue
 
   def getActiveCesaAgentRelationships(
       clientIdentifier: TaxIdentifier

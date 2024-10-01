@@ -26,10 +26,12 @@ import uk.gov.hmrc.crypto.Encrypter
 case class EncryptedValue(value: String)
 
 object EncryptedValue {
-  def encrypDecryptValue(implicit crypto: Encrypter with Decrypter): Format[EncryptedValue] =
+  type EncryptedFormat = Format[EncryptedValue]
+
+  implicit def encrypDecryptValue(implicit crypto: Encrypter with Decrypter): Format[EncryptedValue] =
     stringEncrypterDecrypter.bimap(EncryptedValue.apply, _.value)
 
-  implicit def getValue: Format[EncryptedValue] = implicitly[Format[String]].bimap(EncryptedValue.apply, _.value)
+  def getValue: Format[EncryptedValue] = implicitly[Format[String]].bimap(EncryptedValue.apply, _.value)
 }
 
 case class AgencyDetails(
@@ -41,11 +43,9 @@ case class AgencyDetails(
   val hasUkAddress: Boolean = agencyAddress.exists(_.countryCode == "GB")
 }
 object AgencyDetails {
-  val agencyDetailsFormat: OFormat[AgencyDetails] = Json.format[AgencyDetails]
-  def agencyDetailsDatabaseFormat(implicit crypto: Encrypter with Decrypter): OFormat[AgencyDetails] = {
-    implicit val encryptedValueFormats: Format[EncryptedValue] = EncryptedValue.encrypDecryptValue
+  implicit def agencyDetailsFormat(implicit format: Format[EncryptedValue]): Format[AgencyDetails] =
     Json.format[AgencyDetails]
-  }
+
 }
 
 case class BusinessAddress(
@@ -58,5 +58,5 @@ case class BusinessAddress(
 )
 
 object BusinessAddress {
-  implicit val format: OFormat[BusinessAddress] = Json.format
+  implicit def format(implicit format: Format[EncryptedValue]): OFormat[BusinessAddress] = Json.format
 }

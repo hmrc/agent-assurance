@@ -21,11 +21,13 @@ import javax.inject.Singleton
 
 import scala.concurrent.ExecutionContext
 
+import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
+import uk.gov.hmrc.agentassurance.models.EncryptedValue
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -39,6 +41,8 @@ class GetAgentRecordWithEntityChecksController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with AuthActions {
+
+  implicit val format: Format[EncryptedValue] = EncryptedValue.getValue
 
   def get: Action[AnyContent] = AuthorisedWithArn { implicit request => arn: Arn =>
     entityCheckService.verifyAgent(arn).map(entityCheckResult => Ok(Json.toJson(entityCheckResult.agentRecord)))

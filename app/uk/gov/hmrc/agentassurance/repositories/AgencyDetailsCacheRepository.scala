@@ -26,10 +26,9 @@ import scala.concurrent.Future
 import scala.util.Success
 
 import play.api.libs.json.Format
-import play.api.libs.json.OFormat
 import play.api.Configuration
-import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.models.EncryptedValue
 import uk.gov.hmrc.agentassurance.services.Cache
 import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
@@ -51,9 +50,8 @@ class AgencyDetailsCacheRepository @Inject() (
     @Named("aes") crypto: Encrypter with Decrypter
 ) extends EntityCache[String, AgentDetailsDesResponse]
     with Cache[AgentDetailsDesResponse] {
-
-  implicit val formatAgentDetails: OFormat[AgencyDetails] = AgencyDetails.agencyDetailsDatabaseFormat
-  lazy val format: Format[AgentDetailsDesResponse]        = AgentDetailsDesResponse.dbFormat
+  implicit lazy val formatAgentDetails: Format[EncryptedValue] = EncryptedValue.encrypDecryptValue
+  lazy val format: Format[AgentDetailsDesResponse]             = AgentDetailsDesResponse.agentRecordDetailsFormat
   lazy val cacheRepo: MongoCacheRepository[String] = new MongoCacheRepository(
     mongoComponent = mongo,
     collectionName = "cache-agent-details",

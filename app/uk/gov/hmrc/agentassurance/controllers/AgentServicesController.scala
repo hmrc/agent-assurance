@@ -23,8 +23,8 @@ import javax.inject.Singleton
 
 import scala.concurrent.ExecutionContext
 
+import play.api.libs.json.Format
 import play.api.libs.json.Json
-import play.api.libs.json.OFormat
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
@@ -32,10 +32,10 @@ import play.api.Logging
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AgentDetailsResponse
 import uk.gov.hmrc.agentassurance.models.DmsSubmissionReference
+import uk.gov.hmrc.agentassurance.models.EncryptedValue
 import uk.gov.hmrc.agentassurance.services.DmsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -52,8 +52,8 @@ class AgentServicesController @Inject() (
     with AuthActions
     with Logging {
 
-  implicit val agencyDetailsFormat: OFormat[AgencyDetails] = AgencyDetails.agencyDetailsFormat
-  private val strideRoles                                  = Seq(appConfig.manuallyAssuredStrideRole)
+  private val strideRoles                     = Seq(appConfig.manuallyAssuredStrideRole)
+  implicit val format: Format[EncryptedValue] = EncryptedValue.getValue
 
   def getAgencyDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
     desConnector
