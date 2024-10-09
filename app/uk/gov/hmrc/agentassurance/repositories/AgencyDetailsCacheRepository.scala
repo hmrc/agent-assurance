@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentassurance.repositories
 
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 
 import scala.concurrent.duration.Duration
@@ -28,6 +29,9 @@ import play.api.libs.json.Format
 import play.api.Configuration
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.services.Cache
+import uk.gov.hmrc.crypto.Decrypter
+import uk.gov.hmrc.crypto.Encrypter
+import uk.gov.hmrc.crypto.PlainText
 import uk.gov.hmrc.mongo.cache.CacheIdType
 import uk.gov.hmrc.mongo.cache.EntityCache
 import uk.gov.hmrc.mongo.cache.MongoCacheRepository
@@ -42,11 +46,12 @@ class AgencyDetailsCacheRepository @Inject() (
     timestampSupport: TimestampSupport,
     metrics: Metrics
 )(
-    implicit ec: ExecutionContext
+    implicit ec: ExecutionContext,
+    @Named("aes") crypto: Encrypter with Decrypter
 ) extends EntityCache[String, AgentDetailsDesResponse]
     with Cache[AgentDetailsDesResponse] {
 
-  lazy val format: Format[AgentDetailsDesResponse] = AgentDetailsDesResponse.agentRecordDetailsFormat
+  lazy val format: Format[AgentDetailsDesResponse] = AgentDetailsDesResponse.agentRecordDatabaseDetailsFormat
   lazy val cacheRepo: MongoCacheRepository[String] = new MongoCacheRepository(
     mongoComponent = mongo,
     collectionName = "cache-agent-details",
@@ -61,7 +66,8 @@ class AgencyDetailsCacheRepository @Inject() (
   def apply(
       key: String
   )(body: => Future[AgentDetailsDesResponse])(implicit ec: ExecutionContext): Future[AgentDetailsDesResponse] = {
-    getFromCache(key).flatMap {
+    val encryptedKey = crypto.encrypt(PlainText(key)).value
+    getFromCache(encryptedKey).flatMap {
       case Some(v) =>
         record.counter(s"Count-$key-from-cache")
         Future.successful(v)
@@ -69,7 +75,7 @@ class AgencyDetailsCacheRepository @Inject() (
         body.andThen {
           case Success(v) =>
             record.counter(s"Count-$key-from-source")
-            putCache(key)(v).map(_ => v)
+            putCache(encryptedKey)(v).map(_ => v)
         }
     }
   }

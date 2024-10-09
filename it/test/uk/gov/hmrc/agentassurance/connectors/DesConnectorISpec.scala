@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.connectors
+package uk.gov.hmrc.agentassurance.connectors
 
 import scala.concurrent.ExecutionContext
 
@@ -45,6 +45,11 @@ import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.crypto.Decrypter
+import uk.gov.hmrc.crypto.Encrypter
+import uk.gov.hmrc.crypto.PlainText
+import uk.gov.hmrc.crypto.SymmetricCryptoFactory
+import uk.gov.hmrc.crypto.SymmetricCryptoFactory.aesCrypto
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
@@ -69,6 +74,9 @@ class DesConnectorISpec
   private implicit val appConfig: AppConfig                     = app.injector.instanceOf[AppConfig]
   private implicit val config: Config                           = app.injector.instanceOf[Config]
   private implicit lazy val as: ActorSystem                     = ActorSystem()
+  private implicit val crypto: Encrypter with Decrypter         = aesCrypto("0xbYzrPV9/GmVEGazywGswm7yRYoWy2BraeJnjOUgcY=")
+
+  private def encryptKey(key: String): String = crypto.encrypt(PlainText(key)).value
 
   private val agentDataCache =
     new AgencyDetailsCacheRepository(
@@ -183,7 +191,7 @@ class DesConnectorISpec
 
       await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
       Thread.sleep(500)
-      await(agentDataCache.getFromCache(arn.value)) shouldBe Some(agentDetailsDesResponse)
+      await(agentDataCache.getFromCache(cacheId = encryptKey(arn.value))) shouldBe Some(agentDetailsDesResponse)
 
     }
 
@@ -202,8 +210,8 @@ class DesConnectorISpec
       await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
       await(desConnector.getAgentRecord(arn2)) shouldBe agentDetailsDesResponse2
       Thread.sleep(500)
-      await(agentDataCache.getFromCache(arn.value)) shouldBe Some(agentDetailsDesResponse)
-      await(agentDataCache.getFromCache(arn2.value)) shouldBe Some(agentDetailsDesResponse2)
+      await(agentDataCache.getFromCache(cacheId = encryptKey(arn.value))) shouldBe Some(agentDetailsDesResponse)
+      await(agentDataCache.getFromCache(cacheId = encryptKey(arn2.value))) shouldBe Some(agentDetailsDesResponse2)
     }
 
     "return agency details cached for a given ARN,  second from cache for two agents" in {
