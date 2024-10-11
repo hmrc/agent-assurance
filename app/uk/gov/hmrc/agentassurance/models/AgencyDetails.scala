@@ -23,7 +23,6 @@ import play.api.libs.json.__
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentassurance.utils.StringFormatFallbackSetup.stringFormatFallback
 import uk.gov.hmrc.crypto.json.JsonEncryption.stringEncrypterDecrypter
 import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
@@ -41,9 +40,9 @@ object AgencyDetails {
 
   def agencyDetailsDatabaseFormat(implicit crypto: Encrypter with Decrypter): Format[AgencyDetails] =
     (__ \ "agencyName")
-      .formatNullable[String](stringFormatFallback(stringEncrypterDecrypter))
-      .and((__ \ "agencyEmail").formatNullable[String](stringFormatFallback(stringEncrypterDecrypter)))
-      .and((__ \ "agencyTelephone").formatNullable[String](stringFormatFallback(stringEncrypterDecrypter)))
+      .formatNullable[String](stringEncrypterDecrypter)
+      .and((__ \ "agencyEmail").formatNullable[String](stringEncrypterDecrypter))
+      .and((__ \ "agencyTelephone").formatNullable[String](stringEncrypterDecrypter))
       .and((__ \ "agencyAddress").formatNullable[BusinessAddress](BusinessAddress.businessAddressDatabaseFormat))(
         AgencyDetails.apply,
         unlift(AgencyDetails.unapply)
@@ -64,12 +63,12 @@ object BusinessAddress {
 
   def businessAddressDatabaseFormat(implicit crypto: Encrypter with Decrypter): Format[BusinessAddress] = {
     (__ \ "addressLine1")
-      .format[String](stringFormatFallback(stringEncrypterDecrypter))
-      .and((__ \ "addressLine2").formatNullable[String](stringFormatFallback(stringEncrypterDecrypter)))
-      .and((__ \ "addressLine3").formatNullable[String](stringFormatFallback(stringEncrypterDecrypter)))
-      .and((__ \ "addressLine4").formatNullable[String](stringFormatFallback(stringEncrypterDecrypter)))
-      .and((__ \ "postalCode").formatNullable[String](stringFormatFallback(stringEncrypterDecrypter)))
-      .and((__ \ "countryCode").format[String](stringFormatFallback(stringEncrypterDecrypter)))(
+      .format[String](stringEncrypterDecrypter)
+      .and((__ \ "addressLine2").formatNullable[String](stringEncrypterDecrypter))
+      .and((__ \ "addressLine3").formatNullable[String](stringEncrypterDecrypter))
+      .and((__ \ "addressLine4").formatNullable[String](stringEncrypterDecrypter))
+      .and((__ \ "postalCode").formatNullable[String](stringEncrypterDecrypter))
+      .and((__ \ "countryCode").format[String](stringEncrypterDecrypter))(
         BusinessAddress.apply,
         unlift(BusinessAddress.unapply)
       )

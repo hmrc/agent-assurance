@@ -23,7 +23,6 @@ import play.api.libs.json.__
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentassurance.utils.StringFormatFallbackSetup.stringFormatFallback
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.crypto.json.JsonEncryption.stringEncrypterDecrypter
@@ -42,7 +41,7 @@ object AgentDetailsDesResponse {
 
   def agentRecordDatabaseDetailsFormat(implicit crypto: Encrypter with Decrypter): Format[AgentDetailsDesResponse] =
     (__ \ "uniqueTaxReference")
-      .formatNullable[String](stringFormatFallback(stringEncrypterDecrypter))
+      .formatNullable[String](stringEncrypterDecrypter)
       .bimap[Option[Utr]](
         _.map(Utr(_)),
         _.map(_.value)

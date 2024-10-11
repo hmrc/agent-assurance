@@ -18,6 +18,7 @@ package uk.gov.hmrc.agentassurance.repositories
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
 import com.codahale.metrics.MetricRegistry
 import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
@@ -139,7 +140,7 @@ class AgentDetailsCacheRepositoryISpec
         val result = await(agencyDetailsCacheRepository("agent-2")(Future.successful(agencyDetailsResponse)))
 
         result shouldBe agencyDetailsResponse
-        
+
         eventually {
           await(agencyDetailsCacheRepository.cacheRepo.collection.find().toFuture()).size shouldBe 1
         }

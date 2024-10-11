@@ -15,7 +15,18 @@ These endpoints are called during the agent subscription journey.
 
 The "refusal to deal with" and "manually assured" lists are maintained by HMRC helpdesk staff (stride users) in agent-helpdesk-frontend.
 
+## Running the tests
+
+    sbt test it/test
+
+## Running the tests with coverage
+
+    sbt clean coverageOn test it/test coverageReport
+
 ## Run the application locally
+
+    sm2 -start AGENT_AUTHORISATION
+    sm2 -stop AGENT_ASSURANCE
 
 To run the application execute
 ```
