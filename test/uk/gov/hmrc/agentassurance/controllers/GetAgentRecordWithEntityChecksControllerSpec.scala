@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentassurance.controllers
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
@@ -30,28 +31,39 @@ import play.api.test.Helpers.GET
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.enrolmentsWithNoIrSAAgent
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testUtr
+import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.http.HeaderNames
+import uk.gov.hmrc.internalauth.client.test.BackendAuthComponentsStub
+import uk.gov.hmrc.internalauth.client.test.StubBehaviour
+import uk.gov.hmrc.internalauth.client.BackendAuthComponents
+import uk.gov.hmrc.internalauth.client.Predicate
+import uk.gov.hmrc.internalauth.client.Retrieval
 
 class GetAgentRecordWithEntityChecksControllerSpec
     extends PlaySpec
     with DefaultAwaitTimeout
     with GuiceOneAppPerTest
     with MockAuthConnector
+    with MockAppConfig
     with MockEntityCheckService
     with MockFactory {
 
-  implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
+  implicit val ec: ExecutionContext    = ExecutionContext.Implicits.global
+  val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
+  val stubBackendAuthComponents: BackendAuthComponents =
+    BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
 
   val controller = new GetAgentRecordWithEntityChecksController(
     stubControllerComponents(),
     mockEntityCheckService,
     mockAuthConnector,
-  )(ec)
+    stubBackendAuthComponents
+  )(ec, mockAppConfig)
 
   "get" should {
     "return OK" in {
@@ -75,6 +87,38 @@ class GetAgentRecordWithEntityChecksControllerSpec
         .get()
         .apply(
           FakeRequest(GET, "/agent-record-with-checks")
+            .withHeaders(HeaderNames.authorisation -> "Some auth token")
+        )
+
+      status(result) mustBe OK
+    }
+  }
+
+  "get with Arn" should {
+    "return OK" in {
+      (mockStubBehaviour
+        .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+        .expects(*, *)
+        .returning(Future.unit)
+
+      val agentDetailsDesResponse =
+        AgentDetailsDesResponse(
+          uniqueTaxReference = Some(testUtr),
+          agencyDetails = None,
+          suspensionDetails = None,
+          isAnIndividual = None
+        )
+      mockVerifyEntitySuccess(testArn)(
+        EntityCheckResult(
+          agentDetailsDesResponse,
+          Seq.empty[EntityCheckException]
+        )
+      )
+
+      val result = controller
+        .clientGet(testArn)
+        .apply(
+          FakeRequest(GET, s"/agent-record-with-checks/arn/$testArn")
             .withHeaders(HeaderNames.authorisation -> "Some auth token")
         )
 

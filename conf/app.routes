@@ -40,3 +40,4 @@ POST           /client/verify-entity                                            
 POST          /dms-agent-callback                                                           @uk.gov.hmrc.agentassurance.controllers.DmsNotificationController.dmsCallback()
 
 GET          /agent-record-with-checks                                                     @uk.gov.hmrc.agentassurance.controllers.GetAgentRecordWithEntityChecksController.get()
+GET          /agent-record-with-checks/arn/:arn                                            @uk.gov.hmrc.agentassurance.controllers.GetAgentRecordWithEntityChecksController.clientGet(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)

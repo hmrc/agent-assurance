@@ -26,9 +26,16 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
+import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.internalauth.client.BackendAuthComponents
+import uk.gov.hmrc.internalauth.client.IAAction
+import uk.gov.hmrc.internalauth.client.Predicate
+import uk.gov.hmrc.internalauth.client.Resource
+import uk.gov.hmrc.internalauth.client.ResourceLocation
+import uk.gov.hmrc.internalauth.client.ResourceType
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
@@ -36,7 +43,8 @@ class GetAgentRecordWithEntityChecksController @Inject() (
     cc: ControllerComponents,
     entityCheckService: EntityCheckService,
     val authConnector: AuthConnector,
-)(implicit ec: ExecutionContext)
+    auth: BackendAuthComponents
+)(implicit ec: ExecutionContext, appConfig: AppConfig)
     extends BackendController(cc)
     with AuthActions {
 
@@ -44,4 +52,17 @@ class GetAgentRecordWithEntityChecksController @Inject() (
     entityCheckService.verifyAgent(arn).map(entityCheckResult => Ok(Json.toJson(entityCheckResult.agentRecord)))
   }
 
+  private val predicate = Predicate.Permission(
+    resource = Resource(
+      resourceType = ResourceType(appConfig.appName),
+      resourceLocation = ResourceLocation("agent-record-with-checks/arn")
+    ),
+    action = IAAction("WRITE")
+  )
+
+  private val internalAuth = auth.authorizedAction(predicate)
+
+  def clientGet(arn: Arn): Action[AnyContent] = internalAuth.async { implicit request =>
+    entityCheckService.verifyAgent(arn).map(entityCheckResult => Ok(Json.toJson(entityCheckResult.agentRecord)))
+  }
 }
