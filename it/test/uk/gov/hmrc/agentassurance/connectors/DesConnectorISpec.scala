@@ -35,12 +35,11 @@ import test.uk.gov.hmrc.agentassurance.support.MetricTestSupport
 import test.uk.gov.hmrc.agentassurance.support.UnitSpec
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentassurance.connectors.DesConnectorImpl
 import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.BusinessAddress
 import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
+import uk.gov.hmrc.agentassurance.repositories.AgencyNameCacheRepository
 import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
@@ -48,7 +47,6 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
 import uk.gov.hmrc.crypto.PlainText
-import uk.gov.hmrc.crypto.SymmetricCryptoFactory
 import uk.gov.hmrc.crypto.SymmetricCryptoFactory.aesCrypto
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
@@ -86,10 +84,18 @@ class DesConnectorISpec
       app.injector.instanceOf[Metrics]
     )
 
+  private val agentNameCache =
+    new AgencyNameCacheRepository(
+      app.injector.instanceOf[Configuration],
+      mongoComponent,
+      new CurrentTimestampSupport,
+      app.injector.instanceOf[Metrics]
+    )
+
   implicit override lazy val app: Application = appBuilder
     .build()
 
-  val cacheProvider = new CacheProvider(agentDataCache, app.injector.instanceOf[Configuration])
+  val cacheProvider = new CacheProvider(agentDataCache, agentNameCache, app.injector.instanceOf[Configuration])
 
   val desConnector = new DesConnectorImpl(
     app.injector.instanceOf[HttpClientV2],
@@ -116,7 +122,10 @@ class DesConnectorISpec
         "http-verbs.retries.intervals"                     -> List("1ms"),
         "agent.cache.enabled"                              -> true,
         "agent.cache.expires"                              -> "1 second",
-        "auditing.enabled"                                 -> false
+        "auditing.enabled"                                 -> false,
+        "rate-limiter.business-names.max-calls-per-second" -> 10,
+        "agent.name.cache.enabled"                         -> true,
+        "agent.name.cache.expires"                         -> "1 second"
       )
       .bindings(bind[DesConnector].toInstance(desConnector))
 
@@ -168,6 +177,11 @@ class DesConnectorISpec
 
   val arn  = Arn("AARN00012345")
   val arn2 = Arn("AARN00012346")
+
+  val utr                      = Utr("1234567890")
+  val utr2                     = Utr("1234567891")
+  val individualBusinessName   = "First Name QM Last Name QM"
+  val organisationBusinessName = "CT AGENT 165"
 
   "DesConnector getActiveCesaAgentRelationships with a valid NINO" should {
     behave.like(aCheckEndpoint(Nino("AB123456C")))
@@ -234,6 +248,67 @@ class DesConnectorISpec
     "must fail when the server returns agent unknown status" in {
       givenAgentIsUnknown404(Arn(arn.value))
       an[Exception] should be thrownBy await(desConnector.getAgentRecord(arn))
+    }
+
+  }
+
+  "DesConnector getBusinessNameRecord" should {
+    "return business name for individual for a given UTR" in {
+
+      givenDESRespondsWithRegistrationData(identifier = utr, isIndividual = true)
+
+      await(desConnector.getBusinessName(utr.value)) shouldBe Some(individualBusinessName)
+    }
+
+    "return business name for organisation for a given UTR" in {
+
+      givenDESRespondsWithRegistrationData(identifier = utr, isIndividual = false)
+
+      await(desConnector.getBusinessName(utr.value)) shouldBe Some(organisationBusinessName)
+    }
+  }
+
+  "DesConnector getBusinessName caching check" should {
+    "return business name cached for a given UTR and save record to cache" in {
+      givenDESRespondsWithRegistrationData(identifier = utr, isIndividual = false)
+
+      await(desConnector.getBusinessName(utr.value)) shouldBe Some(organisationBusinessName)
+      Thread.sleep(500)
+      await(agentNameCache.getFromCache(cacheId = encryptKey(utr.value))).get shouldBe Some(organisationBusinessName)
+
+    }
+
+    "do not cache and throw an exception if DES business name is not found" in {
+      givenDESReturnsErrorForRegistration(identifier = utr, responseCode = NOT_FOUND)
+
+      await(desConnector.getBusinessName(utr.value)) shouldBe None
+      Thread.sleep(500)
+      await(agentNameCache.getFromCache(cacheId = encryptKey(utr.value))) shouldBe None
+
+    }
+
+    "return business name from cache second time called within timeout " in {
+      givenDESRespondsWithRegistrationData(identifier = utr, isIndividual = false)
+      await(desConnector.getBusinessName(utr.value)) shouldBe Some(organisationBusinessName)
+      Thread.sleep(500)
+      await(desConnector.getBusinessName(utr.value)) shouldBe Some(organisationBusinessName)
+      verifyDESGetAgentRegistrationData(utr, 1)
+    }
+
+    "return business name cached for a given UTR and save record to cache for two agents" in {
+      givenDESRespondsWithRegistrationData(identifier = utr, isIndividual = false)
+      givenDESRespondsWithRegistrationData(identifier = utr2, isIndividual = true)
+
+      await(desConnector.getBusinessName(utr.value)) shouldBe Some(organisationBusinessName)
+      await(desConnector.getBusinessName(utr2.value)) shouldBe Some(individualBusinessName)
+      Thread.sleep(500)
+      await(agentNameCache.getFromCache(cacheId = encryptKey(utr.value))).get shouldBe Some(organisationBusinessName)
+      await(agentNameCache.getFromCache(cacheId = encryptKey(utr2.value))).get shouldBe Some(individualBusinessName)
+    }
+
+    "return None and do not thow exception when the DES server returns another 5xx status" in {
+      givenDesReturnsServerError()
+      await(desConnector.getBusinessName(utr.value)) shouldBe None
     }
 
   }

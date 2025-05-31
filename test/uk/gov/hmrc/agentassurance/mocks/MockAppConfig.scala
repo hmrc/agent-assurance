@@ -30,6 +30,12 @@ trait MockAppConfig extends MockFactory { this: TestSuite =>
   val mockServiceConfig: ServicesConfig = mock[ServicesConfig]
   val mockConfig: Configuration         = mock[Configuration]
 
+  (mockServiceConfig
+    .getInt(_: String))
+    .expects("rate-limiter.business-names.max-calls-per-second")
+    .atLeastOnce()
+    .returning(10)
+
   (mockServiceConfig.getInt(_: String)).expects(*).atLeastOnce().returning(1)
   (mockServiceConfig.baseUrl(_: String)).expects(*).atLeastOnce().returning("some-url")
   (mockServiceConfig.getConfString(_: String, _: String)).expects(*, *).atLeastOnce().returning("some-string")

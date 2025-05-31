@@ -19,13 +19,13 @@ package uk.gov.hmrc.agentassurance.services
 import javax.inject.Inject
 import javax.inject.Singleton
 
-import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import play.api.Configuration
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
+import uk.gov.hmrc.agentassurance.repositories.AgencyNameCacheRepository
 
 trait Cache[T] {
   def apply(key: String)(
@@ -40,13 +40,21 @@ class DoNotCache[T] extends Cache[T] {
 }
 
 @Singleton
-class CacheProvider @Inject() (agencyDetailsCache: AgencyDetailsCacheRepository, configuration: Configuration) {
+class CacheProvider @Inject() (
+    agencyDetailsCache: AgencyDetailsCacheRepository,
+    agencyNameCache: AgencyNameCacheRepository,
+    configuration: Configuration
+) {
 
-  val cacheEnabled = configuration.underlying.getBoolean("agent.cache.enabled")
-  val cacheExpires = Duration.create(configuration.underlying.getString("agent.cache.expires"))
+  val cacheEnabled     = configuration.underlying.getBoolean("agent.cache.enabled")
+  val cacheNameEnabled = configuration.underlying.getBoolean("agent.name.cache.enabled")
 
   val agentDetailsCache: Cache[AgentDetailsDesResponse] =
     if (cacheEnabled) agencyDetailsCache
     else new DoNotCache[AgentDetailsDesResponse]
+
+  val agentNameCache: Cache[Option[String]] =
+    if (cacheNameEnabled) agencyNameCache
+    else new DoNotCache[Option[String]]
 
 }
