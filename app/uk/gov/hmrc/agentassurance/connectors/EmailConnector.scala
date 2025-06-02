@@ -22,14 +22,16 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import com.google.inject.ImplementedBy
+import play.api.libs.json.Json
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.EmailInformation
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 @ImplementedBy(classOf[EmailConnectorImpl])
@@ -39,7 +41,7 @@ trait EmailConnector {
 
 class EmailConnectorImpl @Inject() (
     appConfig: AppConfig,
-    httpClient: HttpClient,
+    httpClient: HttpClientV2,
     metrics: Metrics
 ) extends EmailConnector
     with HttpErrorFunctions
@@ -50,18 +52,19 @@ class EmailConnectorImpl @Inject() (
     timer.time()
 
     httpClient
-      .POST[EmailInformation, HttpResponse](s"${appConfig.emailBaseUrl}/hmrc/email", emailInformation)
+      .post(url"${appConfig.emailBaseUrl}/hmrc/email")
+      .withBody(Json.toJson(emailInformation))
+      .execute[HttpResponse]
       .map { response =>
-        {
-          timer.time().stop()
-          response.status match {
-            case status if is2xx(status) => ()
-            case other =>
-              logger.warn(s"unexpected status from email service, status: $other")
-              ()
-          }
+        timer.time().stop()
+        response.status match {
+          case status if is2xx(status) => ()
+          case other =>
+            logger.warn(s"unexpected status from email service, status: $other")
+            ()
         }
       }
+
   }
 
 }
