@@ -2,8 +2,8 @@ import sbt._
 
 object AppDependencies {
 
-  private val mongoVer: String      = "1.9.0"
-  private val bootstrapVer: String  = "8.6.0"
+  private val mongoVer: String      = "2.6.0"
+  private val bootstrapVer: String  = "9.12.0"
   private val openHtmlToPdfVersion = "1.0.10"
 
   lazy val compile: Seq[ModuleID] = Seq(
