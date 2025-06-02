@@ -3,7 +3,7 @@ import sbt._
 object AppDependencies {
 
   private val mongoVer: String      = "2.6.0"
-  private val bootstrapVer: String  = "9.12.0"
+  private val bootstrapVer: String  = "9.13.0"
   private val openHtmlToPdfVersion = "1.0.10"
 
   lazy val compile: Seq[ModuleID] = Seq(
@@ -14,7 +14,8 @@ object AppDependencies {
     "uk.gov.hmrc"       %% "internal-auth-client-play-30" % "2.0.0",
     "com.openhtmltopdf"  % "openhtmltopdf-pdfbox"         % openHtmlToPdfVersion,
     "com.beachape"      %% "enumeratum-play-json"         % "1.8.1",
-    "uk.gov.hmrc"       %% "crypto-json-play-30"          % "8.2.0"
+    "uk.gov.hmrc"       %% "crypto-json-play-30"          % "8.2.0",
+    "uk.gov.hmrc"       %% "internal-auth-client-play-30" % "4.0.0"
   )
 
   lazy val test: Seq[ModuleID] = Seq(
