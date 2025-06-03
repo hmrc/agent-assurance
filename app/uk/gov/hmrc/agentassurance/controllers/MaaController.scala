@@ -23,8 +23,13 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import play.api.libs.json.Json
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
+import uk.gov.hmrc.agentassurance.binders.PaginationParameters
+import uk.gov.hmrc.agentassurance.models.pagination.PaginatedResources
+import uk.gov.hmrc.agentassurance.models.pagination.PaginationLinks
 import uk.gov.hmrc.agentassurance.models.ErrorBody
 import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
@@ -66,6 +71,25 @@ class MaaController @Inject() (
     repository.propertyExists(Value(identifier.value).toProperty(key)).map {
       case true  => Ok
       case false => Forbidden
+    }
+  }
+
+  def getMaaList(pagination: PaginationParameters): Action[AnyContent] = BasicAuth { implicit request =>
+    repository.findProperties(key, pagination.page, pagination.pageSize).map {
+      case (total, properties) =>
+        val response = PaginatedResources(
+          PaginationLinks.apply(
+            paginationParams = pagination,
+            total = total,
+            paginatedLinkBuilder = pp => routes.MaaController.getMaaList(pp).absoluteURL()
+          ),
+          pagination.page,
+          pagination.pageSize,
+          total,
+          properties
+        )
+
+        Ok(Json.toJson(response))
     }
   }
 

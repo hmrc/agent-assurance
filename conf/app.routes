@@ -41,3 +41,7 @@ POST          /dms-agent-callback                                               
 
 GET          /agent-record-with-checks                                                     @uk.gov.hmrc.agentassurance.controllers.GetAgentRecordWithEntityChecksController.get()
 GET          /agent-record-with-checks/arn/:arn                                            @uk.gov.hmrc.agentassurance.controllers.GetAgentRecordWithEntityChecksController.clientGet(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
+
+# REGRESSION
+GET           /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.getMaaList(pagination: uk.gov.hmrc.agentassurance.binders.PaginationParameters)
+GET           /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.getR2dwList(pagination: uk.gov.hmrc.agentassurance.binders.PaginationParameters)
