@@ -27,9 +27,6 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
-import uk.gov.hmrc.agentassurance.binders.PaginationParameters
-import uk.gov.hmrc.agentassurance.models.pagination.PaginatedResources
-import uk.gov.hmrc.agentassurance.models.pagination.PaginationLinks
 import uk.gov.hmrc.agentassurance.models.ErrorBody
 import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
@@ -70,25 +67,6 @@ class R2dwController @Inject() (
     repository.propertyExists(Value(identifier.value).toProperty(key)).map {
       case true  => Forbidden
       case false => Ok
-    }
-  }
-
-  def getR2dwList(pagination: PaginationParameters) = BasicAuth { implicit request =>
-    repository.findProperties(key, pagination.page, pagination.pageSize).map {
-      case (total, properties) =>
-        val response = PaginatedResources(
-          PaginationLinks.apply(
-            paginationParams = pagination,
-            total = total,
-            paginatedLinkBuilder = pp => routes.R2dwController.getR2dwList(pp).absoluteURL()
-          ),
-          pagination.page,
-          pagination.pageSize,
-          total,
-          properties
-        )
-
-        Ok(Json.toJson(response))
     }
   }
 
