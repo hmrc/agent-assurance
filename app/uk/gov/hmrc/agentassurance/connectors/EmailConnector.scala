@@ -60,7 +60,7 @@ class EmailConnectorImpl @Inject() (
         response.status match {
           case status if is2xx(status) => ()
           case other =>
-            logger.warn(s"unexpected status from email service, status: $other")
+            logger.error(s"unexpected status from email service, status: $other")
             ()
         }
       }

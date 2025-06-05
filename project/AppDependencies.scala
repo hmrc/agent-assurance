@@ -13,7 +13,7 @@ object AppDependencies {
     "org.julienrf"      %% "play-json-derived-codecs"     % "11.0.0",
     "uk.gov.hmrc"       %% "internal-auth-client-play-30" % "4.0.0",
     "com.openhtmltopdf"  % "openhtmltopdf-pdfbox"         % openHtmlToPdfVersion,
-    "com.beachape"      %% "enumeratum-play-json"         % "1.8.1",
+    "com.beachape"      %% "enumeratum-play-json"         % "1.9.0",
     "uk.gov.hmrc"       %% "crypto-json-play-30"          % "8.2.0"
   )
 
@@ -22,7 +22,7 @@ object AppDependencies {
     "uk.gov.hmrc"            %% "bootstrap-test-play-30"  % bootstrapVer % Test,
     "org.scalatestplus.play" %% "scalatestplus-play"      % "7.0.1"      % Test,
     "org.scalatestplus"      %% "mockito-5-10"            % "3.2.18.0"   % Test,
-    "org.scalamock"          %% "scalamock"               % "6.0.0"      % Test,
+    "org.scalamock"          %% "scalamock"               % "7.3.2"      % Test,
     "com.vladsch.flexmark"   % "flexmark-all"             % "0.64.8"     % Test
   )
 

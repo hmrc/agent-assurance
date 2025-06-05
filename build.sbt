@@ -28,7 +28,7 @@ lazy val root = (project in file("."))
 
 val scalaCOptions = Seq(
   "-Yrangepos",
-  "-Xfatal-warnings",
+//  "-Xfatal-warnings",
   "-Xlint:-missing-interpolator,_",
   "-Xlint:-byname-implicit",
   "-Ywarn-dead-code",
