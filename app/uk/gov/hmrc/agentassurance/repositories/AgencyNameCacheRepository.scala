@@ -42,30 +42,34 @@ import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 @Singleton
 class AgencyNameCacheRepository @Inject() (
-    config: Configuration,
-    mongo: MongoComponent,
-    timestampSupport: TimestampSupport,
-    metrics: Metrics
+  config: Configuration,
+  mongo: MongoComponent,
+  timestampSupport: TimestampSupport,
+  metrics: Metrics
 )(
-    implicit ec: ExecutionContext,
-    @Named("aes") crypto: Encrypter with Decrypter
-) extends EntityCache[String, Option[String]]
-    with Cache[Option[String]] {
+  implicit
+  ec: ExecutionContext,
+  @Named("aes") crypto: Encrypter
+    with Decrypter
+)
+extends EntityCache[String, Option[String]]
+with Cache[Option[String]] {
 
   lazy val format: Format[Option[String]] = Format(Reads.optionWithNull[String], Writes.optionWithNull[String])
-  lazy val cacheRepo: MongoCacheRepository[String] = new MongoCacheRepository(
-    mongoComponent = mongo,
-    collectionName = "cache-agent-name",
-    ttl = Duration.create(config.underlying.getString("agent.name.cache.expires")),
-    timestampSupport = timestampSupport,
-    cacheIdType = CacheIdType.SimpleCacheId,
-    replaceIndexes = true
-  )
+  lazy val cacheRepo: MongoCacheRepository[String] =
+    new MongoCacheRepository(
+      mongoComponent = mongo,
+      collectionName = "cache-agent-name",
+      ttl = Duration.create(config.underlying.getString("agent.name.cache.expires")),
+      timestampSupport = timestampSupport,
+      cacheIdType = CacheIdType.SimpleCacheId,
+      replaceIndexes = true
+    )
 
   val record = metrics.defaultRegistry
 
   def apply(
-      key: String
+    key: String
   )(body: => Future[Option[String]])(implicit ec: ExecutionContext): Future[Option[String]] = {
     val encryptedKey = crypto.encrypt(PlainText(key)).value
     getFromCache(encryptedKey).flatMap {
@@ -84,4 +88,5 @@ class AgencyNameCacheRepository @Inject() (
         }
     }
   }
+
 }

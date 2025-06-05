@@ -39,10 +39,13 @@ trait DesStubs {
     )
   }
 
-  val someAlienAgent  = """{"hasAgent":false,"agentId":"alien"}"""
+  val someAlienAgent = """{"hasAgent":false,"agentId":"alien"}"""
   val someCeasedAgent = """{"hasAgent":true,"agentId":"ex-agent","agentCeasedDate":"someDate"}"""
 
-  def givenClientHasRelationshipWithAgentInCESA(identifier: TaxIdentifier, agentId: SaAgentReference) = {
+  def givenClientHasRelationshipWithAgentInCESA(
+    identifier: TaxIdentifier,
+    agentId: SaAgentReference
+  ) = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -56,7 +59,10 @@ trait DesStubs {
     )
   }
 
-  def givenClientHasRelationshipWithMultipleAgentsInCESA(identifier: TaxIdentifier, agentIds: Seq[SaAgentReference]) = {
+  def givenClientHasRelationshipWithMultipleAgentsInCESA(
+    identifier: TaxIdentifier,
+    agentIds: Seq[SaAgentReference]
+  ) = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -70,7 +76,10 @@ trait DesStubs {
     )
   }
 
-  def givenClientRelationshipWithAgentCeasedInCESA(identifier: TaxIdentifier, agentId: String) = {
+  def givenClientRelationshipWithAgentCeasedInCESA(
+    identifier: TaxIdentifier,
+    agentId: String
+  ) = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -82,7 +91,10 @@ trait DesStubs {
     )
   }
 
-  def givenAllClientRelationshipsWithAgentsCeasedInCESA(identifier: TaxIdentifier, agentIds: Seq[String]) = {
+  def givenAllClientRelationshipsWithAgentsCeasedInCESA(
+    identifier: TaxIdentifier,
+    agentIds: Seq[String]
+  ) = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -160,7 +172,10 @@ trait DesStubs {
     )
   }
 
-  def amlsSubscriptionRecordExists(amlsRegNumber: String, status: String = "Approved") = {
+  def amlsSubscriptionRecordExists(
+    amlsRegNumber: String,
+    status: String = "Approved"
+  ) = {
     stubFor(
       get(urlEqualTo(s"/anti-money-laundering/subscription/$amlsRegNumber/status"))
         .willReturn(
@@ -177,7 +192,10 @@ trait DesStubs {
     )
   }
 
-  def amlsSubscriptionRecordFails(amlsRegNumber: String, status: Int) = {
+  def amlsSubscriptionRecordFails(
+    amlsRegNumber: String,
+    status: Int
+  ) = {
     stubFor(
       get(urlEqualTo(s"/anti-money-laundering/subscription/$amlsRegNumber/status"))
         .willReturn(
@@ -188,38 +206,43 @@ trait DesStubs {
   }
 
   def givenDESGetAgentRecord(
-      arn: Arn,
-      utr: Option[Utr],
-      overseas: Boolean = false
-  ): StubMapping =
-    stubFor(
-      get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
-        .willReturn(
-          aResponse()
-            .withStatus(200)
-            .withBody(personalDetailsResponseBodyWithValidData(utr, overseas))
-        )
-    )
+    arn: Arn,
+    utr: Option[Utr],
+    overseas: Boolean = false
+  ): StubMapping = stubFor(
+    get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
+      .willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(personalDetailsResponseBodyWithValidData(utr, overseas))
+      )
+  )
 
-  def givenDESGetAgentRecordSuspendedAgent(arn: Arn, utr: Option[Utr], isIndividual: Boolean = true): StubMapping =
-    stubFor(
-      get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
-        .willReturn(
-          aResponse()
-            .withStatus(200)
-            .withBody(suspendedAgentRecord(utr, isIndividual))
-        )
-    )
+  def givenDESGetAgentRecordSuspendedAgent(
+    arn: Arn,
+    utr: Option[Utr],
+    isIndividual: Boolean = true
+  ): StubMapping = stubFor(
+    get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
+      .willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(suspendedAgentRecord(utr, isIndividual))
+      )
+  )
 
-  def givenDESGetAgentRecordNoSuspensionDetails(arn: Arn, utr: Option[Utr], isIndividual: Boolean = true): StubMapping =
-    stubFor(
-      get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
-        .willReturn(
-          aResponse()
-            .withStatus(200)
-            .withBody(noSuspendedDetailsAgentRecord(utr, isIndividual))
-        )
-    )
+  def givenDESGetAgentRecordNoSuspensionDetails(
+    arn: Arn,
+    utr: Option[Utr],
+    isIndividual: Boolean = true
+  ): StubMapping = stubFor(
+    get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
+      .willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(noSuspendedDetailsAgentRecord(utr, isIndividual))
+      )
+  )
 
   def givenAgentIsUnknown404(arn: Arn) = {
     stubFor(
@@ -231,7 +254,10 @@ trait DesStubs {
     )
   }
 
-  def verifyDESGetAgentRecord(arn: Arn, count: Int = 1): Unit =
+  def verifyDESGetAgentRecord(
+    arn: Arn,
+    count: Int = 1
+  ): Unit =
     eventually(Timeout(Span(5, Seconds))) {
       verify(
         count,
@@ -239,24 +265,29 @@ trait DesStubs {
       )
     }
 
-  def givenNoDESGetAgentRecord(arn: Arn, optUtr: Option[Utr]): StubMapping =
-    stubFor(
-      get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
-        .willReturn(
-          aResponse()
-            .withStatus(200)
-            .withBody(noPersonalDetailsResponseBodyWithValidData(optUtr))
-        )
-    )
+  def givenNoDESGetAgentRecord(
+    arn: Arn,
+    optUtr: Option[Utr]
+  ): StubMapping = stubFor(
+    get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
+      .willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(noPersonalDetailsResponseBodyWithValidData(optUtr))
+      )
+  )
 
   private def clientIdentifierType(identifer: TaxIdentifier): String =
     identifer match {
       case _: Nino => "nino"
-      case _: Utr  => "utr"
-      case e       => throw new RuntimeException(s"Unacceptable taxIdentifier: $e")
+      case _: Utr => "utr"
+      case e => throw new RuntimeException(s"Unacceptable taxIdentifier: $e")
     }
 
-  def personalDetailsResponseBodyWithValidData(optUtr: Option[Utr], overseas: Boolean) =
+  def personalDetailsResponseBodyWithValidData(
+    optUtr: Option[Utr],
+    overseas: Boolean
+  ) =
     s"""
        |{
        |   "isAnOrganisation" : true,
@@ -275,7 +306,10 @@ trait DesStubs {
          |         "addressLine3" : "Town Centre",
          |         "addressLine4" : "Telford",
          |         "postalCode" : "TF3 4ER",
-         |         "countryCode" : "${if (overseas) "NZ" else "GB"}",
+         |         "countryCode" : "${if (overseas)
+          "NZ"
+        else
+          "GB"}",
          |         "addressLine1" : "Matheson House"
          |      },
          |      "agencyName" : "ABC Accountants",
@@ -307,7 +341,10 @@ trait DesStubs {
          |}
             """.stripMargin
 
-  def suspendedAgentRecord(optUtr: Option[Utr], isIndividual: Boolean) = {
+  def suspendedAgentRecord(
+    optUtr: Option[Utr],
+    isIndividual: Boolean
+  ) = {
 
     s"""
        |{
@@ -333,7 +370,10 @@ trait DesStubs {
          | }""".stripMargin
   }
 
-  def noSuspendedDetailsAgentRecord(optUtr: Option[Utr], isIndividual: Boolean) = {
+  def noSuspendedDetailsAgentRecord(
+    optUtr: Option[Utr],
+    isIndividual: Boolean
+  ) = {
 
     s"""
        |{
@@ -393,17 +433,22 @@ trait DesStubs {
          |}
             """.stripMargin
 
-  def givenDESRespondsWithRegistrationData(identifier: TaxIdentifier, isIndividual: Boolean): StubMapping =
-    stubFor(
-      post(urlEqualTo(s"/registration/individual/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
-        .willReturn(
-          aResponse()
-            .withStatus(200)
-            .withBody(registrationData(isIndividual))
-        )
-    )
+  def givenDESRespondsWithRegistrationData(
+    identifier: TaxIdentifier,
+    isIndividual: Boolean
+  ): StubMapping = stubFor(
+    post(urlEqualTo(s"/registration/individual/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
+      .willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(registrationData(isIndividual))
+      )
+  )
 
-  def verifyDESGetAgentRegistrationData(identifier: TaxIdentifier, count: Int = 1): Unit =
+  def verifyDESGetAgentRegistrationData(
+    identifier: TaxIdentifier,
+    count: Int = 1
+  ): Unit =
     eventually(Timeout(Span(5, Seconds))) {
       verify(
         count,
@@ -413,36 +458,34 @@ trait DesStubs {
       )
     }
 
-  def givenDESRespondsWithoutRegistrationData(identifier: TaxIdentifier): StubMapping =
-    stubFor(
-      post(urlEqualTo(s"/registration/individual/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
-        .willReturn(
-          aResponse()
-            .withStatus(200)
-            .withBody(invalidRegistrationData)
-        )
-    )
+  def givenDESRespondsWithoutRegistrationData(identifier: TaxIdentifier): StubMapping = stubFor(
+    post(urlEqualTo(s"/registration/individual/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
+      .willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(invalidRegistrationData)
+      )
+  )
 
   def givenDESReturnsErrorForRegistration(
-      identifier: TaxIdentifier,
-      responseCode: Int,
-      errorMessage: String = failureResponseBody
-  ): StubMapping =
-    stubFor(
-      post(urlEqualTo(s"/registration/individual/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
-        .inScenario("DES failure")
-        .whenScenarioStateIs(Scenario.STARTED)
-        .willReturn(
-          aResponse()
-            .withStatus(responseCode)
-            .withBody(errorMessage)
-        )
-    )
+    identifier: TaxIdentifier,
+    responseCode: Int,
+    errorMessage: String = failureResponseBody
+  ): StubMapping = stubFor(
+    post(urlEqualTo(s"/registration/individual/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
+      .inScenario("DES failure")
+      .whenScenarioStateIs(Scenario.STARTED)
+      .willReturn(
+        aResponse()
+          .withStatus(responseCode)
+          .withBody(errorMessage)
+      )
+  )
 
   def givenDESReturnsErrorFirstAndValidDataLater(
-      identifier: TaxIdentifier,
-      isIndividual: Boolean,
-      responseCode: Int
+    identifier: TaxIdentifier,
+    isIndividual: Boolean,
+    responseCode: Int
   ): StubMapping = {
     stubFor(
       post(urlEqualTo(s"/registration/individual/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
@@ -480,7 +523,10 @@ trait DesStubs {
   }
 
   private def registrationData(isIndividual: Boolean) =
-    if (isIndividual) registrationDataForIndividual else registrationDataForOrganisation
+    if (isIndividual)
+      registrationDataForIndividual
+    else
+      registrationDataForOrganisation
 
   val registrationDataForOrganisation =
     s"""
@@ -565,4 +611,5 @@ trait DesStubs {
       |   "reason" : "Some reason"
       |}
     """.stripMargin
+
 }

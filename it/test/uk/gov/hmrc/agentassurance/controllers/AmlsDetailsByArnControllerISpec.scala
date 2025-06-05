@@ -43,47 +43,44 @@ import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
 class AmlsDetailsByArnControllerISpec
-    extends PlaySpec
-    with AgentAuthStubs
-    with GuiceOneServerPerSuite
-    with WireMockSupport
-    with CleanMongoCollectionSupport
-    with InstantClockTestSupport
-    with DesStubs {
+extends PlaySpec
+with AgentAuthStubs
+with GuiceOneServerPerSuite
+with WireMockSupport
+with CleanMongoCollectionSupport
+with InstantClockTestSupport
+with DesStubs {
 
-  implicit override lazy val app: Application = appBuilder.build()
+  override implicit lazy val app: Application = appBuilder.build()
 
-  protected val ukAmlsRepository: PlayMongoRepository[UkAmlsEntity] =
-    new AmlsRepositoryImpl(mongoComponent)
+  protected val ukAmlsRepository: PlayMongoRepository[UkAmlsEntity] = new AmlsRepositoryImpl(mongoComponent)
 
-  protected val overseasAmlsRepository: PlayMongoRepository[OverseasAmlsEntity] =
-    new OverseasAmlsRepositoryImpl(mongoComponent)
+  protected val overseasAmlsRepository: PlayMongoRepository[OverseasAmlsEntity] = new OverseasAmlsRepositoryImpl(mongoComponent)
 
-  protected val archivedAmlsRepository: PlayMongoRepository[ArchivedAmlsEntity] =
-    new ArchivedAmlsRepositoryImpl(mongoComponent)
+  protected val archivedAmlsRepository: PlayMongoRepository[ArchivedAmlsEntity] = new ArchivedAmlsRepositoryImpl(mongoComponent)
 
-  val moduleWithOverrides: AbstractModule = new AbstractModule() {
-    override def configure(): Unit = {
-      bind(classOf[OverseasAmlsRepository]).toInstance(overseasAmlsRepository.asInstanceOf[OverseasAmlsRepositoryImpl])
-      bind(classOf[AmlsRepository]).toInstance(ukAmlsRepository.asInstanceOf[AmlsRepositoryImpl])
-      bind(classOf[ArchivedAmlsRepository]).toInstance(archivedAmlsRepository.asInstanceOf[ArchivedAmlsRepositoryImpl])
+  val moduleWithOverrides: AbstractModule =
+    new AbstractModule() {
+      override def configure(): Unit = {
+        bind(classOf[OverseasAmlsRepository]).toInstance(overseasAmlsRepository.asInstanceOf[OverseasAmlsRepositoryImpl])
+        bind(classOf[AmlsRepository]).toInstance(ukAmlsRepository.asInstanceOf[AmlsRepositoryImpl])
+        bind(classOf[ArchivedAmlsRepository]).toInstance(archivedAmlsRepository.asInstanceOf[ArchivedAmlsRepositoryImpl])
+      }
     }
-  }
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "microservice.services.auth.host"      -> wireMockHost,
-        "microservice.services.auth.port"      -> wireMockPort,
-        "microservice.services.des.host"       -> wireMockHost,
-        "microservice.services.des.port"       -> wireMockPort,
-        "auditing.enabled"                     -> false,
-        "stride.roles.agent-assurance"         -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled-on-start" -> false,
-        "http-verbs.retries.intervals"         -> List("1ms"),
-        "agent.cache.enabled"                  -> false
-      )
-      .overrides(moduleWithOverrides)
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.auth.host" -> wireMockHost,
+      "microservice.services.auth.port" -> wireMockPort,
+      "microservice.services.des.host" -> wireMockHost,
+      "microservice.services.des.port" -> wireMockPort,
+      "auditing.enabled" -> false,
+      "stride.roles.agent-assurance" -> "maintain_agent_manually_assure",
+      "internal-auth-token-enabled-on-start" -> false,
+      "http-verbs.retries.intervals" -> List("1ms"),
+      "agent.cache.enabled" -> false
+    )
+    .overrides(moduleWithOverrides)
 
   val arn = Arn("AARN0000002")
   val url = s"http://localhost:$port/agent-assurance/amls/arn/${arn.value}"
@@ -92,32 +89,37 @@ class AmlsDetailsByArnControllerISpec
 
   val wsClient = app.injector.instanceOf[WSClient]
 
-  def doRequest() =
-    Await.result(
-      wsClient
-        .url(url)
-        .withHttpHeaders("Authorization" -> "Bearer XYZ")
-        .get(),
-      15.seconds
-    )
+  def doRequest() = Await.result(
+    wsClient
+      .url(url)
+      .withHttpHeaders("Authorization" -> "Bearer XYZ")
+      .get(),
+    15.seconds
+  )
 
-  def doPostRequest[T](body: T)(implicit writes: BodyWritable[T]) =
-    Await.result(
-      wsClient
-        .url(url)
-        .withHttpHeaders("Authorization" -> "Bearer XYZ", CONTENT_TYPE -> "application/json")
-        .post(body),
-      15.seconds
-    )
+  def doPostRequest[T](body: T)(implicit writes: BodyWritable[T]) = Await.result(
+    wsClient
+      .url(url)
+      .withHttpHeaders("Authorization" -> "Bearer XYZ", CONTENT_TYPE -> "application/json")
+      .post(body),
+    15.seconds
+  )
 
   def agentDetails(countryCode: String = "GB") = AgencyDetails(
     Some("My Agency"),
     Some("abc@abc.com"),
     Some("07345678901"),
-    Some(BusinessAddress("25 Any Street", Some("Central Grange"), Some("Telford"), None, Some("TF4 3TR"), countryCode))
+    Some(BusinessAddress(
+      "25 Any Street",
+      Some("Central Grange"),
+      Some("Telford"),
+      None,
+      Some("TF4 3TR"),
+      countryCode
+    ))
   )
 
-  val testUtr: Utr                       = Utr("7000000002")
+  val testUtr: Utr = Utr("7000000002")
   val membershipExpiresOnDate: LocalDate = LocalDate.now.plusWeeks(4)
   val testAmlsDetails: UkAmlsDetails = UkAmlsDetails(
     "supervisory",
@@ -125,9 +127,12 @@ class AmlsDetailsByArnControllerISpec
     appliedOn = None,
     membershipExpiresOn = Some(membershipExpiresOnDate)
   )
-  val testOverseasAmlsDetails: OverseasAmlsDetails =
-    OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
-  val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(arn, testOverseasAmlsDetails, None)
+  val testOverseasAmlsDetails: OverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
+  val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(
+    arn,
+    testOverseasAmlsDetails,
+    None
+  )
 
   val testCreatedDate: LocalDate = LocalDate.now.plusWeeks(2)
   val amlsEntity: UkAmlsEntity = UkAmlsEntity(
@@ -149,7 +154,11 @@ class AmlsDetailsByArnControllerISpec
 
     s"return OK with status NoAmlsDetailsNonUK when no AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
-      givenDESGetAgentRecord(arn, Some(testUtr), overseas = true)
+      givenDESGetAgentRecord(
+        arn,
+        Some(testUtr),
+        overseas = true
+      )
       val response = doRequest()
       response.status mustBe OK
       response.json mustBe Json.obj("status" -> "NoAmlsDetailsNonUK")
@@ -163,8 +172,8 @@ class AmlsDetailsByArnControllerISpec
       response.json mustBe Json.obj(
         "status" -> "ValidAmlsDetailsUK",
         "details" -> Json.obj(
-          "supervisoryBody"     -> "supervisory",
-          "membershipNumber"    -> "0123456789",
+          "supervisoryBody" -> "supervisory",
+          "membershipNumber" -> "0123456789",
           "membershipExpiresOn" -> membershipExpiresOnDate
         )
       )
@@ -176,7 +185,7 @@ class AmlsDetailsByArnControllerISpec
       val response = doRequest()
       response.status mustBe OK
       response.json mustBe Json.obj(
-        "status"  -> "ValidAmlsNonUK",
+        "status" -> "ValidAmlsNonUK",
         "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789")
       )
     }
@@ -347,4 +356,5 @@ class AmlsDetailsByArnControllerISpec
       }
     }
   }
+
 }

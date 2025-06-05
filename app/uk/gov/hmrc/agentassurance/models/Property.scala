@@ -19,7 +19,10 @@ package uk.gov.hmrc.agentassurance.models
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-case class Property(key: String, value: String)
+case class Property(
+  key: String,
+  value: String
+)
 
 object Property {
   implicit val propertyFormat: Format[Property] = Json.format[Property]

@@ -38,30 +38,39 @@ import uk.gov.hmrc.mongo.MongoComponent
 @ImplementedBy(classOf[PropertiesRepositoryImpl])
 trait PropertiesRepository {
 
-  def findProperties(key: String, page: Int, pageSize: Int): Future[(Int, Seq[String])]
+  def findProperties(
+    key: String,
+    page: Int,
+    pageSize: Int
+  ): Future[(Int, Seq[String])]
 
   def propertyExists(property: Property): Future[Boolean]
 
   def createProperty(property: Property): Future[Unit]
 
   def deleteProperty(property: Property): Future[Unit]
+
 }
 
 @Singleton
 class PropertiesRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
-    extends PlayMongoRepository[Property](
-      mongoComponent = mongo,
-      collectionName = "agent-assurance",
-      domainFormat = Property.propertyFormat,
-      indexes = Seq(
-        IndexModel(ascending("key"))
-      )
-    )
-    with PropertiesRepository {
+extends PlayMongoRepository[Property](
+  mongoComponent = mongo,
+  collectionName = "agent-assurance",
+  domainFormat = Property.propertyFormat,
+  indexes = Seq(
+    IndexModel(ascending("key"))
+  )
+)
+with PropertiesRepository {
 
   override lazy val requiresTtlIndex: Boolean = false
 
-  override def findProperties(key: String, page: Int, pageSize: Int): Future[(Int, Seq[String])] = {
+  override def findProperties(
+    key: String,
+    page: Int,
+    pageSize: Int
+  ): Future[(Int, Seq[String])] = {
 
     val skipDuePageNumber = pageSize * (page - 1)
 
@@ -101,4 +110,5 @@ class PropertiesRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: Ex
       .toFuture()
       .map(_ => ())
   }
+
 }

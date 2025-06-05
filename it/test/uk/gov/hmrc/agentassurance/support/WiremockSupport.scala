@@ -40,41 +40,46 @@ object WireMockSupport {
   private lazy val wireMockPort = Port.randomAvailable
 }
 
-trait WireMockSupport extends BeforeAndAfterAll with BeforeAndAfterEach {
+trait WireMockSupport
+extends BeforeAndAfterAll
+with BeforeAndAfterEach {
   me: Suite =>
 
-  val wireMockPort: Int                                           = WireMockSupport.wireMockPort
-  val wireMockHost                                                = "localhost"
-  val wireMockBaseUrlAsString                                     = s"http://$wireMockHost:$wireMockPort"
-  val wireMockBaseUrl                                             = new URL(wireMockBaseUrlAsString)
+  val wireMockPort: Int = WireMockSupport.wireMockPort
+  val wireMockHost = "localhost"
+  val wireMockBaseUrlAsString = s"http://$wireMockHost:$wireMockPort"
+  val wireMockBaseUrl = new URL(wireMockBaseUrlAsString)
   protected implicit val implicitWireMockBaseUrl: WireMockBaseUrl = WireMockBaseUrl(wireMockBaseUrl)
 
   protected def basicWireMockConfig(): WireMockConfiguration = wireMockConfig()
 
   private val wireMockServer = new WireMockServer(basicWireMockConfig().port(wireMockPort))
 
-  protected override def beforeAll(): Unit = {
+  override protected def beforeAll(): Unit = {
     super.beforeAll()
     configureFor(wireMockHost, wireMockPort)
     wireMockServer.start()
   }
 
-  protected override def afterAll(): Unit = {
+  override protected def afterAll(): Unit = {
     wireMockServer.stop()
     super.afterAll()
   }
 
-  protected override def beforeEach(): Unit = {
+  override protected def beforeEach(): Unit = {
     super.beforeEach()
     wireMockServer.resetAll()
     reset()
   }
+
 }
 
 // This class was copy-pasted from the hmrctest project, which is now deprecated.
-object Port extends Logging {
-  val rnd       = new scala.util.Random
-  val range     = 8000 to 39999
+object Port
+extends Logging {
+
+  val rnd = new scala.util.Random
+  val range = 8000 to 39999
   val usedPorts = List[Int]()
 
   @tailrec
@@ -104,13 +109,18 @@ object Port extends Logging {
         socket = new ServerSocket(p)
         socket.setReuseAddress(true)
         true
-      } else {
+      }
+      else {
         false
       }
-    } catch {
+    }
+    catch {
       case t: Throwable => false
-    } finally {
-      if (socket != null) socket.close()
+    }
+    finally {
+      if (socket != null)
+        socket.close()
     }
   }
+
 }

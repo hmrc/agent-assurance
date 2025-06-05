@@ -33,28 +33,44 @@ import uk.gov.hmrc.auth.core.AuthProviders
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockInternalAuth extends MockFactory { this: TestSuite =>
+trait MockInternalAuth
+extends MockFactory { this: TestSuite =>
 
   val mockAuthConnector = mock[AuthConnector]
 
   def mockAuth()(response: Either[String, Enrolments]) = {
     (mockAuthConnector
       .authorise(_: Predicate, _: Retrieval[Enrolments])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(AuthProviders(GovernmentGateway), Retrievals.allEnrolments, *, *)
+      .expects(
+        AuthProviders(GovernmentGateway),
+        Retrievals.allEnrolments,
+        *,
+        *
+      )
       .returning(response.fold[Future[Enrolments]](e => Future.failed(new Exception(e)), r => Future.successful(r)))
   }
 
   def mockAuthWithNoRetrievals[A](retrieval: Retrieval[A])(result: A) = {
     (mockAuthConnector
       .authorise[A](_: Predicate, _: Retrieval[A])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(EmptyPredicate, retrieval, *, *)
+      .expects(
+        EmptyPredicate,
+        retrieval,
+        *,
+        *
+      )
       .returning(Future.successful(result))
   }
 
   def mockAgentAuth()(response: Either[String, Unit]) = {
     (mockAuthConnector
       .authorise(_: Predicate, _: EmptyRetrieval.type)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(AuthProviders(GovernmentGateway).and(AffinityGroup.Agent), EmptyRetrieval, *, *)
+      .expects(
+        AuthProviders(GovernmentGateway).and(AffinityGroup.Agent),
+        EmptyRetrieval,
+        *,
+        *
+      )
       .returning(response.fold[Future[Unit]](e => Future.failed(new Exception(e)), r => Future.successful(r)))
   }
 

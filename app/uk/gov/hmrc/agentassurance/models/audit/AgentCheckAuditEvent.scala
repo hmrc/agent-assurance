@@ -22,8 +22,12 @@ import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
-case class AgentCheckAuditEvent(agentReferenceNumber: Arn, utr: Option[Utr], agentCheckOutcomes: Seq[AgentCheckOutcome])
-    extends AuditDetail {
+case class AgentCheckAuditEvent(
+  agentReferenceNumber: Arn,
+  utr: Option[Utr],
+  agentCheckOutcomes: Seq[AgentCheckOutcome]
+)
+extends AuditDetail {
   val auditType = "AgentCheck"
 }
 

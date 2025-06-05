@@ -34,67 +34,83 @@ import uk.gov.hmrc.agentassurance.connectors.EnrolmentStoreProxyConnectorImpl
 import uk.gov.hmrc.http.HeaderCarrier
 
 class EnrolmentStoreProxyConnectorISpec
-    extends UnitSpec
-    with GuiceOneAppPerSuite
-    with WireMockSupport
-    with MetricTestSupport
-    with EnrolmentStoreProxyStubs {
-  implicit override lazy val app: Application = appBuilder.build()
+extends UnitSpec
+with GuiceOneAppPerSuite
+with WireMockSupport
+with MetricTestSupport
+with EnrolmentStoreProxyStubs {
+
+  override implicit lazy val app: Application = appBuilder.build()
 
   implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   val connector = app.injector.instanceOf[EnrolmentStoreProxyConnectorImpl]
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "microservice.services.auth.host"                  -> wireMockHost,
-        "microservice.services.auth.port"                  -> wireMockPort,
-        "microservice.services.des.host"                   -> wireMockHost,
-        "microservice.services.des.port"                   -> wireMockPort,
-        "microservice.services.des.environment"            -> "test",
-        "microservice.services.des.authorization-token"    -> "secret",
-        "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
-        "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
-        "microservice.services.internal-auth.host"         -> wireMockHost,
-        "microservice.services.internal-auth.port"         -> wireMockPort,
-        "auditing.consumer.baseUri.host"                   -> wireMockHost,
-        "auditing.consumer.baseUri.port"                   -> wireMockPort,
-        "internal-auth-token-enabled-on-start"             -> false,
-        "agent.cache.enabled"                              -> true,
-        "agent.cache.expires"                              -> "1 hour",
-        "auditing.enabled"                                 -> false
-      )
-      .overrides(moduleWithOverrides)
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.auth.host" -> wireMockHost,
+      "microservice.services.auth.port" -> wireMockPort,
+      "microservice.services.des.host" -> wireMockHost,
+      "microservice.services.des.port" -> wireMockPort,
+      "microservice.services.des.environment" -> "test",
+      "microservice.services.des.authorization-token" -> "secret",
+      "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
+      "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
+      "microservice.services.internal-auth.host" -> wireMockHost,
+      "microservice.services.internal-auth.port" -> wireMockPort,
+      "auditing.consumer.baseUri.host" -> wireMockHost,
+      "auditing.consumer.baseUri.port" -> wireMockPort,
+      "internal-auth-token-enabled-on-start" -> false,
+      "agent.cache.enabled" -> true,
+      "agent.cache.expires" -> "1 hour",
+      "auditing.enabled" -> false
+    )
+    .overrides(moduleWithOverrides)
 
-  lazy val moduleWithOverrides: AbstractModule = new AbstractModule {
-    override def configure(): Unit = {
-      bind(classOf[Clock]).toInstance(clock)
+  lazy val moduleWithOverrides: AbstractModule =
+    new AbstractModule {
+      override def configure(): Unit = {
+        bind(classOf[Clock]).toInstance(clock)
+      }
     }
-  }
 
-  private implicit val hc: HeaderCarrier    = HeaderCarrier()
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.global
 
   private val service = "IR-PAYE"
-  private val userId  = "0000001531072644"
+  private val userId = "0000001531072644"
 
   "EnrolmentStoreProxyConnector getClientCount via EACD's ES2" should {
 
     "return an empty list when ES2 returns 204" in {
-      noClientsAreAllocated(service, userId, 204)
+      noClientsAreAllocated(
+        service,
+        userId,
+        204
+      )
       await(connector.getClientCount(service, userId)) shouldBe 0
     }
 
     "throw an exception when ES2 returns an unexpected http response code" in {
-      noClientsAreAllocated(service, userId, 404)
+      noClientsAreAllocated(
+        service,
+        userId,
+        404
+      )
       an[Exception] should be thrownBy await(connector.getClientCount(service, userId))
     }
 
     "return only clients from ES2 whose enrolments are in the 'Activated' or 'Unknown' state" when {
-      def checkClientCount(withEnrolmentState: String, expectedClientListSize: Int) = {
+      def checkClientCount(
+        withEnrolmentState: String,
+        expectedClientListSize: Int
+      ) = {
         givenCleanMetricRegistry()
-        sufficientClientsAreAllocated(service, userId, state = withEnrolmentState)
+        sufficientClientsAreAllocated(
+          service,
+          userId,
+          state = withEnrolmentState
+        )
 
         await(connector.getClientCount(service, userId)) shouldBe expectedClientListSize
 

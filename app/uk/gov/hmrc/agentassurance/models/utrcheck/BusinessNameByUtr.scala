@@ -19,7 +19,10 @@ package uk.gov.hmrc.agentassurance.models.utrcheck
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
-case class BusinessNameByUtr(utr: String, agentName: Option[String])
+case class BusinessNameByUtr(
+  utr: String,
+  agentName: Option[String]
+)
 
 object BusinessNameByUtr {
   implicit val businessNameFormat: OFormat[BusinessNameByUtr] = Json.format

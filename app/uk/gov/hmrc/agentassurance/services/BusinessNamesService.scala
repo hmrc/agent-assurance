@@ -34,10 +34,12 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
 class BusinessNamesService @Inject() (desConnector: DesConnector)(
-    implicit val appConfig: AppConfig,
-    mat: Materializer,
-    ec: ExecutionContext
-) extends Logging {
+  implicit
+  val appConfig: AppConfig,
+  mat: Materializer,
+  ec: ExecutionContext
+)
+extends Logging {
 
   val maxCallsPerSecondBusinessNames: Int = appConfig.maxCallsPerSecondBusinessNames
 
@@ -53,4 +55,5 @@ class BusinessNamesService @Inject() (desConnector: DesConnector)(
   def get(utr: String)(implicit headerCarrier: HeaderCarrier): Future[Option[String]] = {
     desConnector.getBusinessName(utr)
   }
+
 }

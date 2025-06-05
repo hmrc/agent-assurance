@@ -22,8 +22,8 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
 case class DmsResponse(
-    processingDate: Instant,
-    reference: String
+  processingDate: Instant,
+  reference: String
 )
 
 object DmsResponse {

@@ -41,40 +41,51 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class AgentServicesController @Inject() (
-    desConnector: DesConnector,
-    val authConnector: AuthConnector,
-    dmsService: DmsService,
-    cc: ControllerComponents
-)(implicit val appConfig: AppConfig, ec: ExecutionContext)
-    extends BackendController(cc)
-    with AuthActions
-    with Logging {
+  desConnector: DesConnector,
+  val authConnector: AuthConnector,
+  dmsService: DmsService,
+  cc: ControllerComponents
+)(implicit
+  val appConfig: AppConfig,
+  ec: ExecutionContext
+)
+extends BackendController(cc)
+with AuthActions
+with Logging {
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
-  def getAgencyDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
-    desConnector
-      .getAgentRecord(arn)
-      .map {
-        case _ @AgentDetailsDesResponse(optUtr, Some(agencyDetails), _, _) =>
-          Ok(Json.toJson(AgentDetailsResponse(agencyDetails, optUtr)))
-        case _ => NoContent
-      }
-  }
+  def getAgencyDetails(arn: Arn): Action[AnyContent] =
+    withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
+      desConnector
+        .getAgentRecord(arn)
+        .map {
+          case _ @AgentDetailsDesResponse(
+                optUtr,
+                Some(agencyDetails),
+                _,
+                _
+              ) =>
+            Ok(Json.toJson(AgentDetailsResponse(agencyDetails, optUtr)))
+          case _ => NoContent
+        }
+    }
 
-  def postAgencyDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) {
-    implicit request =>
-      for {
-        dmsResponse <- dmsService.submitToDms(
-          request.body.asText,
-          Instant.now().truncatedTo(ChronoUnit.SECONDS),
-          DmsSubmissionReference.create
-        )
-      } yield {
-        logger.info(
-          s"Dms Submission successful for ${arn.value}: ${dmsResponse.reference} at ${dmsResponse.processingDate}"
-        )
-        Created
-      }
-  }
+  def postAgencyDetails(arn: Arn): Action[AnyContent] =
+    withAffinityGroupAgentOrStride(strideRoles) {
+      implicit request =>
+        for {
+          dmsResponse <- dmsService.submitToDms(
+            request.body.asText,
+            Instant.now().truncatedTo(ChronoUnit.SECONDS),
+            DmsSubmissionReference.create
+          )
+        } yield {
+          logger.info(
+            s"Dms Submission successful for ${arn.value}: ${dmsResponse.reference} at ${dmsResponse.processingDate}"
+          )
+          Created
+        }
+    }
+
 }

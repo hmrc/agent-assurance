@@ -30,22 +30,25 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
 class EmailService @Inject() (
-    emailConnector: EmailConnector,
-    appConfig: AppConfig
+  emailConnector: EmailConnector,
+  appConfig: AppConfig
 ) {
   def sendEntityCheckNotification(
-      entityCheckNotification: EntityCheckNotification
-  )(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Unit] = {
+    entityCheckNotification: EntityCheckNotification
+  )(implicit
+    ec: ExecutionContext,
+    hc: HeaderCarrier
+  ): Future[Unit] = {
     emailConnector.sendEmail(
       EmailInformation(
         to = Seq(appConfig.agentMaintainerEmail),
         templateId = "entity_check_notification",
         parameters = Map(
-          "agencyName"   -> entityCheckNotification.agencyName,
-          "arn"          -> entityCheckNotification.arn.value,
-          "utr"          -> entityCheckNotification.utr,
+          "agencyName" -> entityCheckNotification.agencyName,
+          "arn" -> entityCheckNotification.arn.value,
+          "utr" -> entityCheckNotification.utr,
           "failedChecks" -> entityCheckNotification.failedChecks,
-          "dateTime"     -> entityCheckNotification.dateTime
+          "dateTime" -> entityCheckNotification.dateTime
         )
       )
     )

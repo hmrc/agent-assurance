@@ -19,11 +19,19 @@ package test.uk.gov.hmrc.agentassurance.stubs
 import com.github.tomakehurst.wiremock.client.WireMock._
 
 trait EnrolmentStoreProxyStubs {
-  private def clientListUrl(service: String, userId: String) = {
+
+  private def clientListUrl(
+    service: String,
+    userId: String
+  ) = {
     s"/enrolment-store-proxy/enrolment-store/users/$userId/enrolments?type=delegated&service=$service"
   }
 
-  def sufficientClientsAreAllocated(service: String, userId: String, state: String = "Unknown") = {
+  def sufficientClientsAreAllocated(
+    service: String,
+    userId: String,
+    state: String = "Unknown"
+  ) = {
     val responseBody =
       s"""
          |{
@@ -131,7 +139,10 @@ trait EnrolmentStoreProxyStubs {
     )
   }
 
-  def tooFewClientsAreAllocated(service: String, userId: String) = {
+  def tooFewClientsAreAllocated(
+    service: String,
+    userId: String
+  ) = {
     val responseBody =
       s"""
          |{
@@ -224,7 +235,12 @@ trait EnrolmentStoreProxyStubs {
     )
   }
 
-  def noClientsAreAllocated(service: String, userId: String, statusCode: Int = 204) = {
+  def noClientsAreAllocated(
+    service: String,
+    userId: String,
+    statusCode: Int = 204
+  ) = {
     stubFor(get(urlEqualTo(clientListUrl(service, userId))).willReturn(aResponse().withStatus(statusCode)))
   }
+
 }

@@ -45,23 +45,23 @@ import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 import uk.gov.hmrc.mongo.CurrentTimestampSupport
 
 class EntityCheckServiceSpec
-    extends PlaySpec
-    with CleanMongoCollectionSupport
-    with MockDesConnector
-    with MockCitizenDetailsConnector
-    with InstantClockTestSupport
-    with MockAppConfig
-    with MockEmailService
-    with MockPropertiesRepository
-    with MockAuditService {
+extends PlaySpec
+with CleanMongoCollectionSupport
+with MockDesConnector
+with MockCitizenDetailsConnector
+with InstantClockTestSupport
+with MockAppConfig
+with MockEmailService
+with MockPropertiesRepository
+with MockAuditService {
 
-  implicit val ac: AppConfig        = mockAppConfig
-  implicit val hc: HeaderCarrier    = HeaderCarrier()
+  implicit val ac: AppConfig = mockAppConfig
+  implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-  implicit val req: Request[_]      = FakeRequest()
+  implicit val req: Request[_] = FakeRequest()
 
   val mongoLockRepository = new MongoLockRepository(mongoComponent, new CurrentTimestampSupport)
-  val mongoLockService    = new MongoLockService(mongoLockRepository)
+  val mongoLockService = new MongoLockService(mongoLockRepository)
 
   val service =
     new EntityCheckService(
@@ -141,7 +141,7 @@ class EntityCheckServiceSpec
     "return Some(SuspensionDetails) and do entityChecks and sent email with deceased failed" in {
 
       val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
-      val dateTime  = formatter.format(LocalDateTime.now())
+      val dateTime = formatter.format(LocalDateTime.now())
 
       val utr = Utr("1234567")
       val agentDetailsDesResponse = AgentDetailsDesResponse(
@@ -180,7 +180,7 @@ class EntityCheckServiceSpec
     "return Some(SuspensionDetails) and do entityChecks and sent email with refusal to do list" in {
 
       val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
-      val dateTime  = formatter.format(LocalDateTime.now())
+      val dateTime = formatter.format(LocalDateTime.now())
 
       val utr = Utr("1234567")
       val agentDetailsDesResponse = AgentDetailsDesResponse(

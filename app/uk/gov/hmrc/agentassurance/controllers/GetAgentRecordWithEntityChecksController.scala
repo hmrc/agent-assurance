@@ -40,13 +40,16 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class GetAgentRecordWithEntityChecksController @Inject() (
-    cc: ControllerComponents,
-    entityCheckService: EntityCheckService,
-    val authConnector: AuthConnector,
-    auth: BackendAuthComponents
-)(implicit ec: ExecutionContext, appConfig: AppConfig)
-    extends BackendController(cc)
-    with AuthActions {
+  cc: ControllerComponents,
+  entityCheckService: EntityCheckService,
+  val authConnector: AuthConnector,
+  auth: BackendAuthComponents
+)(implicit
+  ec: ExecutionContext,
+  appConfig: AppConfig
+)
+extends BackendController(cc)
+with AuthActions {
 
   def get: Action[AnyContent] = AuthorisedWithArn { implicit request => arn: Arn =>
     entityCheckService.verifyAgent(arn).map(entityCheckResult => Ok(Json.toJson(entityCheckResult.agentRecord)))
@@ -65,4 +68,5 @@ class GetAgentRecordWithEntityChecksController @Inject() (
   def clientGet(arn: Arn): Action[AnyContent] = internalAuth.async { implicit request =>
     entityCheckService.verifyAgent(arn).map(entityCheckResult => Ok(Json.toJson(entityCheckResult.agentRecord)))
   }
+
 }

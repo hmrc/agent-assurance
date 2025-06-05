@@ -36,18 +36,25 @@ import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 @ImplementedBy(classOf[EmailConnectorImpl])
 trait EmailConnector {
-  def sendEmail(emailInformation: EmailInformation)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit]
+  def sendEmail(emailInformation: EmailInformation)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
 }
 
 class EmailConnectorImpl @Inject() (
-    appConfig: AppConfig,
-    httpClient: HttpClientV2,
-    metrics: Metrics
-) extends EmailConnector
-    with HttpErrorFunctions
-    with Logging {
+  appConfig: AppConfig,
+  httpClient: HttpClientV2,
+  metrics: Metrics
+)
+extends EmailConnector
+with HttpErrorFunctions
+with Logging {
 
-  def sendEmail(emailInformation: EmailInformation)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
+  def sendEmail(emailInformation: EmailInformation)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] = {
     val timer = metrics.defaultRegistry.timer(s"Send-Email-${emailInformation.templateId}")
     timer.time()
 

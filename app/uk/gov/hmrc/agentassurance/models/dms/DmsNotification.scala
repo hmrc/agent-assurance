@@ -20,9 +20,9 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
 final case class DmsNotification(
-    id: String,
-    status: SubmissionItemStatus,
-    failureReason: Option[String]
+  id: String,
+  status: SubmissionItemStatus,
+  failureReason: Option[String]
 )
 
 object DmsNotification {

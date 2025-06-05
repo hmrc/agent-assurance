@@ -22,11 +22,11 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json
 
 case class AmlsSubscriptionRecord(
-    formBundleStatus: String,
-    safeId: String,
-    currentRegYearStartDate: Option[LocalDate],
-    currentRegYearEndDate: Option[LocalDate],
-    suspended: Option[Boolean]
+  formBundleStatus: String,
+  safeId: String,
+  currentRegYearStartDate: Option[LocalDate],
+  currentRegYearEndDate: Option[LocalDate],
+  suspended: Option[Boolean]
 )
 
 object AmlsSubscriptionRecord {

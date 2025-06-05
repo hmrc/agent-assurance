@@ -27,7 +27,9 @@ import uk.gov.hmrc.crypto.Crypted
 import uk.gov.hmrc.crypto.PlainBytes
 import uk.gov.hmrc.crypto.PlainText
 
-class CryptoProviderModuleSpec extends AnyWordSpec with Matchers {
+class CryptoProviderModuleSpec
+extends AnyWordSpec
+with Matchers {
 
   def configuration(fieldLevelEncryptionEnabled: Boolean) = Configuration(
     ConfigFactory.parseString(s"""fieldLevelEncryption {
@@ -39,21 +41,19 @@ class CryptoProviderModuleSpec extends AnyWordSpec with Matchers {
 
   "CryptoProviderModule" should {
     "provide a real crypto instance if field-level encryption is enabled in config" in {
-      val x =
-        new CryptoProviderModule().aesCryptoInstance(configuration(fieldLevelEncryptionEnabled = true))
+      val x = new CryptoProviderModule().aesCryptoInstance(configuration(fieldLevelEncryptionEnabled = true))
       x should not be a[NoCrypto]
     }
     "provide a no-op crypto instance if field-level encryption is disabled in config" in {
-      val x =
-        new CryptoProviderModule().aesCryptoInstance(configuration(fieldLevelEncryptionEnabled = false))
+      val x = new CryptoProviderModule().aesCryptoInstance(configuration(fieldLevelEncryptionEnabled = false))
       x shouldBe a[NoCrypto]
     }
   }
 
   "NoCrypto" should {
-    val text               = "Not a secret"
+    val text = "Not a secret"
     val bytes: Array[Byte] = Array(0x13, 0x37)
-    val base64Bytes        = new String(Base64.getEncoder.encode(bytes), StandardCharsets.UTF_8)
+    val base64Bytes = new String(Base64.getEncoder.encode(bytes), StandardCharsets.UTF_8)
 
     "passthrough data on encryption" in {
       NoCrypto.encrypt(PlainText(text)).value shouldBe text
@@ -65,4 +65,5 @@ class CryptoProviderModuleSpec extends AnyWordSpec with Matchers {
       NoCrypto.decryptAsBytes(Crypted(base64Bytes)).value shouldBe bytes
     }
   }
+
 }

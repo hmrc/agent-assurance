@@ -41,13 +41,16 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class EntityCheckController @Inject() (
-    cc: ControllerComponents,
-    entityCheckService: EntityCheckService,
-    val authConnector: AuthConnector,
-    auth: BackendAuthComponents
-)(implicit ec: ExecutionContext, appConfig: AppConfig)
-    extends BackendController(cc)
-    with AuthActions {
+  cc: ControllerComponents,
+  entityCheckService: EntityCheckService,
+  val authConnector: AuthConnector,
+  auth: BackendAuthComponents
+)(implicit
+  ec: ExecutionContext,
+  appConfig: AppConfig
+)
+extends BackendController(cc)
+with AuthActions {
 
   private val predicate = Predicate.Permission(
     resource = Resource(
@@ -68,19 +71,21 @@ class EntityCheckController @Inject() (
   }
 
   // only for clients or stride
-  def clientVerifyEntity: Action[JsValue] = internalAuth.async(parse.json) { implicit request =>
-    request.body.validate[VerifyEntityRequest] match {
-      case JsSuccess(value, _) =>
-        entityCheckService
-          .verifyAgent(value.identifier)
-          .map(x => createResponse(x.agentRecord.suspensionDetails))
-      case _ => Future.successful(BadRequest("Invalid Arn"))
+  def clientVerifyEntity: Action[JsValue] =
+    internalAuth.async(parse.json) { implicit request =>
+      request.body.validate[VerifyEntityRequest] match {
+        case JsSuccess(value, _) =>
+          entityCheckService
+            .verifyAgent(value.identifier)
+            .map(x => createResponse(x.agentRecord.suspensionDetails))
+        case _ => Future.successful(BadRequest("Invalid Arn"))
+      }
     }
-  }
 
   private val createResponse: Option[SuspensionDetails] => Result = {
-    case None                                                           => NoContent
+    case None => NoContent
     case Some(suspensionDetails) if !suspensionDetails.suspensionStatus => NoContent
-    case suspensionDetails                                              => Ok(Json.toJson(suspensionDetails))
+    case suspensionDetails => Ok(Json.toJson(suspensionDetails))
   }
+
 }

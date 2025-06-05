@@ -42,21 +42,28 @@ import uk.gov.hmrc.internalauth.client.BackendAuthComponents
 import uk.gov.hmrc.internalauth.client.Predicate
 import uk.gov.hmrc.internalauth.client.Retrieval
 
-class DmsNotificationControllerSpec extends PlaySpec with DefaultAwaitTimeout with MockFactory with MockAppConfig {
+class DmsNotificationControllerSpec
+extends PlaySpec
+with DefaultAwaitTimeout
+with MockFactory
+with MockAppConfig {
 
-  implicit val ec: ExecutionContext    = ExecutionContext.Implicits.global
+  implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
-  val stubBackendAuthComponents: BackendAuthComponents =
-    BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
+  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
 
-  val controller = new DmsNotificationController(
-    stubControllerComponents(),
-    stubBackendAuthComponents,
-    mockAppConfig
+  val controller =
+    new DmsNotificationController(
+      stubControllerComponents(),
+      stubBackendAuthComponents,
+      mockAppConfig
+    )
+
+  val dmsNotification: DmsNotification = DmsNotification(
+    id = "123",
+    status = SubmissionItemStatus.Submitted,
+    failureReason = None
   )
-
-  val dmsNotification: DmsNotification =
-    DmsNotification(id = "123", status = SubmissionItemStatus.Submitted, failureReason = None)
 
   "dmsCallback" should {
     "return OK" when {
@@ -125,4 +132,5 @@ class DmsNotificationControllerSpec extends PlaySpec with DefaultAwaitTimeout wi
     }
 
   }
+
 }

@@ -24,24 +24,31 @@ import play.api.libs.json.Json
 sealed trait AmlsDetails
 
 case class UkAmlsDetails(
-    supervisoryBody: String,
-    membershipNumber: Option[String],
-    amlsSafeId: Option[String] = None,
-    agentBPRSafeId: Option[String] = None,
-    appliedOn: Option[LocalDate],
-    membershipExpiresOn: Option[LocalDate]
-) extends AmlsDetails {
-  val isPending: Boolean             = appliedOn.nonEmpty && membershipExpiresOn.isEmpty
-  val isRegistered: Boolean          = membershipExpiresOn.nonEmpty
+  supervisoryBody: String,
+  membershipNumber: Option[String],
+  amlsSafeId: Option[String] = None,
+  agentBPRSafeId: Option[String] = None,
+  appliedOn: Option[LocalDate],
+  membershipExpiresOn: Option[LocalDate]
+)
+extends AmlsDetails {
+
+  val isPending: Boolean = appliedOn.nonEmpty && membershipExpiresOn.isEmpty
+  val isRegistered: Boolean = membershipExpiresOn.nonEmpty
   val supervisoryBodyIsHmrc: Boolean = supervisoryBody.equals("HM Revenue and Customs (HMRC)")
-  val isExpired: Boolean             = membershipExpiresOn.forall(LocalDate.now.isAfter(_))
+  val isExpired: Boolean = membershipExpiresOn.forall(LocalDate.now.isAfter(_))
+
 }
 
 object UkAmlsDetails {
   implicit val format: Format[UkAmlsDetails] = Json.format[UkAmlsDetails]
 }
 
-case class OverseasAmlsDetails(supervisoryBody: String, membershipNumber: Option[String] = None) extends AmlsDetails
+case class OverseasAmlsDetails(
+  supervisoryBody: String,
+  membershipNumber: Option[String] = None
+)
+extends AmlsDetails
 
 object OverseasAmlsDetails {
   implicit val format: Format[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]

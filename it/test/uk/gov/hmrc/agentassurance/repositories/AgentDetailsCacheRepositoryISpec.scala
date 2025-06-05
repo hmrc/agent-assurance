@@ -47,33 +47,35 @@ import uk.gov.hmrc.mongo.CurrentTimestampSupport
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 class AgentDetailsCacheRepositoryISpec
-    extends AnyWordSpecLike
-    with Matchers
-    with GuiceOneServerPerSuite
-    with CleanMongoCollectionSupport
-    with Eventually {
+extends AnyWordSpecLike
+with Matchers
+with GuiceOneServerPerSuite
+with CleanMongoCollectionSupport
+with Eventually {
 
-  implicit override lazy val app: Application = appBuilder.build()
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder().configure(
-      "agent.cache.expires" -> "5 minutes",
-    )
+  override implicit lazy val app: Application = appBuilder.build()
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder().configure(
+    "agent.cache.expires" -> "5 minutes"
+  )
 
   private val config: Configuration = app.injector.instanceOf[Configuration]
-  private val metrics: Metrics = new Metrics {
-    override def defaultRegistry: MetricRegistry = new MetricRegistry
-  }
+  private val metrics: Metrics =
+    new Metrics {
+      override def defaultRegistry: MetricRegistry = new MetricRegistry
+    }
 
-  private implicit val crypto: Encrypter with Decrypter = aesCrypto("0xbYzrPV9/GmVEGazywGswm7yRYoWy2BraeJnjOUgcY=")
-  private def encryptKey(key: String): String           = crypto.encrypt(PlainText(key)).value
-  private def decryptKey(field: String): String         = crypto.decrypt(Crypted(field)).value
+  private implicit val crypto: Encrypter
+    with Decrypter = aesCrypto("0xbYzrPV9/GmVEGazywGswm7yRYoWy2BraeJnjOUgcY=")
+  private def encryptKey(key: String): String = crypto.encrypt(PlainText(key)).value
+  private def decryptKey(field: String): String = crypto.decrypt(Crypted(field)).value
 
-  private val agencyDetailsCacheRepository: AgencyDetailsCacheRepository = new AgencyDetailsCacheRepository(
-    config = config,
-    mongo = mongoComponent,
-    timestampSupport = new CurrentTimestampSupport(),
-    metrics = metrics,
-  )
+  private val agencyDetailsCacheRepository: AgencyDetailsCacheRepository =
+    new AgencyDetailsCacheRepository(
+      config = config,
+      mongo = mongoComponent,
+      timestampSupport = new CurrentTimestampSupport(),
+      metrics = metrics
+    )
 
   val businessAddress: BusinessAddress = BusinessAddress(
     addressLine1 = "25",
@@ -93,7 +95,7 @@ class AgentDetailsCacheRepositoryISpec
 
   val suspensionDetails: SuspensionDetails = SuspensionDetails(
     suspensionStatus = true,
-    regimes = Some(Set("ALL")),
+    regimes = Some(Set("ALL"))
   )
 
   val agencyDetailsResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(
@@ -103,34 +105,33 @@ class AgentDetailsCacheRepositoryISpec
     isAnIndividual = Some(true)
   )
 
-  private val agentDetailsEncryptedJson: JsValue =
-    Json.parse("""
-                 |{
-                 |  "dataKey": {
-                 |    "uniqueTaxReference": "dYxKUcQi7brfw2LV/jTF6Q==",
-                 |    "agencyDetails": {
-                 |      "agencyName": "Wdx+pMEDlSl5CvlEZi6MpDrLGPNjnx0XLGviZ3VCXKk=",
-                 |      "agencyEmail": "HsqaxGDAUITyI08IQPDg0RxkRDlJHhe7tYcQPq70wz8=",
-                 |      "agencyTelephone": "vxQ+sLG39lJBSyQcAmLLEg==",
-                 |      "agencyAddress": {
-                 |        "addressLine1": "dSa/QR2l10hGIhYZBl0nRg==",
-                 |        "addressLine2": "vCy7qMC2hQ6E1M+TAkldhkif+6omWtQ7ge93+XqTuUQ=",
-                 |        "addressLine3": "vCy7qMC2hQ6E1M+TAkldhkzV5LrzZyjqwSUyFZ6PcPQ=",
-                 |        "addressLine4": "vCy7qMC2hQ6E1M+TAkldhhD6UE6fqfY3hml1fQwr/OU=",
-                 |        "postalCode": "tnJ/JZ8+U+FQ2CWid13eHw==",
-                 |        "countryCode": "h87BRos/A2asGKgzRou3Sg=="
-                 |      }
-                 |    },
-                 |    "suspensionDetails": {
-                 |      "suspensionStatus": true,
-                 |      "regimes": [
-                 |        "ALL"
-                 |      ]
-                 |    },
-                 |    "isAnIndividual": true
-                 |  }
-                 |}
-                 |""".stripMargin)
+  private val agentDetailsEncryptedJson: JsValue = Json.parse("""
+                                                                |{
+                                                                |  "dataKey": {
+                                                                |    "uniqueTaxReference": "dYxKUcQi7brfw2LV/jTF6Q==",
+                                                                |    "agencyDetails": {
+                                                                |      "agencyName": "Wdx+pMEDlSl5CvlEZi6MpDrLGPNjnx0XLGviZ3VCXKk=",
+                                                                |      "agencyEmail": "HsqaxGDAUITyI08IQPDg0RxkRDlJHhe7tYcQPq70wz8=",
+                                                                |      "agencyTelephone": "vxQ+sLG39lJBSyQcAmLLEg==",
+                                                                |      "agencyAddress": {
+                                                                |        "addressLine1": "dSa/QR2l10hGIhYZBl0nRg==",
+                                                                |        "addressLine2": "vCy7qMC2hQ6E1M+TAkldhkif+6omWtQ7ge93+XqTuUQ=",
+                                                                |        "addressLine3": "vCy7qMC2hQ6E1M+TAkldhkzV5LrzZyjqwSUyFZ6PcPQ=",
+                                                                |        "addressLine4": "vCy7qMC2hQ6E1M+TAkldhhD6UE6fqfY3hml1fQwr/OU=",
+                                                                |        "postalCode": "tnJ/JZ8+U+FQ2CWid13eHw==",
+                                                                |        "countryCode": "h87BRos/A2asGKgzRou3Sg=="
+                                                                |      }
+                                                                |    },
+                                                                |    "suspensionDetails": {
+                                                                |      "suspensionStatus": true,
+                                                                |      "regimes": [
+                                                                |        "ALL"
+                                                                |      ]
+                                                                |    },
+                                                                |    "isAnIndividual": true
+                                                                |  }
+                                                                |}
+                                                                |""".stripMargin)
 
   private def encryptedCacheId(key: String): String = encryptKey(key)
 
@@ -171,4 +172,5 @@ class AgentDetailsCacheRepositoryISpec
       }
     }
   }
+
 }

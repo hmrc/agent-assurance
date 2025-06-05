@@ -31,7 +31,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
-trait MockDmsConnector extends MockFactory { this: TestSuite =>
+trait MockDmsConnector
+extends MockFactory { this: TestSuite =>
 
   val mockDmsConnector = mock[DmsConnector]
 

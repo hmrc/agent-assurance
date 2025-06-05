@@ -22,7 +22,11 @@ import org.scalatest.concurrent.Eventually.eventually
 import uk.gov.hmrc.domain.SaUtr
 
 trait CitizenDetailsStubs {
-  def givenCitizenReturnDeceasedFlag(saUtr: SaUtr, deceased: Boolean): StubMapping = {
+
+  def givenCitizenReturnDeceasedFlag(
+    saUtr: SaUtr,
+    deceased: Boolean
+  ): StubMapping = {
     stubFor(
       get(urlEqualTo(s"/citizen-details/sautr/${saUtr.value}"))
         .willReturn(
@@ -35,12 +39,14 @@ trait CitizenDetailsStubs {
     )
   }
 
-  def verifyCitizenDetailsWasCalled(saUtr: SaUtr, times: Int = 1): Unit =
-    eventually {
-      verify(
-        times,
-        getRequestedFor(urlMatching(s"/citizen-details/sautr/${saUtr.value}"))
-      )
-    }
+  def verifyCitizenDetailsWasCalled(
+    saUtr: SaUtr,
+    times: Int = 1
+  ): Unit = eventually {
+    verify(
+      times,
+      getRequestedFor(urlMatching(s"/citizen-details/sautr/${saUtr.value}"))
+    )
+  }
 
 }

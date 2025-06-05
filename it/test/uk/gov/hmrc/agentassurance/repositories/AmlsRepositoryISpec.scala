@@ -36,26 +36,27 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 class AmlsRepositoryISpec
-    extends PlaySpec
-    with DefaultPlayMongoRepositorySupport[UkAmlsEntity]
-    with GuiceOneServerPerSuite
-    with InstantClockTestSupport {
-  implicit override lazy val app: Application = appBuilder.build()
+extends PlaySpec
+with DefaultPlayMongoRepositorySupport[UkAmlsEntity]
+with GuiceOneServerPerSuite
+with InstantClockTestSupport {
 
-  val moduleWithOverrides: AbstractModule = new AbstractModule() {
-    override def configure(): Unit = {
-      bind(classOf[Clock]).toInstance(clock)
+  override implicit lazy val app: Application = appBuilder.build()
+
+  val moduleWithOverrides: AbstractModule =
+    new AbstractModule() {
+      override def configure(): Unit = {
+        bind(classOf[Clock]).toInstance(clock)
+      }
     }
-  }
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure("internal-auth-token-enabled-on-start" -> false)
-      .overrides(moduleWithOverrides)
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure("internal-auth-token-enabled-on-start" -> false)
+    .overrides(moduleWithOverrides)
   override lazy val repository = new AmlsRepositoryImpl(mongoComponent)
 
-  val arn   = Arn("TARN0000001")
-  val utr   = Utr("1234567890")
+  val arn = Arn("TARN0000001")
+  val utr = Utr("1234567890")
   val today = LocalDate.now()
   val newUkAmlsDetails = UkAmlsDetails(
     supervisoryBody = "ICAEW",
@@ -182,9 +183,7 @@ class AmlsRepositoryISpec
 
         val checkResult = repository.collection.find().toFuture().futureValue
         checkResult.size mustBe 1
-        checkResult.head mustBe oldAmlsEntity.copy(amlsDetails =
-          oldUkAmlsDetails.copy(membershipExpiresOn = Some(newExpiryDate))
-        )
+        checkResult.head mustBe oldAmlsEntity.copy(amlsDetails = oldUkAmlsDetails.copy(membershipExpiresOn = Some(newExpiryDate)))
       }
     }
   }

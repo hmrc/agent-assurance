@@ -27,12 +27,13 @@ import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockAmlsDetailsService extends MockFactory { this: TestSuite =>
+trait MockAmlsDetailsService
+extends MockFactory { this: TestSuite =>
 
   val mockAmlsDetailsService: AmlsDetailsService = mock[AmlsDetailsService]
 
   def mockGetAmlsDetailsByArn(arn: Arn)(
-      response: Future[(AmlsStatus, Option[AmlsDetails])]
+    response: Future[(AmlsStatus, Option[AmlsDetails])]
   ) = {
     (mockAmlsDetailsService
       .getAmlsDetailsByArn(_: Arn)(_: HeaderCarrier, _: Request[_]))

@@ -19,10 +19,15 @@ package uk.gov.hmrc.agentassurance.models.pagination
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-case class PaginatedResources[A](_links: PaginationLinks, page: Int, pageSize: Int, total: Int, resources: Seq[A])
+case class PaginatedResources[A](
+  _links: PaginationLinks,
+  page: Int,
+  pageSize: Int,
+  total: Int,
+  resources: Seq[A]
+)
 
 object PaginatedResources {
 
-  implicit def paginatedResourcesFormat[A](implicit resourcesFormat: Format[A]): Format[PaginatedResources[A]] =
-    Json.format[PaginatedResources[A]]
+  implicit def paginatedResourcesFormat[A](implicit resourcesFormat: Format[A]): Format[PaginatedResources[A]] = Json.format[PaginatedResources[A]]
 }

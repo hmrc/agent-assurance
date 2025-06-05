@@ -58,21 +58,22 @@ import uk.gov.hmrc.mongo.CurrentTimestampSupport
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 class DesConnectorISpec
-    extends UnitSpec
-    with GuiceOneAppPerSuite
-    with WireMockSupport
-    with DesStubs
-    with DataStreamStub
-    with CleanMongoCollectionSupport
-    with MetricTestSupport {
+extends UnitSpec
+with GuiceOneAppPerSuite
+with WireMockSupport
+with DesStubs
+with DataStreamStub
+with CleanMongoCollectionSupport
+with MetricTestSupport {
 
-  private implicit val hc: HeaderCarrier                        = HeaderCarrier()
-  private implicit val ec: ExecutionContext                     = ExecutionContext.global
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
+  private implicit val ec: ExecutionContext = ExecutionContext.global
   private implicit val request: Request[AnyContentAsEmpty.type] = FakeRequest()
-  private implicit val appConfig: AppConfig                     = app.injector.instanceOf[AppConfig]
-  private implicit val config: Config                           = app.injector.instanceOf[Config]
-  private implicit lazy val as: ActorSystem                     = ActorSystem()
-  private implicit val crypto: Encrypter with Decrypter         = aesCrypto("0xbYzrPV9/GmVEGazywGswm7yRYoWy2BraeJnjOUgcY=")
+  private implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+  private implicit val config: Config = app.injector.instanceOf[Config]
+  private implicit lazy val as: ActorSystem = ActorSystem()
+  private implicit val crypto: Encrypter
+    with Decrypter = aesCrypto("0xbYzrPV9/GmVEGazywGswm7yRYoWy2BraeJnjOUgcY=")
 
   private def encryptKey(key: String): String = crypto.encrypt(PlainText(key)).value
 
@@ -92,42 +93,47 @@ class DesConnectorISpec
       app.injector.instanceOf[Metrics]
     )
 
-  implicit override lazy val app: Application = appBuilder
+  override implicit lazy val app: Application = appBuilder
     .build()
 
-  val cacheProvider = new CacheProvider(agentDataCache, agentNameCache, app.injector.instanceOf[Configuration])
+  val cacheProvider =
+    new CacheProvider(
+      agentDataCache,
+      agentNameCache,
+      app.injector.instanceOf[Configuration]
+    )
 
-  val desConnector = new DesConnectorImpl(
-    app.injector.instanceOf[HttpClientV2],
-    app.injector.instanceOf[Metrics],
-    cacheProvider,
-    config,
-    as
-  )
+  val desConnector =
+    new DesConnectorImpl(
+      app.injector.instanceOf[HttpClientV2],
+      app.injector.instanceOf[Metrics],
+      cacheProvider,
+      config,
+      as
+    )
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "microservice.services.auth.host"                  -> wireMockHost,
-        "microservice.services.auth.port"                  -> wireMockPort,
-        "microservice.services.des.host"                   -> wireMockHost,
-        "microservice.services.des.port"                   -> wireMockPort,
-        "microservice.services.des.environment"            -> "test",
-        "microservice.services.des.authorization-token"    -> "secret",
-        "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
-        "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
-        "auditing.consumer.baseUri.host"                   -> wireMockHost,
-        "auditing.consumer.baseUri.port"                   -> wireMockPort,
-        "internal-auth-token-enabled-on-start"             -> false,
-        "http-verbs.retries.intervals"                     -> List("1ms"),
-        "agent.cache.enabled"                              -> true,
-        "agent.cache.expires"                              -> "1 second",
-        "auditing.enabled"                                 -> false,
-        "rate-limiter.business-names.max-calls-per-second" -> 10,
-        "agent.name.cache.enabled"                         -> true,
-        "agent.name.cache.expires"                         -> "1 second"
-      )
-      .bindings(bind[DesConnector].toInstance(desConnector))
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.auth.host" -> wireMockHost,
+      "microservice.services.auth.port" -> wireMockPort,
+      "microservice.services.des.host" -> wireMockHost,
+      "microservice.services.des.port" -> wireMockPort,
+      "microservice.services.des.environment" -> "test",
+      "microservice.services.des.authorization-token" -> "secret",
+      "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
+      "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
+      "auditing.consumer.baseUri.host" -> wireMockHost,
+      "auditing.consumer.baseUri.port" -> wireMockPort,
+      "internal-auth-token-enabled-on-start" -> false,
+      "http-verbs.retries.intervals" -> List("1ms"),
+      "agent.cache.enabled" -> true,
+      "agent.cache.expires" -> "1 second",
+      "auditing.enabled" -> false,
+      "rate-limiter.business-names.max-calls-per-second" -> 10,
+      "agent.name.cache.enabled" -> true,
+      "agent.name.cache.expires" -> "1 second"
+    )
+    .bindings(bind[DesConnector].toInstance(desConnector))
 
   val agentDetailsDesResponse = AgentDetailsDesResponse(
     Some(Utr("0123456789")),
@@ -175,12 +181,12 @@ class DesConnectorISpec
     Some(false)
   )
 
-  val arn  = Arn("AARN00012345")
+  val arn = Arn("AARN00012345")
   val arn2 = Arn("AARN00012346")
 
-  val utr                      = Utr("1234567890")
-  val utr2                     = Utr("1234567891")
-  val individualBusinessName   = "First Name QM Last Name QM"
+  val utr = Utr("1234567890")
+  val utr2 = Utr("1234567891")
+  val individualBusinessName = "First Name QM Last Name QM"
   val organisationBusinessName = "CT AGENT 165"
 
   "DesConnector getActiveCesaAgentRelationships with a valid NINO" should {
@@ -322,7 +328,15 @@ class DesConnectorISpec
     }
 
     "return multiple Agents when client has multiple active agents" in {
-      val agentIds = Seq("001", "002", "003", "004", "005", "005", "007").map(SaAgentReference.apply)
+      val agentIds = Seq(
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "005",
+        "007"
+      ).map(SaAgentReference.apply)
       givenClientHasRelationshipWithMultipleAgentsInCESA(identifier, agentIds)
       givenAuditConnector()
       await(desConnector.getActiveCesaAgentRelationships(identifier)) should contain theSameElementsAs agentIds
@@ -349,7 +363,15 @@ class DesConnectorISpec
     "return empty seq when all client's relationships with agents ceased" in {
       givenAllClientRelationshipsWithAgentsCeasedInCESA(
         identifier,
-        Seq("001", "002", "003", "004", "005", "005", "007")
+        Seq(
+          "001",
+          "002",
+          "003",
+          "004",
+          "005",
+          "005",
+          "007"
+        )
       )
       givenAuditConnector()
       await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Seq.empty[SaAgentReference]
@@ -394,4 +416,5 @@ class DesConnectorISpec
     }
 
   }
+
 }

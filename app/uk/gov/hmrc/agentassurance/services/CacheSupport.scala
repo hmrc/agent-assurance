@@ -29,32 +29,37 @@ import uk.gov.hmrc.agentassurance.repositories.AgencyNameCacheRepository
 
 trait Cache[T] {
   def apply(key: String)(
-      body: => Future[T]
+    body: => Future[T]
   )(implicit ec: ExecutionContext): Future[T]
 }
 
-class DoNotCache[T] extends Cache[T] {
+class DoNotCache[T]
+extends Cache[T] {
   def apply(key: String)(
-      body: => Future[T]
+    body: => Future[T]
   )(implicit ec: ExecutionContext): Future[T] = body
 }
 
 @Singleton
 class CacheProvider @Inject() (
-    agencyDetailsCache: AgencyDetailsCacheRepository,
-    agencyNameCache: AgencyNameCacheRepository,
-    configuration: Configuration
+  agencyDetailsCache: AgencyDetailsCacheRepository,
+  agencyNameCache: AgencyNameCacheRepository,
+  configuration: Configuration
 ) {
 
-  val cacheEnabled     = configuration.underlying.getBoolean("agent.cache.enabled")
+  val cacheEnabled = configuration.underlying.getBoolean("agent.cache.enabled")
   val cacheNameEnabled = configuration.underlying.getBoolean("agent.name.cache.enabled")
 
   val agentDetailsCache: Cache[AgentDetailsDesResponse] =
-    if (cacheEnabled) agencyDetailsCache
-    else new DoNotCache[AgentDetailsDesResponse]
+    if (cacheEnabled)
+      agencyDetailsCache
+    else
+      new DoNotCache[AgentDetailsDesResponse]
 
   val agentNameCache: Cache[Option[String]] =
-    if (cacheNameEnabled) agencyNameCache
-    else new DoNotCache[Option[String]]
+    if (cacheNameEnabled)
+      agencyNameCache
+    else
+      new DoNotCache[Option[String]]
 
 }

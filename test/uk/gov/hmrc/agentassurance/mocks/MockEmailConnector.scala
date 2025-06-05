@@ -26,16 +26,26 @@ import uk.gov.hmrc.agentassurance.connectors.EmailConnector
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockEmailConnector extends MockFactory { this: TestSuite =>
+trait MockEmailConnector
+extends MockFactory { this: TestSuite =>
 
   val mockEmailConnector: EmailConnector = mock[EmailConnector]
 
   def mockSendEmail(
-      emailInformation: EmailInformation
-  ): CallHandler3[EmailInformation, HeaderCarrier, ExecutionContext, Future[Unit]] =
+    emailInformation: EmailInformation
+  ): CallHandler3[
+    EmailInformation,
+    HeaderCarrier,
+    ExecutionContext,
+    Future[Unit]
+  ] =
     (mockEmailConnector
       .sendEmail(_: EmailInformation)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(emailInformation, *, *)
+      .expects(
+        emailInformation,
+        *,
+        *
+      )
       .returning(Future.successful(()))
 
 }

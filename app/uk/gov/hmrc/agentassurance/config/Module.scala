@@ -23,7 +23,11 @@ import com.google.inject.AbstractModule
 import play.api.Configuration
 import play.api.Environment
 
-class Module(environment: Environment, configuration: Configuration) extends AbstractModule {
+class Module(
+  environment: Environment,
+  configuration: Configuration
+)
+extends AbstractModule {
 
   override def configure(): Unit = {
     bind(classOf[Clock]).toInstance(Clock.system(ZoneId.systemDefault()))
@@ -34,7 +38,8 @@ class Module(environment: Environment, configuration: Configuration) extends Abs
       bind(classOf[InternalAuthTokenInitialiser])
         .to(classOf[InternalAuthTokenInitialiserImpl])
         .asEagerSingleton()
-    } else {
+    }
+    else {
       bind(classOf[InternalAuthTokenInitialiser])
         .to(classOf[NoOpInternalAuthTokenInitialiser])
         .asEagerSingleton()

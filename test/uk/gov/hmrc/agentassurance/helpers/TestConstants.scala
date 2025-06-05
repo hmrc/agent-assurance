@@ -49,24 +49,29 @@ object TestConstants {
   )
 
   val strideEnrolment: Set[Enrolment] = Set(
-    Enrolment("maintain_agent_manually_assure", Seq.empty, state = "activated", delegatedAuthRule = None)
+    Enrolment(
+      "maintain_agent_manually_assure",
+      Seq.empty,
+      state = "activated",
+      delegatedAuthRule = None
+    )
   )
 
-  val enrolmentsWithIrSAAgent: Enrolments    = Enrolments(irSaAgentEnrolment)
-  val enrolmentsWithNoIrSAAgent: Enrolments  = Enrolments(hmrcAsAgentEnrolment)
+  val enrolmentsWithIrSAAgent: Enrolments = Enrolments(irSaAgentEnrolment)
+  val enrolmentsWithNoIrSAAgent: Enrolments = Enrolments(hmrcAsAgentEnrolment)
   val enrolmentsWithoutIrSAAgent: Enrolments = Enrolments(Set.empty)
-  val enrolmentsWithStride: Enrolments       = Enrolments(strideEnrolment)
+  val enrolmentsWithStride: Enrolments = Enrolments(strideEnrolment)
 
-  val testNino: Nino                         = Nino("AA000000A")
-  val testUtr: Utr                           = Utr("7000000002")
-  val testSaUtr: SaUtr                       = SaUtr(testUtr.value)
+  val testNino: Nino = Nino("AA000000A")
+  val testUtr: Utr = Utr("7000000002")
+  val testSaUtr: SaUtr = SaUtr(testUtr.value)
   val testSaAgentReference: SaAgentReference = SaAgentReference("IRSA-123")
-  val testValidApplicationReferenceNumber    = "XAML00000123456"
-  val testArn: Arn                           = Arn("ARN123")
-  val testArn1: Arn                          = Arn("ARN1231")
-  val testArn2: Arn                          = Arn("ARN1232")
-  val testArn3: Arn                          = Arn("ARN1233")
-  val today: LocalDate                       = LocalDate.now
+  val testValidApplicationReferenceNumber = "XAML00000123456"
+  val testArn: Arn = Arn("ARN123")
+  val testArn1: Arn = Arn("ARN1231")
+  val testArn2: Arn = Arn("ARN1232")
+  val testArn3: Arn = Arn("ARN1233")
+  val today: LocalDate = LocalDate.now
 
   val membershipExpiresOnDate: LocalDate = LocalDate.parse("2024-01-12")
   val testAmlsDetails: UkAmlsDetails = UkAmlsDetails(
@@ -102,42 +107,84 @@ object TestConstants {
     appliedOn = None,
     membershipExpiresOn = Some(LocalDate.now())
   )
-  val testOverseasAmlsDetails: OverseasAmlsDetails =
-    OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
-  val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(testArn, testOverseasAmlsDetails, None)
-  val testUKAmlsRequest: AmlsRequest =
-    AmlsRequest(ukRecord = true, "supervisory", "0123456789", Some(membershipExpiresOnDate))
-  val testOverseasAmlsRequest: AmlsRequest =
-    AmlsRequest(ukRecord = false, "supervisory", "0123456789", Some(membershipExpiresOnDate))
+  val testOverseasAmlsDetails: OverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
+  val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(
+    testArn,
+    testOverseasAmlsDetails,
+    None
+  )
+  val testUKAmlsRequest: AmlsRequest = AmlsRequest(
+    ukRecord = true,
+    "supervisory",
+    "0123456789",
+    Some(membershipExpiresOnDate)
+  )
+  val testOverseasAmlsRequest: AmlsRequest = AmlsRequest(
+    ukRecord = false,
+    "supervisory",
+    "0123456789",
+    Some(membershipExpiresOnDate)
+  )
 
   // DES Agent Record
-  val agencyDetailsUk: AgencyDetails =
-    AgencyDetails(None, None, None, Some(BusinessAddress("line1", None, None, None, None, "GB")))
-  val agencyDetailsOverseas: AgencyDetails =
-    AgencyDetails(None, None, None, Some(BusinessAddress("line1", None, None, None, None, "US")))
+  val agencyDetailsUk: AgencyDetails = AgencyDetails(
+    None,
+    None,
+    None,
+    Some(BusinessAddress(
+      "line1",
+      None,
+      None,
+      None,
+      None,
+      "GB"
+    ))
+  )
+  val agencyDetailsOverseas: AgencyDetails = AgencyDetails(
+    None,
+    None,
+    None,
+    Some(BusinessAddress(
+      "line1",
+      None,
+      None,
+      None,
+      None,
+      "US"
+    ))
+  )
   val agencyDetails: AgencyDetails = AgencyDetails(
     Some("agencyName"),
     Some("agencyEmail"),
     Some("agencyTelephone"),
-    Some(BusinessAddress("addressLine1", None, None, None, None, "GB"))
+    Some(BusinessAddress(
+      "addressLine1",
+      None,
+      None,
+      None,
+      None,
+      "GB"
+    ))
   )
-  val testAgentDetailsDesEmptyResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(None, None, None, None)
+  val testAgentDetailsDesEmptyResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(
+    None,
+    None,
+    None,
+    None
+  )
   val testAgentDetailsDesAddressUtrResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(
     uniqueTaxReference = Some(testUtr),
     agencyDetails = Some(agencyDetails),
     suspensionDetails = None,
     isAnIndividual = None
   )
-  val testAgentDetailsDesOverseas: AgentDetailsDesResponse =
-    testAgentDetailsDesAddressUtrResponse.copy(agencyDetails = Some(agencyDetailsOverseas))
-  val testAgentDetailsDesResponse: AgentDetailsDesResponse =
-    AgentDetailsDesResponse(
-      uniqueTaxReference = Some(testUtr),
-      agencyDetails = None,
-      suspensionDetails = None,
-      isAnIndividual = None
-    )
-  val testAgentDetailsDesResponseNoUtr: AgentDetailsDesResponse =
-    testAgentDetailsDesResponse.copy(uniqueTaxReference = None)
+  val testAgentDetailsDesOverseas: AgentDetailsDesResponse = testAgentDetailsDesAddressUtrResponse.copy(agencyDetails = Some(agencyDetailsOverseas))
+  val testAgentDetailsDesResponse: AgentDetailsDesResponse = AgentDetailsDesResponse(
+    uniqueTaxReference = Some(testUtr),
+    agencyDetails = None,
+    suspensionDetails = None,
+    isAnIndividual = None
+  )
+  val testAgentDetailsDesResponseNoUtr: AgentDetailsDesResponse = testAgentDetailsDesResponse.copy(uniqueTaxReference = None)
 
 }

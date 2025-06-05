@@ -35,56 +35,53 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
 class GetAgentRecordWithEntityChecksControllerISpec
-    extends PlaySpec
-    with AgentAuthStubs
-    with GuiceOneServerPerSuite
-    with WireMockSupport
+extends PlaySpec
+with AgentAuthStubs
+with GuiceOneServerPerSuite
+with WireMockSupport
 //    with CleanMongoCollectionSupport
-    with InstantClockTestSupport
-    with InternalAuthStub
-    with DesStubs {
+with InstantClockTestSupport
+with InternalAuthStub
+with DesStubs {
 
-  implicit override lazy val app: Application = appBuilder.build()
+  override implicit lazy val app: Application = appBuilder.build()
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "microservice.services.auth.host"          -> wireMockHost,
-        "microservice.services.auth.port"          -> wireMockPort,
-        "microservice.services.des.host"           -> wireMockHost,
-        "microservice.services.des.port"           -> wireMockPort,
-        "microservice.services.internal-auth.port" -> wireMockPort,
-        "microservice.services.internal-auth.host" -> wireMockHost,
-        "auditing.enabled"                         -> false,
-        "stride.roles.agent-assurance"             -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled-on-start"     -> false,
-        "http-verbs.retries.intervals"             -> List("1ms"),
-        "agent.cache.enabled"                      -> false
-      )
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.auth.host" -> wireMockHost,
+      "microservice.services.auth.port" -> wireMockPort,
+      "microservice.services.des.host" -> wireMockHost,
+      "microservice.services.des.port" -> wireMockPort,
+      "microservice.services.internal-auth.port" -> wireMockPort,
+      "microservice.services.internal-auth.host" -> wireMockHost,
+      "auditing.enabled" -> false,
+      "stride.roles.agent-assurance" -> "maintain_agent_manually_assure",
+      "internal-auth-token-enabled-on-start" -> false,
+      "http-verbs.retries.intervals" -> List("1ms"),
+      "agent.cache.enabled" -> false
+    )
 
-  val arn       = Arn("AARN0000002")
-  val url       = s"http://localhost:$port/agent-assurance/agent-record-with-checks"
+  val arn = Arn("AARN0000002")
+  val url = s"http://localhost:$port/agent-assurance/agent-record-with-checks"
   val clientUrl = s"http://localhost:$port/agent-assurance/agent-record-with-checks/arn/${arn.value}"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  def doGetRequest() =
-    Await.result(
-      wsClient
-        .url(url)
-        .withHttpHeaders("Authorization" -> "Bearer secret")
-        .get(),
-      15.seconds
-    )
+  def doGetRequest() = Await.result(
+    wsClient
+      .url(url)
+      .withHttpHeaders("Authorization" -> "Bearer secret")
+      .get(),
+    15.seconds
+  )
 
-  def doClientGetRequest() =
-    Await.result(
-      wsClient
-        .url(clientUrl)
-        .withHttpHeaders("Authorization" -> "internal auth token")
-        .get(),
-      15.seconds
-    )
+  def doClientGetRequest() = Await.result(
+    wsClient
+      .url(clientUrl)
+      .withHttpHeaders("Authorization" -> "internal auth token")
+      .get(),
+    15.seconds
+  )
 
   "get" should {
     "return agent record" in {
@@ -98,16 +95,16 @@ class GetAgentRecordWithEntityChecksControllerISpec
 
       response.json mustBe Json.obj(
         "agencyDetails" -> Json.obj(
-          "agencyName"      -> "ABC Accountants",
-          "agencyEmail"     -> "abc@xyz.com",
+          "agencyName" -> "ABC Accountants",
+          "agencyEmail" -> "abc@xyz.com",
           "agencyTelephone" -> "07345678901",
           "agencyAddress" -> Json.obj(
             "addressLine1" -> "Matheson House",
             "addressLine2" -> "Grange Central",
             "addressLine3" -> "Town Centre",
             "addressLine4" -> "Telford",
-            "postalCode"   -> "TF3 4ER",
-            "countryCode"  -> "GB"
+            "postalCode" -> "TF3 4ER",
+            "countryCode" -> "GB"
           )
         ),
         "suspensionDetails" -> Json.obj(
@@ -131,16 +128,16 @@ class GetAgentRecordWithEntityChecksControllerISpec
 
       response.json mustBe Json.obj(
         "agencyDetails" -> Json.obj(
-          "agencyName"      -> "ABC Accountants",
-          "agencyEmail"     -> "abc@xyz.com",
+          "agencyName" -> "ABC Accountants",
+          "agencyEmail" -> "abc@xyz.com",
           "agencyTelephone" -> "07345678901",
           "agencyAddress" -> Json.obj(
             "addressLine1" -> "Matheson House",
             "addressLine2" -> "Grange Central",
             "addressLine3" -> "Town Centre",
             "addressLine4" -> "Telford",
-            "postalCode"   -> "TF3 4ER",
-            "countryCode"  -> "GB"
+            "postalCode" -> "TF3 4ER",
+            "countryCode" -> "GB"
           )
         ),
         "suspensionDetails" -> Json.obj(

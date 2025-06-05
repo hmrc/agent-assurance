@@ -43,26 +43,36 @@ import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
 
 @Singleton
-class AuditService @Inject() (auditConnector: AuditConnector)(implicit ec: ExecutionContext, appConfig: AppConfig) {
+class AuditService @Inject() (auditConnector: AuditConnector)(implicit
+  ec: ExecutionContext,
+  appConfig: AppConfig
+) {
 
-  def auditEntityChecksPerformed(arn: Arn, utr: Option[Utr], agentCheckOutcomes: Seq[AgentCheckOutcome])(
-      implicit hc: HeaderCarrier
-  ): Unit = audit(AgentCheckAuditEvent(arn, utr, agentCheckOutcomes))
+  def auditEntityChecksPerformed(
+    arn: Arn,
+    utr: Option[Utr],
+    agentCheckOutcomes: Seq[AgentCheckOutcome]
+  )(
+    implicit hc: HeaderCarrier
+  ): Unit = audit(AgentCheckAuditEvent(
+    arn,
+    utr,
+    agentCheckOutcomes
+  ))
 
   def auditEntityCheckFailureNotificationSent(
-      entityCheckNotification: EntityCheckNotification
-  )(implicit hc: HeaderCarrier): Unit =
-    audit(
-      AgentCheckFailureNotificationAuditEvent(
-        agentReferenceNumber = entityCheckNotification.arn,
-        utr = entityCheckNotification.utr,
-        email = appConfig.agentMaintainerEmail,
-        emailData = EmailData(
-          Seq(entityCheckNotification.failedChecks),
-          dateChecked = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
-        )
+    entityCheckNotification: EntityCheckNotification
+  )(implicit hc: HeaderCarrier): Unit = audit(
+    AgentCheckFailureNotificationAuditEvent(
+      agentReferenceNumber = entityCheckNotification.arn,
+      utr = entityCheckNotification.utr,
+      email = appConfig.agentMaintainerEmail,
+      emailData = EmailData(
+        Seq(entityCheckNotification.failedChecks),
+        dateChecked = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
       )
     )
+  )
 
   private def audit[A <: AuditDetail: Writes](a: A)(implicit hc: HeaderCarrier): Future[AuditResult] = {
     auditConnector

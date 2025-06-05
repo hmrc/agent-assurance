@@ -38,33 +38,35 @@ abstract class InternalAuthTokenInitialiser {
 }
 
 @Singleton
-class NoOpInternalAuthTokenInitialiser @Inject() () extends InternalAuthTokenInitialiser {
+class NoOpInternalAuthTokenInitialiser @Inject() ()
+extends InternalAuthTokenInitialiser {
   override val initialised: Future[Done] = Future.successful(Done)
 }
 
 @Singleton
 class InternalAuthTokenInitialiserImpl @Inject() (
-    appConfig: AppConfig,
-    httpClient: HttpClientV2
+  appConfig: AppConfig,
+  httpClient: HttpClientV2
 )(implicit ec: ExecutionContext)
-    extends InternalAuthTokenInitialiser
-    with Logging {
+extends InternalAuthTokenInitialiser
+with Logging {
 
-  override val initialised: Future[Done] = for {
-    _ <- ensureAuthToken()
-  } yield Done
+  override val initialised: Future[Done] =
+    for {
+      _ <- ensureAuthToken()
+    } yield Done
 
   Await.result(initialised, 30.seconds)
 
-  private def ensureAuthToken(): Future[Done] =
-    authTokenIsValid.flatMap { isValid =>
-      if (isValid) {
-        logger.info("Auth token is already valid")
-        Future.successful(Done)
-      } else {
-        createClientAuthToken()
-      }
+  private def ensureAuthToken(): Future[Done] = authTokenIsValid.flatMap { isValid =>
+    if (isValid) {
+      logger.info("Auth token is already valid")
+      Future.successful(Done)
     }
+    else {
+      createClientAuthToken()
+    }
+  }
 
   private def createClientAuthToken(): Future[Done] = {
     logger.info("Initialising auth token")
@@ -90,7 +92,8 @@ class InternalAuthTokenInitialiserImpl @Inject() (
         if (response.status == CREATED) {
           logger.info("Auth token initialised")
           Future.successful(Done)
-        } else {
+        }
+        else {
           Future.failed(new RuntimeException("Unable to initialise internal-auth token"))
         }
       }

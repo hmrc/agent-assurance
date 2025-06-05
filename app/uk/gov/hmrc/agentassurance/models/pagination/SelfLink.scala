@@ -22,7 +22,9 @@ import play.api.libs.json.Json
 case class SelfLink(self: LinkHref)
 
 object SelfLink {
+
   implicit val format: Format[SelfLink] = Json.format[SelfLink]
 
   def apply(selfUrl: String) = new SelfLink(LinkHref(selfUrl))
+
 }

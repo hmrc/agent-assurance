@@ -22,16 +22,24 @@ import play.api.libs.json.Format
 sealed trait AmlsStatus
 
 object AmlsStatus {
+
   implicit val formatAmlsSource: Format[AmlsStatus] = derived.oformat[AmlsStatus]()
 
-  final case object NoAmlsDetailsNonUK extends AmlsStatus
-  final case object ValidAmlsNonUK     extends AmlsStatus
+  final case object NoAmlsDetailsNonUK
+  extends AmlsStatus
+  final case object ValidAmlsNonUK
+  extends AmlsStatus
 
-  final case object NoAmlsDetailsUK      extends AmlsStatus
-  final case object ValidAmlsDetailsUK   extends AmlsStatus
-  final case object ExpiredAmlsDetailsUK extends AmlsStatus
+  final case object NoAmlsDetailsUK
+  extends AmlsStatus
+  final case object ValidAmlsDetailsUK
+  extends AmlsStatus
+  final case object ExpiredAmlsDetailsUK
+  extends AmlsStatus
 
-  final case object PendingAmlsDetails         extends AmlsStatus
-  final case object PendingAmlsDetailsRejected extends AmlsStatus
+  final case object PendingAmlsDetails
+  extends AmlsStatus
+  final case object PendingAmlsDetailsRejected
+  extends AmlsStatus
 
 }

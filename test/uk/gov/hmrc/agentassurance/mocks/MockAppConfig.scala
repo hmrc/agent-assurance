@@ -25,10 +25,11 @@ import play.api.Configuration
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-trait MockAppConfig extends MockFactory { this: TestSuite =>
+trait MockAppConfig
+extends MockFactory { this: TestSuite =>
 
   val mockServiceConfig: ServicesConfig = mock[ServicesConfig]
-  val mockConfig: Configuration         = mock[Configuration]
+  val mockConfig: Configuration = mock[Configuration]
 
   (mockServiceConfig
     .getInt(_: String))
@@ -82,7 +83,11 @@ trait MockAppConfig extends MockFactory { this: TestSuite =>
     .get[Seq[String]](_: String)(_: ConfigLoader[Seq[String]]))
     .expects("internalServiceHostPatterns", *)
     .atLeastOnce()
-    .returning(Seq("^.*\\.service$", "^.*\\.mdtp$", "^localhost$"))
+    .returning(Seq(
+      "^.*\\.service$",
+      "^.*\\.mdtp$",
+      "^localhost$"
+    ))
 
   (mockServiceConfig
     .getDuration(_: String))
@@ -103,4 +108,5 @@ trait MockAppConfig extends MockFactory { this: TestSuite =>
     .returning("test@example.com")
 
   val mockAppConfig: AppConfig = new AppConfig(mockConfig, mockServiceConfig)
+
 }

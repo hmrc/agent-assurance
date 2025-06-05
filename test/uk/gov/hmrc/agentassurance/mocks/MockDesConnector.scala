@@ -32,13 +32,18 @@ import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockDesConnector extends MockFactory { this: TestSuite =>
+trait MockDesConnector
+extends MockFactory { this: TestSuite =>
 
   val mockDesConnector = mock[DesConnector]
 
   def mockGetActiveCesaAgentRelationships(ti: TaxIdentifier)(
-      response: Either[String, Seq[SaAgentReference]]
-  ): CallHandler2[TaxIdentifier, HeaderCarrier, Future[Seq[SaAgentReference]]] = {
+    response: Either[String, Seq[SaAgentReference]]
+  ): CallHandler2[
+    TaxIdentifier,
+    HeaderCarrier,
+    Future[Seq[SaAgentReference]]
+  ] = {
     (mockDesConnector
       .getActiveCesaAgentRelationships(_: TaxIdentifier)(_: HeaderCarrier))
       .expects(ti, *)
@@ -48,8 +53,12 @@ trait MockDesConnector extends MockFactory { this: TestSuite =>
   }
 
   def mockGetAmlsSubscriptionStatus(registrationNumber: String)(
-      response: Future[AmlsSubscriptionRecord]
-  ): CallHandler2[String, HeaderCarrier, Future[AmlsSubscriptionRecord]] = {
+    response: Future[AmlsSubscriptionRecord]
+  ): CallHandler2[
+    String,
+    HeaderCarrier,
+    Future[AmlsSubscriptionRecord]
+  ] = {
     (mockDesConnector
       .getAmlsSubscriptionStatus(_: String)(_: HeaderCarrier))
       .expects(registrationNumber, *)
@@ -57,16 +66,25 @@ trait MockDesConnector extends MockFactory { this: TestSuite =>
   }
 
   def mockGetAgentRecord(
-      arn: Arn
-  )(response: AgentDetailsDesResponse): CallHandler3[Arn, Request[_], HeaderCarrier, Future[AgentDetailsDesResponse]] =
+    arn: Arn
+  )(response: AgentDetailsDesResponse): CallHandler3[
+    Arn,
+    Request[_],
+    HeaderCarrier,
+    Future[AgentDetailsDesResponse]
+  ] =
     (mockDesConnector
       .getAgentRecord(_: Arn)(_: Request[_], _: HeaderCarrier))
       .expects(arn, *, *)
       .returning(Future.successful(response))
 
   def mockGetBusinessNameRecord(
-      utr: String
-  )(response: Option[String]): CallHandler2[String, HeaderCarrier, Future[Option[String]]] =
+    utr: String
+  )(response: Option[String]): CallHandler2[
+    String,
+    HeaderCarrier,
+    Future[Option[String]]
+  ] =
     (mockDesConnector
       .getBusinessName(_: String)(_: HeaderCarrier))
       .expects(utr, *)

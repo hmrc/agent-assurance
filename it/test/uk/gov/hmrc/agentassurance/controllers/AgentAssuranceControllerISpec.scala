@@ -48,70 +48,64 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 class AgentAssuranceControllerISpec
-    extends IntegrationSpec
-    with GuiceOneServerPerSuite
-    with AgentAuthStubs
-    with DesStubs
-    with WireMockSupport
-    with EnrolmentStoreProxyStubs
-    with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
+extends IntegrationSpec
+with GuiceOneServerPerSuite
+with AgentAuthStubs
+with DesStubs
+with WireMockSupport
+with EnrolmentStoreProxyStubs
+with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
 
-  implicit override lazy val app: Application = appBuilder.build()
+  override implicit lazy val app: Application = appBuilder.build()
 
   override lazy val repository = new AmlsRepositoryImpl(mongoComponent)
 
-  val moduleWithOverrides: AbstractModule = new AbstractModule() {
-    override def configure(): Unit = {
-      bind(classOf[AmlsRepositoryImpl]).toInstance(repository)
-      bind(classOf[Clock]).toInstance(clock)
+  val moduleWithOverrides: AbstractModule =
+    new AbstractModule() {
+      override def configure(): Unit = {
+        bind(classOf[AmlsRepositoryImpl]).toInstance(repository)
+        bind(classOf[Clock]).toInstance(clock)
+      }
     }
-  }
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "microservice.services.auth.host"                  -> wireMockHost,
-        "auditing.enabled"                                 -> false,
-        "microservice.services.auth.port"                  -> wireMockPort,
-        "microservice.services.des.host"                   -> wireMockHost,
-        "microservice.services.des.port"                   -> wireMockPort,
-        "microservice.services.des.environment"            -> "test",
-        "microservice.services.des.authorization-token"    -> "secret",
-        "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
-        "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
-        "minimumIRPAYEClients"                             -> 6,
-        "minimumIRSAClients"                               -> 6,
-        "minimumVatDecOrgClients"                          -> 6,
-        "minimumIRCTClients"                               -> 6,
-        "stride.roles.agent-assurance"                     -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled-on-start"             -> false,
-        "http-verbs.retries.intervals"                     -> List("1ms"),
-        "agent.cache.enabled"                              -> true
-      )
-      .overrides(moduleWithOverrides)
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.auth.host" -> wireMockHost,
+      "auditing.enabled" -> false,
+      "microservice.services.auth.port" -> wireMockPort,
+      "microservice.services.des.host" -> wireMockHost,
+      "microservice.services.des.port" -> wireMockPort,
+      "microservice.services.des.environment" -> "test",
+      "microservice.services.des.authorization-token" -> "secret",
+      "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
+      "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
+      "minimumIRPAYEClients" -> 6,
+      "minimumIRSAClients" -> 6,
+      "minimumVatDecOrgClients" -> 6,
+      "minimumIRCTClients" -> 6,
+      "stride.roles.agent-assurance" -> "maintain_agent_manually_assure",
+      "internal-auth-token-enabled-on-start" -> false,
+      "http-verbs.retries.intervals" -> List("1ms"),
+      "agent.cache.enabled" -> true
+    )
+    .overrides(moduleWithOverrides)
 
   implicit val hc: HeaderCarrier = new HeaderCarrier
 
   val irSaAgentEnrolmentUrl = s"http://localhost:$port/agent-assurance/irSaAgentEnrolment"
 
-  def irSaAgentEnrolmentNinoUrl(nino: String) =
-    s"http://localhost:$port/agent-assurance/activeCesaRelationship/nino/$nino/saAgentReference/$irAgentReference"
+  def irSaAgentEnrolmentNinoUrl(nino: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/nino/$nino/saAgentReference/$irAgentReference"
 
-  def irSaAgentEnrolmentUtrUrl(utr: String) =
-    s"http://localhost:$port/agent-assurance/activeCesaRelationship/utr/$utr/saAgentReference/$irAgentReference"
+  def irSaAgentEnrolmentUtrUrl(utr: String) = s"http://localhost:$port/agent-assurance/activeCesaRelationship/utr/$utr/saAgentReference/$irAgentReference"
 
-  val irPayeKey    = "IR-PAYE"
-  val irSaKey      = "IR-SA"
+  val irPayeKey = "IR-PAYE"
+  val irSaKey = "IR-SA"
   val vatDecOrgKey = "HMCE-VATDEC-ORG"
-  val irCtKey      = "IR-CT"
-  val acceptableNumberOfPayeClientsUrl =
-    s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$irPayeKey"
-  val acceptableNumberOfSAClientsUrl =
-    s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$irSaKey"
-  val acceptableNumberOfVatDevOrgClientsUrl =
-    s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$vatDecOrgKey"
-  val acceptableNumberOfIRCTClientsUrl =
-    s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$irCtKey"
+  val irCtKey = "IR-CT"
+  val acceptableNumberOfPayeClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$irPayeKey"
+  val acceptableNumberOfSAClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$irSaKey"
+  val acceptableNumberOfVatDevOrgClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$vatDecOrgKey"
+  val acceptableNumberOfIRCTClientsUrl = s"http://localhost:$port/agent-assurance/acceptableNumberOfClients/service/$irCtKey"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
@@ -460,7 +454,7 @@ class AgentAssuranceControllerISpec
 
     val amlsCreateUrl = s"http://localhost:$port/agent-assurance/amls"
 
-    val utr                             = Utr("7000000002")
+    val utr = Utr("7000000002")
     val validApplicationReferenceNumber = "XAML00000123456"
     val amlsDetails = UkAmlsDetails(
       "supervisory",
@@ -474,17 +468,16 @@ class AgentAssuranceControllerISpec
       appliedOn = Some(LocalDate.now().minusDays(10)),
       membershipExpiresOn = None
     )
-    val createAmlsRequest         = CreateAmlsRequest(utr, amlsDetails)
+    val createAmlsRequest = CreateAmlsRequest(utr, amlsDetails)
     val pendingAmlsDetailsRequest = CreateAmlsRequest(utr, pendingAmlsDetails)
 
-    def doRequest(createAmlsRequest: CreateAmlsRequest) =
-      Await.result(
-        wsClient
-          .url(amlsCreateUrl)
-          .withHttpHeaders(CONTENT_TYPE -> "application/json", "Authorization" -> "Bearer XYZ")
-          .post(Json.toJson(createAmlsRequest)),
-        10 seconds
-      )
+    def doRequest(createAmlsRequest: CreateAmlsRequest) = Await.result(
+      wsClient
+        .url(amlsCreateUrl)
+        .withHttpHeaders(CONTENT_TYPE -> "application/json", "Authorization" -> "Bearer XYZ")
+        .post(Json.toJson(createAmlsRequest)),
+      10 seconds
+    )
 
     Scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
       Given("User is logged in and is an agent")
@@ -549,7 +542,7 @@ class AgentAssuranceControllerISpec
       isLoggedInAsStride(userId)
 
       When("POST /amls/create is called with a registered AMLS record that doesn't have an expiry date")
-      val amlsDetailsNoDate    = amlsDetails.copy(membershipExpiresOn = None)
+      val amlsDetailsNoDate = amlsDetails.copy(membershipExpiresOn = None)
       val response: WSResponse = doRequest(createAmlsRequest.copy(amlsDetails = amlsDetailsNoDate))
 
       Then("201 CREATED is returned")
@@ -568,7 +561,7 @@ class AgentAssuranceControllerISpec
       isLoggedInAsStride(userId)
 
       When("POST /amls/create is called with a pending AMLS record that doesn't have an applied date")
-      val amlsDetailsNoDate    = pendingAmlsDetails.copy(appliedOn = None)
+      val amlsDetailsNoDate = pendingAmlsDetails.copy(appliedOn = None)
       val response: WSResponse = doRequest(createAmlsRequest.copy(amlsDetails = amlsDetailsNoDate))
 
       Then("201 CREATED is returned")
@@ -587,7 +580,7 @@ class AgentAssuranceControllerISpec
       isLoggedInAsStride(userId)
 
       When("POST /amls/create is called with a pending AMLS record without a reference number")
-      val amlsDetailsNoDate    = pendingAmlsDetails.copy(membershipNumber = None)
+      val amlsDetailsNoDate = pendingAmlsDetails.copy(membershipNumber = None)
       val response: WSResponse = doRequest(createAmlsRequest.copy(amlsDetails = amlsDetailsNoDate))
 
       Then("201 CREATED is returned")
@@ -623,9 +616,7 @@ class AgentAssuranceControllerISpec
 
       When("POST /amls/create is called second time with the same UTR")
       val newResponse: WSResponse = doRequest(
-        createAmlsRequest.copy(amlsDetails =
-          createAmlsRequest.amlsDetails.copy(supervisoryBody = "updated-supervisory")
-        )
+        createAmlsRequest.copy(amlsDetails = createAmlsRequest.amlsDetails.copy(supervisoryBody = "updated-supervisory"))
       )
 
       Then("201 CREATED is returned")
@@ -716,14 +707,16 @@ class AgentAssuranceControllerISpec
       membershipExpiresOn = Some(LocalDate.now())
     )
 
-    def callPut(utr: Utr, arn: Arn) =
-      Await.result(
-        wsClient
-          .url(amlsUpdateUrl(utr))
-          .withHttpHeaders(CONTENT_TYPE -> "application/json", "Authorization" -> "Bearer XYZ")
-          .put(Json.toJson(arn).toString()),
-        10 seconds
-      )
+    def callPut(
+      utr: Utr,
+      arn: Arn
+    ) = Await.result(
+      wsClient
+        .url(amlsUpdateUrl(utr))
+        .withHttpHeaders(CONTENT_TYPE -> "application/json", "Authorization" -> "Bearer XYZ")
+        .put(Json.toJson(arn).toString()),
+      10 seconds
+    )
 
     Scenario("user logged in and is an agent should be able to update existing amls record with ARN") {
 
@@ -838,8 +831,7 @@ class AgentAssuranceControllerISpec
 
   Feature("GET /amls-subscription/:amlsRegistrationNumber") {
     val validAmlsRegistrationNumber = "XAML00000700000"
-    def url(amlsRegistrationNumber: String) =
-      s"http://localhost:$port/agent-assurance/amls-subscription/$amlsRegistrationNumber"
+    def url(amlsRegistrationNumber: String) = s"http://localhost:$port/agent-assurance/amls-subscription/$amlsRegistrationNumber"
 
     Scenario("return 200 when amlsRegistrationNumber is valid") {
 
@@ -866,7 +858,10 @@ class AgentAssuranceControllerISpec
     }
   }
 
-  def delegatedEnrolmentClientCheck(enrolment: String, acceptableClientUrl: String): Unit = {
+  def delegatedEnrolmentClientCheck(
+    enrolment: String,
+    acceptableClientUrl: String
+  ): Unit = {
     Feature(s"/acceptableNumberOfClients/service/$enrolment") {
 
       Scenario(s"Logged in user is an agent with sufficient allocated $enrolment clients") {
@@ -964,4 +959,5 @@ class AgentAssuranceControllerISpec
       }
     }
   }
+
 }

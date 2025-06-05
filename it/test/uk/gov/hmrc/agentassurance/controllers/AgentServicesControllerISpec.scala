@@ -38,30 +38,29 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 class AgentServicesControllerISpec
-    extends PlaySpec
-    with AgentAuthStubs
-    with GuiceOneServerPerSuite
-    with WireMockSupport
-    with DesStubs
-    with DmsSubmissionStubs {
+extends PlaySpec
+with AgentAuthStubs
+with GuiceOneServerPerSuite
+with WireMockSupport
+with DesStubs
+with DmsSubmissionStubs {
 
-  implicit override lazy val app: Application = appBuilder.build()
+  override implicit lazy val app: Application = appBuilder.build()
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "microservice.services.auth.host"           -> wireMockHost,
-        "microservice.services.auth.port"           -> wireMockPort,
-        "microservice.services.des.host"            -> wireMockHost,
-        "microservice.services.des.port"            -> wireMockPort,
-        "microservice.services.dms-submission.host" -> wireMockHost,
-        "microservice.services.dms-submission.port" -> wireMockPort,
-        "auditing.enabled"                          -> false,
-        "stride.roles.agent-assurance"              -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled-on-start"      -> false,
-        "http-verbs.retries.intervals"              -> List("1ms"),
-        "agent.cache.enabled"                       -> false
-      )
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.auth.host" -> wireMockHost,
+      "microservice.services.auth.port" -> wireMockPort,
+      "microservice.services.des.host" -> wireMockHost,
+      "microservice.services.des.port" -> wireMockPort,
+      "microservice.services.dms-submission.host" -> wireMockHost,
+      "microservice.services.dms-submission.port" -> wireMockPort,
+      "auditing.enabled" -> false,
+      "stride.roles.agent-assurance" -> "maintain_agent_manually_assure",
+      "internal-auth-token-enabled-on-start" -> false,
+      "http-verbs.retries.intervals" -> List("1ms"),
+      "agent.cache.enabled" -> false
+    )
 
   val arn = Arn("AARN0000002")
   val url = s"http://localhost:$port/agent-assurance/agent/agency-details/arn/${arn.value}"
@@ -70,25 +69,23 @@ class AgentServicesControllerISpec
 
   val wsClient = app.injector.instanceOf[WSClient]
 
-  def doGETRequest() =
-    Await.result(
-      wsClient
-        .url(url)
-        .withHttpHeaders("Authorization" -> "Bearer XYZ")
-        .get(),
-      15.seconds
-    )
+  def doGETRequest() = Await.result(
+    wsClient
+      .url(url)
+      .withHttpHeaders("Authorization" -> "Bearer XYZ")
+      .get(),
+    15.seconds
+  )
 
-  def doPOSTRequest[T](body: T)(implicit wr: BodyWritable[T]) =
-    Await.result(
-      wsClient
-        .url(url)
-        .withHttpHeaders("Authorization" -> "Bearer XYZ")
-        .post(body),
-      15.seconds
-    )
+  def doPOSTRequest[T](body: T)(implicit wr: BodyWritable[T]) = Await.result(
+    wsClient
+      .url(url)
+      .withHttpHeaders("Authorization" -> "Bearer XYZ")
+      .post(body),
+    15.seconds
+  )
 
-  val testUtr: Utr                       = Utr("7000000002")
+  val testUtr: Utr = Utr("7000000002")
   val membershipExpiresOnDate: LocalDate = LocalDate.now.plusWeeks(4)
   val testAmlsDetails: UkAmlsDetails = UkAmlsDetails(
     "supervisory",
@@ -96,9 +93,12 @@ class AgentServicesControllerISpec
     appliedOn = None,
     membershipExpiresOn = Some(membershipExpiresOnDate)
   )
-  val testOverseasAmlsDetails: OverseasAmlsDetails =
-    OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
-  val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(arn, testOverseasAmlsDetails, None)
+  val testOverseasAmlsDetails: OverseasAmlsDetails = OverseasAmlsDetails("supervisory", membershipNumber = Some("0123456789"))
+  val testOverseasAmlsEntity: OverseasAmlsEntity = OverseasAmlsEntity(
+    arn,
+    testOverseasAmlsDetails,
+    None
+  )
 
   val testCreatedDate: LocalDate = LocalDate.now.plusWeeks(2)
   val amlsEntity: UkAmlsEntity = UkAmlsEntity(
@@ -118,16 +118,16 @@ class AgentServicesControllerISpec
       response.status mustBe OK
       response.json mustBe Json.obj(
         "agencyDetails" -> Json.obj(
-          "agencyName"      -> "ABC Accountants",
-          "agencyEmail"     -> "abc@xyz.com",
+          "agencyName" -> "ABC Accountants",
+          "agencyEmail" -> "abc@xyz.com",
           "agencyTelephone" -> "07345678901",
           "agencyAddress" -> Json.obj(
             "addressLine1" -> "Matheson House",
             "addressLine2" -> "Grange Central",
             "addressLine3" -> "Town Centre",
             "addressLine4" -> "Telford",
-            "postalCode"   -> "TF3 4ER",
-            "countryCode"  -> "GB"
+            "postalCode" -> "TF3 4ER",
+            "countryCode" -> "GB"
           )
         ),
         "utr" -> "7000000002"
@@ -142,16 +142,16 @@ class AgentServicesControllerISpec
       response.status mustBe OK
       response.json mustBe Json.obj(
         "agencyDetails" -> Json.obj(
-          "agencyName"      -> "ABC Accountants",
-          "agencyEmail"     -> "abc@xyz.com",
+          "agencyName" -> "ABC Accountants",
+          "agencyEmail" -> "abc@xyz.com",
           "agencyTelephone" -> "07345678901",
           "agencyAddress" -> Json.obj(
             "addressLine1" -> "Matheson House",
             "addressLine2" -> "Grange Central",
             "addressLine3" -> "Town Centre",
             "addressLine4" -> "Telford",
-            "postalCode"   -> "TF3 4ER",
-            "countryCode"  -> "GB"
+            "postalCode" -> "TF3 4ER",
+            "countryCode" -> "GB"
           )
         )
       )
@@ -172,9 +172,9 @@ class AgentServicesControllerISpec
       isLoggedInAsStride("stride")
       givenDmsSubmissionSuccess
 
-      val html           = "<html><head></head><body></body></html>"
+      val html = "<html><head></head><body></body></html>"
       val encodedHtmlStr = java.util.Base64.getEncoder.encodeToString(html.getBytes())
-      val response       = doPOSTRequest(encodedHtmlStr)
+      val response = doPOSTRequest(encodedHtmlStr)
       response.status mustBe CREATED
     }
 
@@ -194,4 +194,5 @@ class AgentServicesControllerISpec
       response.body.contains("base64 encoding failed with field not provided")
     }
   }
+
 }

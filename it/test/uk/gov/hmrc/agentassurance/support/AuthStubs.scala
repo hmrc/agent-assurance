@@ -32,7 +32,9 @@ trait BasicUserAuthStubs { WiremockAware =>
   }
 }
 
-trait AgentAuthStubs extends BasicUserAuthStubs {
+trait AgentAuthStubs
+extends BasicUserAuthStubs {
+
   def irAgentReference: String = "IRSA-123"
 
   def isLoggedInAsAnAfinityGroupAgent(userId: String) = {
@@ -236,4 +238,5 @@ trait AgentAuthStubs extends BasicUserAuthStubs {
     )
     this
   }
+
 }

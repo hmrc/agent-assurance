@@ -37,17 +37,17 @@ import uk.gov.hmrc.http.StringContextOps
 
 @Singleton
 class DmsConnector @Inject() (
-    httpClient: HttpClientV2,
-    appConfig: AppConfig,
-    override val configuration: Config,
-    override val actorSystem: ActorSystem
+  httpClient: HttpClientV2,
+  appConfig: AppConfig,
+  override val configuration: Config,
+  override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
-    extends BaseConnector {
+extends BaseConnector {
 
   private def dmsHeaders: (String, String) = HeaderNames.authorisation -> appConfig.internalAuthToken
 
   def sendPdf(
-      body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed]
+    body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed]
   )(implicit hc: HeaderCarrier): Future[Unit] =
     retryFor[Unit]("DMS submission")(retryCondition) {
       httpClient
@@ -56,4 +56,5 @@ class DmsConnector @Inject() (
         .withBody(body)
         .executeAndExpect(ACCEPTED)
     }
+
 }

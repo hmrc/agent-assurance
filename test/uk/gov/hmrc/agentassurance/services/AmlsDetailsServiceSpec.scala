@@ -36,24 +36,25 @@ import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
 import uk.gov.hmrc.http.HeaderCarrier
 
 class AmlsDetailsServiceSpec
-    extends PlaySpec
-    with PrivateMethodTester
-    with MockAmlsRepository
-    with MockOverseasAmlsRepository
-    with MockArchivedAmlsRepository
-    with MockDesConnector
-    with MockAgencyDetailsService {
+extends PlaySpec
+with PrivateMethodTester
+with MockAmlsRepository
+with MockOverseasAmlsRepository
+with MockArchivedAmlsRepository
+with MockDesConnector
+with MockAgencyDetailsService {
 
-  implicit val hc: HeaderCarrier     = HeaderCarrier()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: Request[Any] = FakeRequest()
 
-  val service = new AmlsDetailsService(
-    mockOverseasAmlsRepository,
-    mockAmlsRepository,
-    mockArchivedAmlsRepository,
-    mockDesConnector,
-    mockAgencyDetailsService
-  )
+  val service =
+    new AmlsDetailsService(
+      mockOverseasAmlsRepository,
+      mockAmlsRepository,
+      mockArchivedAmlsRepository,
+      mockDesConnector,
+      mockAgencyDetailsService
+    )
 
   "getAmlsDetailsByArn" when {
 
@@ -94,9 +95,12 @@ class AmlsDetailsServiceSpec
 
         val result = service.getAmlsDetailsByArn(testArn)
 
-        await(result) mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(
-          testAmlsDetails.copy(membershipExpiresOn = Some(testDate))
-        ))
+        await(result) mustBe (
+          AmlsStatus.ValidAmlsDetailsUK,
+          Some(
+            testAmlsDetails.copy(membershipExpiresOn = Some(testDate))
+          )
+        )
       }
       "return (ValidAMLSDetailsUK, UkAmlsDetails) if there is no expiry date set - Scenario #4b" in {
         mockGetAmlsDetailsByArn(testArn)(Some(testAmlsDetails.copy(membershipExpiresOn = None)))
@@ -122,21 +126,36 @@ class AmlsDetailsServiceSpec
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = Some(testDate))))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
-          Future.successful(AmlsSubscriptionRecord("Approved", "1", None, Some(testDate), None))
+          Future.successful(AmlsSubscriptionRecord(
+            "Approved",
+            "1",
+            None,
+            Some(testDate),
+            None
+          ))
         )
 
         val result = service.getAmlsDetailsByArn(testArn)
 
-        await(result) mustBe (AmlsStatus.ExpiredAmlsDetailsUK, Some(
-          testHmrcAmlsDetails.copy(membershipExpiresOn = Some(testDate))
-        ))
+        await(result) mustBe (
+          AmlsStatus.ExpiredAmlsDetailsUK,
+          Some(
+            testHmrcAmlsDetails.copy(membershipExpiresOn = Some(testDate))
+          )
+        )
       }
       "return (ValidAMLSDetailsUK, UkAmlsDetails) if the record has not expired - Scenario #6a" in {
         val testDate = LocalDate.now().plusWeeks(2)
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
-          Future.successful(AmlsSubscriptionRecord("ApprovedWithConditions", "1", None, Some(testDate), None))
+          Future.successful(AmlsSubscriptionRecord(
+            "ApprovedWithConditions",
+            "1",
+            None,
+            Some(testDate),
+            None
+          ))
         )
         mockUpdateExpiryDate(testArn, testDate)(UpdateResult.acknowledged(1, 1, null))
 
@@ -148,7 +167,13 @@ class AmlsDetailsServiceSpec
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None)))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
-          Future.successful(AmlsSubscriptionRecord("Approved", "1", None, None, None))
+          Future.successful(AmlsSubscriptionRecord(
+            "Approved",
+            "1",
+            None,
+            None,
+            None
+          ))
         )
 
         val result = service.getAmlsDetailsByArn(testArn)
@@ -174,7 +199,13 @@ class AmlsDetailsServiceSpec
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetailsPending))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
-          Future.successful(AmlsSubscriptionRecord("Pending", "1", None, Some(testDate), None))
+          Future.successful(AmlsSubscriptionRecord(
+            "Pending",
+            "1",
+            None,
+            Some(testDate),
+            None
+          ))
         )
 
         val result = await(service.getAmlsDetailsByArn(testArn))
@@ -186,7 +217,13 @@ class AmlsDetailsServiceSpec
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetailsPending))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
-          Future.successful(AmlsSubscriptionRecord("Rejected", "1", None, Some(testDate), None))
+          Future.successful(AmlsSubscriptionRecord(
+            "Rejected",
+            "1",
+            None,
+            Some(testDate),
+            None
+          ))
         )
 
         val result = await(service.getAmlsDetailsByArn(testArn))
@@ -201,7 +238,13 @@ class AmlsDetailsServiceSpec
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = testDate)))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
-          Future.successful(AmlsSubscriptionRecord("ApprovedWithConditions", "1", None, testDate, None))
+          Future.successful(AmlsSubscriptionRecord(
+            "ApprovedWithConditions",
+            "1",
+            None,
+            testDate,
+            None
+          ))
         )
 
         val result = await(service.getAmlsDetailsByArn(testArn))
@@ -213,7 +256,13 @@ class AmlsDetailsServiceSpec
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
-          Future.successful(AmlsSubscriptionRecord("ApprovedWithConditions", "1", None, Some(testDate), None))
+          Future.successful(AmlsSubscriptionRecord(
+            "ApprovedWithConditions",
+            "1",
+            None,
+            Some(testDate),
+            None
+          ))
         )
         mockUpdateExpiryDate(testArn, testDate)(UpdateResult.acknowledged(1, 1, null))
 
@@ -225,7 +274,13 @@ class AmlsDetailsServiceSpec
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None)))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
-          Future.successful(AmlsSubscriptionRecord("ApprovedWithConditions", "1", None, None, None))
+          Future.successful(AmlsSubscriptionRecord(
+            "ApprovedWithConditions",
+            "1",
+            None,
+            None,
+            None
+          ))
         )
 
         val result = await(service.getAmlsDetailsByArn(testArn))
@@ -276,21 +331,33 @@ class AmlsDetailsServiceSpec
         val asa = defaultDate
         mockUpdateExpiryDate(testArn, des.get)(UpdateResult.acknowledged(1, null, null))
 
-        val result = service.findCorrectExpiryDate(testArn, des, asa)
+        val result = service.findCorrectExpiryDate(
+          testArn,
+          des,
+          asa
+        )
 
         result mustBe des
       }
       "return the ASA expiry date if it is after the DES expiry date" in {
-        val des    = defaultDate
-        val asa    = defaultDate.map(_.plusWeeks(1))
-        val result = service.findCorrectExpiryDate(testArn, des, asa)
+        val des = defaultDate
+        val asa = defaultDate.map(_.plusWeeks(1))
+        val result = service.findCorrectExpiryDate(
+          testArn,
+          des,
+          asa
+        )
 
         result mustBe asa
       }
       "return the ASA expiry date if it is equal to the DES expiry date" in {
-        val des    = defaultDate
-        val asa    = defaultDate
-        val result = service.findCorrectExpiryDate(testArn, des, asa)
+        val des = defaultDate
+        val asa = defaultDate
+        val result = service.findCorrectExpiryDate(
+          testArn,
+          des,
+          asa
+        )
 
         result mustBe asa
       }
@@ -298,9 +365,13 @@ class AmlsDetailsServiceSpec
 
     "the DES expiry date is not populated and the ASA expiry date is populated" should {
       "return the ASA expiry date" in {
-        val des    = None
-        val asa    = defaultDate
-        val result = service.findCorrectExpiryDate(testArn, des, asa)
+        val des = None
+        val asa = defaultDate
+        val result = service.findCorrectExpiryDate(
+          testArn,
+          des,
+          asa
+        )
 
         result mustBe asa
       }
@@ -312,7 +383,11 @@ class AmlsDetailsServiceSpec
         val asa = None
         mockUpdateExpiryDate(testArn, des.get)(UpdateResult.acknowledged(1, null, null))
 
-        val result = service.findCorrectExpiryDate(testArn, des, asa)
+        val result = service.findCorrectExpiryDate(
+          testArn,
+          des,
+          asa
+        )
 
         result mustBe des
       }
@@ -320,7 +395,11 @@ class AmlsDetailsServiceSpec
 
     "neither expiry dates are provided" should {
       "return None" in {
-        service.findCorrectExpiryDate(testArn, None, None) mustBe None
+        service.findCorrectExpiryDate(
+          testArn,
+          None,
+          None
+        ) mustBe None
       }
     }
   }

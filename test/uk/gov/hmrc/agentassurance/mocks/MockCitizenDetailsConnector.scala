@@ -26,7 +26,8 @@ import uk.gov.hmrc.agentassurance.models.entitycheck.DeceasedCheckException
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockCitizenDetailsConnector extends MockFactory { this: TestSuite =>
+trait MockCitizenDetailsConnector
+extends MockFactory { this: TestSuite =>
 
   val mockCitizenDetailsConnector = mock[CitizenDetailsConnector]
 

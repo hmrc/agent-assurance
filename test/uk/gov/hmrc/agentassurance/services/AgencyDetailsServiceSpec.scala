@@ -29,11 +29,13 @@ import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn
 import uk.gov.hmrc.agentassurance.mocks.MockDesConnector
 import uk.gov.hmrc.http.HeaderCarrier
 
-class AgencyDetailsServiceSpec extends PlaySpec with MockDesConnector {
+class AgencyDetailsServiceSpec
+extends PlaySpec
+with MockDesConnector {
 
-  implicit val hc: HeaderCarrier     = HeaderCarrier()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: Request[Any] = FakeRequest()
-  val service: AgencyDetailsService  = new AgencyDetailsService(mockDesConnector)
+  val service: AgencyDetailsService = new AgencyDetailsService(mockDesConnector)
 
   "isUkAddress" should {
     "return true if agency address country code is GB" in {
@@ -57,4 +59,5 @@ class AgencyDetailsServiceSpec extends PlaySpec with MockDesConnector {
       result mustBe false
     }
   }
+
 }

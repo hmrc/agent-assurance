@@ -19,7 +19,11 @@ package uk.gov.hmrc.agentassurance.models
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-case class AgentCheckOutcome(agentCheckType: String, isSuccessful: Boolean, failureReason: Option[String])
+case class AgentCheckOutcome(
+  agentCheckType: String,
+  isSuccessful: Boolean,
+  failureReason: Option[String]
+)
 
 object AgentCheckOutcome {
   implicit val format: Format[AgentCheckOutcome] = Json.format[AgentCheckOutcome]

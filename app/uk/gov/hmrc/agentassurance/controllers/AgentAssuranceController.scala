@@ -46,102 +46,108 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class AgentAssuranceController @Inject() (
-    override val authConnector: AuthConnector,
-    val desConnector: DesConnector,
-    val espConnector: EnrolmentStoreProxyConnector,
-    val overseasAmlsRepository: OverseasAmlsRepository,
-    cc: ControllerComponents,
-    val amlsRepository: AmlsRepository
-)(implicit val appConfig: AppConfig, ec: ExecutionContext)
-    extends BackendController(cc)
-    with AuthActions {
+  override val authConnector: AuthConnector,
+  val desConnector: DesConnector,
+  val espConnector: EnrolmentStoreProxyConnector,
+  val overseasAmlsRepository: OverseasAmlsRepository,
+  cc: ControllerComponents,
+  val amlsRepository: AmlsRepository
+)(implicit
+  val appConfig: AppConfig,
+  ec: ExecutionContext
+)
+extends BackendController(cc)
+with AuthActions {
 
-  private val minimumIRPAYEClients    = appConfig.minimumIRPAYEClients
-  private val minimumIRSAClients      = appConfig.minimumIRSAClients
+  private val minimumIRPAYEClients = appConfig.minimumIRPAYEClients
+  private val minimumIRSAClients = appConfig.minimumIRSAClients
   private val minimumVatDecOrgClients = appConfig.minimumVatDecOrgClients
-  private val minimumIRCTClients      = appConfig.minimumIRCTClients
-  private val strideRoles             = Seq(appConfig.manuallyAssuredStrideRole)
+  private val minimumIRCTClients = appConfig.minimumIRCTClients
+  private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
   private val logger = Logger(this.getClass)
 
   def enrolledForIrSAAgent(): Action[AnyContent] = AuthorisedIRSAAgent { _ => _ => Future.successful(NoContent) }
 
-  def activeCesaRelationshipWithUtr(utr: Utr, saAgentReference: SaAgentReference): Action[AnyContent] =
-    activeCesaRelationship(utr, saAgentReference)
+  def activeCesaRelationshipWithUtr(
+    utr: Utr,
+    saAgentReference: SaAgentReference
+  ): Action[AnyContent] = activeCesaRelationship(utr, saAgentReference)
 
-  def activeCesaRelationshipWithNino(nino: Nino, saAgentReference: SaAgentReference): Action[AnyContent] =
-    activeCesaRelationship(nino, saAgentReference)
+  def activeCesaRelationshipWithNino(
+    nino: Nino,
+    saAgentReference: SaAgentReference
+  ): Action[AnyContent] = activeCesaRelationship(nino, saAgentReference)
 
   private def activeCesaRelationship(
-      identifier: TaxIdentifier,
-      saAgentReference: SaAgentReference
-  ): Action[AnyContent] =
-    BasicAuth { implicit request =>
-      desConnector.getActiveCesaAgentRelationships(identifier).map {
-        case agentRefs if agentRefs.contains(saAgentReference) => Ok
-        case _                                                 => Forbidden
-      }
+    identifier: TaxIdentifier,
+    saAgentReference: SaAgentReference
+  ): Action[AnyContent] = BasicAuth { implicit request =>
+    desConnector.getActiveCesaAgentRelationships(identifier).map {
+      case agentRefs if agentRefs.contains(saAgentReference) => Ok
+      case _ => Forbidden
     }
+  }
 
   def acceptableNumberOfPAYEClients = acceptableNumberOfClients("IR-PAYE", minimumIRPAYEClients)
 
   def acceptableNumberOfIRSAClients = acceptableNumberOfClients("IR-SA", minimumIRSAClients)
 
-  def acceptableNumberOfVatDecOrgClients: Action[AnyContent] =
-    acceptableNumberOfClients("HMCE-VATDEC-ORG", minimumVatDecOrgClients)
+  def acceptableNumberOfVatDecOrgClients: Action[AnyContent] = acceptableNumberOfClients("HMCE-VATDEC-ORG", minimumVatDecOrgClients)
 
   def acceptableNumberOfIRCTClients: Action[AnyContent] = acceptableNumberOfClients("IR-CT", minimumIRCTClients)
 
-  def acceptableNumberOfClients(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
-    AuthorisedWithUserId { implicit request => implicit userId =>
-      espConnector.getClientCount(service, userId).flatMap { count =>
-        if (count >= minimumAcceptableNumberOfClients)
-          Future.successful(NoContent)
-        else
-          Future.successful(Forbidden)
-      }
-    }
-
-  def storeAmlsDetails: Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
-    request.body.asJson.map(_.validate[CreateAmlsRequest]) match {
-      case Some(JsSuccess(createAmlsRequest, _)) =>
-        if (Utr.isValid(createAmlsRequest.utr.value)) {
-          amlsRepository.createOrUpdate(createAmlsRequest).map {
-            case Right(_) => Created
-            case Left(error) =>
-              error match {
-                case ArnAlreadySetError => Forbidden
-                case _                  => InternalServerError
-              }
-          }
-        } else {
-          BadRequest("utr is not valid")
-        }
-      case Some(JsError(_)) =>
-        BadRequest("Could not parse AmlsDetails JSON in request")
-      case None =>
-        BadRequest("No JSON found in request body")
+  def acceptableNumberOfClients(
+    service: String,
+    minimumAcceptableNumberOfClients: Int
+  ): Action[AnyContent] = AuthorisedWithUserId { implicit request => implicit userId =>
+    espConnector.getClientCount(service, userId).flatMap { count =>
+      if (count >= minimumAcceptableNumberOfClients)
+        Future.successful(NoContent)
+      else
+        Future.successful(Forbidden)
     }
   }
+
+  def storeAmlsDetails: Action[AnyContent] =
+    withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
+      request.body.asJson.map(_.validate[CreateAmlsRequest]) match {
+        case Some(JsSuccess(createAmlsRequest, _)) =>
+          if (Utr.isValid(createAmlsRequest.utr.value)) {
+            amlsRepository.createOrUpdate(createAmlsRequest).map {
+              case Right(_) => Created
+              case Left(error) =>
+                error match {
+                  case ArnAlreadySetError => Forbidden
+                  case _ => InternalServerError
+                }
+            }
+          }
+          else {
+            BadRequest("utr is not valid")
+          }
+        case Some(JsError(_)) => BadRequest("Could not parse AmlsDetails JSON in request")
+        case None => BadRequest("No JSON found in request body")
+      }
+    }
 
   def storeOverseasAmlsDetails: Action[AnyContent] = withAffinityGroupAgent { implicit request =>
     request.body.asJson.map(_.validate[OverseasAmlsEntity]) match {
       case Some(JsSuccess(amlsEntity, _)) =>
         if (Arn.isValid(amlsEntity.arn.value)) {
           overseasAmlsRepository.create(amlsEntity).map {
-            case Right(_)               => Created
+            case Right(_) => Created
             case Left(AmlsRecordExists) => Conflict
             case Left(error) =>
               logger.warn(s"Creating overseas amls details failed with error: $error")
               InternalServerError
           }
-        } else {
+        }
+        else {
           BadRequest("Invalid Arn")
         }
-      case Some(JsError(_)) =>
-        BadRequest("Could not parse JSON in request")
-      case None =>
-        BadRequest("No JSON found in request body")
+      case Some(JsError(_)) => BadRequest("Could not parse JSON in request")
+      case None => BadRequest("No JSON found in request body")
     }
   }
 
@@ -157,14 +163,15 @@ class AgentAssuranceController @Inject() (
     }
   }
 
-  def getAmlsDetails(utr: Utr): Action[AnyContent] = withAffinityGroupAgentOrStride(strideRoles) { _ =>
-    amlsRepository
-      .getAmlDetails(utr)
-      .map {
-        case Some(details) => Ok(Json.toJson(details))
-        case _             => NotFound
-      }
-  }
+  def getAmlsDetails(utr: Utr): Action[AnyContent] =
+    withAffinityGroupAgentOrStride(strideRoles) { _ =>
+      amlsRepository
+        .getAmlDetails(utr)
+        .map {
+          case Some(details) => Ok(Json.toJson(details))
+          case _ => NotFound
+        }
+    }
 
   def updateAmlsDetails(utr: Utr): Action[AnyContent] = withAffinityGroupAgent { implicit request =>
     request.body.asJson.map(_.validate[Arn]) match {
@@ -174,20 +181,20 @@ class AgentAssuranceController @Inject() (
             case Right(updated) => Ok(Json.toJson(updated))
             case Left(error) =>
               error match {
-                case ArnAlreadySetError      => Forbidden
-                case NoExistingAmlsError     => NotFound
+                case ArnAlreadySetError => Forbidden
+                case NoExistingAmlsError => NotFound
                 case UniqueKeyViolationError => BadRequest
-                case _                       => InternalServerError
+                case _ => InternalServerError
               }
           }
-        } else {
+        }
+        else {
           BadRequest("invalid Arn value")
         }
 
-      case Some(JsError(_)) =>
-        BadRequest("Could not parse Arn JSON in request")
-      case None =>
-        BadRequest("No JSON found in request body")
+      case Some(JsError(_)) => BadRequest("Could not parse Arn JSON in request")
+      case None => BadRequest("No JSON found in request body")
     }
   }
+
 }

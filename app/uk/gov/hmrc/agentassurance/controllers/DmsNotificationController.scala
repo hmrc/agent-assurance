@@ -33,11 +33,12 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class DmsNotificationController @Inject() (
-    cc: ControllerComponents,
-    auth: BackendAuthComponents,
-    appConfig: AppConfig
-) extends BackendController(cc)
-    with Logging {
+  cc: ControllerComponents,
+  auth: BackendAuthComponents,
+  appConfig: AppConfig
+)
+extends BackendController(cc)
+with Logging {
 
   private val predicate = Predicate.Permission(
     resource = Resource(
@@ -49,22 +50,24 @@ class DmsNotificationController @Inject() (
 
   private val authorised = auth.authorizedAction(predicate)
 
-  def dmsCallback: Action[JsValue] = authorised(parse.json) { implicit request =>
-    request.body.validate[DmsNotification] match {
-      case JsSuccess(notification, _) =>
-        if (notification.status == SubmissionItemStatus.Failed) {
-          logger.error(
-            s"DMS notification error received for ${notification.id} with error: ${notification.failureReason
-                .getOrElse("")}"
-          )
-        } else {
-          logger.info(
-            s"DMS notification received for ${notification.id} with status ${notification.status}"
-          )
-        }
-        Ok
-      case JsError(_) =>
-        BadRequest
+  def dmsCallback: Action[JsValue] =
+    authorised(parse.json) { implicit request =>
+      request.body.validate[DmsNotification] match {
+        case JsSuccess(notification, _) =>
+          if (notification.status == SubmissionItemStatus.Failed) {
+            logger.error(
+              s"DMS notification error received for ${notification.id} with error: ${notification.failureReason
+                  .getOrElse("")}"
+            )
+          }
+          else {
+            logger.info(
+              s"DMS notification received for ${notification.id} with status ${notification.status}"
+            )
+          }
+          Ok
+        case JsError(_) => BadRequest
+      }
     }
-  }
+
 }

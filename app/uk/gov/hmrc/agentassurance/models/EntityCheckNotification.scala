@@ -21,11 +21,11 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 case class EntityCheckNotification(
-    arn: Arn,
-    utr: String,
-    agencyName: String,
-    failedChecks: String,
-    dateTime: String
+  arn: Arn,
+  utr: String,
+  agencyName: String,
+  failedChecks: String,
+  dateTime: String
 )
 
 object EntityCheckNotification {

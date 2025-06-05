@@ -32,7 +32,8 @@ import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
-trait MockAmlsRepository extends MockFactory { this: TestSuite =>
+trait MockAmlsRepository
+extends MockFactory { this: TestSuite =>
 
   val mockAmlsRepository = mock[AmlsRepository]
 
@@ -43,7 +44,10 @@ trait MockAmlsRepository extends MockFactory { this: TestSuite =>
       .returning(toFuture(response))
   }
 
-  def mockUpdateAmls(utr: Utr, arn: Arn)(response: Either[AmlsError, UkAmlsDetails]) = {
+  def mockUpdateAmls(
+    utr: Utr,
+    arn: Arn
+  )(response: Either[AmlsError, UkAmlsDetails]) = {
     (mockAmlsRepository
       .updateArn(_: Utr, _: Arn))
       .expects(utr, arn)
@@ -71,7 +75,10 @@ trait MockAmlsRepository extends MockFactory { this: TestSuite =>
       .returning(response)
   }
 
-  def mockCreateOrUpdate(arn: Arn, ukAmnlsEntity: UkAmlsEntity)(response: Option[UkAmlsEntity]) = {
+  def mockCreateOrUpdate(
+    arn: Arn,
+    ukAmnlsEntity: UkAmlsEntity
+  )(response: Option[UkAmlsEntity]) = {
     (mockAmlsRepository
       .createOrUpdate(_: Arn, _: UkAmlsEntity))
       .expects(arn, ukAmnlsEntity)
@@ -85,7 +92,10 @@ trait MockAmlsRepository extends MockFactory { this: TestSuite =>
       .returning(toFuture(response))
   }
 
-  def mockUpdateExpiryDate(arn: Arn, date: LocalDate)(response: UpdateResult) = {
+  def mockUpdateExpiryDate(
+    arn: Arn,
+    date: LocalDate
+  )(response: UpdateResult) = {
     (mockAmlsRepository
       .updateExpiryDate(_: Arn, _: LocalDate))
       .expects(arn, date)
