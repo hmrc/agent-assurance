@@ -27,13 +27,18 @@ import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockEntityCheckService extends MockFactory { this: TestSuite =>
+trait MockEntityCheckService
+extends MockFactory { this: TestSuite =>
 
   val mockEntityCheckService: EntityCheckService = mock[EntityCheckService]
 
   def mockVerifyEntitySuccess(arn: Arn)(returns: EntityCheckResult) =
     (mockEntityCheckService
-      .verifyAgent(_: Arn)(_: Request[_], _: HeaderCarrier, _: ExecutionContext))
+      .verifyAgent(_: Arn)(
+        _: Request[_],
+        _: HeaderCarrier,
+        _: ExecutionContext
+      ))
       .expects(arn, *, *, *)
       .returning(Future.successful(returns))
 

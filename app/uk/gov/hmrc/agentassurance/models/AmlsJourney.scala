@@ -23,11 +23,11 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 case class AmlsJourney(
-    status: String,
-    utr: Option[Utr] = None,
-    newAmlsBody: Option[String] = None,
-    newMembershipNumber: Option[String] = None,
-    newExpirationDate: Option[LocalDate] = None
+  status: String,
+  utr: Option[Utr] = None,
+  newAmlsBody: Option[String] = None,
+  newMembershipNumber: Option[String] = None,
+  newExpirationDate: Option[LocalDate] = None
 )
 
 object AmlsJourney {

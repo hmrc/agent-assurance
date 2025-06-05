@@ -26,22 +26,20 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 
 trait DmsSubmissionStubs {
 
-  def givenDmsSubmissionSuccess: StubMapping =
-    stubFor(
-      post(urlEqualTo("/dms-submission/submit"))
-        .willReturn(
-          aResponse()
-            .withStatus(ACCEPTED)
-        )
-    )
+  def givenDmsSubmissionSuccess: StubMapping = stubFor(
+    post(urlEqualTo("/dms-submission/submit"))
+      .willReturn(
+        aResponse()
+          .withStatus(ACCEPTED)
+      )
+  )
 
-  def givenDmsSubmission5xx: StubMapping =
-    stubFor(
-      post(urlEqualTo("/dms-submission/submit"))
-        .willReturn(
-          aResponse()
-            .withStatus(INTERNAL_SERVER_ERROR)
-        )
-    )
+  def givenDmsSubmission5xx: StubMapping = stubFor(
+    post(urlEqualTo("/dms-submission/submit"))
+      .willReturn(
+        aResponse()
+          .withStatus(INTERNAL_SERVER_ERROR)
+      )
+  )
 
 }

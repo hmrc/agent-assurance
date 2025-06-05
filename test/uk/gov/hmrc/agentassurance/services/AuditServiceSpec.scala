@@ -31,11 +31,14 @@ import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
-class AuditServiceSpec extends PlaySpec with MockAppConfig with MockAuditConnector {
+class AuditServiceSpec
+extends PlaySpec
+with MockAppConfig
+with MockAuditConnector {
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-  implicit val hc: HeaderCarrier    = new HeaderCarrier()
-  val auditService                  = new AuditService(mockAuditConnector)(ec, mockAppConfig)
+  implicit val hc: HeaderCarrier = new HeaderCarrier()
+  val auditService = new AuditService(mockAuditConnector)(ec, mockAppConfig)
 
   "auditEntityCheckFailureNotificationSent" should {
     "send audit event" in {
@@ -44,7 +47,13 @@ class AuditServiceSpec extends PlaySpec with MockAppConfig with MockAuditConnect
       mockSendExtendedEvent(AuditResult.Success)
 
       auditService.auditEntityCheckFailureNotificationSent(
-        EntityCheckNotification(testArn, testUtr.value, "ABC", "deceased, refusalList", nowTime.toString)
+        EntityCheckNotification(
+          testArn,
+          testUtr.value,
+          "ABC",
+          "deceased, refusalList",
+          nowTime.toString
+        )
       )
     }
   }
@@ -58,10 +67,19 @@ class AuditServiceSpec extends PlaySpec with MockAppConfig with MockAuditConnect
         testArn,
         Some(testUtr),
         Seq(
-          AgentCheckOutcome("deceased", true, Some("is deceased")),
-          AgentCheckOutcome("refusal", true, Some("on the list"))
+          AgentCheckOutcome(
+            "deceased",
+            true,
+            Some("is deceased")
+          ),
+          AgentCheckOutcome(
+            "refusal",
+            true,
+            Some("on the list")
+          )
         )
       )
     }
   }
+
 }

@@ -24,7 +24,8 @@ import uk.gov.hmrc.agentassurance.models.AmlsError
 import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
 import uk.gov.hmrc.agentassurance.repositories.ArchivedAmlsRepository
 
-trait MockArchivedAmlsRepository extends MockFactory { this: TestSuite =>
+trait MockArchivedAmlsRepository
+extends MockFactory { this: TestSuite =>
 
   val mockArchivedAmlsRepository = mock[ArchivedAmlsRepository]
   def mockCreate(entity: ArchivedAmlsEntity)(response: Either[AmlsError, Unit]) = {

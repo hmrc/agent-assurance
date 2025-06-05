@@ -40,12 +40,12 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class R2dwController @Inject() (
-    repository: PropertiesRepository,
-    cc: ControllerComponents,
-    val authConnector: AuthConnector
+  repository: PropertiesRepository,
+  cc: ControllerComponents,
+  val authConnector: AuthConnector
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc)
-    with AuthActions {
+extends BackendController(cc)
+with AuthActions {
 
   val key = "refusal-to-deal-with"
 
@@ -60,7 +60,7 @@ class R2dwController @Inject() (
         val propertyConverted = newValue.toProperty(key)
         repository.propertyExists(propertyConverted).flatMap {
           case false => repository.createProperty(propertyConverted).map(_ => Created)
-          case true  => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
+          case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
         }
       case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
     }
@@ -68,13 +68,17 @@ class R2dwController @Inject() (
 
   def isOnR2dwList(identifier: Utr): Action[AnyContent] = BasicAuth { _ =>
     repository.propertyExists(Value(identifier.value).toProperty(key)).map {
-      case true  => Forbidden
+      case true => Forbidden
       case false => Ok
     }
   }
 
   def getR2dwList(pagination: PaginationParameters): Action[AnyContent] = BasicAuth { implicit request =>
-    repository.findProperties(key, pagination.page, pagination.pageSize).map {
+    repository.findProperties(
+      key,
+      pagination.page,
+      pagination.pageSize
+    ).map {
       case (total, properties) =>
         val response = PaginatedResources(
           PaginationLinks.apply(
@@ -96,8 +100,9 @@ class R2dwController @Inject() (
     val property = Value(identifier.value).toProperty(key)
 
     repository.propertyExists(property).flatMap {
-      case true  => repository.deleteProperty(property).map(_ => NoContent)
+      case true => repository.deleteProperty(property).map(_ => NoContent)
       case false => Future.successful(NotFound)
     }
   }
+
 }

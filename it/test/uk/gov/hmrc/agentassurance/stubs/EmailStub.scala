@@ -42,15 +42,17 @@ trait EmailStub {
     )
   }
 
-  def verifyEmailRequestWasSent(times: Int): Unit =
-    eventually {
-      verify(
-        times,
-        postRequestedFor(urlPathEqualTo("/hmrc/email"))
-      )
-    }
+  def verifyEmailRequestWasSent(times: Int): Unit = eventually {
+    verify(
+      times,
+      postRequestedFor(urlPathEqualTo("/hmrc/email"))
+    )
+  }
 
-  def verifyEmailRequestWasSentWithEmailInformation(times: Int, emailInformation: EmailInformation): Unit = {
+  def verifyEmailRequestWasSentWithEmailInformation(
+    times: Int,
+    emailInformation: EmailInformation
+  ): Unit = {
     val emailInformationJson = Json.toJson(emailInformation).toString()
     eventually {
       verify(
@@ -60,6 +62,10 @@ trait EmailStub {
       )
     }
   }
-  private def similarToJson(value: String) = equalToJson(value.stripMargin, true, true)
+  private def similarToJson(value: String) = equalToJson(
+    value.stripMargin,
+    true,
+    true
+  )
 
 }

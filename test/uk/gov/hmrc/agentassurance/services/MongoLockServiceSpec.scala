@@ -28,9 +28,12 @@ import uk.gov.hmrc.mongo.lock.MongoLockRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 import uk.gov.hmrc.mongo.CurrentTimestampSupport
 
-class MongoLockServiceSpec extends PlaySpec with CleanMongoCollectionSupport with MockAppConfig {
+class MongoLockServiceSpec
+extends PlaySpec
+with CleanMongoCollectionSupport
+with MockAppConfig {
 
-  val mongoLockRepository    = new MongoLockRepository(mongoComponent, new CurrentTimestampSupport)
+  val mongoLockRepository = new MongoLockRepository(mongoComponent, new CurrentTimestampSupport)
   implicit val ac: AppConfig = mockAppConfig
 
   val service = new MongoLockService(mongoLockRepository)
@@ -56,4 +59,5 @@ class MongoLockServiceSpec extends PlaySpec with CleanMongoCollectionSupport wit
     }
 
   }
+
 }

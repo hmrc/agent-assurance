@@ -20,14 +20,19 @@ sealed trait AmlsError
 
 object AmlsError {
 
-  case object ArnAlreadySetError extends AmlsError
+  case object ArnAlreadySetError
+  extends AmlsError
 
-  case object NoExistingAmlsError extends AmlsError
+  case object NoExistingAmlsError
+  extends AmlsError
 
-  case object UniqueKeyViolationError extends AmlsError
+  case object UniqueKeyViolationError
+  extends AmlsError
 
-  case object AmlsUnexpectedMongoError extends AmlsError
+  case object AmlsUnexpectedMongoError
+  extends AmlsError
 
-  case object AmlsRecordExists extends AmlsError
+  case object AmlsRecordExists
+  extends AmlsError
 
 }

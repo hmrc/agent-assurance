@@ -26,13 +26,18 @@ import uk.gov.hmrc.agentassurance.services.AgencyDetailsService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockAgencyDetailsService extends MockFactory { this: TestSuite =>
+trait MockAgencyDetailsService
+extends MockFactory { this: TestSuite =>
 
   val mockAgencyDetailsService = mock[AgencyDetailsService]
 
   def mockIsUkAddress()(response: Boolean) =
     (mockAgencyDetailsService
-      .agencyDetailsHasUkAddress(_: Arn)(_: ExecutionContext, _: HeaderCarrier, _: Request[_]))
+      .agencyDetailsHasUkAddress(_: Arn)(
+        _: ExecutionContext,
+        _: HeaderCarrier,
+        _: Request[_]
+      ))
       .expects(*, *, *, *)
       .returning(Future.successful(response))
 

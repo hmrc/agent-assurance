@@ -40,6 +40,7 @@ import uk.gov.hmrc.mongo.MongoComponent
 
 @ImplementedBy(classOf[OverseasAmlsRepositoryImpl])
 trait OverseasAmlsRepository {
+
   def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]]
 
   def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]]
@@ -49,17 +50,20 @@ trait OverseasAmlsRepository {
 }
 
 @Singleton
-class OverseasAmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext, clock: Clock)
-    extends PlayMongoRepository[OverseasAmlsEntity](
-      mongoComponent = mongo,
-      collectionName = "overseas-agent-amls",
-      domainFormat = OverseasAmlsEntity.format,
-      indexes = Seq(
-        IndexModel(ascending("arn"), IndexOptions().name("arnIndex").unique(true))
-      )
-    )
-    with OverseasAmlsRepository
-    with Logging {
+class OverseasAmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit
+  ec: ExecutionContext,
+  clock: Clock
+)
+extends PlayMongoRepository[OverseasAmlsEntity](
+  mongoComponent = mongo,
+  collectionName = "overseas-agent-amls",
+  domainFormat = OverseasAmlsEntity.format,
+  indexes = Seq(
+    IndexModel(ascending("arn"), IndexOptions().name("arnIndex").unique(true))
+  )
+)
+with OverseasAmlsRepository
+with Logging {
 
   override lazy val requiresTtlIndex: Boolean = false
 
@@ -87,11 +91,10 @@ class OverseasAmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: 
       }
   }
 
-  override def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]] =
-    collection
-      .find(equal("arn", arn.value))
-      .headOption()
-      .map(_.map(_.amlsDetails))
+  override def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]] = collection
+    .find(equal("arn", arn.value))
+    .headOption()
+    .map(_.map(_.amlsDetails))
 
   override def createOrUpdate(amlsEntity: OverseasAmlsEntity): Future[Option[OverseasAmlsEntity]] = {
     collection

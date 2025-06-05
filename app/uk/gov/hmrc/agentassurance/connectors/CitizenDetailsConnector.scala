@@ -39,31 +39,40 @@ import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 case class CitizenDeceased(deceased: Boolean)
 
 object CitizenDeceased {
-  implicit val reads: Reads[CitizenDeceased] =
-    (JsPath \ "deceased")
-      .readNullable[Boolean]
-      .map(x => CitizenDeceased(x.getOrElse(false)))
+  implicit val reads: Reads[CitizenDeceased] = (JsPath \ "deceased")
+    .readNullable[Boolean]
+    .map(x => CitizenDeceased(x.getOrElse(false)))
 }
 
 @ImplementedBy(classOf[CitizenDetailsConnectorImpl])
 trait CitizenDetailsConnector {
 
   def getCitizenDeceasedFlag(
-      saUtr: SaUtr
-  )(implicit c: HeaderCarrier, ec: ExecutionContext): Future[Option[DeceasedCheckException]]
+    saUtr: SaUtr
+  )(implicit
+    c: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Option[DeceasedCheckException]]
 
 }
 
 @Singleton
-class CitizenDetailsConnectorImpl @Inject() (appConfig: AppConfig, http: HttpClientV2, metrics: Metrics)
-    extends CitizenDetailsConnector
-    with Logging {
+class CitizenDetailsConnectorImpl @Inject() (
+  appConfig: AppConfig,
+  http: HttpClientV2,
+  metrics: Metrics
+)
+extends CitizenDetailsConnector
+with Logging {
 
   private val baseUrl = appConfig.citizenDetailsBaseUrl
 
   def getCitizenDeceasedFlag(
-      saUtr: SaUtr
-  )(implicit c: HeaderCarrier, ec: ExecutionContext): Future[Option[DeceasedCheckException]] = {
+    saUtr: SaUtr
+  )(implicit
+    c: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Option[DeceasedCheckException]] = {
     val timer = metrics.defaultRegistry.timer(s"ConsumedAPI-CitizenDetails-GET")
     timer.time()
     http
@@ -75,7 +84,7 @@ class CitizenDetailsConnectorImpl @Inject() (appConfig: AppConfig, http: HttpCli
           case Status.OK =>
             Json.parse(response.body).as[CitizenDeceased] match {
               case x: CitizenDeceased if !x.deceased => None
-              case _                                 => Some(DeceasedCheckException.EntityDeceasedCheckFailed)
+              case _ => Some(DeceasedCheckException.EntityDeceasedCheckFailed)
             }
           case e => Some(DeceasedCheckException.CitizenConnectorRequestFailed(e))
         }

@@ -22,17 +22,21 @@ import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
-case class EmailData(failedCheck: Seq[String], dateChecked: LocalDateTime)
+case class EmailData(
+  failedCheck: Seq[String],
+  dateChecked: LocalDateTime
+)
 
 object EmailData {
   implicit val writes: OWrites[EmailData] = Json.writes
 }
 case class AgentCheckFailureNotificationAuditEvent(
-    agentReferenceNumber: Arn,
-    utr: String,
-    email: String,
-    emailData: EmailData
-) extends AuditDetail {
+  agentReferenceNumber: Arn,
+  utr: String,
+  email: String,
+  emailData: EmailData
+)
+extends AuditDetail {
   val auditType = "AgentCheckFailureNotificationSent"
 }
 

@@ -25,7 +25,8 @@ import play.api.Application
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 trait MetricTestSupport {
-  self: Suite with Matchers =>
+  self: Suite
+    with Matchers =>
 
   def app: Application
 
@@ -40,16 +41,21 @@ trait MetricTestSupport {
   }
 
   def timerShouldExistsAndBeenUpdated(metric: String): Unit = {
-    val timers  = metricsRegistry.getTimers
+    val timers = metricsRegistry.getTimers
     val metrics = timers.get(s"$metric")
-    if (metrics == null) throw new Exception(s"Metric [$metric] not found, try one of ${timers.keySet()}")
+    if (metrics == null)
+      throw new Exception(s"Metric [$metric] not found, try one of ${timers.keySet()}")
     metrics.getCount should be >= 1L
   }
 
-  def histogramShouldExistsAndBeenUpdated(metric: String, max: Long): Unit = {
+  def histogramShouldExistsAndBeenUpdated(
+    metric: String,
+    max: Long
+  ): Unit = {
     val histogram = metricsRegistry.getHistograms
-    val metrics   = histogram.get(s"Histogram-$metric")
-    if (metrics == null) throw new Exception(s"Metric [$metric] not found, try one of ${histogram.keySet()}")
+    val metrics = histogram.get(s"Histogram-$metric")
+    if (metrics == null)
+      throw new Exception(s"Metric [$metric] not found, try one of ${histogram.keySet()}")
     metrics.getSnapshot.getMax shouldBe max
   }
 

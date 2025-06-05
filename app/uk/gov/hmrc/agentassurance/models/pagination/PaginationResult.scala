@@ -19,7 +19,10 @@ package uk.gov.hmrc.agentassurance.models.pagination
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-case class PaginationResult(utrsForPage: Seq[String], collectionTotalForKey: Int)
+case class PaginationResult(
+  utrsForPage: Seq[String],
+  collectionTotalForKey: Int
+)
 
 object PaginationResult {
   implicit val paginationResultFormat: Format[PaginationResult] = Json.format[PaginationResult]

@@ -30,17 +30,26 @@ import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.http.HeaderCarrier
 
-class BusinessNamesServiceSpec extends PlaySpec with MockDesConnector with MockAppConfig with ScalaFutures {
+class BusinessNamesServiceSpec
+extends PlaySpec
+with MockDesConnector
+with MockAppConfig
+with ScalaFutures {
 
   implicit val system: ActorSystem = ActorSystem("test-system")
-  implicit val mat: Materializer   = Materializer(system)
-  implicit val hc: HeaderCarrier   = HeaderCarrier()
+  implicit val mat: Materializer = Materializer(system)
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  val service = new BusinessNamesService(mockDesConnector)(mockAppConfig, mat, global)
-  val utr     = Utr("1234567890")
-  val utr1    = Utr("1234567891")
-  val utr2    = Utr("1234567892")
-  val utr3    = Utr("1234567893")
+  val service =
+    new BusinessNamesService(mockDesConnector)(
+      mockAppConfig,
+      mat,
+      global
+    )
+  val utr = Utr("1234567890")
+  val utr1 = Utr("1234567891")
+  val utr2 = Utr("1234567892")
+  val utr3 = Utr("1234567893")
 
   "BusinessNamesService get(utr)" must {
     "return business name if connector returns Some" in {
@@ -62,16 +71,19 @@ class BusinessNamesServiceSpec extends PlaySpec with MockDesConnector with MockA
 
   "BusinessNamesService get(Seq[utr])" must {
     "return set of BusinessNameByUtr for all UTRs" in {
-      val utrs = Seq(utr.value, utr1.value, utr2.value)
+      val utrs = Seq(
+        utr.value,
+        utr1.value,
+        utr2.value
+      )
       val expectedResults = Map(
-        utr  -> Some("Name1"),
+        utr -> Some("Name1"),
         utr1 -> Some("Name2"),
         utr2 -> None
       )
 
       expectedResults.foreach {
-        case (utr, nameOpt) =>
-          mockGetBusinessNameRecord(utr.value)(nameOpt)
+        case (utr, nameOpt) => mockGetBusinessNameRecord(utr.value)(nameOpt)
       }
 
       whenReady(service.get(utrs), timeout(Span(2, Seconds))) { result =>

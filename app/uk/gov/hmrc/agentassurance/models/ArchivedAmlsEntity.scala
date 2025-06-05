@@ -27,23 +27,27 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 case class ArchivedAmlsEntity(
-    ukRecord: Boolean,
-    createdAt: JsValue = Json.obj("$date" -> Instant.now().truncatedTo(ChronoUnit.SECONDS)),
-    arn: Arn,
-    utr: Option[Utr],
-    supervisoryBody: String,
-    originalCreatedOn: Option[LocalDate], // when the record was created in the other collection
-    membershipNumber: Option[String],
-    amlsSafeId: Option[String],
-    agentBprSafeId: Option[String],
-    appliedOn: Option[LocalDate], // when they applied for HMRC AMLS
-    membershipExpiresOn: Option[LocalDate],
+  ukRecord: Boolean,
+  createdAt: JsValue = Json.obj("$date" -> Instant.now().truncatedTo(ChronoUnit.SECONDS)),
+  arn: Arn,
+  utr: Option[Utr],
+  supervisoryBody: String,
+  originalCreatedOn: Option[LocalDate], // when the record was created in the other collection
+  membershipNumber: Option[String],
+  amlsSafeId: Option[String],
+  agentBprSafeId: Option[String],
+  appliedOn: Option[LocalDate], // when they applied for HMRC AMLS
+  membershipExpiresOn: Option[LocalDate]
 )
 
 object ArchivedAmlsEntity {
+
   implicit val format: Format[ArchivedAmlsEntity] = Json.format[ArchivedAmlsEntity]
 
-  def apply(arn: Arn, amlsEntity: AmlsEntity): ArchivedAmlsEntity = {
+  def apply(
+    arn: Arn,
+    amlsEntity: AmlsEntity
+  ): ArchivedAmlsEntity = {
     amlsEntity match {
       case uk: UkAmlsEntity =>
         val amlsDetails = uk.amlsDetails
@@ -80,10 +84,10 @@ object ArchivedAmlsEntity {
 
 // for the ASA AMLS journey (using POST /amls/arn/:arn)
 case class AmlsRequest(
-    ukRecord: Boolean,
-    supervisoryBody: String,
-    membershipNumber: String,
-    membershipExpiresOn: Option[LocalDate]
+  ukRecord: Boolean,
+  supervisoryBody: String,
+  membershipNumber: String,
+  membershipExpiresOn: Option[LocalDate]
 ) {
   def toAmlsEntity(amlsRequest: AmlsRequest): AmlsDetails = {
     if (amlsRequest.ukRecord)

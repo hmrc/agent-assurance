@@ -19,7 +19,10 @@ package uk.gov.hmrc.agentassurance.models
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
-case class Individual(firstName: String, lastName: String) {
+case class Individual(
+  firstName: String,
+  lastName: String
+) {
   val name: String = s"$firstName $lastName"
 }
 object Individual {
@@ -32,15 +35,17 @@ object Organisation {
 }
 
 case class DesAgentNameResponse(
-    isAnIndividual: Boolean,
-    organisation: Option[Organisation],
-    individual: Option[Individual]
+  isAnIndividual: Boolean,
+  organisation: Option[Organisation],
+  individual: Option[Individual]
 ) {
-  val agentName: Option[String] = if (isAnIndividual) {
-    individual.map(_.name)
-  } else {
-    organisation.map(_.organisationName)
-  }
+  val agentName: Option[String] =
+    if (isAnIndividual) {
+      individual.map(_.name)
+    }
+    else {
+      organisation.map(_.organisationName)
+    }
 }
 
 object DesAgentNameResponse {

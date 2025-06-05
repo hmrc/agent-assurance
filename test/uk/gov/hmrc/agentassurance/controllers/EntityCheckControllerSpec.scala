@@ -44,27 +44,27 @@ import uk.gov.hmrc.internalauth.client.Predicate
 import uk.gov.hmrc.internalauth.client.Retrieval
 
 class EntityCheckControllerSpec
-    extends PlaySpec
-    with DefaultAwaitTimeout
-    with GuiceOneAppPerTest
-    with MockAuthConnector
-    with MockAppConfig
-    with MockEntityCheckService
-    with MockFactory {
+extends PlaySpec
+with DefaultAwaitTimeout
+with GuiceOneAppPerTest
+with MockAuthConnector
+with MockAppConfig
+with MockEntityCheckService
+with MockFactory {
 
-  implicit val ec: ExecutionContext    = ExecutionContext.Implicits.global
-  val as: ActorSystem                  = ActorSystem()
-  implicit val mat: Materializer       = Materializer(as)
+  implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
+  val as: ActorSystem = ActorSystem()
+  implicit val mat: Materializer = Materializer(as)
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
-  val stubBackendAuthComponents: BackendAuthComponents =
-    BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
+  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
 
-  val controller = new EntityCheckController(
-    stubControllerComponents(),
-    mockEntityCheckService,
-    mockAuthConnector,
-    stubBackendAuthComponents,
-  )(ec, mockAppConfig)
+  val controller =
+    new EntityCheckController(
+      stubControllerComponents(),
+      mockEntityCheckService,
+      mockAuthConnector,
+      stubBackendAuthComponents
+    )(ec, mockAppConfig)
 
   "agentVerifyEntity" should {
     "return NO_CONTENT" when {
@@ -99,13 +99,12 @@ class EntityCheckControllerSpec
 
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
 
-        val agentDetailsDesResponse =
-          AgentDetailsDesResponse(
-            uniqueTaxReference = None,
-            agencyDetails = None,
-            suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))),
-            isAnIndividual = None
-          )
+        val agentDetailsDesResponse = AgentDetailsDesResponse(
+          uniqueTaxReference = None,
+          agencyDetails = None,
+          suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))),
+          isAnIndividual = None
+        )
 
         mockVerifyEntitySuccess(testArn)(
           EntityCheckResult(
@@ -137,13 +136,12 @@ class EntityCheckControllerSpec
           .expects(*, *)
           .returning(Future.unit)
 
-        val agentDetailsDesResponse =
-          AgentDetailsDesResponse(
-            uniqueTaxReference = None,
-            agencyDetails = None,
-            suspensionDetails = None,
-            isAnIndividual = None
-          )
+        val agentDetailsDesResponse = AgentDetailsDesResponse(
+          uniqueTaxReference = None,
+          agencyDetails = None,
+          suspensionDetails = None,
+          isAnIndividual = None
+        )
 
         mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException]))
 
@@ -167,13 +165,12 @@ class EntityCheckControllerSpec
             .expects(*, *)
             .returning(Future.unit)
 
-          val agentDetailsDesResponse =
-            AgentDetailsDesResponse(
-              uniqueTaxReference = None,
-              agencyDetails = None,
-              suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))),
-              isAnIndividual = None
-            )
+          val agentDetailsDesResponse = AgentDetailsDesResponse(
+            uniqueTaxReference = None,
+            agencyDetails = None,
+            suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, Some(Set("ITSA")))),
+            isAnIndividual = None
+          )
 
           mockVerifyEntitySuccess(testArn)(
             EntityCheckResult(
@@ -221,4 +218,5 @@ class EntityCheckControllerSpec
       }
     }
   }
+
 }

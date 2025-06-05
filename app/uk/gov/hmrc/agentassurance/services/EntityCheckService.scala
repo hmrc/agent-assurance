@@ -46,33 +46,43 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
 class EntityCheckService @Inject() (
-    desConnector: DesConnector,
-    citizenConnector: CitizenDetailsConnector,
-    mongoLockService: MongoLockService,
-    emailService: EmailService,
-    repository: PropertiesRepository,
-    auditService: AuditService
+  desConnector: DesConnector,
+  citizenConnector: CitizenDetailsConnector,
+  mongoLockService: MongoLockService,
+  emailService: EmailService,
+  repository: PropertiesRepository,
+  auditService: AuditService
 ) {
 
   def verifyAgent(
-      arn: Arn
-  )(implicit request: Request[_], hc: HeaderCarrier, ec: ExecutionContext): Future[EntityCheckResult] = {
+    arn: Arn
+  )(implicit
+    request: Request[_],
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[EntityCheckResult] = {
 
-    def deceasedStatusCheck(saUtr: SaUtr): Future[Option[EntityCheckException]] =
-      citizenConnector
-        .getCitizenDeceasedFlag(saUtr)
+    def deceasedStatusCheck(saUtr: SaUtr): Future[Option[EntityCheckException]] = citizenConnector
+      .getCitizenDeceasedFlag(saUtr)
 
     def refusalToDealCheck(utr: Utr): Future[Option[RefusalCheckException]] = {
       repository.propertyExists(Value(utr.value).toProperty("refusal-to-deal-with")).map {
-        case true  => Some(AgentIsOnRefuseToDealList)
+        case true => Some(AgentIsOnRefuseToDealList)
         case false => None
       }
     }
 
-    def entityChecks(arn: Arn, utr: Utr, isAnIndividual: Option[Boolean]): Future[Seq[EntityCheckException]] = {
-      val checksRequired = if (isAnIndividual.contains(true)) {
-        Seq(deceasedStatusCheck(SaUtr(utr.value)), refusalToDealCheck(utr))
-      } else Seq(refusalToDealCheck(utr))
+    def entityChecks(
+      arn: Arn,
+      utr: Utr,
+      isAnIndividual: Option[Boolean]
+    ): Future[Seq[EntityCheckException]] = {
+      val checksRequired =
+        if (isAnIndividual.contains(true)) {
+          Seq(deceasedStatusCheck(SaUtr(utr.value)), refusalToDealCheck(utr))
+        }
+        else
+          Seq(refusalToDealCheck(utr))
       mongoLockService
         .dailyLock(utr) {
           Future
@@ -90,7 +100,11 @@ class EntityCheckService @Inject() (
                     failureReason = Some(AgentIsOnRefuseToDealList.failedChecksText)
                   )
               }
-              .getOrElse(AgentCheckOutcome(agentCheckType = "onRefusalList", isSuccessful = true, failureReason = None))
+              .getOrElse(AgentCheckOutcome(
+                agentCheckType = "onRefusalList",
+                isSuccessful = true,
+                failureReason = None
+              ))
 
             val isDeceasedAgentCheckOutcome: AgentCheckOutcome = entityCheckExceptions
               .collectFirst {
@@ -107,7 +121,11 @@ class EntityCheckService @Inject() (
                     failureReason = Some(s"Check failed with error: ${x.code.toString}")
                   )
               }
-              .getOrElse(AgentCheckOutcome(agentCheckType = "isDeceased", isSuccessful = true, failureReason = None))
+              .getOrElse(AgentCheckOutcome(
+                agentCheckType = "isDeceased",
+                isSuccessful = true,
+                failureReason = None
+              ))
 
             auditService.auditEntityChecksPerformed(
               arn,
@@ -120,8 +138,8 @@ class EntityCheckService @Inject() (
     }
 
     def sendEmail(
-        agentRecord: AgentDetailsDesResponse,
-        entityCheckExceptions: Seq[EntityCheckException]
+      agentRecord: AgentDetailsDesResponse,
+      entityCheckExceptions: Seq[EntityCheckException]
     ): Future[Unit] = {
       val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
 
@@ -145,7 +163,7 @@ class EntityCheckService @Inject() (
             }
             .map {
               case Some(_) => auditService.auditEntityCheckFailureNotificationSent(entityCheckNotification)
-              case None    => ()
+              case None => ()
             }
 
         case _ => Future.successful(())
@@ -155,7 +173,11 @@ class EntityCheckService @Inject() (
     for {
       agentRecord <- desConnector.getAgentRecord(arn)
       entityChecksResult <- agentRecord.uniqueTaxReference
-        .map(entityChecks(arn, _, agentRecord.isAnIndividual))
+        .map(entityChecks(
+          arn,
+          _,
+          agentRecord.isAnIndividual
+        ))
         .getOrElse(Future.successful(Seq.empty[EntityCheckException]))
       _ <- sendEmail(agentRecord, entityChecksResult)
     } yield EntityCheckResult(

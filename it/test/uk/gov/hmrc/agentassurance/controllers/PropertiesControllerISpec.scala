@@ -45,63 +45,73 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 class PropertiesControllerISpec
-    extends UnitSpec
-    with GuiceOneServerPerSuite
-    with BeforeAndAfterEach
-    with AgentAuthStubs
-    with DesStubs
-    with WireMockSupport
-    with DefaultPlayMongoRepositorySupport[Property] {
+extends UnitSpec
+with GuiceOneServerPerSuite
+with BeforeAndAfterEach
+with AgentAuthStubs
+with DesStubs
+with WireMockSupport
+with DefaultPlayMongoRepositorySupport[Property] {
 
   override lazy val repository = new PropertiesRepositoryImpl(mongoComponent)
 
-  val moduleWithOverrides: AbstractModule = new AbstractModule() {
-    override def configure(): Unit = {
-      bind(classOf[PropertiesRepository]).toInstance(repository)
-      bind(classOf[Clock]).toInstance(clock)
+  val moduleWithOverrides: AbstractModule =
+    new AbstractModule() {
+      override def configure(): Unit = {
+        bind(classOf[PropertiesRepository]).toInstance(repository)
+        bind(classOf[Clock]).toInstance(clock)
+      }
     }
-  }
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "auditing.enabled"                                 -> false,
-        "microservice.services.auth.host"                  -> wireMockHost,
-        "microservice.services.auth.port"                  -> wireMockPort,
-        "microservice.services.des.host"                   -> wireMockHost,
-        "microservice.services.des.port"                   -> wireMockPort,
-        "microservice.services.des.environment"            -> "test",
-        "microservice.services.des.authorization-token"    -> "secret",
-        "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
-        "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
-        "auditing.consumer.baseUri.host"                   -> wireMockHost,
-        "auditing.consumer.baseUri.port"                   -> wireMockPort,
-        "internal-auth-token-enabled-on-start"             -> false
-      )
-      .overrides(moduleWithOverrides)
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "auditing.enabled" -> false,
+      "microservice.services.auth.host" -> wireMockHost,
+      "microservice.services.auth.port" -> wireMockPort,
+      "microservice.services.des.host" -> wireMockHost,
+      "microservice.services.des.port" -> wireMockPort,
+      "microservice.services.des.environment" -> "test",
+      "microservice.services.des.authorization-token" -> "secret",
+      "microservice.services.enrolment-store-proxy.host" -> wireMockHost,
+      "microservice.services.enrolment-store-proxy.port" -> wireMockPort,
+      "auditing.consumer.baseUri.host" -> wireMockHost,
+      "auditing.consumer.baseUri.port" -> wireMockPort,
+      "internal-auth-token-enabled-on-start" -> false
+    )
+    .overrides(moduleWithOverrides)
 
-  implicit override lazy val app: Application = appBuilder.build()
+  override implicit lazy val app: Application = appBuilder.build()
 
-  val url    = s"http://localhost:$port/agent-assurance"
+  val url = s"http://localhost:$port/agent-assurance"
   val urlNew = s"http://localhost:$port/agent-assurance/utr"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  def createProperty(key: String, value: String) =
-    wsClient
-      .url(s"$url/$key")
-      .withHttpHeaders("Authorization" -> "Bearer XYZ")
-      .post(Json.obj("value" -> value))
+  def createProperty(
+    key: String,
+    value: String
+  ) = wsClient
+    .url(s"$url/$key")
+    .withHttpHeaders("Authorization" -> "Bearer XYZ")
+    .post(Json.obj("value" -> value))
 
-  def isAssured(key: String, identifier: String): Future[WSResponse] =
-    wsClient.url(s"$url/$key/utr/$identifier").withHttpHeaders("Authorization" -> "Bearer XYZ").get()
+  def isAssured(
+    key: String,
+    identifier: String
+  ): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").withHttpHeaders("Authorization" -> "Bearer XYZ").get()
 
-  def getEntirePaginatedList(key: String, page: Int, pageSize: Int): Future[WSResponse] = {
+  def getEntirePaginatedList(
+    key: String,
+    page: Int,
+    pageSize: Int
+  ): Future[WSResponse] = {
     wsClient.url(s"$urlNew/$key?page=$page&pageSize=$pageSize").withHttpHeaders("Authorization" -> "Bearer XYZ").get()
   }
 
-  def deleteProperty(key: String, identifier: String): Future[WSResponse] =
-    wsClient.url(s"$url/$key/utr/$identifier").withHttpHeaders("Authorization" -> "Bearer XYZ").delete()
+  def deleteProperty(
+    key: String,
+    identifier: String
+  ): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").withHttpHeaders("Authorization" -> "Bearer XYZ").delete()
 
   "a getProperty entire List for refusal-to-deal-with" should {
     behave.like(getPropertyList("refusal-to-deal-with"))
@@ -158,10 +168,11 @@ class PropertiesControllerISpec
     "return 400 (with appropriate reason) json is not well formed" in {
       isLoggedInWithoutUserId
 
-      val badlyFormedJson = s"""
-                               |{
-                               |   "value": "missingQuote
-                               |}
+      val badlyFormedJson =
+        s"""
+           |{
+           |   "value": "missingQuote
+           |}
                  """.stripMargin
 
       val response: WSResponse = Await.result(
@@ -191,7 +202,10 @@ class PropertiesControllerISpec
     }
   }
 
-  def identifierExistsTests(key: String, isR2dw: Boolean = true) = {
+  def identifierExistsTests(
+    key: String,
+    isR2dw: Boolean = true
+  ) = {
     "return 200 OK when property is present" in {
       isLoggedInWithoutUserId
 
@@ -200,7 +214,8 @@ class PropertiesControllerISpec
       val response = Await.result(isAssured(key, "4000000009   "), 10 seconds)
       if (isR2dw)
         response.status shouldBe FORBIDDEN
-      else response.status shouldBe OK
+      else
+        response.status shouldBe OK
     }
     "return 404 when property is not present" in {
       isLoggedInWithoutUserId
@@ -208,7 +223,8 @@ class PropertiesControllerISpec
       val response = Await.result(isAssured(key, "4000000009"), 10 seconds)
       if (isR2dw)
         response.status shouldBe OK
-      else response.status shouldBe FORBIDDEN
+      else
+        response.status shouldBe FORBIDDEN
     }
 
     "INVALID UTR" in {
@@ -340,7 +356,10 @@ class PropertiesControllerISpec
     }
   }
 
-  def deletePropertyTests(key: String, isR2dw: Boolean = true) = {
+  def deletePropertyTests(
+    key: String,
+    isR2dw: Boolean = true
+  ) = {
     "return 204 when property is present" in {
       isLoggedInWithoutUserId
       Await.result(createProperty(key, "4000000009"), 10 seconds)
@@ -351,7 +370,8 @@ class PropertiesControllerISpec
       val response2 = Await.result(isAssured(key, "4000000009"), 10 seconds)
       if (isR2dw)
         response2.status shouldBe OK
-      else response2.status shouldBe FORBIDDEN
+      else
+        response2.status shouldBe FORBIDDEN
     }
     "return 404 when property is not present" in {
       isLoggedInWithoutUserId
@@ -366,4 +386,5 @@ class PropertiesControllerISpec
       response.statusText shouldBe "Bad Request"
     }
   }
+
 }

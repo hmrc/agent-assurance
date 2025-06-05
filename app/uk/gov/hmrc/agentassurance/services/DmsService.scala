@@ -49,61 +49,68 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 
 @Singleton
 class DmsService @Inject() (
-    dmsConnector: DmsConnector,
-    appConfig: AppConfig
+  dmsConnector: DmsConnector,
+  appConfig: AppConfig
 )(implicit ec: ExecutionContext) {
 
   def submitToDms(
-      base64EncodedDmsSubmissionHtml: Option[String],
-      now: Instant,
-      submissionReference: DmsSubmissionReference
+    base64EncodedDmsSubmissionHtml: Option[String],
+    now: Instant,
+    submissionReference: DmsSubmissionReference
   )(
-      implicit hc: HeaderCarrier
+    implicit hc: HeaderCarrier
   ): Future[DmsResponse] =
     for {
-      pdf      <- createPdf(base64EncodedDmsSubmissionHtml)
-      body     <- createBody(pdf, now, submissionReference)
+      pdf <- createPdf(base64EncodedDmsSubmissionHtml)
+      body <- createBody(
+        pdf,
+        now,
+        submissionReference
+      )
       response <- sendPdf(body, now)(hc)
     } yield response
 
   private def createPdf(
-      base64EncodedDmsSubmissionHtml: Option[String]
-  ): Future[ByteArrayOutputStream] =
-    Future.successful(
-      base64EncodedDmsSubmissionHtml match {
-        case Some(value) =>
-          Try(new String(Base64.getDecoder.decode(value))) match {
-            case Success(result) =>
-              Try(buildPdf(result)) match {
-                case Success(pdfResult) => pdfResult
-                case Failure(e)         => throw new RuntimeException(s"build PDF failed with error:${e.getCause}")
-              }
-            case Failure(e) => throw new RuntimeException(s"build PDF failed with error:${e.getCause}")
-          }
-        case None =>
-          throw new InternalServerException(s"base64 encoding failed with field not provided")
-      }
-    )
+    base64EncodedDmsSubmissionHtml: Option[String]
+  ): Future[ByteArrayOutputStream] = Future.successful(
+    base64EncodedDmsSubmissionHtml match {
+      case Some(value) =>
+        Try(new String(Base64.getDecoder.decode(value))) match {
+          case Success(result) =>
+            Try(buildPdf(result)) match {
+              case Success(pdfResult) => pdfResult
+              case Failure(e) => throw new RuntimeException(s"build PDF failed with error:${e.getCause}")
+            }
+          case Failure(e) => throw new RuntimeException(s"build PDF failed with error:${e.getCause}")
+        }
+      case None => throw new InternalServerException(s"base64 encoding failed with field not provided")
+    }
+  )
 
   private def createBody(
-      pdf: ByteArrayOutputStream,
-      now: Instant,
-      submissionReference: DmsSubmissionReference
+    pdf: ByteArrayOutputStream,
+    now: Instant,
+    submissionReference: DmsSubmissionReference
   ): Future[Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed]] = Future.successful(
     Try(
       DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(
         LocalDateTime.ofInstant(now, ZoneOffset.UTC)
       )
     ) match {
-      case Success(result) => assembleBodySource(pdf, result, submissionReference)
-      case Failure(e)      => throw new InternalServerException(s"build PDF failed with error:${e.getCause}")
+      case Success(result) =>
+        assembleBodySource(
+          pdf,
+          result,
+          submissionReference
+        )
+      case Failure(e) => throw new InternalServerException(s"build PDF failed with error:${e.getCause}")
     }
   )
 
   private def assembleBodySource(
-      pdf: ByteArrayOutputStream,
-      dateOfReceipt: String,
-      submissionReference: DmsSubmissionReference
+    pdf: ByteArrayOutputStream,
+    dateOfReceipt: String,
+    submissionReference: DmsSubmissionReference
   ): Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed] = {
 
     Source(
@@ -127,16 +134,24 @@ class DmsService @Inject() (
   }
 
   def sendPdf(
-      body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed],
-      now: Instant
-  )(implicit hc: HeaderCarrier): Future[DmsResponse] =
-    dmsConnector
-      .sendPdf(body)
-      .map(_ => DmsResponse(now, ""))
-      .recover {
-        case error @ UpstreamErrorResponse(message, code, _, _) =>
-          throw UpstreamErrorResponse(message, code, code)
-        case NonFatal(e) =>
-          throw new InternalServerException(s"send PDF failed with error:${e.getCause}")
-      }
+    body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed],
+    now: Instant
+  )(implicit hc: HeaderCarrier): Future[DmsResponse] = dmsConnector
+    .sendPdf(body)
+    .map(_ => DmsResponse(now, ""))
+    .recover {
+      case error @ UpstreamErrorResponse(
+            message,
+            code,
+            _,
+            _
+          ) =>
+        throw UpstreamErrorResponse(
+          message,
+          code,
+          code
+        )
+      case NonFatal(e) => throw new InternalServerException(s"send PDF failed with error:${e.getCause}")
+    }
+
 }

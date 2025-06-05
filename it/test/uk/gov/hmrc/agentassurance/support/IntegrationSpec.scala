@@ -26,12 +26,11 @@ import org.scalatest.GivenWhenThen
 import play.api.http.Status
 
 trait IntegrationSpec
-    extends AnyFeatureSpec
-    with GivenWhenThen
-    with Matchers
-    with Eventually
-    with Status
-    with InstantClockTestSupport {
-  implicit override val patienceConfig: PatienceConfig =
-    PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
+extends AnyFeatureSpec
+with GivenWhenThen
+with Matchers
+with Eventually
+with Status
+with InstantClockTestSupport {
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 }

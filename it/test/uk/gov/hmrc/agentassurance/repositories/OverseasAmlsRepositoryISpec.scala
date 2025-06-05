@@ -29,23 +29,27 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 class OverseasAmlsRepositoryISpec
-    extends PlaySpec
-    with DefaultPlayMongoRepositorySupport[OverseasAmlsEntity]
-    with InstantClockTestSupport {
+extends PlaySpec
+with DefaultPlayMongoRepositorySupport[OverseasAmlsEntity]
+with InstantClockTestSupport {
 
   override lazy val repository = new OverseasAmlsRepositoryImpl(mongoComponent)
 
-  val arn   = Arn("TARN0000001")
+  val arn = Arn("TARN0000001")
   val today = LocalDate.now()
   val newOverseasAmlsDetails = OverseasAmlsDetails(
     supervisoryBody = "Australian AC",
-    membershipNumber = Some("ii77"),
+    membershipNumber = Some("ii77")
   )
 
   "createOrUpdate" should {
     "create a new record when none currently exists" in {
 
-      val amlsEntity = OverseasAmlsEntity(arn, newOverseasAmlsDetails, None)
+      val amlsEntity = OverseasAmlsEntity(
+        arn,
+        newOverseasAmlsDetails,
+        None
+      )
 
       val result = repository.createOrUpdate(amlsEntity).futureValue
       result mustBe None
@@ -60,14 +64,31 @@ class OverseasAmlsRepositoryISpec
 
       val oldOverseasAmlsDetails = OverseasAmlsDetails(supervisoryBody = "Auckland ARP", membershipNumber = None)
 
-      repository.collection.insertOne(OverseasAmlsEntity(arn, oldOverseasAmlsDetails, None)).toFuture().futureValue
+      repository.collection.insertOne(OverseasAmlsEntity(
+        arn,
+        oldOverseasAmlsDetails,
+        None
+      )).toFuture().futureValue
 
-      val result = repository.createOrUpdate(OverseasAmlsEntity(arn, newOverseasAmlsDetails, None)).futureValue
-      result mustBe Some(OverseasAmlsEntity(arn, oldOverseasAmlsDetails, None))
+      val result =
+        repository.createOrUpdate(OverseasAmlsEntity(
+          arn,
+          newOverseasAmlsDetails,
+          None
+        )).futureValue
+      result mustBe Some(OverseasAmlsEntity(
+        arn,
+        oldOverseasAmlsDetails,
+        None
+      ))
 
       val checkResult = repository.collection.find().toFuture().futureValue
       checkResult.size mustBe 1
-      checkResult.head mustBe OverseasAmlsEntity(arn, newOverseasAmlsDetails, Some(frozenInstant))
+      checkResult.head mustBe OverseasAmlsEntity(
+        arn,
+        newOverseasAmlsDetails,
+        Some(frozenInstant)
+      )
     }
   }
 

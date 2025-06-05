@@ -38,18 +38,25 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class UtrChecksController @Inject() (
-    repository: PropertiesRepository,
-    businessNamesService: BusinessNamesService,
-    override val controllerComponents: ControllerComponents,
-    val authConnector: AuthConnector
+  repository: PropertiesRepository,
+  businessNamesService: BusinessNamesService,
+  override val controllerComponents: ControllerComponents,
+  val authConnector: AuthConnector
 )(implicit ec: ExecutionContext)
-    extends BackendController(controllerComponents)
-    with AuthActions {
+extends BackendController(controllerComponents)
+with AuthActions {
 
-  def getUtrList(pagination: PaginationParameters, key: UtrCheckType): Action[AnyContent] = BasicAuth {
+  def getUtrList(
+    pagination: PaginationParameters,
+    key: UtrCheckType
+  ): Action[AnyContent] = BasicAuth {
     implicit request =>
       for {
-        (total, utrs)         <- repository.findProperties(key.toString, pagination.page, pagination.pageSize)
+        (total, utrs) <- repository.findProperties(
+          key.toString,
+          pagination.page,
+          pagination.pageSize
+        )
         businessNamesByUtrSet <- businessNamesService.get(utrs)
       } yield {
         val paginatedResources = PaginatedResources(

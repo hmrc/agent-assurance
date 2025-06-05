@@ -28,13 +28,14 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 sealed trait AmlsEntity
 
 case class UkAmlsEntity(
-    utr: Option[Utr],
-    amlsDetails: UkAmlsDetails,
-    arn: Option[Arn] = None,
-    createdOn: LocalDate,
-    updatedArnOn: Option[LocalDate] = None,
-    amlsSource: AmlsSource
-) extends AmlsEntity
+  utr: Option[Utr],
+  amlsDetails: UkAmlsDetails,
+  arn: Option[Arn] = None,
+  createdOn: LocalDate,
+  updatedArnOn: Option[LocalDate] = None,
+  amlsSource: AmlsSource
+)
+extends AmlsEntity
 
 object UkAmlsEntity {
 
@@ -56,10 +57,13 @@ object UkAmlsEntity {
 
 }
 
-case class OverseasAmlsEntity(arn: Arn, amlsDetails: OverseasAmlsDetails, createdDate: Option[Instant])
-    extends AmlsEntity {
-  def withDefaultCreatedDate(implicit clock: Clock): OverseasAmlsEntity =
-    copy(createdDate = Some(createdDate.getOrElse(Instant.now(clock))))
+case class OverseasAmlsEntity(
+  arn: Arn,
+  amlsDetails: OverseasAmlsDetails,
+  createdDate: Option[Instant]
+)
+extends AmlsEntity {
+  def withDefaultCreatedDate(implicit clock: Clock): OverseasAmlsEntity = copy(createdDate = Some(createdDate.getOrElse(Instant.now(clock))))
 }
 
 object OverseasAmlsEntity {

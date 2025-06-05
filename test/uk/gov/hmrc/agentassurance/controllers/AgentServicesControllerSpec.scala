@@ -37,16 +37,21 @@ import uk.gov.hmrc.auth.core.syntax.retrieved.authSyntaxForRetrieved
 import uk.gov.hmrc.auth.core.AffinityGroup
 
 class AgentServicesControllerSpec
-    extends PlaySpec
-    with MockAuthConnector
-    with MockAppConfig
-    with MockDesConnector
-    with MockDmsService
-    with BeforeAndAfterEach
-    with ScalaFutures {
+extends PlaySpec
+with MockAuthConnector
+with MockAppConfig
+with MockDesConnector
+with MockDmsService
+with BeforeAndAfterEach
+with ScalaFutures {
 
   val controller =
-    new AgentServicesController(mockDesConnector, mockAuthConnector, mockDmsService, stubControllerComponents())(
+    new AgentServicesController(
+      mockDesConnector,
+      mockAuthConnector,
+      mockDmsService,
+      stubControllerComponents()
+    )(
       mockAppConfig,
       ExecutionContext.global
     )
@@ -108,10 +113,10 @@ class AgentServicesControllerSpec
         status(response) mustBe OK
         contentAsJson(response) mustBe Json.obj(
           "agencyDetails" -> Json.obj(
-            "agencyName"      -> "agencyName",
-            "agencyEmail"     -> "agencyEmail",
+            "agencyName" -> "agencyName",
+            "agencyEmail" -> "agencyEmail",
             "agencyTelephone" -> "agencyTelephone",
-            "agencyAddress"   -> Json.obj("addressLine1" -> "addressLine1", "countryCode" -> "GB")
+            "agencyAddress" -> Json.obj("addressLine1" -> "addressLine1", "countryCode" -> "GB")
           ),
           "utr" -> "7000000002"
         )
@@ -129,10 +134,10 @@ class AgentServicesControllerSpec
         status(response) mustBe OK
         contentAsJson(response) mustBe Json.obj(
           "agencyDetails" -> Json.obj(
-            "agencyName"      -> "agencyName",
-            "agencyEmail"     -> "agencyEmail",
+            "agencyName" -> "agencyName",
+            "agencyEmail" -> "agencyEmail",
             "agencyTelephone" -> "agencyTelephone",
-            "agencyAddress"   -> Json.obj("addressLine1" -> "addressLine1", "countryCode" -> "GB")
+            "agencyAddress" -> Json.obj("addressLine1" -> "addressLine1", "countryCode" -> "GB")
           ),
           "utr" -> "7000000002"
         )
@@ -151,11 +156,12 @@ class AgentServicesControllerSpec
         mockSubmitToDmsSuccess
       }
 
-      val response = controller.postAgencyDetails(testArn)(
-        FakeRequest()
-          .withJsonBody(Json.toJson(""))
-          .withHeaders(CONTENT_TYPE -> "application/json")
-      )
+      val response =
+        controller.postAgencyDetails(testArn)(
+          FakeRequest()
+            .withJsonBody(Json.toJson(""))
+            .withHeaders(CONTENT_TYPE -> "application/json")
+        )
 
       status(response) mustBe CREATED
     }

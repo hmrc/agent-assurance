@@ -27,7 +27,8 @@ import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
 import uk.gov.hmrc.agentassurance.util.toFuture
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
-trait MockOverseasAmlsRepository extends MockFactory { this: TestSuite =>
+trait MockOverseasAmlsRepository
+extends MockFactory { this: TestSuite =>
 
   val mockOverseasAmlsRepository = mock[OverseasAmlsRepository]
 

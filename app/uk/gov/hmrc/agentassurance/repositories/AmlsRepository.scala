@@ -57,9 +57,15 @@ trait AmlsRepository {
 
   def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError, Unit]]
 
-  def createOrUpdate(arn: Arn, amlsEntity: UkAmlsEntity): Future[Option[UkAmlsEntity]]
+  def createOrUpdate(
+    arn: Arn,
+    amlsEntity: UkAmlsEntity
+  ): Future[Option[UkAmlsEntity]]
 
-  def updateArn(utr: Utr, arn: Arn): Future[Either[AmlsError, UkAmlsDetails]]
+  def updateArn(
+    utr: Utr,
+    arn: Arn
+  ): Future[Either[AmlsError, UkAmlsDetails]]
 
   def getAmlDetails(utr: Utr): Future[Option[UkAmlsDetails]]
 
@@ -67,38 +73,42 @@ trait AmlsRepository {
 
   def getUtr(arn: Arn): Future[Option[Utr]]
 
-  def updateExpiryDate(arn: Arn, date: LocalDate): Future[UpdateResult]
+  def updateExpiryDate(
+    arn: Arn,
+    date: LocalDate
+  ): Future[UpdateResult]
+
 }
 
 @Singleton
 class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
-    extends PlayMongoRepository[UkAmlsEntity](
-      mongoComponent = mongo,
-      collectionName = "agent-amls",
-      domainFormat = UkAmlsEntity.amlsEntityFormat,
-      indexes = Seq(
-        IndexModel(
-          ascending("utr"),
-          IndexOptions()
-            .unique(true)
-            .name("utrIndex")
-            .sparse(true)
-        ),
-        IndexModel(
-          ascending("arn"),
-          IndexOptions()
-            .unique(true)
-            .name("arnIndex")
-            .sparse(true)
-        )
-      ),
-      extraCodecs = Seq(
-        Codecs.playFormatCodec(CreateAmlsRequest.format)
-      ),
-      replaceIndexes = true // TODO WG - remove that
+extends PlayMongoRepository[UkAmlsEntity](
+  mongoComponent = mongo,
+  collectionName = "agent-amls",
+  domainFormat = UkAmlsEntity.amlsEntityFormat,
+  indexes = Seq(
+    IndexModel(
+      ascending("utr"),
+      IndexOptions()
+        .unique(true)
+        .name("utrIndex")
+        .sparse(true)
+    ),
+    IndexModel(
+      ascending("arn"),
+      IndexOptions()
+        .unique(true)
+        .name("arnIndex")
+        .sparse(true)
     )
-    with AmlsRepository
-    with Logging {
+  ),
+  extraCodecs = Seq(
+    Codecs.playFormatCodec(CreateAmlsRequest.format)
+  ),
+  replaceIndexes = true // TODO WG - remove that
+)
+with AmlsRepository
+with Logging {
 
   override lazy val requiresTtlIndex: Boolean = false
 
@@ -127,12 +137,15 @@ class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: Executio
             .toFuture()
             .map {
               case updateResult if updateResult.getModifiedCount < 2L => Right(())
-              case _                                                  => Left(AmlsUnexpectedMongoError)
+              case _ => Left(AmlsUnexpectedMongoError)
             }
       }
   }
 
-  override def createOrUpdate(arn: Arn, amlsEntity: UkAmlsEntity): Future[Option[UkAmlsEntity]] = {
+  override def createOrUpdate(
+    arn: Arn,
+    amlsEntity: UkAmlsEntity
+  ): Future[Option[UkAmlsEntity]] = {
     collection
       .findOneAndReplace(
         equal("arn", arn.value),
@@ -142,7 +155,10 @@ class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: Executio
       .headOption()
   }
 
-  override def updateArn(utr: Utr, arn: Arn): Future[Either[AmlsError, UkAmlsDetails]] = {
+  override def updateArn(
+    utr: Utr,
+    arn: Arn
+  ): Future[Either[AmlsError, UkAmlsDetails]] = {
     collection
       .find(equal("utr", utr.value))
       .headOption()
@@ -150,8 +166,10 @@ class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: Executio
         case Some(existingEntity) =>
           existingEntity.arn match {
             case Some(existingArn) =>
-              if (existingArn.value == arn.value) Right(existingEntity.amlsDetails)
-              else Left(ArnAlreadySetError)
+              if (existingArn.value == arn.value)
+                Right(existingEntity.amlsDetails)
+              else
+                Left(ArnAlreadySetError)
             case None =>
               val toUpdate = existingEntity.copy(arn = Some(arn)).copy(updatedArnOn = Some(LocalDate.now()))
               collection
@@ -159,7 +177,8 @@ class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: Executio
                 .toFuture()
                 .map {
                   case updateResult =>
-                    if (updateResult.getModifiedCount == 1L) Right(toUpdate.amlsDetails)
+                    if (updateResult.getModifiedCount == 1L)
+                      Right(toUpdate.amlsDetails)
                     else {
                       logger.warn(
                         s"error updating AMLS record with ARN - acknowledged: " +
@@ -169,8 +188,7 @@ class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: Executio
                     }
                 }
                 .recover {
-                  case e: MongoWriteException if e.getError.getCode == 11000 =>
-                    Left(UniqueKeyViolationError)
+                  case e: MongoWriteException if e.getError.getCode == 11000 => Left(UniqueKeyViolationError)
                   case e => {
                     logger.warn(s"unexpected error when updating AMLS record with ARN ${e.getMessage}")
                     Left(AmlsUnexpectedMongoError)
@@ -181,25 +199,25 @@ class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: Executio
       }
   }
 
-  override def getAmlDetails(utr: Utr): Future[Option[UkAmlsDetails]] =
-    collection
-      .find(equal("utr", utr.value))
-      .headOption()
-      .map(_.map(_.amlsDetails))
+  override def getAmlDetails(utr: Utr): Future[Option[UkAmlsDetails]] = collection
+    .find(equal("utr", utr.value))
+    .headOption()
+    .map(_.map(_.amlsDetails))
 
-  override def getAmlsDetailsByArn(arn: Arn): Future[Option[UkAmlsDetails]] =
-    collection
-      .find(equal("arn", arn.value))
-      .headOption()
-      .map(_.map(_.amlsDetails))
+  override def getAmlsDetailsByArn(arn: Arn): Future[Option[UkAmlsDetails]] = collection
+    .find(equal("arn", arn.value))
+    .headOption()
+    .map(_.map(_.amlsDetails))
 
-  override def getUtr(arn: Arn): Future[Option[Utr]] =
-    collection
-      .find(equal("arn", arn.value))
-      .headOption()
-      .map(_.flatMap(_.utr))
+  override def getUtr(arn: Arn): Future[Option[Utr]] = collection
+    .find(equal("arn", arn.value))
+    .headOption()
+    .map(_.flatMap(_.utr))
 
-  override def updateExpiryDate(arn: Arn, date: LocalDate): Future[UpdateResult] = {
+  override def updateExpiryDate(
+    arn: Arn,
+    date: LocalDate
+  ): Future[UpdateResult] = {
     collection
       .updateOne(
         filter = Filters.equal("arn", arn.value),

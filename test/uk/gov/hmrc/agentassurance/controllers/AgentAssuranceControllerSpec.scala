@@ -48,15 +48,15 @@ import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
 class AgentAssuranceControllerSpec
-    extends PlaySpec
-    with MockFactory
-    with MockAuthConnector
-    with MockAmlsRepository
-    with MockOverseasAmlsRepository
-    with MockEnrolmentStoreProxyConnector
-    with MockDesConnector
-    with MockAppConfig
-    with BeforeAndAfterEach {
+extends PlaySpec
+with MockFactory
+with MockAuthConnector
+with MockAmlsRepository
+with MockOverseasAmlsRepository
+with MockEnrolmentStoreProxyConnector
+with MockDesConnector
+with MockAppConfig
+with BeforeAndAfterEach {
 
   implicit val appConfig: AppConfig = mockAppConfig
 
@@ -164,10 +164,11 @@ class AgentAssuranceControllerSpec
 
       val utr = Utr("7000000002")
 
-      def doRequest(): Future[Result] = controller.getAmlsDetails(utr)(
-        FakeRequest()
-          .withHeaders(CONTENT_TYPE -> "application/json")
-      )
+      def doRequest(): Future[Result] =
+        controller.getAmlsDetails(utr)(
+          FakeRequest()
+            .withHeaders(CONTENT_TYPE -> "application/json")
+        )
 
       "not an agent or stride should return forbidden" in {
 
@@ -312,11 +313,12 @@ class AgentAssuranceControllerSpec
           enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
         )
 
-        val response = controller.storeAmlsDetails()(
-          FakeRequest()
-            .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
-            .withHeaders(CONTENT_TYPE -> "application/json")
-        )
+        val response =
+          controller.storeAmlsDetails()(
+            FakeRequest()
+              .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
+              .withHeaders(CONTENT_TYPE -> "application/json")
+          )
 
         status(response) mustBe BAD_REQUEST
       }
@@ -453,11 +455,12 @@ class AgentAssuranceControllerSpec
           enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
         )
 
-        val response = controller.storeAmlsDetails()(
-          FakeRequest()
-            .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
-            .withHeaders(CONTENT_TYPE -> "application/json")
-        )
+        val response =
+          controller.storeAmlsDetails()(
+            FakeRequest()
+              .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
+              .withHeaders(CONTENT_TYPE -> "application/json")
+          )
 
         status(response) mustBe BAD_REQUEST
       }
@@ -468,11 +471,12 @@ class AgentAssuranceControllerSpec
           enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
         )
 
-        val response = controller.storeAmlsDetails()(
-          FakeRequest()
-            .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
-            .withHeaders(CONTENT_TYPE -> "application/json")
-        )
+        val response =
+          controller.storeAmlsDetails()(
+            FakeRequest()
+              .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
+              .withHeaders(CONTENT_TYPE -> "application/json")
+          )
 
         status(response) mustBe BAD_REQUEST
       }
@@ -493,15 +497,18 @@ class AgentAssuranceControllerSpec
     "storeOverseasAmlsDetails" should {
       val arn = Arn("AARN0000002")
 
-      val amlsDetails        = OverseasAmlsDetails("supervisoryBody", Some("0123456789"))
-      val overseasAmlsEntity = OverseasAmlsEntity(arn, amlsDetails, None)
+      val amlsDetails = OverseasAmlsDetails("supervisoryBody", Some("0123456789"))
+      val overseasAmlsEntity = OverseasAmlsEntity(
+        arn,
+        amlsDetails,
+        None
+      )
 
-      def doRequest(request: OverseasAmlsEntity = overseasAmlsEntity) =
-        controller.storeOverseasAmlsDetails(
-          FakeRequest()
-            .withJsonBody(Json.toJson(request))
-            .withHeaders(CONTENT_TYPE -> "application/json")
-        )
+      def doRequest(request: OverseasAmlsEntity = overseasAmlsEntity) = controller.storeOverseasAmlsDetails(
+        FakeRequest()
+          .withJsonBody(Json.toJson(request))
+          .withHeaders(CONTENT_TYPE -> "application/json")
+      )
 
       "store amlsDetails successfully in mongo" in {
 
@@ -561,11 +568,11 @@ class AgentAssuranceControllerSpec
 
         mockAgentAuth()(Right(()))
 
-        val response =
-          controller.storeOverseasAmlsDetails(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
+        val response = controller.storeOverseasAmlsDetails(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
         status(response) mustBe BAD_REQUEST
       }
     }
   }
+
 }

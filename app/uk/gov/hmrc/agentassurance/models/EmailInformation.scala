@@ -20,10 +20,10 @@ import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 
 case class EmailInformation(
-    to: Seq[String],
-    templateId: String,
-    parameters: Map[String, String],
-    force: Boolean = true
+  to: Seq[String],
+  templateId: String,
+  parameters: Map[String, String],
+  force: Boolean = true
 )
 
 object EmailInformation {

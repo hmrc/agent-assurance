@@ -29,6 +29,7 @@ import uk.gov.hmrc.mongo.lock.TimePeriodLockService
 
 @Singleton
 class MongoLockService @Inject() (mongoLockRepository: MongoLockRepository)(implicit appConfig: AppConfig) {
+
   def dailyLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] = {
     val lockService = TimePeriodLockService(
       mongoLockRepository,
@@ -46,4 +47,5 @@ class MongoLockService @Inject() (mongoLockRepository: MongoLockRepository)(impl
     )
     lockService.withRenewedLock(body)
   }
+
 }

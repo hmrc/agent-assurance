@@ -27,13 +27,18 @@ import uk.gov.hmrc.agentassurance.models.DmsSubmissionReference
 import uk.gov.hmrc.agentassurance.services.DmsService
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockDmsService extends MockFactory { this: TestSuite =>
+trait MockDmsService
+extends MockFactory { this: TestSuite =>
 
   val mockDmsService = mock[DmsService]
 
   def mockSubmitToDmsSuccess =
     (mockDmsService
-      .submitToDms(_: Option[String], _: Instant, _: DmsSubmissionReference)(_: HeaderCarrier))
+      .submitToDms(
+        _: Option[String],
+        _: Instant,
+        _: DmsSubmissionReference
+      )(_: HeaderCarrier))
       .expects(*, *, *, *)
       .returning(Future.successful(DmsResponse(Instant.now(), "")))
 

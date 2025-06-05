@@ -26,7 +26,8 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
-trait MockAuditConnector extends MockFactory { this: TestSuite =>
+trait MockAuditConnector
+extends MockFactory { this: TestSuite =>
 
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
 

@@ -55,15 +55,20 @@ import DesRegistrationRequest._
 
 case class ClientRelationship(agents: Seq[Agent])
 
-case class Agent(agentId: Option[SaAgentReference], hasAgent: Boolean, agentCeasedDate: Option[String])
+case class Agent(
+  agentId: Option[SaAgentReference],
+  hasAgent: Boolean,
+  agentCeasedDate: Option[String]
+)
 
 object ClientRelationship {
+
   implicit val agentReads: Reads[Agent] = Json.reads[Agent]
 
-  implicit val readClientRelationship: Reads[ClientRelationship] =
-    (JsPath \ "agents")
-      .readNullable[Seq[Agent]]
-      .map(optionalAgents => ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
+  implicit val readClientRelationship: Reads[ClientRelationship] = (JsPath \ "agents")
+    .readNullable[Seq[Agent]]
+    .map(optionalAgents => ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
+
 }
 
 case class RegistrationRelationshipResponse(processingDate: String)
@@ -74,49 +79,58 @@ object RegistrationRelationshipResponse {
 
 @ImplementedBy(classOf[DesConnectorImpl])
 trait DesConnector {
+
   def getActiveCesaAgentRelationships(
-      clientIdentifier: TaxIdentifier
+    clientIdentifier: TaxIdentifier
   )(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]]
   def getAmlsSubscriptionStatus(
-      amlsRegistrationNumber: String
+    amlsRegistrationNumber: String
   )(implicit hc: HeaderCarrier): Future[AmlsSubscriptionRecord]
 
   def getAgentRecord(
-      arn: Arn
-  )(implicit request: Request[_], hc: HeaderCarrier): Future[AgentDetailsDesResponse]
+    arn: Arn
+  )(implicit
+    request: Request[_],
+    hc: HeaderCarrier
+  ): Future[AgentDetailsDesResponse]
 
   def getBusinessName(utr: String)(implicit hc: HeaderCarrier): Future[Option[String]]
+
 }
 
 @Singleton
 class DesConnectorImpl @Inject() (
-    httpV2: HttpClientV2,
-    metrics: Metrics,
-    agentCacheProvider: CacheProvider,
-    override val configuration: Config,
-    override val actorSystem: ActorSystem
-)(implicit appConfig: AppConfig, ec: ExecutionContext)
-    extends DesConnector
-    with BaseConnector
-    with Logging {
+  httpV2: HttpClientV2,
+  metrics: Metrics,
+  agentCacheProvider: CacheProvider,
+  override val configuration: Config,
+  override val actorSystem: ActorSystem
+)(implicit
+  appConfig: AppConfig,
+  ec: ExecutionContext
+)
+extends DesConnector
+with BaseConnector
+with Logging {
 
-  private val baseUrl            = appConfig.desBaseUrl
+  private val baseUrl = appConfig.desBaseUrl
   private val authorizationToken = appConfig.desAuthToken
-  private val environment        = appConfig.desEnv
+  private val environment = appConfig.desEnv
 
-  private val Environment   = "Environment"
+  private val Environment = "Environment"
   private val CorrelationId = "CorrelationId"
 
   def getActiveCesaAgentRelationships(
-      clientIdentifier: TaxIdentifier
+    clientIdentifier: TaxIdentifier
   )(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
     val encodedClientId = UriEncoding.encodePathSegment(clientIdentifier.value, "UTF-8")
     val encodedClientType: String = {
-      val clientType = clientIdentifier match {
-        case nino @ Nino(_) => nino.name
-        case _ @Utr(_)      => "utr"
-        case e              => throw new RuntimeException(s"Unacceptable taxIdentifier: $e")
-      }
+      val clientType =
+        clientIdentifier match {
+          case nino @ Nino(_) => nino.name
+          case _ @Utr(_) => "utr"
+          case e => throw new RuntimeException(s"Unacceptable taxIdentifier: $e")
+        }
       UriEncoding.encodePathSegment(clientType, "UTF-8")
     }
 
@@ -137,17 +151,20 @@ class DesConnectorImpl @Inject() (
 
   // API #1028 Get Subscription Status
   def getAmlsSubscriptionStatus(
-      amlsRegistrationNumber: String
+    amlsRegistrationNumber: String
   )(implicit hc: HeaderCarrier): Future[AmlsSubscriptionRecord] = {
     val encodedRegNumber = UriEncoding.encodePathSegment(amlsRegistrationNumber, UTF_8.name)
-    val url              = new URL(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status")
+    val url = new URL(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status")
     getWithDesHeadersWithRetry[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
   }
 
   // API #1170 (API#4) Get Agent Record
   override def getAgentRecord(
-      arn: Arn
-  )(implicit request: Request[_], hc: HeaderCarrier): Future[AgentDetailsDesResponse] = {
+    arn: Arn
+  )(implicit
+    request: Request[_],
+    hc: HeaderCarrier
+  ): Future[AgentDetailsDesResponse] = {
     val url = new URL(s"$baseUrl/registration/personal-details/arn/${arn.value}")
     agentCacheProvider.agentDetailsCache(arn.value) {
       getWithDesHeadersWithRetry[AgentDetailsDesResponse]("GetAgentRecordCached", url)
@@ -166,11 +183,18 @@ class DesConnectorImpl @Inject() (
     }
   }
 
-  def postWithDesHeaders[B, A: HttpReads](
-      apiName: String,
-      url: URL,
-      request: B
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext, y: Writes[B]): Future[Option[A]] = {
+  def postWithDesHeaders[
+    B,
+    A: HttpReads
+  ](
+    apiName: String,
+    url: URL,
+    request: B
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext,
+    y: Writes[B]
+  ): Future[Option[A]] = {
 
     val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
 
@@ -180,7 +204,11 @@ class DesConnectorImpl @Inject() (
     val response = httpV2
       .post(url)
       .withBody(Json.toJson(request))
-      .setHeader(desHeaders(authorizationToken, environment, isInternalHost): _*)
+      .setHeader(desHeaders(
+        authorizationToken,
+        environment,
+        isInternalHost
+      ): _*)
       .execute[Option[A]]
     timer.time().stop()
     response
@@ -188,9 +216,13 @@ class DesConnectorImpl @Inject() (
   }
 
   private def getWithDesHeadersWithRetry[A: HttpReads](
-      apiName: String,
-      url: URL
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext, x: Reads[A]): Future[A] = {
+    apiName: String,
+    url: URL
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext,
+    x: Reads[A]
+  ): Future[A] = {
 
     val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
 
@@ -199,7 +231,11 @@ class DesConnectorImpl @Inject() (
       timer.time()
       httpV2
         .get(url)
-        .setHeader(desHeaders(authorizationToken, environment, isInternalHost): _*)
+        .setHeader(desHeaders(
+          authorizationToken,
+          environment,
+          isInternalHost
+        ): _*)
         .executeAndDeserialise[A]
         .map(result => {
           timer.time().stop()
@@ -215,16 +251,21 @@ class DesConnectorImpl @Inject() (
    * See https://github.com/hmrc/http-verbs?tab=readme-ov-file#propagation-of-headers
    * */
 
-  def desHeaders(authToken: String, env: String, isInternalHost: Boolean)(
-      implicit hc: HeaderCarrier
+  def desHeaders(
+    authToken: String,
+    env: String,
+    isInternalHost: Boolean
+  )(
+    implicit hc: HeaderCarrier
   ): Seq[(String, String)] = {
 
     val additionalHeaders =
-      if (isInternalHost) Seq.empty
+      if (isInternalHost)
+        Seq.empty
       else
         Seq(
           HeaderNames.authorisation -> s"Bearer $authToken",
-          HeaderNames.xRequestId    -> hc.requestId.map(_.value).getOrElse(UUID.randomUUID().toString)
+          HeaderNames.xRequestId -> hc.requestId.map(_.value).getOrElse(UUID.randomUUID().toString)
         ) ++ hc.sessionId.fold(Seq.empty[(String, String)])(x => Seq(HeaderNames.xSessionId -> x.value))
     val commonHeaders = Seq(Environment -> env, CorrelationId -> UUID.randomUUID().toString)
     commonHeaders ++ additionalHeaders

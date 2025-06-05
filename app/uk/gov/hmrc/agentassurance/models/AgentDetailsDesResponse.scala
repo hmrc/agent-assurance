@@ -30,16 +30,20 @@ import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
 
 case class AgentDetailsDesResponse(
-    uniqueTaxReference: Option[Utr],
-    agencyDetails: Option[AgencyDetails],
-    suspensionDetails: Option[SuspensionDetails],
-    isAnIndividual: Option[Boolean]
+  uniqueTaxReference: Option[Utr],
+  agencyDetails: Option[AgencyDetails],
+  suspensionDetails: Option[SuspensionDetails],
+  isAnIndividual: Option[Boolean]
 )
 
 object AgentDetailsDesResponse {
+
   implicit val agentRecordDetailsFormat: OFormat[AgentDetailsDesResponse] = Json.format[AgentDetailsDesResponse]
 
-  def agentRecordDatabaseDetailsFormat(implicit crypto: Encrypter with Decrypter): Format[AgentDetailsDesResponse] =
+  def agentRecordDatabaseDetailsFormat(implicit
+    crypto: Encrypter
+      with Decrypter
+  ): Format[AgentDetailsDesResponse] =
     (__ \ "uniqueTaxReference")
       .formatNullable[String](stringEncrypterDecrypter)
       .bimap[Option[Utr]](
@@ -52,4 +56,5 @@ object AgentDetailsDesResponse {
         AgentDetailsDesResponse.apply,
         unlift(AgentDetailsDesResponse.unapply)
       )
+
 }

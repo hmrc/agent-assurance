@@ -25,14 +25,19 @@ import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
 import uk.gov.hmrc.agentassurance.services.EmailService
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockEmailService extends MockFactory { this: TestSuite =>
+trait MockEmailService
+extends MockFactory { this: TestSuite =>
 
   val mockMockEmailService = mock[EmailService]
 
   def mockSendEntityCheckNotification(entityCheckNotification: EntityCheckNotification) = {
     (mockMockEmailService
       .sendEntityCheckNotification(_: EntityCheckNotification)(_: ExecutionContext, _: HeaderCarrier))
-      .expects(entityCheckNotification, *, *)
+      .expects(
+        entityCheckNotification,
+        *,
+        *
+      )
       .returning(Future.successful(()))
   }
 

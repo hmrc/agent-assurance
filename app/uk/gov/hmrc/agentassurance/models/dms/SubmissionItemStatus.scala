@@ -21,21 +21,29 @@ import enumeratum.EnumEntry
 import play.api.libs.json.Format
 import uk.gov.hmrc.agentassurance.utils.EnumFormat
 
-sealed abstract class SubmissionItemStatus extends EnumEntry
+sealed abstract class SubmissionItemStatus
+extends EnumEntry
 
-object SubmissionItemStatus extends Enum[SubmissionItemStatus] {
+object SubmissionItemStatus
+extends Enum[SubmissionItemStatus] {
 
   implicit val format: Format[SubmissionItemStatus] = EnumFormat(SubmissionItemStatus)
 
-  case object Completed extends SubmissionItemStatus
+  case object Completed
+  extends SubmissionItemStatus
 
-  case object Failed extends SubmissionItemStatus
+  case object Failed
+  extends SubmissionItemStatus
 
-  case object Forwarded extends SubmissionItemStatus
+  case object Forwarded
+  extends SubmissionItemStatus
 
-  case object Processed extends SubmissionItemStatus
+  case object Processed
+  extends SubmissionItemStatus
 
-  case object Submitted extends SubmissionItemStatus
+  case object Submitted
+  extends SubmissionItemStatus
 
   override def values: IndexedSeq[SubmissionItemStatus] = findValues
+
 }

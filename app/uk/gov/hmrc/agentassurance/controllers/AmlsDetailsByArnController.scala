@@ -43,22 +43,23 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class AmlsDetailsByArnController @Inject() (
-    amlsDetailsService: AmlsDetailsService,
-    val authConnector: AuthConnector,
-    override val controllerComponents: ControllerComponents
-)(implicit val appConfig: AppConfig, ec: ExecutionContext)
-    extends BackendController(controllerComponents)
-    with AuthActions {
+  amlsDetailsService: AmlsDetailsService,
+  val authConnector: AuthConnector,
+  override val controllerComponents: ControllerComponents
+)(implicit
+  val appConfig: AppConfig,
+  ec: ExecutionContext
+)
+extends BackendController(controllerComponents)
+with AuthActions {
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
   def getAmlsDetails(arn: Arn): Action[AnyContent] =
     withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
       amlsDetailsService.getAmlsDetailsByArn(arn).map {
-        case (amlsStatus, None) =>
-          Ok(Json.toJson(UkAmlsDetailsResponse(amlsStatus.toString)))
-        case (amlsStatus, Some(amlsDetails: UkAmlsDetails)) =>
-          Ok(Json.toJson(UkAmlsDetailsResponse(amlsStatus.toString, Some(amlsDetails))))
+        case (amlsStatus, None) => Ok(Json.toJson(UkAmlsDetailsResponse(amlsStatus.toString)))
+        case (amlsStatus, Some(amlsDetails: UkAmlsDetails)) => Ok(Json.toJson(UkAmlsDetailsResponse(amlsStatus.toString, Some(amlsDetails))))
         case (amlsStatus, Some(overseasAmlsDetails: OverseasAmlsDetails)) =>
           Ok(Json.toJson(OverseasAmlsDetailsResponse(amlsStatus.toString, Some(overseasAmlsDetails))))
       }

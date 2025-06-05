@@ -27,13 +27,18 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockAuditService extends MockFactory { this: TestSuite =>
+trait MockAuditService
+extends MockFactory { this: TestSuite =>
 
   val mockAuditService: AuditService = mock[AuditService]
 
   def mockAuditEntityChecksPerformed =
     (mockAuditService
-      .auditEntityChecksPerformed(_: Arn, _: Option[Utr], _: Seq[AgentCheckOutcome])(_: HeaderCarrier))
+      .auditEntityChecksPerformed(
+        _: Arn,
+        _: Option[Utr],
+        _: Seq[AgentCheckOutcome]
+      )(_: HeaderCarrier))
       .expects(*, *, *, *)
       .returning(Future.successful(()))
 

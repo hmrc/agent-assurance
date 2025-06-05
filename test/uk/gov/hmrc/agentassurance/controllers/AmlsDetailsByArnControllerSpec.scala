@@ -39,15 +39,19 @@ import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http.InternalServerException
 
 class AmlsDetailsByArnControllerSpec
-    extends PlaySpec
-    with MockAuthConnector
-    with MockAppConfig
-    with MockAmlsDetailsService
-    with BeforeAndAfterEach
-    with ScalaFutures {
+extends PlaySpec
+with MockAuthConnector
+with MockAppConfig
+with MockAmlsDetailsService
+with BeforeAndAfterEach
+with ScalaFutures {
 
   val controller =
-    new AmlsDetailsByArnController(mockAmlsDetailsService, mockAuthConnector, stubControllerComponents())(
+    new AmlsDetailsByArnController(
+      mockAmlsDetailsService,
+      mockAuthConnector,
+      stubControllerComponents()
+    )(
       mockAppConfig,
       ExecutionContext.global
     )
@@ -112,8 +116,8 @@ class AmlsDetailsByArnControllerSpec
         contentAsJson(response) mustBe Json.obj(
           "status" -> "ValidAmlsDetailsUK",
           "details" -> Json.obj(
-            "supervisoryBody"     -> "supervisory",
-            "membershipNumber"    -> "0123456789",
+            "supervisoryBody" -> "supervisory",
+            "membershipNumber" -> "0123456789",
             "membershipExpiresOn" -> "2024-01-12"
           )
         )
@@ -132,7 +136,7 @@ class AmlsDetailsByArnControllerSpec
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
         status(response) mustBe OK
         contentAsJson(response) mustBe Json.obj(
-          "status"  -> "ValidAmlsNonUK",
+          "status" -> "ValidAmlsNonUK",
           "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789")
         )
       }
@@ -164,7 +168,7 @@ class AmlsDetailsByArnControllerSpec
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
         status(response) mustBe OK
         contentAsJson(response) mustBe Json.obj(
-          "status"  -> "ValidAmlsNonUK",
+          "status" -> "ValidAmlsNonUK",
           "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789")
         )
       }

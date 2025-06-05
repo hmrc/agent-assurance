@@ -26,7 +26,9 @@ import uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController
 @Singleton
 class TestOnlyController @Inject() (ctrl: AgentAssuranceController) {
 
-  def acceptableNumberOfClientsForAny(service: String, minimumAcceptableNumberOfClients: Int): Action[AnyContent] =
-    ctrl.acceptableNumberOfClients(service, minimumAcceptableNumberOfClients)
+  def acceptableNumberOfClientsForAny(
+    service: String,
+    minimumAcceptableNumberOfClients: Int
+  ): Action[AnyContent] = ctrl.acceptableNumberOfClients(service, minimumAcceptableNumberOfClients)
 
 }

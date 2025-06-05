@@ -28,11 +28,15 @@ import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
-class EmailServiceSpec extends PlaySpec with DefaultAwaitTimeout with MockEmailConnector with MockAppConfig {
+class EmailServiceSpec
+extends PlaySpec
+with DefaultAwaitTimeout
+with MockEmailConnector
+with MockAppConfig {
 
-  implicit val hc: HeaderCarrier    = HeaderCarrier()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
-  val service: EmailService         = new EmailService(mockEmailConnector, mockAppConfig)
+  val service: EmailService = new EmailService(mockEmailConnector, mockAppConfig)
 
   "sendEntityCheckEmail" should {
     "be successful when request is valid" in {
@@ -49,11 +53,11 @@ class EmailServiceSpec extends PlaySpec with DefaultAwaitTimeout with MockEmailC
           to = Seq("test@example.com"),
           templateId = "entity_check_notification",
           parameters = Map(
-            "arn"          -> entityChecks.arn.value,
-            "utr"          -> entityChecks.utr,
-            "agencyName"   -> entityChecks.agencyName,
+            "arn" -> entityChecks.arn.value,
+            "utr" -> entityChecks.utr,
+            "agencyName" -> entityChecks.agencyName,
             "failedChecks" -> entityChecks.failedChecks,
-            "dateTime"     -> entityChecks.dateTime
+            "dateTime" -> entityChecks.dateTime
           )
         )
       )
@@ -61,4 +65,5 @@ class EmailServiceSpec extends PlaySpec with DefaultAwaitTimeout with MockEmailC
       await(service.sendEntityCheckNotification(entityChecks)) mustBe ()
     }
   }
+
 }

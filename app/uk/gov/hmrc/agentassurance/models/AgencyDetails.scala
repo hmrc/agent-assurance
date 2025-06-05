@@ -28,17 +28,21 @@ import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
 
 case class AgencyDetails(
-    agencyName: Option[String],
-    agencyEmail: Option[String],
-    agencyTelephone: Option[String],
-    agencyAddress: Option[BusinessAddress]
+  agencyName: Option[String],
+  agencyEmail: Option[String],
+  agencyTelephone: Option[String],
+  agencyAddress: Option[BusinessAddress]
 ) {
   val hasUkAddress: Boolean = agencyAddress.exists(_.countryCode == "GB")
 }
 object AgencyDetails {
+
   implicit val agencyDetailsFormat: Format[AgencyDetails] = Json.format[AgencyDetails]
 
-  def agencyDetailsDatabaseFormat(implicit crypto: Encrypter with Decrypter): Format[AgencyDetails] =
+  def agencyDetailsDatabaseFormat(implicit
+    crypto: Encrypter
+      with Decrypter
+  ): Format[AgencyDetails] =
     (__ \ "agencyName")
       .formatNullable[String](stringEncrypterDecrypter)
       .and((__ \ "agencyEmail").formatNullable[String](stringEncrypterDecrypter))
@@ -47,21 +51,26 @@ object AgencyDetails {
         AgencyDetails.apply,
         unlift(AgencyDetails.unapply)
       )
+
 }
 
 case class BusinessAddress(
-    addressLine1: String,
-    addressLine2: Option[String],
-    addressLine3: Option[String] = None,
-    addressLine4: Option[String] = None,
-    postalCode: Option[String],
-    countryCode: String
+  addressLine1: String,
+  addressLine2: Option[String],
+  addressLine3: Option[String] = None,
+  addressLine4: Option[String] = None,
+  postalCode: Option[String],
+  countryCode: String
 )
 
 object BusinessAddress {
+
   implicit val format: OFormat[BusinessAddress] = Json.format
 
-  def businessAddressDatabaseFormat(implicit crypto: Encrypter with Decrypter): Format[BusinessAddress] = {
+  def businessAddressDatabaseFormat(implicit
+    crypto: Encrypter
+      with Decrypter
+  ): Format[BusinessAddress] = {
     (__ \ "addressLine1")
       .format[String](stringEncrypterDecrypter)
       .and((__ \ "addressLine2").formatNullable[String](stringEncrypterDecrypter))
@@ -73,4 +82,5 @@ object BusinessAddress {
         unlift(BusinessAddress.unapply)
       )
   }
+
 }

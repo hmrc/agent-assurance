@@ -43,30 +43,31 @@ trait ArchivedAmlsRepository {
 
 @Singleton
 class ArchivedAmlsRepositoryImpl @Inject() (mongoComponent: MongoComponent)(implicit ec: ExecutionContext)
-    extends PlayMongoRepository[ArchivedAmlsEntity](
-      mongoComponent = mongoComponent,
-      collectionName = "archived-amls",
-      domainFormat = ArchivedAmlsEntity.format,
-      indexes = Seq(
-        IndexModel(
-          ascending("arn"),
-          IndexOptions()
-            .name("arnIndex")
-        )
-      ),
-      extraCodecs = Seq(
-        Codecs.playFormatCodec(Format(Arn.arnReads, Arn.arnWrites))
-      )
+extends PlayMongoRepository[ArchivedAmlsEntity](
+  mongoComponent = mongoComponent,
+  collectionName = "archived-amls",
+  domainFormat = ArchivedAmlsEntity.format,
+  indexes = Seq(
+    IndexModel(
+      ascending("arn"),
+      IndexOptions()
+        .name("arnIndex")
     )
-    with ArchivedAmlsRepository
-    with Logging {
+  ),
+  extraCodecs = Seq(
+    Codecs.playFormatCodec(Format(Arn.arnReads, Arn.arnWrites))
+  )
+)
+with ArchivedAmlsRepository
+with Logging {
 
   override def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]] = {
     collection
       .insertOne(archivedAmlsEntity)
       .toFuture()
       .map(result =>
-        if (result.wasAcknowledged()) Right(())
+        if (result.wasAcknowledged())
+          Right(())
         else
           Left(AmlsUnexpectedMongoError)
       )

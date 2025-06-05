@@ -31,29 +31,29 @@ import play.api.test.Helpers.AUTHORIZATION
 
 trait InternalAuthStub {
 
-  def stubInternalAuthorised(): StubMapping =
-    stubFor(
-      post(urlEqualTo("/internal-auth/auth"))
-        .willReturn(
-          aResponse()
-            .withStatus(OK)
-            .withBody("""{"retrievals": {}}""".stripMargin)
-        )
-    )
+  def stubInternalAuthorised(): StubMapping = stubFor(
+    post(urlEqualTo("/internal-auth/auth"))
+      .willReturn(
+        aResponse()
+          .withStatus(OK)
+          .withBody("""{"retrievals": {}}""".stripMargin)
+      )
+  )
 
-  def getTestStubInternalAuthorised(): StubMapping =
-    stubFor(
-      get(urlMatching("/test-only/token"))
-        .willReturn(aResponse().withStatus(NOT_FOUND))
-    )
+  def getTestStubInternalAuthorised(): StubMapping = stubFor(
+    get(urlMatching("/test-only/token"))
+      .willReturn(aResponse().withStatus(NOT_FOUND))
+  )
 
-  def postTestStubInternalAuthorised(): StubMapping =
-    stubFor(
-      post(urlMatching("/test-only/token"))
-        .willReturn(aResponse().withStatus(CREATED))
-    )
+  def postTestStubInternalAuthorised(): StubMapping = stubFor(
+    post(urlMatching("/test-only/token"))
+      .willReturn(aResponse().withStatus(CREATED))
+  )
 
-  def verifyGetTestStubInternalAuth(authToken: String, count: Int = 1): Unit =
+  def verifyGetTestStubInternalAuth(
+    authToken: String,
+    count: Int = 1
+  ): Unit =
     eventually(Timeout(Span(30, Seconds))) {
       verify(
         count,
@@ -62,7 +62,10 @@ trait InternalAuthStub {
       )
     }
 
-  def verifyPostTestStubInternalAuth(expectedRequest: JsObject, count: Int = 1): Unit =
+  def verifyPostTestStubInternalAuth(
+    expectedRequest: JsObject,
+    count: Int = 1
+  ): Unit =
     eventually(Timeout(Span(30, Seconds))) {
       verify(
         count,

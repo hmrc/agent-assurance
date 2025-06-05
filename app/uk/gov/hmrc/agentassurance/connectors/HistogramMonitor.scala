@@ -28,13 +28,12 @@ trait HistogramMonitor {
   val metrics: Metrics
   val registry: MetricRegistry = metrics.defaultRegistry
 
-  def reportHistogramValue[T](name: String)(function: => Future[Int])(implicit ec: ExecutionContext): Future[Int] =
-    function.andThen {
-      case Success(c) =>
-        registry.getHistograms.getOrDefault(histogramName(name), registry.histogram(histogramName(name))).update(c)
-    }
+  def reportHistogramValue[T](name: String)(function: => Future[Int])(implicit ec: ExecutionContext): Future[Int] = function.andThen {
+    case Success(c) => registry.getHistograms.getOrDefault(histogramName(name), registry.histogram(histogramName(name))).update(c)
+  }
 
   def histogramName[T](counterName: String): String = {
     s"Histogram-$counterName"
   }
+
 }

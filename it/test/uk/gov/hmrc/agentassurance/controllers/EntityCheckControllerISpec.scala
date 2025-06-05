@@ -52,75 +52,72 @@ import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
 class EntityCheckControllerISpec
-    extends PlaySpec
-    with AgentAuthStubs
-    with GuiceOneServerPerSuite
-    with WireMockSupport
-    with CleanMongoCollectionSupport
-    with InstantClockTestSupport
-    with DesStubs
-    with InternalAuthStub
-    with CitizenDetailsStubs
-    with EmailStub {
+extends PlaySpec
+with AgentAuthStubs
+with GuiceOneServerPerSuite
+with WireMockSupport
+with CleanMongoCollectionSupport
+with InstantClockTestSupport
+with DesStubs
+with InternalAuthStub
+with CitizenDetailsStubs
+with EmailStub {
 
-  implicit override lazy val app: Application = appBuilder.build()
+  override implicit lazy val app: Application = appBuilder.build()
 
-  protected val propertiesRepository: PlayMongoRepository[Property] =
-    new PropertiesRepositoryImpl(mongoComponent)
+  protected val propertiesRepository: PlayMongoRepository[Property] = new PropertiesRepositoryImpl(mongoComponent)
 
-  val moduleWithOverrides: AbstractModule = new AbstractModule() {
-    override def configure(): Unit = {
-      bind(classOf[PropertiesRepository]).toInstance(propertiesRepository.asInstanceOf[PropertiesRepositoryImpl])
+  val moduleWithOverrides: AbstractModule =
+    new AbstractModule() {
+      override def configure(): Unit = {
+        bind(classOf[PropertiesRepository]).toInstance(propertiesRepository.asInstanceOf[PropertiesRepositoryImpl])
+      }
     }
-  }
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "microservice.services.auth.host"            -> wireMockHost,
-        "microservice.services.auth.port"            -> wireMockPort,
-        "microservice.services.des.host"             -> wireMockHost,
-        "microservice.services.des.port"             -> wireMockPort,
-        "microservice.services.citizen-details.host" -> wireMockHost,
-        "microservice.services.citizen-details.port" -> wireMockPort,
-        "microservice.services.internal-auth.port"   -> wireMockPort,
-        "microservice.services.internal-auth.host"   -> wireMockHost,
-        "microservice.services.email.port"           -> wireMockPort,
-        "microservice.services.email.host"           -> wireMockHost,
-        "auditing.enabled"                           -> false,
-        "stride.roles.agent-assurance"               -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled-on-start"       -> false,
-        "http-verbs.retries.intervals"               -> List("1ms"),
-        "agent.cache.enabled"                        -> true,
-        "agent.cache.expires"                        -> "1 seconds",
-        "agent.entity-check.lock.expires"            -> "1 seconds",
-        "agent.entity-check.email.lock.expires"      -> "1 seconds"
-      )
-      .overrides(moduleWithOverrides)
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.auth.host" -> wireMockHost,
+      "microservice.services.auth.port" -> wireMockPort,
+      "microservice.services.des.host" -> wireMockHost,
+      "microservice.services.des.port" -> wireMockPort,
+      "microservice.services.citizen-details.host" -> wireMockHost,
+      "microservice.services.citizen-details.port" -> wireMockPort,
+      "microservice.services.internal-auth.port" -> wireMockPort,
+      "microservice.services.internal-auth.host" -> wireMockHost,
+      "microservice.services.email.port" -> wireMockPort,
+      "microservice.services.email.host" -> wireMockHost,
+      "auditing.enabled" -> false,
+      "stride.roles.agent-assurance" -> "maintain_agent_manually_assure",
+      "internal-auth-token-enabled-on-start" -> false,
+      "http-verbs.retries.intervals" -> List("1ms"),
+      "agent.cache.enabled" -> true,
+      "agent.cache.expires" -> "1 seconds",
+      "agent.entity-check.lock.expires" -> "1 seconds",
+      "agent.entity-check.email.lock.expires" -> "1 seconds"
+    )
+    .overrides(moduleWithOverrides)
 
-  val arn       = Arn("AARN0000002")
+  val arn = Arn("AARN0000002")
   val clientUrl = s"http://localhost:$port/agent-assurance/client/verify-entity"
-  val agentUrl  = s"http://localhost:$port/agent-assurance/agent/verify-entity"
+  val agentUrl = s"http://localhost:$port/agent-assurance/agent/verify-entity"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  def doClientPostRequest(body: VerifyEntityRequest) =
-    Await.result(
-      wsClient
-        .url(clientUrl)
-        .withHttpHeaders("Authorization" -> "internal auth token", CONTENT_TYPE -> "application/json")
-        .post(Json.toJson(body)),
-      15.seconds
-    )
+  def doClientPostRequest(body: VerifyEntityRequest) = Await.result(
+    wsClient
+      .url(clientUrl)
+      .withHttpHeaders("Authorization" -> "internal auth token", CONTENT_TYPE -> "application/json")
+      .post(Json.toJson(body)),
+    15.seconds
+  )
 
-  def doAgentPostRequest() =
-    Await.result(
-      wsClient
-        .url(agentUrl)
-        .withHttpHeaders("Authorization" -> "Bearer XYZ", CONTENT_TYPE -> "application/json")
-        .post(""),
-      15.seconds
-    )
+  def doAgentPostRequest() = Await.result(
+    wsClient
+      .url(agentUrl)
+      .withHttpHeaders("Authorization" -> "Bearer XYZ", CONTENT_TYPE -> "application/json")
+      .post(""),
+    15.seconds
+  )
 
   "POST /agent-assurance/client/verify-entity" should {
 
@@ -151,7 +148,7 @@ class EntityCheckControllerISpec
     "return suspension details and send email for deceased" in {
       Thread.sleep(1000) // To make sure cache expires
       val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
-      val dateTime  = formatter.format(LocalDateTime.now())
+      val dateTime = formatter.format(LocalDateTime.now())
 
       stubInternalAuthorised()
       givenDESGetAgentRecordSuspendedAgent(
@@ -166,11 +163,11 @@ class EntityCheckControllerISpec
           to = Seq("test@example.com"),
           templateId = "entity_check_notification",
           parameters = Map(
-            "arn"          -> "ARN123",
-            "dateTime"     -> dateTime,
-            "agencyName"   -> "ABC Accountants",
+            "arn" -> "ARN123",
+            "dateTime" -> dateTime,
+            "agencyName" -> "ABC Accountants",
             "failedChecks" -> "Agent is deceased",
-            "utr"          -> "7000000002"
+            "utr" -> "7000000002"
           ),
           force = true
         )
@@ -187,7 +184,7 @@ class EntityCheckControllerISpec
     "return suspension details and send email for refuse to deal with" in {
       Thread.sleep(1000) // To make sure cache expires
       val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
-      val dateTime  = formatter.format(LocalDateTime.now())
+      val dateTime = formatter.format(LocalDateTime.now())
 
       stubInternalAuthorised()
       givenDESGetAgentRecordSuspendedAgent(
@@ -206,11 +203,11 @@ class EntityCheckControllerISpec
           to = Seq("test@example.com"),
           templateId = "entity_check_notification",
           parameters = Map(
-            "arn"          -> "ARN123",
-            "dateTime"     -> dateTime,
-            "agencyName"   -> "ABC Accountants",
+            "arn" -> "ARN123",
+            "dateTime" -> dateTime,
+            "agencyName" -> "ABC Accountants",
             "failedChecks" -> "Agent is on the 'Refuse To Deal With' list",
-            "utr"          -> "7000000002"
+            "utr" -> "7000000002"
           ),
           force = true
         )

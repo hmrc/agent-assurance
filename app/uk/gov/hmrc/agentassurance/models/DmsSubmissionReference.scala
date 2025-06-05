@@ -21,9 +21,12 @@ import scala.util.Random
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
-case class DmsSubmissionReference(submissionReference: String) extends Product
+case class DmsSubmissionReference(submissionReference: String)
+extends Product
 
 object DmsSubmissionReference {
-  def create: DmsSubmissionReference                   = DmsSubmissionReference(Random.alphanumeric.take(12).mkString.map(_.toUpper))
+
+  def create: DmsSubmissionReference = DmsSubmissionReference(Random.alphanumeric.take(12).mkString.map(_.toUpper))
   implicit val format: OFormat[DmsSubmissionReference] = Json.format[DmsSubmissionReference]
+
 }

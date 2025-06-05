@@ -20,24 +20,34 @@ sealed trait EmailCheckExceptions {
   def failedChecksText: String
 }
 
-sealed trait EntityCheckException extends Product with Serializable
+sealed trait EntityCheckException
+extends Product
+with Serializable
 
-sealed trait DeceasedCheckException extends EntityCheckException
+sealed trait DeceasedCheckException
+extends EntityCheckException
 
 object DeceasedCheckException {
 
-  case class CitizenConnectorRequestFailed(code: Int) extends DeceasedCheckException
+  case class CitizenConnectorRequestFailed(code: Int)
+  extends DeceasedCheckException
 
-  case object EntityDeceasedCheckFailed extends DeceasedCheckException with EmailCheckExceptions {
+  case object EntityDeceasedCheckFailed
+  extends DeceasedCheckException
+  with EmailCheckExceptions {
     override val failedChecksText: String = "Agent is deceased"
   }
+
 }
 
-sealed trait RefusalCheckException extends EntityCheckException
+sealed trait RefusalCheckException
+extends EntityCheckException
 
 object RefusalCheckException {
 
-  case object AgentIsOnRefuseToDealList extends RefusalCheckException with EmailCheckExceptions {
+  case object AgentIsOnRefuseToDealList
+  extends RefusalCheckException
+  with EmailCheckExceptions {
     override val failedChecksText: String = "Agent is on the 'Refuse To Deal With' list"
   }
 }

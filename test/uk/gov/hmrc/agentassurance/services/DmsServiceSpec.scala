@@ -34,12 +34,15 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
-class DmsServiceSpec extends PlaySpec with MockDmsConnector with MockAppConfig {
+class DmsServiceSpec
+extends PlaySpec
+with MockDmsConnector
+with MockAppConfig {
 
-  val html                          = "<html><head></head><body></body></html>"
-  val now: Instant                  = Instant.now
+  val html = "<html><head></head><body></body></html>"
+  val now: Instant = Instant.now
   implicit val appConfig: AppConfig = mockAppConfig
-  implicit val hc: HeaderCarrier    = HeaderCarrier()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val service = new DmsService(mockDmsConnector, appConfig)
 
@@ -47,15 +50,26 @@ class DmsServiceSpec extends PlaySpec with MockDmsConnector with MockAppConfig {
     "handle escaped special chars in desi details changes" in {
       val encoded = Base64.getEncoder.encodeToString(ChangeDesiDetailsPayloads.specialChars.getBytes)
 
-      val timestamp = LocalDateTime
-        .of(2022, 3, 2, 12, 30, 45)
-        .atZone(ZoneId.of("UTC"))
-        .toInstant
+      val timestamp =
+        LocalDateTime
+          .of(
+            2022,
+            3,
+            2,
+            12,
+            30,
+            45
+          )
+          .atZone(ZoneId.of("UTC"))
+          .toInstant
 
       mocksendPdfAccepted()
 
-      val result =
-        await(service.submitToDms(Some(encoded), timestamp, DmsSubmissionReference("DmsSubmissionReference"))(hc))
+      val result = await(service.submitToDms(
+        Some(encoded),
+        timestamp,
+        DmsSubmissionReference("DmsSubmissionReference")
+      )(hc))
 
       result mustBe DmsResponse(timestamp, "")
     }
@@ -63,15 +77,26 @@ class DmsServiceSpec extends PlaySpec with MockDmsConnector with MockAppConfig {
     "return correct value when the submission is successful" in {
       val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
-      val timestamp = LocalDateTime
-        .of(2022, 3, 2, 12, 30, 45)
-        .atZone(ZoneId.of("UTC"))
-        .toInstant
+      val timestamp =
+        LocalDateTime
+          .of(
+            2022,
+            3,
+            2,
+            12,
+            30,
+            45
+          )
+          .atZone(ZoneId.of("UTC"))
+          .toInstant
 
       mocksendPdfAccepted()
 
-      val result =
-        await(service.submitToDms(Some(encoded), timestamp, DmsSubmissionReference("DmsSubmissionReference"))(hc))
+      val result = await(service.submitToDms(
+        Some(encoded),
+        timestamp,
+        DmsSubmissionReference("DmsSubmissionReference")
+      )(hc))
 
       result mustBe DmsResponse(timestamp, "")
     }
@@ -79,15 +104,27 @@ class DmsServiceSpec extends PlaySpec with MockDmsConnector with MockAppConfig {
     "return upstream error if submission fails" in {
       val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
-      val timestamp = LocalDateTime
-        .of(2022, 3, 2, 12, 30, 45)
-        .atZone(ZoneId.of("UTC"))
-        .toInstant
+      val timestamp =
+        LocalDateTime
+          .of(
+            2022,
+            3,
+            2,
+            12,
+            30,
+            45
+          )
+          .atZone(ZoneId.of("UTC"))
+          .toInstant
 
       mocksendPdfUpstreamErrorResponse()
 
       an[UpstreamErrorResponse] mustBe thrownBy {
-        await(service.submitToDms(Some(encoded), timestamp, DmsSubmissionReference("DmsSubmissionReference")))
+        await(service.submitToDms(
+          Some(encoded),
+          timestamp,
+          DmsSubmissionReference("DmsSubmissionReference")
+        ))
       }
 
     }
@@ -97,15 +134,24 @@ class DmsServiceSpec extends PlaySpec with MockDmsConnector with MockAppConfig {
       mocksendPdfNonFatal()
 
       an[InternalServerException] mustBe thrownBy {
-        await(service.submitToDms(Some(encoded), now, DmsSubmissionReference("DmsSubmissionReference")))
+        await(service.submitToDms(
+          Some(encoded),
+          now,
+          DmsSubmissionReference("DmsSubmissionReference")
+        ))
       }
     }
 
     "return upstream error if no data to submit" in {
 
       an[InternalServerException] mustBe thrownBy {
-        await(service.submitToDms(None, now, DmsSubmissionReference("DmsSubmissionReference")))
+        await(service.submitToDms(
+          None,
+          now,
+          DmsSubmissionReference("DmsSubmissionReference")
+        ))
       }
     }
   }
+
 }

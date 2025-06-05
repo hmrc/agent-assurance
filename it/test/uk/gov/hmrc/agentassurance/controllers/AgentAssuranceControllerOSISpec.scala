@@ -40,32 +40,32 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 class AgentAssuranceControllerOSISpec
-    extends IntegrationSpec
-    with AgentAuthStubs
-    with GuiceOneServerPerSuite
-    with WireMockSupport
-    with DefaultPlayMongoRepositorySupport[OverseasAmlsEntity] {
+extends IntegrationSpec
+with AgentAuthStubs
+with GuiceOneServerPerSuite
+with WireMockSupport
+with DefaultPlayMongoRepositorySupport[OverseasAmlsEntity] {
 
   override lazy val repository = new OverseasAmlsRepositoryImpl(mongoComponent)
 
-  implicit override lazy val app: Application = appBuilder.build()
+  override implicit lazy val app: Application = appBuilder.build()
 
-  val moduleWithOverrides: AbstractModule = new AbstractModule() {
-    override def configure(): Unit = {
-      bind(classOf[OverseasAmlsRepositoryImpl]).toInstance(repository)
+  val moduleWithOverrides: AbstractModule =
+    new AbstractModule() {
+      override def configure(): Unit = {
+        bind(classOf[OverseasAmlsRepositoryImpl]).toInstance(repository)
+      }
     }
-  }
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "microservice.services.auth.host"      -> wireMockHost,
-        "microservice.services.auth.port"      -> wireMockPort,
-        "auditing.enabled"                     -> false,
-        "stride.roles.agent-assurance"         -> "maintain_agent_manually_assure",
-        "internal-auth-token-enabled-on-start" -> false
-      )
-      .overrides(moduleWithOverrides)
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.auth.host" -> wireMockHost,
+      "microservice.services.auth.port" -> wireMockPort,
+      "auditing.enabled" -> false,
+      "stride.roles.agent-assurance" -> "maintain_agent_manually_assure",
+      "internal-auth-token-enabled-on-start" -> false
+    )
+    .overrides(moduleWithOverrides)
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
@@ -76,17 +76,20 @@ class AgentAssuranceControllerOSISpec
 
     val arn = Arn("AARN0000002")
 
-    val amlsDetails               = OverseasAmlsDetails("supervisory", Some("0123456789"))
-    val createOverseasAmlsRequest = OverseasAmlsEntity(arn, amlsDetails, None)
+    val amlsDetails = OverseasAmlsDetails("supervisory", Some("0123456789"))
+    val createOverseasAmlsRequest = OverseasAmlsEntity(
+      arn,
+      amlsDetails,
+      None
+    )
 
-    def doRequest(request: OverseasAmlsEntity) =
-      Await.result(
-        wsClient
-          .url(amlsCreateUrl)
-          .withHttpHeaders(CONTENT_TYPE -> "application/json", "Authorization" -> "Bearer XYZ")
-          .post(Json.toJson(request)),
-        10.seconds
-      )
+    def doRequest(request: OverseasAmlsEntity) = Await.result(
+      wsClient
+        .url(amlsCreateUrl)
+        .withHttpHeaders(CONTENT_TYPE -> "application/json", "Authorization" -> "Bearer XYZ")
+        .post(Json.toJson(request)),
+      10.seconds
+    )
 
     Scenario("user logged in and is an agent should be able to create a new Amls record for the first time") {
       Given("User is logged in and is an overseas agent")
@@ -106,8 +109,7 @@ class AgentAssuranceControllerOSISpec
       withAffinityGroupAgent
 
       When("POST /overseas-agents/amls is called")
-      val response: WSResponse =
-        doRequest(createOverseasAmlsRequest.copy(amlsDetails = OverseasAmlsDetails("AOSS", None)))
+      val response: WSResponse = doRequest(createOverseasAmlsRequest.copy(amlsDetails = OverseasAmlsDetails("AOSS", None)))
 
       Then("201 CREATED is returned")
       response.status shouldBe 201

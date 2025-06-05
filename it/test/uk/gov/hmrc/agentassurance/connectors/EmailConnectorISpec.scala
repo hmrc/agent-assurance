@@ -34,30 +34,34 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 class EmailConnectorISpec
-    extends UnitSpec
-    with GuiceOneAppPerSuite
-    with WireMockSupport
-    with DataStreamStub
-    with EmailStub {
+extends UnitSpec
+with GuiceOneAppPerSuite
+with WireMockSupport
+with DataStreamStub
+with EmailStub {
 
-  implicit override lazy val app: Application = appBuilder
+  override implicit lazy val app: Application = appBuilder
     .build()
-  val appConfig: AppConfig                  = app.injector.instanceOf[AppConfig]
-  val httpClient: HttpClientV2              = app.injector.instanceOf[HttpClientV2]
-  val metrics: Metrics                      = app.injector.instanceOf[Metrics]
-  val connector: EmailConnector             = new EmailConnectorImpl(appConfig, httpClient, metrics)
-  private implicit val hc: HeaderCarrier    = HeaderCarrier()
+  val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+  val httpClient: HttpClientV2 = app.injector.instanceOf[HttpClientV2]
+  val metrics: Metrics = app.injector.instanceOf[Metrics]
+  val connector: EmailConnector =
+    new EmailConnectorImpl(
+      appConfig,
+      httpClient,
+      metrics
+    )
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.global
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "microservice.services.email.host" -> wireMockHost,
-        "microservice.services.email.port" -> wireMockPort,
-        "agent-maintainer-email"           -> "test@example.com",
-        "auditing.enabled"                 -> false
-      )
-      .bindings(bind[EmailConnector].toInstance(connector))
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.email.host" -> wireMockHost,
+      "microservice.services.email.port" -> wireMockPort,
+      "agent-maintainer-email" -> "test@example.com",
+      "auditing.enabled" -> false
+    )
+    .bindings(bind[EmailConnector].toInstance(connector))
 
   val emailInfo: EmailInformation = EmailInformation(
     to = Seq("abc@xyz.com"),
@@ -83,4 +87,5 @@ class EmailConnectorISpec
       result shouldBe (())
     }
   }
+
 }

@@ -40,12 +40,12 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class MaaController @Inject() (
-    repository: PropertiesRepository,
-    override val controllerComponents: ControllerComponents,
-    val authConnector: AuthConnector
+  repository: PropertiesRepository,
+  override val controllerComponents: ControllerComponents,
+  val authConnector: AuthConnector
 )(implicit ec: ExecutionContext)
-    extends BackendController(controllerComponents)
-    with AuthActions {
+extends BackendController(controllerComponents)
+with AuthActions {
 
   val key = "manually-assured"
 
@@ -60,7 +60,7 @@ class MaaController @Inject() (
         val propertyConverted = newValue.toProperty(key)
         repository.propertyExists(propertyConverted).flatMap {
           case false => repository.createProperty(propertyConverted).map(_ => Created)
-          case true  => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
+          case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
         }
       }
       case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
@@ -69,13 +69,17 @@ class MaaController @Inject() (
 
   def isManuallyAssured(identifier: Utr) = BasicAuth { _ =>
     repository.propertyExists(Value(identifier.value).toProperty(key)).map {
-      case true  => Ok
+      case true => Ok
       case false => Forbidden
     }
   }
 
   def getMaaList(pagination: PaginationParameters): Action[AnyContent] = BasicAuth { implicit request =>
-    repository.findProperties(key, pagination.page, pagination.pageSize).map {
+    repository.findProperties(
+      key,
+      pagination.page,
+      pagination.pageSize
+    ).map {
       case (total, properties) =>
         val response = PaginatedResources(
           PaginationLinks.apply(
@@ -96,8 +100,9 @@ class MaaController @Inject() (
   def deleteProperty(identifier: Utr) = BasicAuth { _ =>
     val newProperty = Value(identifier.value).toProperty(key)
     repository.propertyExists(newProperty).flatMap {
-      case true  => repository.deleteProperty(newProperty).map(_ => NoContent)
+      case true => repository.deleteProperty(newProperty).map(_ => NoContent)
       case false => Future.successful(NotFound)
     }
   }
+
 }

@@ -49,55 +49,72 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
 
 class DmsConnectorISpec
-    extends UnitSpec
-    with GuiceOneAppPerSuite
-    with WireMockSupport
-    with DesStubs
-    with DataStreamStub
-    with MetricTestSupport {
+extends UnitSpec
+with GuiceOneAppPerSuite
+with WireMockSupport
+with DesStubs
+with DataStreamStub
+with MetricTestSupport {
 
-  implicit override lazy val app: Application = appBuilder
+  override implicit lazy val app: Application = appBuilder
     .build()
 
-  implicit val appConfig: AppConfig         = app.injector.instanceOf[AppConfig]
-  implicit val config: Config               = app.injector.instanceOf[Config]
+  implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+  implicit val config: Config = app.injector.instanceOf[Config]
   private implicit lazy val as: ActorSystem = ActorSystem()
-  private implicit val hc: HeaderCarrier    = HeaderCarrier()
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.global
 
-  val dmsConnector = new DmsConnector(app.injector.instanceOf[HttpClientV2], appConfig, config, as)
+  val dmsConnector =
+    new DmsConnector(
+      app.injector.instanceOf[HttpClientV2],
+      appConfig,
+      config,
+      as
+    )
 
-  protected def appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "internal-auth-token-enabled-on-start"                                               -> false,
-        "microservice.services.internal-auth.host"                                           -> wireMockHost,
-        "microservice.services.internal-auth.port"                                           -> wireMockPort,
-        "microservice.services.dms-submission.port"                                          -> wireMockPort,
-        "microservice.services.dms-submission.host"                                          -> wireMockHost,
-        "microservice.services.dms-submission.contact-details-submission.callbackEndpoint"   -> "http://localhost/callback",
-        "microservice.services.dms-submission.contact-details-submission.classificationType" -> "classificationType",
-        "microservice.services.dms-submission.contact-details-submission.source"             -> "source",
-        "microservice.services.dms-submission.contact-details-submission.formId"             -> "formId",
-        "microservice.services.dms-submission.contact-details-submission.customerId"         -> "customerId",
-        "microservice.services.dms-submission.contact-details-submission.businessArea"       -> "businessArea",
-        "internal-auth.token"                                                                -> "authKey",
-        "http-verbs.retries.intervals"                                                       -> List("1ms"),
-        "auditing.enabled"                                                                   -> false
-      )
-      .bindings(bind[DmsConnector].toInstance(dmsConnector))
+  protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "internal-auth-token-enabled-on-start" -> false,
+      "microservice.services.internal-auth.host" -> wireMockHost,
+      "microservice.services.internal-auth.port" -> wireMockPort,
+      "microservice.services.dms-submission.port" -> wireMockPort,
+      "microservice.services.dms-submission.host" -> wireMockHost,
+      "microservice.services.dms-submission.contact-details-submission.callbackEndpoint" -> "http://localhost/callback",
+      "microservice.services.dms-submission.contact-details-submission.classificationType" -> "classificationType",
+      "microservice.services.dms-submission.contact-details-submission.source" -> "source",
+      "microservice.services.dms-submission.contact-details-submission.formId" -> "formId",
+      "microservice.services.dms-submission.contact-details-submission.customerId" -> "customerId",
+      "microservice.services.dms-submission.contact-details-submission.businessArea" -> "businessArea",
+      "internal-auth.token" -> "authKey",
+      "http-verbs.retries.intervals" -> List("1ms"),
+      "auditing.enabled" -> false
+    )
+    .bindings(bind[DmsConnector].toInstance(dmsConnector))
 
   "DmsConnector sendPdf" should {
 
 //    val submissionReference = "submissionReference"
 
-    val timestamp = LocalDateTime
-      .of(2022, 3, 2, 12, 30, 45)
-      .atZone(ZoneId.of("UTC"))
-      .toInstant
+    val timestamp =
+      LocalDateTime
+        .of(
+          2022,
+          3,
+          2,
+          12,
+          30,
+          45
+        )
+        .atZone(ZoneId.of("UTC"))
+        .toInstant
 
     val sourcePart: Source[ByteString, NotUsed] = Source.single(ByteString.fromString("SomePdfBytes"))
-    val source: Source[MultipartFormData.Part[Source[ByteString, NotUsed]] with Serializable, NotUsed] = Source(
+    val source: Source[
+      MultipartFormData.Part[Source[ByteString, NotUsed]]
+        with Serializable,
+      NotUsed
+    ] = Source(
       Seq(
         DataPart("callbackUrl", "http://localhost/callback"),
         MultipartFormData.DataPart("submissionReference", "submissionReference"),
@@ -165,4 +182,5 @@ class DmsConnectorISpec
       dmsConnector.sendPdf(source)(hc).failed.futureValue
     }
   }
+
 }

@@ -20,34 +20,46 @@ import scala.util.Try
 
 import play.api.mvc.QueryStringBindable
 
-case class PaginationParameters(page: Int, pageSize: Int) {
+case class PaginationParameters(
+  page: Int,
+  pageSize: Int
+) {
+
   require(pageSize > 0, "The pageSize should be greater than zero")
   require(page > 0, s"The page should be greater than zero")
 
   def lastPage(total: Int): Int = 1 + ((total - 1) / pageSize)
+
 }
 
 object PaginationParameters {
 
   implicit def queryStringBinder(
-      implicit intBinder: QueryStringBindable[Int]
-  ): QueryStringBindable[PaginationParameters] = new QueryStringBindable[PaginationParameters] {
-    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, PaginationParameters]] = {
-      Try(for {
-        page     <- intBinder.bind("page", params)
-        pageSize <- intBinder.bind("pageSize", params)
-      } yield {
-        (page, pageSize) match {
-          case (Right(page), Right(size)) => Right(PaginationParameters(page, size))
-          case _                          => Left("Unable to bind Pagination Parameters")
-        }
-      }).recover {
-        case _ => Some(Left("Invalid pagination parameters"))
-      }.get
-    }
+    implicit intBinder: QueryStringBindable[Int]
+  ): QueryStringBindable[PaginationParameters] =
+    new QueryStringBindable[PaginationParameters] {
+      override def bind(
+        key: String,
+        params: Map[String, Seq[String]]
+      ): Option[Either[String, PaginationParameters]] = {
+        Try(for {
+          page <- intBinder.bind("page", params)
+          pageSize <- intBinder.bind("pageSize", params)
+        } yield {
+          (page, pageSize) match {
+            case (Right(page), Right(size)) => Right(PaginationParameters(page, size))
+            case _ => Left("Unable to bind Pagination Parameters")
+          }
+        }).recover {
+          case _ => Some(Left("Invalid pagination parameters"))
+        }.get
+      }
 
-    override def unbind(key: String, parameters: PaginationParameters): String = {
-      intBinder.unbind("page", parameters.page) + "&" + intBinder.unbind("pageSize", parameters.pageSize)
+      override def unbind(
+        key: String,
+        parameters: PaginationParameters
+      ): String = {
+        intBinder.unbind("page", parameters.page) + "&" + intBinder.unbind("pageSize", parameters.pageSize)
+      }
     }
-  }
 }

@@ -36,7 +36,10 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
-case class ClientAllocation(friendlyName: String, state: String)
+case class ClientAllocation(
+  friendlyName: String,
+  state: String
+)
 
 object ClientAllocation {
   implicit val formats: Format[ClientAllocation] = format[ClientAllocation]
@@ -46,31 +49,52 @@ case class ClientAllocationResponse(clients: Seq[ClientAllocation])
 
 @ImplementedBy(classOf[EnrolmentStoreProxyConnectorImpl])
 trait EnrolmentStoreProxyConnector {
-  def getClientCount(service: String, userId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int]
+  def getClientCount(
+    service: String,
+    userId: String
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Int]
 }
 
 @Singleton
-class EnrolmentStoreProxyConnectorImpl @Inject() (httpGet: HttpClientV2, val metrics: Metrics)(
-    implicit appConfig: AppConfig
-) extends EnrolmentStoreProxyConnector
-    with HistogramMonitor {
+class EnrolmentStoreProxyConnectorImpl @Inject() (
+  httpGet: HttpClientV2,
+  val metrics: Metrics
+)(
+  implicit appConfig: AppConfig
+)
+extends EnrolmentStoreProxyConnector
+with HistogramMonitor {
 
   private val emacBaseUrl: String = s"${appConfig.esProxyUrl}/enrolment-store-proxy/enrolment-store"
 
-  implicit val responseHandler: HttpReads[ClientAllocationResponse] = new HttpReads[ClientAllocationResponse] {
-    override def read(method: String, url: String, response: HttpResponse) = {
-      Try(response.status match {
-        case 200 => ClientAllocationResponse(parseClients((response.json \ "enrolments").get))
-        case 204 => ClientAllocationResponse(Seq.empty)
-      }).getOrElse(
-        throw new RuntimeException(
-          s"Error retrieving client list from $url: status ${response.status} body ${response.body}"
+  implicit val responseHandler: HttpReads[ClientAllocationResponse] =
+    new HttpReads[ClientAllocationResponse] {
+      override def read(
+        method: String,
+        url: String,
+        response: HttpResponse
+      ) = {
+        Try(response.status match {
+          case 200 => ClientAllocationResponse(parseClients((response.json \ "enrolments").get))
+          case 204 => ClientAllocationResponse(Seq.empty)
+        }).getOrElse(
+          throw new RuntimeException(
+            s"Error retrieving client list from $url: status ${response.status} body ${response.body}"
+          )
         )
-      )
+      }
     }
-  }
 
-  def getClientCount(service: String, userId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Int] = {
+  def getClientCount(
+    service: String,
+    userId: String
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Int] = {
     val clientListUrl = s"$emacBaseUrl/users/$userId/enrolments?type=delegated&service=$service"
 
     reportHistogramValue(s"Size-ESP-ES2-GetAgentClientList-$service") {
@@ -84,8 +108,8 @@ class EnrolmentStoreProxyConnectorImpl @Inject() (httpGet: HttpClientV2, val met
           result.clients.count {
             _.state.toLowerCase match {
               case "activated" => true
-              case "unknown"   => true
-              case _           => false
+              case "unknown" => true
+              case _ => false
             }
           }
         })
