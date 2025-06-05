@@ -29,8 +29,8 @@ import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.stubs.EmailStub
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 class EmailConnectorISpec
@@ -43,7 +43,7 @@ class EmailConnectorISpec
   implicit override lazy val app: Application = appBuilder
     .build()
   val appConfig: AppConfig                  = app.injector.instanceOf[AppConfig]
-  val httpClient: HttpClient                = app.injector.instanceOf[HttpClient]
+  val httpClient: HttpClientV2              = app.injector.instanceOf[HttpClientV2]
   val metrics: Metrics                      = app.injector.instanceOf[Metrics]
   val connector: EmailConnector             = new EmailConnectorImpl(appConfig, httpClient, metrics)
   private implicit val hc: HeaderCarrier    = HeaderCarrier()
