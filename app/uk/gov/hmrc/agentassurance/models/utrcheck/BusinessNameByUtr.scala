@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.pagination
+package uk.gov.hmrc.agentassurance.models.utrcheck
 
-import play.api.libs.json.Format
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
-case class PaginatedResources[A](_links: PaginationLinks, page: Int, pageSize: Int, total: Int, resources: Seq[A])
+case class BusinessNameByUtr(utr: String, agentName: Option[String])
 
-object PaginatedResources {
-
-  implicit def paginatedResourcesFormat[A](implicit resourcesFormat: Format[A]): Format[PaginatedResources[A]] =
-    Json.format[PaginatedResources[A]]
+object BusinessNameByUtr {
+  implicit val businessNameFormat: OFormat[BusinessNameByUtr] = Json.format
 }

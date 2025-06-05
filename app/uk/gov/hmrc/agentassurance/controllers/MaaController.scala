@@ -23,6 +23,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import play.api.libs.json.Json
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
@@ -72,7 +74,7 @@ class MaaController @Inject() (
     }
   }
 
-  def getMaaList(pagination: PaginationParameters) = BasicAuth { implicit request =>
+  def getMaaList(pagination: PaginationParameters): Action[AnyContent] = BasicAuth { implicit request =>
     repository.findProperties(key, pagination.page, pagination.pageSize).map {
       case (total, properties) =>
         val response = PaginatedResources(

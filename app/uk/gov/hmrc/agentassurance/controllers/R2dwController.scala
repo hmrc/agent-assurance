@@ -73,7 +73,7 @@ class R2dwController @Inject() (
     }
   }
 
-  def getR2dwList(pagination: PaginationParameters) = BasicAuth { implicit request =>
+  def getR2dwList(pagination: PaginationParameters): Action[AnyContent] = BasicAuth { implicit request =>
     repository.findProperties(key, pagination.page, pagination.pageSize).map {
       case (total, properties) =>
         val response = PaginatedResources(

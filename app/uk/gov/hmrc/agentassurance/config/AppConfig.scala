@@ -78,4 +78,7 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig
 
   val emailBaseUrl: String         = baseUrl("email")
   val agentMaintainerEmail: String = config.get[String]("agent-maintainer-email")
+
+  val maxCallsPerSecondBusinessNames: Int =
+    servicesConfig.getInt("rate-limiter.business-names.max-calls-per-second")
 }

@@ -56,15 +56,15 @@ class EmailConnectorImpl @Inject() (
       .withBody(Json.toJson(emailInformation))
       .execute[HttpResponse]
       .map { response =>
-        {
-          timer.time().stop()
-          response.status match {
-            case status if is2xx(status) => ()
-            case other =>
-              logger.error(s"unexpected status from email service, status: $other")
-              ()
-          }
+        timer.time().stop()
+        response.status match {
+          case status if is2xx(status) => ()
+          case other =>
+            logger.error(s"unexpected status from email service, status: $other")
+            ()
         }
       }
+
   }
+
 }
