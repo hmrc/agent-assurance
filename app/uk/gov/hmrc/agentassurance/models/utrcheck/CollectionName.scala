@@ -16,23 +16,23 @@
 
 package uk.gov.hmrc.agentassurance.models.utrcheck
 
-import UtrCheckType._
+import CollectionName._
 
-sealed trait UtrCheckType {
+sealed trait CollectionName {
   override def toString: String =
     this match {
       case ManuallyAssured => "manually-assured"
       case RefusalToDealWith => "refusal-to-deal-with"
     }
 }
-object UtrCheckType {
+object CollectionName {
 
   case object ManuallyAssured
-  extends UtrCheckType
+  extends CollectionName
   case object RefusalToDealWith
-  extends UtrCheckType
+  extends CollectionName
 
-  def fromString(str: String): Option[UtrCheckType] =
+  def fromString(str: String): Option[CollectionName] =
     str.toLowerCase match {
       case "refusal-to-deal-with" => Some(RefusalToDealWith)
       case "manually-assured" => Some(ManuallyAssured)

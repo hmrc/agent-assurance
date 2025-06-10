@@ -11,7 +11,7 @@ GET           /acceptableNumberOfClients/service/IR-SA                          
 GET           /acceptableNumberOfClients/service/HMCE-VATDEC-ORG                           @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfVatDecOrgClients
 GET           /acceptableNumberOfClients/service/IR-CT                                     @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfIRCTClients
 
-GET           /utr/:collection                                                             @uk.gov.hmrc.agentassurance.controllers.UtrChecksController.getUtrList(pagination: uk.gov.hmrc.agentassurance.binders.PaginationParameters, collection: uk.gov.hmrc.agentassurance.models.utrcheck.UtrCheckType)
+GET           /restricted-collection-check/collection/:collection                          @uk.gov.hmrc.agentassurance.controllers.UtrChecksController.getUtrList(pagination: uk.gov.hmrc.agentassurance.binders.PaginationParameters, collection: uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName)
 GET           /restricted-collection-check/utr/:utr                                        @uk.gov.hmrc.agentassurance.controllers.UtrChecksController.utrChecks(utr: uk.gov.hmrc.agentmtdidentifiers.model.Utr, nameRequired: Boolean)
 
 POST          /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.createProperty()

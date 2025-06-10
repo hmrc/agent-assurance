@@ -26,7 +26,7 @@ import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.models.pagination.PaginatedResources
 import uk.gov.hmrc.agentassurance.models.pagination.PaginationLinks
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr._
-import uk.gov.hmrc.agentassurance.models.utrcheck.UtrCheckType
+import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName
 import uk.gov.hmrc.agentassurance.models.utrcheck.UtrChecksResponse
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.services.BusinessNamesService
@@ -51,7 +51,7 @@ with AuthActions {
 
   def getUtrList(
     pagination: PaginationParameters,
-    key: UtrCheckType
+    key: CollectionName
   ): Action[AnyContent] = BasicAuth {
     implicit request =>
       for {
@@ -83,8 +83,8 @@ with AuthActions {
     nameRequired: Boolean
   ) = BasicAuth { implicit request =>
     for {
-      isManuallyAssured <- repository.propertyExists(Value(utr.value).toProperty(UtrCheckType.ManuallyAssured.toString))
-      isRefusalToDealWith <- repository.propertyExists(Value(utr.value).toProperty(UtrCheckType.RefusalToDealWith.toString))
+      isManuallyAssured <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.ManuallyAssured.toString))
+      isRefusalToDealWith <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.RefusalToDealWith.toString))
       businessName <-
         if (nameRequired)
           businessNamesService.get(utr.value)
@@ -99,7 +99,6 @@ with AuthActions {
       )
       Ok(Json.toJson(utrChecksResponse))
     }
-
   }
 
 }

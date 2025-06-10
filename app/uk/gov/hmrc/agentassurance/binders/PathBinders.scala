@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentassurance.binders
 
 import play.api.mvc.PathBindable
-import uk.gov.hmrc.agentassurance.models.utrcheck.UtrCheckType
+import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.Nino
@@ -66,18 +66,18 @@ object PathBinders {
       ): String = arn.value
     }
 
-  implicit val utrCheckTypeBinder: PathBindable[UtrCheckType] =
-    new PathBindable[UtrCheckType] {
+  implicit val utrCheckTypeBinder: PathBindable[CollectionName] =
+    new PathBindable[CollectionName] {
       override def bind(
         key: String,
         value: String
-      ): Either[String, UtrCheckType] = {
-        UtrCheckType.fromString(value).toRight(s"Invalid UTR access control: $value")
+      ): Either[String, CollectionName] = {
+        CollectionName.fromString(value).toRight(s"Invalid UTR access control: $value")
       }
 
       override def unbind(
         key: String,
-        utrAc: UtrCheckType
+        utrAc: CollectionName
       ): String = utrAc.toString
     }
 

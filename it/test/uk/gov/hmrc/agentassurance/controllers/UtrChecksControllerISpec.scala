@@ -30,6 +30,7 @@ import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.UnitSpec
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.models.Property
+import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
 import uk.gov.hmrc.agentassurance.models.utrcheck.UtrChecksResponse
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepositoryImpl
@@ -96,8 +97,173 @@ with DefaultPlayMongoRepositorySupport[Property] {
     nameRequired: Boolean
   ): Future[WSResponse] = wsClient.url(s"$url/utr/$utr?nameRequired=$nameRequired").withHttpHeaders("Authorization" -> "Bearer XYZ").get()
 
+  def getUtrListCheckPaginatedList(
+    collectionName: String,
+    page: Int,
+    pageSize: Int
+  ): Future[WSResponse] = {
+    wsClient.url(s"$url/collection/$collectionName?page=$page&pageSize=$pageSize").withHttpHeaders("Authorization" -> "Bearer XYZ").get()
+  }
+
+  "a getProperty entire List for refusal-to-deal-with" should {
+    behave.like(getUtrList("refusal-to-deal-with"))
+  }
+
+  "a getProperty entire List for manually-assured" should {
+    behave.like(getUtrList("manually-assured"))
+  }
+
   "a identifier exists in  getProperty endpoint for refusal-to-deal-with" should {
     behave.like(checkUtr())
+  }
+
+  def getUtrList(collection: String) = {
+    "return 200 OK when properties are present in first page" in {
+      isLoggedInWithoutUserId
+
+      givenDESRespondsWithRegistrationData(identifier = Utr("4000000009"), isIndividual = true)
+      givenDESRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
+      givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
+      givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
+
+      await(repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture())
+      await(repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture())
+      await(repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture())
+      await(repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture())
+
+      val response = Await.result(
+        getUtrListCheckPaginatedList(
+          collection,
+          1,
+          3
+        ),
+        10 seconds
+      )
+      response.status shouldBe OK
+      // TODO WG - failing here
+      (response.json \ "resources").as[Seq[BusinessNameByUtr]] shouldBe Seq(
+        BusinessNameByUtr("4000000009", Some("First Name QM Last Name QM")),
+        BusinessNameByUtr("6660717101", Some("CT AGENT 165")),
+        BusinessNameByUtr("4660717102", Some("First Name QM Last Name QM"))
+      )
+      (response.json \ "total").as[Int] shouldBe 4
+      (response.json \ "_links" \ "self" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=1&pageSize=3"
+      )
+      (response.json \ "_links" \ "first" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=1&pageSize=3"
+      )
+      (response.json \ "_links" \ "next" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=2&pageSize=3"
+      )
+      (response.json \ "_links" \ "last" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=2&pageSize=3"
+      )
+      (response.json \ "_links" \ "previous" \ "href").toOption.isDefined shouldBe false
+    }
+
+    "return 200 OK when properties are present in second page" in {
+      isLoggedInWithoutUserId
+
+      givenDESRespondsWithRegistrationData(identifier = Utr("4000000009"), isIndividual = true)
+      givenDESRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
+      givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
+      givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
+      givenDESRespondsWithRegistrationData(identifier = Utr("9660717105"), isIndividual = false)
+
+      await(repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture())
+      await(repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture())
+      await(repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture())
+      await(repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture())
+      await(repository.collection.insertOne(Property(key = collection, value = "9660717105")).toFuture())
+
+      val response = Await.result(
+        getUtrListCheckPaginatedList(
+          collection,
+          2,
+          2
+        ),
+        10 seconds
+      )
+      response.status shouldBe OK
+      (response.json \ "resources").as[Seq[BusinessNameByUtr]] shouldBe Seq(
+        BusinessNameByUtr("4660717102", Some("First Name QM Last Name QM")),
+        BusinessNameByUtr("2660717103", Some("CT AGENT 165"))
+      )
+      (response.json \ "total").as[Int] shouldBe 5
+      (response.json \ "_links" \ "self" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=2&pageSize=2"
+      )
+      (response.json \ "_links" \ "first" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=1&pageSize=2"
+      )
+      (response.json \ "_links" \ "previous" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=1&pageSize=2"
+      )
+      (response.json \ "_links" \ "last" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=3&pageSize=2"
+      )
+      (response.json \ "_links" \ "next" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=3&pageSize=2"
+      )
+    }
+
+    "return 200 OK when properties are present in last page" in {
+      isLoggedInWithoutUserId
+
+      givenDESRespondsWithRegistrationData(identifier = Utr("4000000009"), isIndividual = true)
+      givenDESRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
+      givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
+      givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
+
+      await(repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture())
+      await(repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture())
+      await(repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture())
+      await(repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture())
+
+      val response = Await.result(
+        getUtrListCheckPaginatedList(
+          collection,
+          2,
+          3
+        ),
+        10 seconds
+      )
+      response.status shouldBe OK
+      (response.json \ "resources").as[Seq[BusinessNameByUtr]] shouldBe Seq(
+        BusinessNameByUtr("2660717103", Some("CT AGENT 165"))
+      )
+      (response.json \ "total").as[Int] shouldBe 4
+      (response.json \ "_links" \ "self" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=2&pageSize=3"
+      )
+      (response.json \ "_links" \ "first" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=1&pageSize=3"
+      )
+      (response.json \ "_links" \ "previous" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=1&pageSize=3"
+      )
+      (response.json \ "_links" \ "last" \ "href").as[String] should include(
+        s"/agent-assurance/restricted-collection-check/collection/$collection?page=2&pageSize=3"
+      )
+      (response.json \ "_links" \ "next" \ "href").toOption.isDefined shouldBe false
+    }
+
+    "return empty results when property is not present" in {
+      isLoggedInWithoutUserId
+
+      val response = Await.result(
+        getUtrListCheckPaginatedList(
+          collection,
+          10,
+          3
+        ),
+        10 seconds
+      )
+      response.status shouldBe OK
+      (response.json \ "resources").as[Seq[String]] shouldBe Seq.empty
+      (response.json \ "total").as[Int] shouldBe 0
+    }
   }
 
   def checkUtr() = {
