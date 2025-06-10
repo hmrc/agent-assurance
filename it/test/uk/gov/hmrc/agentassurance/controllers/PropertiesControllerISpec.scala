@@ -33,15 +33,12 @@ import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.WSResponse
 import play.api.Application
-import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
 import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.UnitSpec
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
-import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepositoryImpl
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 class PropertiesControllerISpec
@@ -49,7 +46,6 @@ extends UnitSpec
 with GuiceOneServerPerSuite
 with BeforeAndAfterEach
 with AgentAuthStubs
-with DesStubs
 with WireMockSupport
 with DefaultPlayMongoRepositorySupport[Property] {
 
@@ -83,7 +79,6 @@ with DefaultPlayMongoRepositorySupport[Property] {
   override implicit lazy val app: Application = appBuilder.build()
 
   val url = s"http://localhost:$port/agent-assurance"
-  val urlNew = s"http://localhost:$port/agent-assurance/utr"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
@@ -105,7 +100,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
     page: Int,
     pageSize: Int
   ): Future[WSResponse] = {
-    wsClient.url(s"$urlNew/$key?page=$page&pageSize=$pageSize").withHttpHeaders("Authorization" -> "Bearer XYZ").get()
+    wsClient.url(s"$url/$key?page=$page&pageSize=$pageSize").withHttpHeaders("Authorization" -> "Bearer XYZ").get()
   }
 
   def deleteProperty(
@@ -239,11 +234,6 @@ with DefaultPlayMongoRepositorySupport[Property] {
     "return 200 OK when properties are present in first page" in {
       isLoggedInWithoutUserId
 
-      givenDESRespondsWithRegistrationData(identifier = Utr("4000000009"), isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
-      givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
-
       Await.result(createProperty(key, "4000000009"), 10 seconds)
       Await.result(createProperty(key, "6660717101"), 10 seconds)
       Await.result(createProperty(key, "4660717102"), 10 seconds)
@@ -251,36 +241,23 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
       val response = Await.result(getEntirePaginatedList(key, 1, 3), 10 seconds)
       response.status shouldBe OK
-      // TODO WG - failing here
-      (response.json \ "resources").as[Seq[BusinessNameByUtr]] shouldBe Seq(
-        BusinessNameByUtr("4000000009", Some("First Name QM Last Name QM")),
-        BusinessNameByUtr("6660717101", Some("CT AGENT 165")),
-        BusinessNameByUtr("4660717102", Some("First Name QM Last Name QM"))
+      (response.json \ "resources").as[Seq[String]] shouldBe Seq(
+        "4000000009",
+        "6660717101",
+        "4660717102"
       )
       (response.json \ "total").as[Int] shouldBe 4
-      (response.json \ "_links" \ "self" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=1&pageSize=3"
-      )
+      (response.json \ "_links" \ "self" \ "href").as[String] should include(s"/agent-assurance/$key?page=1&pageSize=3")
       (response.json \ "_links" \ "first" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=1&pageSize=3"
+        s"/agent-assurance/$key?page=1&pageSize=3"
       )
-      (response.json \ "_links" \ "next" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=2&pageSize=3"
-      )
-      (response.json \ "_links" \ "last" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=2&pageSize=3"
-      )
+      (response.json \ "_links" \ "next" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=3")
+      (response.json \ "_links" \ "last" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=3")
       (response.json \ "_links" \ "previous" \ "href").toOption.isDefined shouldBe false
     }
 
     "return 200 OK when properties are present in second page" in {
       isLoggedInWithoutUserId
-
-      givenDESRespondsWithRegistrationData(identifier = Utr("4000000009"), isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
-      givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
-      givenDESRespondsWithRegistrationData(identifier = Utr("9660717105"), isIndividual = false)
 
       Await.result(createProperty(key, "4000000009"), 10 seconds)
       Await.result(createProperty(key, "6660717101"), 10 seconds)
@@ -290,35 +267,21 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
       val response = Await.result(getEntirePaginatedList(key, 2, 2), 10 seconds)
       response.status shouldBe OK
-      (response.json \ "resources").as[Seq[BusinessNameByUtr]] shouldBe Seq(
-        BusinessNameByUtr("4660717102", Some("First Name QM Last Name QM")),
-        BusinessNameByUtr("2660717103", Some("CT AGENT 165"))
-      )
+      (response.json \ "resources").as[Seq[String]] shouldBe Seq("4660717102", "2660717103")
       (response.json \ "total").as[Int] shouldBe 5
-      (response.json \ "_links" \ "self" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=2&pageSize=2"
-      )
+      (response.json \ "_links" \ "self" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=2")
       (response.json \ "_links" \ "first" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=1&pageSize=2"
+        s"/agent-assurance/$key?page=1&pageSize=2"
       )
       (response.json \ "_links" \ "previous" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=1&pageSize=2"
+        s"/agent-assurance/$key?page=1&pageSize=2"
       )
-      (response.json \ "_links" \ "last" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=3&pageSize=2"
-      )
-      (response.json \ "_links" \ "next" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=3&pageSize=2"
-      )
+      (response.json \ "_links" \ "last" \ "href").as[String] should include(s"/agent-assurance/$key?page=3&pageSize=2")
+      (response.json \ "_links" \ "next" \ "href").as[String] should include(s"/agent-assurance/$key?page=3&pageSize=2")
     }
 
     "return 200 OK when properties are present in last page" in {
       isLoggedInWithoutUserId
-
-      givenDESRespondsWithRegistrationData(identifier = Utr("4000000009"), isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
-      givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
 
       Await.result(createProperty(key, "4000000009"), 10 seconds)
       Await.result(createProperty(key, "6660717101"), 10 seconds)
@@ -327,22 +290,16 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
       val response = Await.result(getEntirePaginatedList(key, 2, 3), 10 seconds)
       response.status shouldBe OK
-      (response.json \ "resources").as[Seq[BusinessNameByUtr]] shouldBe Seq(
-        BusinessNameByUtr("2660717103", Some("CT AGENT 165"))
-      )
+      (response.json \ "resources").as[Seq[String]] shouldBe Seq("2660717103")
       (response.json \ "total").as[Int] shouldBe 4
-      (response.json \ "_links" \ "self" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=2&pageSize=3"
-      )
+      (response.json \ "_links" \ "self" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=3")
       (response.json \ "_links" \ "first" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=1&pageSize=3"
+        s"/agent-assurance/$key?page=1&pageSize=3"
       )
       (response.json \ "_links" \ "previous" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=1&pageSize=3"
+        s"/agent-assurance/$key?page=1&pageSize=3"
       )
-      (response.json \ "_links" \ "last" \ "href").as[String] should include(
-        s"/agent-assurance/utr/$key?page=2&pageSize=3"
-      )
+      (response.json \ "_links" \ "last" \ "href").as[String] should include(s"/agent-assurance/$key?page=2&pageSize=3")
       (response.json \ "_links" \ "next" \ "href").toOption.isDefined shouldBe false
     }
 

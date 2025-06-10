@@ -16,25 +16,28 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
+import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.models.pagination.PaginatedResources
 import uk.gov.hmrc.agentassurance.models.pagination.PaginationLinks
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr._
-import uk.gov.hmrc.agentassurance.models.utrcheck.UtrCheckType
+import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName
+import uk.gov.hmrc.agentassurance.models.utrcheck.UtrChecksResponse
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.services.BusinessNamesService
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton
 class UtrChecksController @Inject() (
@@ -48,7 +51,7 @@ with AuthActions {
 
   def getUtrList(
     pagination: PaginationParameters,
-    key: UtrCheckType
+    key: CollectionName
   ): Action[AnyContent] = BasicAuth {
     implicit request =>
       for {
@@ -73,7 +76,29 @@ with AuthActions {
         Ok(Json.toJson(paginatedResources))
 
       }
+  }
 
+  def utrChecks(
+    utr: Utr,
+    nameRequired: Boolean
+  ) = BasicAuth { implicit request =>
+    for {
+      isManuallyAssured <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.ManuallyAssured.toString))
+      isRefusalToDealWith <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.RefusalToDealWith.toString))
+      businessName <-
+        if (nameRequired)
+          businessNamesService.get(utr.value)
+        else
+          Future.successful(None)
+    } yield {
+
+      val utrChecksResponse = UtrChecksResponse(
+        isManuallyAssured = isManuallyAssured,
+        isRefusalToDealWith = isRefusalToDealWith,
+        businessName = businessName
+      )
+      Ok(Json.toJson(utrChecksResponse))
+    }
   }
 
 }

@@ -16,27 +16,15 @@
 
 package uk.gov.hmrc.agentassurance.models.utrcheck
 
-import UtrCheckType._
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
-sealed trait UtrCheckType {
-  override def toString: String =
-    this match {
-      case ManuallyAssured => "manually-assured"
-      case RefusalToDealWith => "refusal-to-deal-with"
-    }
-}
-object UtrCheckType {
+case class UtrChecksResponse(
+  isManuallyAssured: Boolean,
+  isRefusalToDealWith: Boolean,
+  businessName: Option[String]
+)
 
-  case object ManuallyAssured
-  extends UtrCheckType
-  case object RefusalToDealWith
-  extends UtrCheckType
-
-  def fromString(str: String): Option[UtrCheckType] =
-    str.toLowerCase match {
-      case "refusal-to-deal-with" => Some(RefusalToDealWith)
-      case "manually-assured" => Some(ManuallyAssured)
-      case _ => None
-    }
-
+object UtrChecksResponse {
+  implicit val utrChecksResponseFormat: OFormat[UtrChecksResponse] = Json.format
 }
