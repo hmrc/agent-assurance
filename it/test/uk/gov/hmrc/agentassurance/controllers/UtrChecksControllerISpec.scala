@@ -39,10 +39,9 @@ import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import java.time.Clock
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration.DurationInt
 import scala.concurrent.Await
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 
 class UtrChecksControllerISpec
@@ -84,9 +83,9 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
   override implicit lazy val app: Application = appBuilder.build()
 
-  implicit val defaultTimeout: Duration = 5 seconds
-
-  def await[A](future: Future[A])(implicit timeout: Duration) = Await.result(future, timeout)
+//  implicit val defaultTimeout: Duration = 5 seconds
+//
+//  def await[A](future: Future[A])(implicit timeout: Duration) = Await.result(future, timeout)
 
   val url = s"http://localhost:$port/agent-assurance/restricted-collection-check"
 
@@ -126,10 +125,10 @@ with DefaultPlayMongoRepositorySupport[Property] {
       givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
       givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
 
-      await(repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture())
-      await(repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture())
-      await(repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture())
-      await(repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture())
+      (repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture()).futureValue
 
       val response = Await.result(
         getUtrListCheckPaginatedList(
@@ -171,11 +170,11 @@ with DefaultPlayMongoRepositorySupport[Property] {
       givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
       givenDESRespondsWithRegistrationData(identifier = Utr("9660717105"), isIndividual = false)
 
-      await(repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture())
-      await(repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture())
-      await(repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture())
-      await(repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture())
-      await(repository.collection.insertOne(Property(key = collection, value = "9660717105")).toFuture())
+      (repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = collection, value = "9660717105")).toFuture()).futureValue
 
       val response = Await.result(
         getUtrListCheckPaginatedList(
@@ -216,10 +215,10 @@ with DefaultPlayMongoRepositorySupport[Property] {
       givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
       givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
 
-      await(repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture())
-      await(repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture())
-      await(repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture())
-      await(repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture())
+      (repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture()).futureValue
 
       val response = Await.result(
         getUtrListCheckPaginatedList(
@@ -272,7 +271,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
       givenDESRespondsWithRegistrationData(identifier = Utr("4000000009"), isIndividual = true)
 
-      await(repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture())
+      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
 
       val response = Await.result(getUtrCheck(utr = "4000000009", nameRequired = true), 10 seconds)
       response.status shouldBe OK
@@ -288,8 +287,8 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
       givenDESRespondsWithRegistrationData(identifier = Utr("4000000009"), isIndividual = true)
 
-      await(repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture())
-      await(repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture())
+      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
 
       val response = Await.result(getUtrCheck(utr = "4000000009", nameRequired = true), 10 seconds)
       response.status shouldBe OK
@@ -305,7 +304,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
       givenDESRespondsWithRegistrationData(identifier = Utr("4000000009"), isIndividual = true)
 
-      await(repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture())
+      (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
 
       val response = Await.result(getUtrCheck(utr = "4000000009", nameRequired = true), 10 seconds)
       response.status shouldBe OK
@@ -336,7 +335,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
       givenDESReturnsErrorForRegistration(identifier = Utr("4000000009"), responseCode = NOT_FOUND)
 
-      await(repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture())
+      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
 
       val response = Await.result(getUtrCheck(utr = "4000000009", nameRequired = true), 10 seconds)
       response.status shouldBe OK
@@ -351,9 +350,8 @@ with DefaultPlayMongoRepositorySupport[Property] {
     "return 200 OK and correct payload when utr on manually-assured and on refusal-to-deal-with and no name" in {
       isLoggedInWithoutUserId
       givenDESReturnsErrorForRegistration(identifier = Utr("4000000009"), responseCode = NOT_FOUND)
-
-      await(repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture())
-      await(repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture())
+      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
+      (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
 
       val response = Await.result(getUtrCheck(utr = "4000000009", nameRequired = true), 10 seconds)
       response.status shouldBe OK
@@ -369,7 +367,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
       givenDESReturnsErrorForRegistration(identifier = Utr("4000000009"), responseCode = NOT_FOUND)
 
-      await(repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture())
+      (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
 
       val response = Await.result(getUtrCheck(utr = "4000000009", nameRequired = true), 10 seconds)
       response.status shouldBe OK
@@ -398,7 +396,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
     "return 200 OK and correct payload when utr on manually-assured and not refusal-to-deal-with and no name is not required" in {
       isLoggedInWithoutUserId
       givenDESRespondsWithRegistrationData(identifier = Utr("4000000009"), isIndividual = true)
-      await(repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture())
+      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
 
       val response = Await.result(getUtrCheck(utr = "4000000009", nameRequired = false), 10 seconds)
       response.status shouldBe OK
