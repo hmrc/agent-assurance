@@ -23,18 +23,13 @@ import play.api.Application
 import play.api.http.Status._
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.libs.ws.WSClient
-import play.api.libs.ws.WSResponse
+import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.NOT_FOUND
 import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
-import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
-import test.uk.gov.hmrc.agentassurance.support.UnitSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import test.uk.gov.hmrc.agentassurance.support.{AgentAuthStubs, UnitSpec, WireMockSupport}
 import uk.gov.hmrc.agentassurance.models.Property
-import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
-import uk.gov.hmrc.agentassurance.models.utrcheck.UtrChecksResponse
-import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
-import uk.gov.hmrc.agentassurance.repositories.PropertiesRepositoryImpl
+import uk.gov.hmrc.agentassurance.models.utrcheck.{BusinessNameByUtr, UtrChecksResponse}
+import uk.gov.hmrc.agentassurance.repositories.{PropertiesRepository, PropertiesRepositoryImpl}
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
@@ -475,7 +470,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
           .post(payload)
           .futureValue
       response.status shouldBe BAD_REQUEST
-      response.body.contains("json failed validation") shouldBe true
+      response.body.contains("INVALID_JSON") shouldBe true
     }
   }
 

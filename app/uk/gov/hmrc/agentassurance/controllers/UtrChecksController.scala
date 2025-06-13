@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import play.api.libs.json.JsError
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -33,7 +35,6 @@ import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.services.BusinessNamesService
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
@@ -103,22 +104,25 @@ with AuthActions {
     }
   }
 
-  def addUtr(key: CollectionName): Action[AnyContent] = BasicAuth { implicit request =>
-    val newValue = request.body.asJson
-      .getOrElse(throw new BadRequestException("could not find or recognise json"))
-      .validate[Value]
-      .getOrElse(throw new BadRequestException("json failed validation"))
-
-    Utr.isValid(newValue.value) match {
-      case true =>
-        val propertyConverted = newValue.toProperty(key.toString)
-        repository.propertyExists(propertyConverted).flatMap {
-          case false => repository.createProperty(propertyConverted).map(_ => Created)
-          case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
+  def addUtr(key: CollectionName): Action[JsValue] =
+    BasicAuth(parse.json) { implicit request =>
+      request.body.validate[Value].fold(
+        errors => {
+          Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_JSON", JsError.toJson(errors).toString))))
+        },
+        newValue => {
+          Utr.isValid(newValue.value) match {
+            case true =>
+              val propertyConverted = newValue.toProperty(key.toString)
+              repository.propertyExists(propertyConverted).flatMap {
+                case false => repository.createProperty(propertyConverted).map(_ => Created)
+                case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
+              }
+            case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
+          }
         }
-      case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
+      )
     }
-  }
 
   def removeUtr(
     identifier: Utr,
