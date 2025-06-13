@@ -12,13 +12,9 @@ GET           /acceptableNumberOfClients/service/HMCE-VATDEC-ORG                
 GET           /acceptableNumberOfClients/service/IR-CT                                     @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfIRCTClients
 
 GET           /restricted-collection-check/collection/:collection                          @uk.gov.hmrc.agentassurance.controllers.UtrChecksController.getUtrList(pagination: uk.gov.hmrc.agentassurance.binders.PaginationParameters, collection: uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName)
+POST          /restricted-collection-check/collection/:collection                          @uk.gov.hmrc.agentassurance.controllers.UtrChecksController.addUtr(collection: uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName)
 GET           /restricted-collection-check/utr/:utr                                        @uk.gov.hmrc.agentassurance.controllers.UtrChecksController.utrChecks(utr: uk.gov.hmrc.agentmtdidentifiers.model.Utr, nameRequired: Boolean)
-
-POST          /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.createProperty()
-DELETE        /refusal-to-deal-with/utr/:identifier                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.deleteProperty(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
-
-POST          /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.createProperty()
-DELETE        /manually-assured/utr/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.deleteProperty(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
+DELETE        /restricted-collection-check/collection/:collection/utr/:utr                 @uk.gov.hmrc.agentassurance.controllers.UtrChecksController.removeUtr(utr: uk.gov.hmrc.agentmtdidentifiers.model.Utr, collection: uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName)
 
 POST          /amls                                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.storeAmlsDetails()
 PUT           /amls/utr/:identifier                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.updateAmlsDetails(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
@@ -46,3 +42,8 @@ GET           /manually-assured                                                 
 GET           /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.getR2dwList(pagination: uk.gov.hmrc.agentassurance.binders.PaginationParameters)
 GET           /refusal-to-deal-with/utr/:identifier                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.isOnR2dwList(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
 GET           /manually-assured/utr/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.isManuallyAssured(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
+POST          /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.createProperty()
+DELETE        /refusal-to-deal-with/utr/:identifier                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.deleteProperty(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
+
+POST          /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.createProperty()
+DELETE        /manually-assured/utr/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.deleteProperty(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)

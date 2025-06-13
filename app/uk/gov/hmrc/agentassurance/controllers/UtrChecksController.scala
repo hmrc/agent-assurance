@@ -22,6 +22,7 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
+import uk.gov.hmrc.agentassurance.models.ErrorBody
 import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.models.pagination.PaginatedResources
 import uk.gov.hmrc.agentassurance.models.pagination.PaginationLinks
@@ -32,6 +33,7 @@ import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.services.BusinessNamesService
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
@@ -98,6 +100,35 @@ with AuthActions {
         businessName = businessName
       )
       Ok(Json.toJson(utrChecksResponse))
+    }
+  }
+
+  def addUtr(key: CollectionName): Action[AnyContent] = BasicAuth { implicit request =>
+    val newValue = request.body.asJson
+      .getOrElse(throw new BadRequestException("could not find or recognise json"))
+      .validate[Value]
+      .getOrElse(throw new BadRequestException("json failed validation"))
+
+    Utr.isValid(newValue.value) match {
+      case true =>
+        val propertyConverted = newValue.toProperty(key.toString)
+        repository.propertyExists(propertyConverted).flatMap {
+          case false => repository.createProperty(propertyConverted).map(_ => Created)
+          case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
+        }
+      case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
+    }
+  }
+
+  def removeUtr(
+    identifier: Utr,
+    key: CollectionName
+  ): Action[AnyContent] = BasicAuth { _ =>
+    val property = Value(identifier.value).toProperty(key.toString)
+
+    repository.propertyExists(property).flatMap {
+      case true => repository.deleteProperty(property).map(_ => NoContent)
+      case false => Future.successful(NotFound)
     }
   }
 
