@@ -16,12 +16,15 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import play.api.libs.json.JsError
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
+import uk.gov.hmrc.agentassurance.models.ErrorBody
 import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.models.pagination.PaginatedResources
 import uk.gov.hmrc.agentassurance.models.pagination.PaginationLinks
@@ -98,6 +101,38 @@ with AuthActions {
         businessName = businessName
       )
       Ok(Json.toJson(utrChecksResponse))
+    }
+  }
+
+  def addUtr(key: CollectionName): Action[JsValue] =
+    BasicAuth(parse.json) { implicit request =>
+      request.body.validate[Value].fold(
+        errors => {
+          Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_JSON", JsError.toJson(errors).toString))))
+        },
+        newValue => {
+          Utr.isValid(newValue.value) match {
+            case true =>
+              val propertyConverted = newValue.toProperty(key.toString)
+              repository.propertyExists(propertyConverted).flatMap {
+                case false => repository.createProperty(propertyConverted).map(_ => Created)
+                case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
+              }
+            case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
+          }
+        }
+      )
+    }
+
+  def removeUtr(
+    identifier: Utr,
+    key: CollectionName
+  ): Action[AnyContent] = BasicAuth { _ =>
+    val property = Value(identifier.value).toProperty(key.toString)
+
+    repository.propertyExists(property).flatMap {
+      case true => repository.deleteProperty(property).map(_ => NoContent)
+      case false => Future.successful(NotFound)
     }
   }
 

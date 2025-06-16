@@ -114,6 +114,18 @@ with BaseController {
       }
   }
 
+  def BasicAuth[A](parser: BodyParser[A])(body: Request[A] => Future[Result])(implicit ec: ExecutionContext): Action[A] =
+    Action.async(parser) { implicit request =>
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+      authorised() {
+        body(request)
+      }.recoverWith {
+        case ex: NoActiveSession =>
+          logger.warn("NoActiveSession while trying to access check activeCesaRelationship endpoint", ex)
+          Future.successful(Unauthorized)
+      }
+    }
+
   def BasicAuth[A](body: Request[AnyContent] => Future[Result])(implicit ec: ExecutionContext): Action[AnyContent] = Action.async { implicit request =>
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     authorised() {
