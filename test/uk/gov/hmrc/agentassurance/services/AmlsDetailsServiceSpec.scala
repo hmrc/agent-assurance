@@ -180,6 +180,16 @@ with MockAgencyDetailsService {
 
         await(result) mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None)))
       }
+
+      "return (ValidAMLSDetailsUK, UkAmlsDetails) if the AMLS membership number is invalid and do not call DES" in {
+        val testInvalidMemNo = Some("XXXXXXXXXXXX")
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None, membershipNumber = testInvalidMemNo)))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
+
+        val result = service.getAmlsDetailsByArn(testArn)
+
+        await(result) mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None, membershipNumber = testInvalidMemNo)))
+      }
     }
 
     "there is a non-UK ASA AMLS record" should {
