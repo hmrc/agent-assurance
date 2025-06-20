@@ -17,9 +17,10 @@
 package uk.gov.hmrc.agentassurance.models
 
 import java.time.LocalDate
-
 import play.api.libs.json.Format
 import play.api.libs.json.Json
+
+import scala.util.matching.Regex
 
 sealed trait AmlsDetails
 
@@ -33,10 +34,12 @@ case class UkAmlsDetails(
 )
 extends AmlsDetails {
 
+  private val validMemNoRegex: Regex = "^X[A-Z]ML00000[0-9]{6}$".r
   val isPending: Boolean = appliedOn.nonEmpty && membershipExpiresOn.isEmpty
   val isRegistered: Boolean = membershipExpiresOn.nonEmpty
   val supervisoryBodyIsHmrc: Boolean = supervisoryBody.equals("HM Revenue and Customs (HMRC)")
   val isExpired: Boolean = membershipExpiresOn.forall(LocalDate.now.isAfter(_))
+  val hasValidMembershipNumber: Boolean = membershipNumber.exists(validMemNoRegex.matches(_))
 
 }
 

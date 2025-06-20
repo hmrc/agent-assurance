@@ -19,12 +19,10 @@ package uk.gov.hmrc.agentassurance.services
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
-
 import scala.collection.immutable.::
 import scala.collection.immutable.Nil
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import play.api.mvc.Request
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
@@ -63,14 +61,18 @@ extends Logging {
         if (ukAmlsDetails.supervisoryBodyIsHmrc) {
           ukAmlsDetails.membershipNumber
             .map { membershipNumber =>
-              // this call may have update ASA AMLS expiry date side-effect
-              processUkHmrcAmlsDetails(
-                arn,
-                membershipNumber,
-                ukAmlsDetails
-              ).map { amlsStatus =>
-                (amlsStatus, Some(ukAmlsDetails)) // Scenarios: #5a, #5b, #6a, #6b #8, #9
+              if (ukAmlsDetails.hasValidMembershipNumber) {
+                // this call may have update ASA AMLS expiry date side-effect
+                processUkHmrcAmlsDetails(
+                  arn,
+                  membershipNumber,
+                  ukAmlsDetails
+                ).map { amlsStatus =>
+                  (amlsStatus, Some(ukAmlsDetails)) // Scenarios: #5a, #5b, #6a, #6b #8, #9
+                }
               }
+              else
+                Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(ukAmlsDetails)))
             }
             .getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, None))) // Scenario #10
         }

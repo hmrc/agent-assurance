@@ -17,10 +17,8 @@
 package uk.gov.hmrc.agentassurance.services
 
 import java.time.LocalDate
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 import com.mongodb.client.result.UpdateResult
 import org.scalatest.PrivateMethodTester
 import org.scalatestplus.play.PlaySpec
@@ -179,6 +177,15 @@ with MockAgencyDetailsService {
         val result = service.getAmlsDetailsByArn(testArn)
 
         await(result) mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None)))
+      }
+      "return (ValidAMLSDetailsUK, UkAmlsDetails) if the AMLS membership number is invalid and do not call DES" in {
+        val testInvalidMemNo = Some("XXXXXXXXXXXX")
+        mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None, membershipNumber = testInvalidMemNo)))
+        mockGetOverseasAmlsDetailsByArn(testArn)(None)
+
+        val result = service.getAmlsDetailsByArn(testArn)
+
+        await(result) mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None, membershipNumber = testInvalidMemNo)))
       }
     }
 
