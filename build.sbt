@@ -13,7 +13,15 @@ lazy val root = (project in file("."))
     PlayKeys.playDefaultPort := 9565,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     resolvers ++= Seq(Resolver.typesafeRepo("releases")),
-    routesImport ++= Seq("uk.gov.hmrc.agentassurance.binders.PathBinders._"),
+    routesImport ++= Seq(
+      "uk.gov.hmrc.agentassurance.binders.PathBinders._",
+      "uk.gov.hmrc.agentassurance.binders._",
+      "uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName",
+      "uk.gov.hmrc.agentmtdidentifiers.model.Utr",
+      "uk.gov.hmrc.agentmtdidentifiers.model.Arn",
+      "uk.gov.hmrc.domain.Nino",
+      "uk.gov.hmrc.domain.SaAgentReference"
+    ),
     scalacOptions ++= scalaCOptions,
     Compile / scalafmtOnCompile := true,
     Test / scalafmtOnCompile := true,

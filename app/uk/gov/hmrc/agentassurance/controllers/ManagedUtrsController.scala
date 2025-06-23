@@ -43,7 +43,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @Singleton
-class UtrChecksController @Inject() (
+class ManagedUtrsController @Inject() (
   repository: PropertiesRepository,
   businessNamesService: BusinessNamesService,
   override val controllerComponents: ControllerComponents,
@@ -52,7 +52,7 @@ class UtrChecksController @Inject() (
 extends BackendController(controllerComponents)
 with AuthActions {
 
-  def getUtrList(
+  def listUtrs(
     pagination: PaginationParameters,
     key: CollectionName
   ): Action[AnyContent] = BasicAuth {
@@ -69,7 +69,7 @@ with AuthActions {
           _links = PaginationLinks.apply(
             paginationParams = pagination,
             total = total,
-            paginatedLinkBuilder = pp => routes.UtrChecksController.getUtrList(pp, key).absoluteURL()
+            paginatedLinkBuilder = pp => routes.ManagedUtrsController.listUtrs(pp, key).absoluteURL()
           ),
           page = pagination.page,
           pageSize = pagination.pageSize,
@@ -77,11 +77,10 @@ with AuthActions {
           resources = businessNamesByUtrSet.toSeq
         )
         Ok(Json.toJson(paginatedResources))
-
       }
   }
 
-  def utrChecks(
+  def getUtrDetails(
     utr: Utr,
     nameRequired: Boolean
   ) = BasicAuth { implicit request =>
@@ -96,6 +95,7 @@ with AuthActions {
     } yield {
 
       val utrChecksResponse = UtrChecksResponse(
+        utr = utr,
         isManuallyAssured = isManuallyAssured,
         isRefusalToDealWith = isRefusalToDealWith,
         businessName = businessName
@@ -104,7 +104,7 @@ with AuthActions {
     }
   }
 
-  def addUtr(key: CollectionName): Action[JsValue] =
+  def upsertUtr(collectionName: CollectionName): Action[JsValue] =
     BasicAuth(parse.json) { implicit request =>
       request.body.validate[Value].fold(
         errors => {
@@ -113,11 +113,8 @@ with AuthActions {
         newValue => {
           Utr.isValid(newValue.value) match {
             case true =>
-              val propertyConverted = newValue.toProperty(key.toString)
-              repository.propertyExists(propertyConverted).flatMap {
-                case false => repository.createProperty(propertyConverted).map(_ => Created)
-                case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
-              }
+              val propertyConverted = newValue.toProperty(collectionName.toString)
+              repository.upsertProperty(propertyConverted).map(_ => Created)
             case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
           }
         }

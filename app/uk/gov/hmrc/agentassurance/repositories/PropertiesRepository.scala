@@ -18,18 +18,17 @@ package uk.gov.hmrc.agentassurance.repositories
 
 import javax.inject.Inject
 import javax.inject.Singleton
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import com.google.inject.ImplementedBy
+import com.mongodb.client.model.ReplaceOptions
 import org.mongodb.scala._
 import org.mongodb.scala.model.Aggregates.filter
 import org.mongodb.scala.model.Aggregates.limit
 import org.mongodb.scala.model.Aggregates.skip
 import org.mongodb.scala.model.Filters.and
 import org.mongodb.scala.model.Filters.equal
-import org.mongodb.scala.model.IndexModel
+import org.mongodb.scala.model.{IndexModel, InsertOneOptions, ReplaceOptions}
 import org.mongodb.scala.model.Indexes.ascending
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -46,7 +45,7 @@ trait PropertiesRepository {
 
   def propertyExists(property: Property): Future[Boolean]
 
-  def createProperty(property: Property): Future[Unit]
+  def upsertProperty(property: Property): Future[Unit]
 
   def deleteProperty(property: Property): Future[Unit]
 
@@ -100,8 +99,15 @@ with PropertiesRepository {
       .map(_.isDefined)
   }
 
-  override def createProperty(property: Property): Future[Unit] = {
-    collection.insertOne(property).toFuture().map(_ => ())
+  override def upsertProperty(property: Property): Future[Unit] = {
+    collection
+      .replaceOne(
+        filter = equal("key", property.key),
+        replacement = property,
+        ReplaceOptions().upsert(true)
+      )
+      .toFuture()
+      .map(_ => ())
   }
 
   override def deleteProperty(property: Property): Future[Unit] = {
