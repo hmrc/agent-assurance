@@ -16,23 +16,24 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import javax.inject.Inject
-import javax.inject.Singleton
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 import com.google.inject.ImplementedBy
-import com.mongodb.client.model.ReplaceOptions
 import org.mongodb.scala._
 import org.mongodb.scala.model.Aggregates.filter
 import org.mongodb.scala.model.Aggregates.limit
 import org.mongodb.scala.model.Aggregates.skip
 import org.mongodb.scala.model.Filters.and
 import org.mongodb.scala.model.Filters.equal
-import org.mongodb.scala.model.{IndexModel, InsertOneOptions, ReplaceOptions}
 import org.mongodb.scala.model.Indexes.ascending
+import org.mongodb.scala.model.IndexModel
+import org.mongodb.scala.model.ReplaceOptions
 import uk.gov.hmrc.agentassurance.models.Property
-import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[PropertiesRepositoryImpl])
 trait PropertiesRepository {

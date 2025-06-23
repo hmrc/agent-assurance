@@ -37,13 +37,3 @@ POST          /dms-agent-callback                                               
 GET          /agent-record-with-checks                                                     @uk.gov.hmrc.agentassurance.controllers.GetAgentRecordWithEntityChecksController.get()
 GET          /agent-record-with-checks/arn/:arn                                            @uk.gov.hmrc.agentassurance.controllers.GetAgentRecordWithEntityChecksController.clientGet(arn: Arn)
 
-# REGRESSION
-GET           /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.getMaaList(pagination: PaginationParameters)
-GET           /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.getR2dwList(pagination: PaginationParameters)
-GET           /refusal-to-deal-with/utr/:identifier                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.isOnR2dwList(identifier: Utr)
-GET           /manually-assured/utr/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.isManuallyAssured(identifier: Utr)
-POST          /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.createProperty()
-DELETE        /refusal-to-deal-with/utr/:identifier                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.deleteProperty(identifier: Utr)
-
-POST          /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.createProperty()
-DELETE        /manually-assured/utr/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.deleteProperty(identifier: Utr)

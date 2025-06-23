@@ -41,7 +41,6 @@ import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import java.time.Clock
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.language.postfixOps
 
 class ManagedUtrsControllerISpec
 extends UnitSpec
