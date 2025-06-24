@@ -30,7 +30,7 @@ import uk.gov.hmrc.agentassurance.models.pagination.PaginatedResources
 import uk.gov.hmrc.agentassurance.models.pagination.PaginationLinks
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr._
 import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName
-import uk.gov.hmrc.agentassurance.models.utrcheck.UtrChecksResponse
+import uk.gov.hmrc.agentassurance.models.utrcheck.UtrDetails
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.services.BusinessNamesService
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -94,7 +94,7 @@ with AuthActions {
           Future.successful(None)
     } yield {
 
-      val utrChecksResponse = UtrChecksResponse(
+      val utrChecksResponse = UtrDetails(
         utr = utr,
         isManuallyAssured = isManuallyAssured,
         isRefusalToDealWith = isRefusalToDealWith,

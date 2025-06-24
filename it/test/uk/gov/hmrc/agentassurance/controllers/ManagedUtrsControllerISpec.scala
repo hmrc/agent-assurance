@@ -32,7 +32,7 @@ import test.uk.gov.hmrc.agentassurance.support.UnitSpec
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
-import uk.gov.hmrc.agentassurance.models.utrcheck.UtrChecksResponse
+import uk.gov.hmrc.agentassurance.models.utrcheck.UtrDetails
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepositoryImpl
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -299,7 +299,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
-      response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
+      response.json.as[UtrDetails] shouldBe UtrDetails(
         utr = utr4000000009,
         isManuallyAssured = true,
         isRefusalToDealWith = false,
@@ -317,7 +317,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
-      response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
+      response.json.as[UtrDetails] shouldBe UtrDetails(
         utr = utr4000000009,
         isManuallyAssured = true,
         isRefusalToDealWith = true,
@@ -334,7 +334,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
-      response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
+      response.json.as[UtrDetails] shouldBe UtrDetails(
         utr = utr4000000009,
         isManuallyAssured = false,
         isRefusalToDealWith = true,
@@ -349,7 +349,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
-      response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
+      response.json.as[UtrDetails] shouldBe UtrDetails(
         utr = utr4000000009,
         isManuallyAssured = false,
         isRefusalToDealWith = false,
@@ -367,7 +367,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
-      response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
+      response.json.as[UtrDetails] shouldBe UtrDetails(
         utr = utr4000000009,
         isManuallyAssured = true,
         isRefusalToDealWith = false,
@@ -384,7 +384,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
-      response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
+      response.json.as[UtrDetails] shouldBe UtrDetails(
         utr = utr4000000009,
         isManuallyAssured = true,
         isRefusalToDealWith = true,
@@ -401,7 +401,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
-      response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
+      response.json.as[UtrDetails] shouldBe UtrDetails(
         utr = utr4000000009,
         isManuallyAssured = false,
         isRefusalToDealWith = true,
@@ -416,7 +416,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
-      response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
+      response.json.as[UtrDetails] shouldBe UtrDetails(
         utr = utr4000000009,
         isManuallyAssured = false,
         isRefusalToDealWith = false,
@@ -432,7 +432,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       val response = getUtrDetails(utr = utr4000000009, nameRequired = false).futureValue
       response.status shouldBe OK
 
-      response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
+      response.json.as[UtrDetails] shouldBe UtrDetails(
         utr = utr4000000009,
         isManuallyAssured = true,
         isRefusalToDealWith = false,
