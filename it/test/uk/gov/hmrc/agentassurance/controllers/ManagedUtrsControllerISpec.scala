@@ -81,33 +81,40 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
   override implicit lazy val app: Application = appBuilder.build()
 
-  val url = s"http://localhost:$port/agent-assurance//managed-utrs/"
+  val baseUrl = s"http://localhost:$port"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  def getUtrDetailsCheck(
+  def getUtrDetails(
     utr: Utr,
     nameRequired: Boolean
-  ): Future[WSResponse] = wsClient.url(s"$url/utr/${utr.value}?nameRequired=$nameRequired").withHttpHeaders("Authorization" -> "Bearer XYZ").get()
+  ): Future[WSResponse] = wsClient
+    .url(s"$baseUrl/agent-assurance/managed-utrs/utr/${utr.value}?nameRequired=$nameRequired")
+    .withHttpHeaders("Authorization" -> "Bearer XYZ")
+    .get()
 
-  def getUtrDetailsListCheckPaginatedList(
+  def listUtrs(
     collectionName: String,
     page: Int,
     pageSize: Int
-  ): Future[WSResponse] = {
-    wsClient.url(s"$url/collection/$collectionName?page=$page&pageSize=$pageSize").withHttpHeaders("Authorization" -> "Bearer XYZ").get()
-  }
+  ): Future[WSResponse] = wsClient
+    .url(s"$baseUrl/agent-assurance/managed-utrs/collection/$collectionName?page=$page&pageSize=$pageSize")
+    .withHttpHeaders("Authorization" -> "Bearer XYZ")
+    .get()
 
-  def deleteProperty(
+  def removeUtr(
     collectionName: String,
     utr: String
-  ): Future[WSResponse] = wsClient.url(s"$url/collection/$collectionName/utr/$utr").withHttpHeaders("Authorization" -> "Bearer XYZ").delete()
+  ): Future[WSResponse] = wsClient
+    .url(s"$baseUrl/agent-assurance/managed-utrs/collection/$collectionName/utr/$utr")
+    .withHttpHeaders("Authorization" -> "Bearer XYZ")
+    .delete()
 
-  def createProperty(
+  def upsertUtr(
     collectionName: String,
     value: String
-  ) = wsClient
-    .url(s"$url/collection/$collectionName")
+  ): Future[WSResponse] = wsClient
+    .url(s"$baseUrl/agent-assurance/managed-utrs/collection/$collectionName")
     .withHttpHeaders("Authorization" -> "Bearer XYZ")
     .post(Json.obj("value" -> value))
 
@@ -124,11 +131,11 @@ with DefaultPlayMongoRepositorySupport[Property] {
   }
 
   "a createProperty endpoint for refusal-to-deal-with" should {
-    behave.like(createPropertyTests("refusal-to-deal-with"))
+    behave.like(upsertUtrTests("refusal-to-deal-with"))
   }
 
   "a createProperty endpoint for manually-assured" should {
-    behave.like(createPropertyTests("manually-assured"))
+    behave.like(upsertUtrTests("manually-assured"))
   }
 
   "a deleteIdentifierInProperty endpoint for refusal-to-deal-with" should {
@@ -156,10 +163,10 @@ with DefaultPlayMongoRepositorySupport[Property] {
       (repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture()).futureValue
 
       val response =
-        getUtrDetailsListCheckPaginatedList(
-          collection,
-          1,
-          3
+        listUtrs(
+          collectionName = collection,
+          page = 1,
+          pageSize = 3
         ).futureValue
       response.status shouldBe OK
       (response.json \ "resources").as[Seq[BusinessNameByUtr]] shouldBe Seq(
@@ -199,7 +206,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       (repository.collection.insertOne(Property(key = collection, value = "9660717105")).toFuture()).futureValue
 
       val response =
-        getUtrDetailsListCheckPaginatedList(
+        listUtrs(
           collection,
           2,
           2
@@ -241,7 +248,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       (repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture()).futureValue
 
       val response =
-        getUtrDetailsListCheckPaginatedList(
+        listUtrs(
           collection,
           2,
           3
@@ -270,7 +277,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
 
       val response =
-        getUtrDetailsListCheckPaginatedList(
+        listUtrs(
           collection,
           10,
           3
@@ -289,7 +296,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
       (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
 
-      val response = getUtrDetailsCheck(utr = utr4000000009, nameRequired = true).futureValue
+      val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
       response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
@@ -307,7 +314,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
       (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
 
-      val response = getUtrDetailsCheck(utr = utr4000000009, nameRequired = true).futureValue
+      val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
       response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
@@ -324,7 +331,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
       (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
 
-      val response = getUtrDetailsCheck(utr = utr4000000009, nameRequired = true).futureValue
+      val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
       response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
@@ -339,7 +346,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
       givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
 
-      val response = getUtrDetailsCheck(utr = utr4000000009, nameRequired = true).futureValue
+      val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
       response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
@@ -357,7 +364,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
       (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
 
-      val response = getUtrDetailsCheck(utr = utr4000000009, nameRequired = true).futureValue
+      val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
       response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
@@ -374,7 +381,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
       (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
 
-      val response = getUtrDetailsCheck(utr = utr4000000009, nameRequired = true).futureValue
+      val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
       response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
@@ -391,7 +398,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
       (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
 
-      val response = getUtrDetailsCheck(utr = utr4000000009, nameRequired = true).futureValue
+      val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
       response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
@@ -406,7 +413,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
       givenDESReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
 
-      val response = getUtrDetailsCheck(utr = utr4000000009, nameRequired = true).futureValue
+      val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
 
       response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
@@ -422,7 +429,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
       (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
 
-      val response = getUtrDetailsCheck(utr = utr4000000009, nameRequired = false).futureValue
+      val response = getUtrDetails(utr = utr4000000009, nameRequired = false).futureValue
       response.status shouldBe OK
 
       response.json.as[UtrChecksResponse] shouldBe UtrChecksResponse(
@@ -432,27 +439,25 @@ with DefaultPlayMongoRepositorySupport[Property] {
         businessName = None
       )
     }
-
   }
 
-  def createPropertyTests(key: String) = {
+  def upsertUtrTests(collectionName: String) = {
 
     "return 201 when property is not already present" in {
       isLoggedInWithoutUserId
 
-      val response: WSResponse = createProperty(key, "4000000009").futureValue
+      val response: WSResponse = upsertUtr(collectionName, "4000000009").futureValue
       response.status shouldBe CREATED
     }
 
-    "return 409 (with appropriate reason) when property is already present" in {
+    "upsert updates if the utr is already there" in {
       isLoggedInWithoutUserId
 
-      val response: WSResponse = createProperty(key, "4000000009").futureValue
+      val response: WSResponse = upsertUtr(collectionName, "4000000009").futureValue
       response.status shouldBe CREATED
 
-      val response2: WSResponse = createProperty(key, "4000000009").futureValue
-      response2.status shouldBe CONFLICT
-      (Json.parse(response2.body) \ "message").as[String] shouldBe "Property already exists"
+      val response2: WSResponse = upsertUtr(collectionName, "4000000009").futureValue
+      response2.status shouldBe CREATED
     }
 
     "return 400 (with appropriate reason) json is not well formed" in {
@@ -467,7 +472,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
       val response: WSResponse =
         wsClient
-          .url(s"$url/collection/$key")
+          .url(s"$baseUrl/agent-assurance/managed-utrs/collection/$collectionName")
           .withHttpHeaders("Content-Type" -> "application/json")
           .post(badlyFormedJson).futureValue
       response.status shouldBe BAD_REQUEST
@@ -480,7 +485,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
       val response: WSResponse =
         wsClient
-          .url(s"$url/collection/$key")
+          .url(s"$baseUrl/agent-assurance/managed-utrs/collection/$collectionName")
           .withHttpHeaders("Authorization" -> "Bearer XYZ")
           .post(payload)
           .futureValue
@@ -494,23 +499,24 @@ with DefaultPlayMongoRepositorySupport[Property] {
   ) = {
     "return 204 when property is present" in {
       isLoggedInWithoutUserId
-      createProperty(key, "4000000009").futureValue
+      upsertUtr(key, "4000000009").futureValue
 
-      val response = deleteProperty(key, "4000000009").futureValue
+      val response = removeUtr(key, "4000000009").futureValue
       response.status shouldBe NO_CONTENT
 
-      val response2 = getUtrDetailsCheck(utr = utr4000000009, nameRequired = false).futureValue
+      val response2 = getUtrDetails(utr = utr4000000009, nameRequired = false).futureValue
       response2.status shouldBe OK
     }
-    "return 404 when property is not present" in {
+
+    "return Accepted when property is not present" in {
       isLoggedInWithoutUserId
-      val response = deleteProperty(key, "4000000009").futureValue
-      response.status shouldBe NOT_FOUND
+      val response = removeUtr(key, "4000000009").futureValue
+      response.status shouldBe NO_CONTENT
     }
 
     "INVALID UTR" in {
       isLoggedInWithoutUserId
-      val response = deleteProperty(key, "INVALID_UTR").futureValue
+      val response = removeUtr(key, "INVALID_UTR").futureValue
       response.status shouldBe BAD_REQUEST
       response.statusText shouldBe "Bad Request"
     }

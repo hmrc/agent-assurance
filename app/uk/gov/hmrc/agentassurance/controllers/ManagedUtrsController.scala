@@ -113,8 +113,9 @@ with AuthActions {
         newValue => {
           Utr.isValid(newValue.value) match {
             case true =>
-              val propertyConverted = newValue.toProperty(collectionName.toString)
-              repository.upsertProperty(propertyConverted).map(_ => Created)
+              repository
+                .upsertProperty(newValue.toProperty(collectionName.toString))
+                .map(_ => Created)
             case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
           }
         }
@@ -125,12 +126,11 @@ with AuthActions {
     identifier: Utr,
     key: CollectionName
   ): Action[AnyContent] = BasicAuth { _ =>
-    val property = Value(identifier.value).toProperty(key.toString)
-
-    repository.propertyExists(property).flatMap {
-      case true => repository.deleteProperty(property).map(_ => NoContent)
-      case false => Future.successful(NotFound)
-    }
+    repository
+      .deleteProperty(
+        Value(identifier.value).toProperty(key.toString)
+      )
+      .map(_ => NoContent)
   }
 
 }
