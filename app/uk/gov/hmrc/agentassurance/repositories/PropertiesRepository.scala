@@ -103,7 +103,7 @@ with PropertiesRepository {
   override def upsertProperty(property: Property): Future[Unit] = {
     collection
       .replaceOne(
-        filter = equal("key", property.key),
+        filter = and(equal("key", property.key), equal("value", property.value)),
         replacement = property,
         ReplaceOptions().upsert(true)
       )
