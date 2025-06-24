@@ -87,9 +87,9 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
   def getUtrDetails(
     utr: Utr,
-    nameRequired: Boolean
+    nameRequired: java.lang.Boolean = (null)
   ): Future[WSResponse] = wsClient
-    .url(s"$baseUrl/agent-assurance/managed-utrs/utr/${utr.value}?nameRequired=$nameRequired")
+    .url(s"$baseUrl/agent-assurance/managed-utrs/utr/${utr.value}${Option(nameRequired).map(nr => s"?nameRequired=$nr").getOrElse("")}")
     .withHttpHeaders("Authorization" -> "Bearer XYZ")
     .get()
 
@@ -430,6 +430,22 @@ with DefaultPlayMongoRepositorySupport[Property] {
       (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = false).futureValue
+      response.status shouldBe OK
+
+      response.json.as[UtrDetails] shouldBe UtrDetails(
+        utr = utr4000000009,
+        isManuallyAssured = true,
+        isRefusalToDealWith = false,
+        businessName = None
+      )
+    }
+
+    "nameRequired is optional and defaults to false" in {
+      isLoggedInWithoutUserId
+      givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
+      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
+
+      val response = getUtrDetails(utr = utr4000000009).futureValue
       response.status shouldBe OK
 
       response.json.as[UtrDetails] shouldBe UtrDetails(

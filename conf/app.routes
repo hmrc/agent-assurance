@@ -13,7 +13,7 @@ GET           /acceptableNumberOfClients/service/IR-CT                          
 
 GET           /managed-utrs/collection/:collection                                         @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.listUtrs(pagination: PaginationParameters, collection: CollectionName)
 POST          /managed-utrs/collection/:collection                                         @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.upsertUtr(collection: CollectionName)
-GET           /managed-utrs/utr/:utr                                                       @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.getUtrDetails(utr: Utr, nameRequired: Boolean)
+GET           /managed-utrs/utr/:utr                                                       @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.getUtrDetails(utr: Utr, nameRequired: Option[Boolean])
 DELETE        /managed-utrs/collection/:collection/utr/:utr                                @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.removeUtr(utr: Utr, collection: CollectionName)
 
 POST          /amls                                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.storeAmlsDetails()

@@ -82,8 +82,9 @@ with AuthActions {
 
   def getUtrDetails(
     utr: Utr,
-    nameRequired: Boolean
+    nameRequired_ : Option[Boolean] = None
   ) = BasicAuth { implicit request =>
+    val nameRequired: Boolean = nameRequired_.getOrElse(false)
     for {
       isManuallyAssured <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.ManuallyAssured.toString))
       isRefusalToDealWith <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.RefusalToDealWith.toString))
