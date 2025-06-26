@@ -29,7 +29,10 @@ object Property {
 }
 
 case class Value(value: String) {
-  def toProperty(key: String) = Property(key, this.value.replace(" ", ""))
+  def toProperty(key: String) = Property(
+    key = key,
+    value = this.value.replace(" ", "")
+  )
 }
 
 object Value {

@@ -2,32 +2,32 @@
 
 GET           /irSaAgentEnrolment                                                          @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.enrolledForIrSAAgent()
 
-GET           /activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReference          @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationshipWithUtr(utr: uk.gov.hmrc.agentmtdidentifiers.model.Utr, saAgentReference: uk.gov.hmrc.domain.SaAgentReference)
+GET           /activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReference          @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationshipWithUtr(utr: Utr, saAgentReference: SaAgentReference)
 
-GET           /activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationshipWithNino(nino: uk.gov.hmrc.domain.Nino, saAgentReference: uk.gov.hmrc.domain.SaAgentReference)
+GET           /activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.activeCesaRelationshipWithNino(nino: Nino, saAgentReference: SaAgentReference)
 
 GET           /acceptableNumberOfClients/service/IR-PAYE                                   @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfPAYEClients
 GET           /acceptableNumberOfClients/service/IR-SA                                     @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfIRSAClients
 GET           /acceptableNumberOfClients/service/HMCE-VATDEC-ORG                           @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfVatDecOrgClients
 GET           /acceptableNumberOfClients/service/IR-CT                                     @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfIRCTClients
 
-GET           /restricted-collection-check/collection/:collection                          @uk.gov.hmrc.agentassurance.controllers.UtrChecksController.getUtrList(pagination: uk.gov.hmrc.agentassurance.binders.PaginationParameters, collection: uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName)
-POST          /restricted-collection-check/collection/:collection                          @uk.gov.hmrc.agentassurance.controllers.UtrChecksController.addUtr(collection: uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName)
-GET           /restricted-collection-check/utr/:utr                                        @uk.gov.hmrc.agentassurance.controllers.UtrChecksController.utrChecks(utr: uk.gov.hmrc.agentmtdidentifiers.model.Utr, nameRequired: Boolean)
-DELETE        /restricted-collection-check/collection/:collection/utr/:utr                 @uk.gov.hmrc.agentassurance.controllers.UtrChecksController.removeUtr(utr: uk.gov.hmrc.agentmtdidentifiers.model.Utr, collection: uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName)
+GET           /managed-utrs/collection/:collection                                         @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.listUtrs(pagination: PaginationParameters, collection: CollectionName)
+POST          /managed-utrs/collection/:collection                                         @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.upsertUtr(collection: CollectionName)
+GET           /managed-utrs/utr/:utr                                                       @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.getUtrDetails(utr: Utr, nameRequired: Option[Boolean])
+DELETE        /managed-utrs/collection/:collection/utr/:utr                                @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.removeUtr(utr: Utr, collection: CollectionName)
 
 POST          /amls                                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.storeAmlsDetails()
-PUT           /amls/utr/:identifier                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.updateAmlsDetails(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
-GET           /amls/utr/:identifier                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.getAmlsDetails(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
+PUT           /amls/utr/:identifier                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.updateAmlsDetails(identifier: Utr)
+GET           /amls/utr/:identifier                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.getAmlsDetails(identifier: Utr)
 GET           /amls-subscription/:amlsRegistrationNumber                                   @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.getAmlsSubscription(amlsRegistrationNumber: String)
 
 POST          /overseas-agents/amls                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.storeOverseasAmlsDetails
 
-GET           /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.getAmlsDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
-POST          /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.postAmlsDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
+GET           /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.getAmlsDetails(arn: Arn)
+POST          /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.postAmlsDetails(arn: Arn)
 
-GET           /agent/agency-details/arn/:arn                                                @uk.gov.hmrc.agentassurance.controllers.AgentServicesController.getAgencyDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
-POST          /agent/agency-details/arn/:arn                                                @uk.gov.hmrc.agentassurance.controllers.AgentServicesController.postAgencyDetails(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
+GET           /agent/agency-details/arn/:arn                                                @uk.gov.hmrc.agentassurance.controllers.AgentServicesController.getAgencyDetails(arn: Arn)
+POST          /agent/agency-details/arn/:arn                                                @uk.gov.hmrc.agentassurance.controllers.AgentServicesController.postAgencyDetails(arn: Arn)
 
 POST           /agent/verify-entity                                                          @uk.gov.hmrc.agentassurance.controllers.EntityCheckController.agentVerifyEntity()
 POST           /client/verify-entity                                                         @uk.gov.hmrc.agentassurance.controllers.EntityCheckController.clientVerifyEntity()
@@ -35,7 +35,7 @@ POST           /client/verify-entity                                            
 POST          /dms-agent-callback                                                           @uk.gov.hmrc.agentassurance.controllers.DmsNotificationController.dmsCallback()
 
 GET          /agent-record-with-checks                                                     @uk.gov.hmrc.agentassurance.controllers.GetAgentRecordWithEntityChecksController.get()
-GET          /agent-record-with-checks/arn/:arn                                            @uk.gov.hmrc.agentassurance.controllers.GetAgentRecordWithEntityChecksController.clientGet(arn: uk.gov.hmrc.agentmtdidentifiers.model.Arn)
+GET          /agent-record-with-checks/arn/:arn                                            @uk.gov.hmrc.agentassurance.controllers.GetAgentRecordWithEntityChecksController.clientGet(arn: Arn)
 
 # REGRESSION
 GET           /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.getMaaList(pagination: uk.gov.hmrc.agentassurance.binders.PaginationParameters)

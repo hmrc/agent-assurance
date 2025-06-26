@@ -59,7 +59,7 @@ with AuthActions {
       case true =>
         val propertyConverted = newValue.toProperty(key)
         repository.propertyExists(propertyConverted).flatMap {
-          case false => repository.createProperty(propertyConverted).map(_ => Created)
+          case false => repository.upsertProperty(propertyConverted).map(_ => Created)
           case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
         }
       case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))

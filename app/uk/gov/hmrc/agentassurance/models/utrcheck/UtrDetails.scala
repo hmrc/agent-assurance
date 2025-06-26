@@ -18,13 +18,15 @@ package uk.gov.hmrc.agentassurance.models.utrcheck
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
-case class UtrChecksResponse(
+case class UtrDetails(
+  utr: Utr,
   isManuallyAssured: Boolean,
   isRefusalToDealWith: Boolean,
   businessName: Option[String]
 )
 
-object UtrChecksResponse {
-  implicit val utrChecksResponseFormat: OFormat[UtrChecksResponse] = Json.format
+object UtrDetails {
+  implicit val utrChecksResponseFormat: OFormat[UtrDetails] = Json.format
 }
