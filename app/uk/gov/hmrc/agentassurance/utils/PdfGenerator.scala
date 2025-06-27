@@ -26,7 +26,7 @@ object PdfGenerator {
     val builder = new PdfRendererBuilder
     val renderer = builder
       .useFont(() => getClass.getResourceAsStream("/pdf/arial.ttf"), "Arial")
-      .usePdfUaAccessbility(true)
+      .usePdfUaAccessibility(true)
       .usePdfAConformance(PdfRendererBuilder.PdfAConformance.PDFA_3_U)
       .withHtmlContent(html, null)
       .withProducer("HMRC")

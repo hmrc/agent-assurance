@@ -16,30 +16,28 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.Await
-
-import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import play.api.Application
 import play.api.http.Status.OK
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
-import play.api.Application
 import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
 import test.uk.gov.hmrc.agentassurance.stubs.InternalAuthStub
 import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
+
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
 
 class GetAgentRecordWithEntityChecksControllerISpec
 extends PlaySpec
 with AgentAuthStubs
 with GuiceOneServerPerSuite
 with WireMockSupport
-//    with CleanMongoCollectionSupport
 with InstantClockTestSupport
 with InternalAuthStub
 with DesStubs {
