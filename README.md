@@ -35,6 +35,15 @@ To run the application execute
 
 Running locally, the services will run on http://localhost:9565
 
+### Automated testing
+This service is tested by the following automated test repositories:
+- [agent-helpdesk-ui-tests](https://github.com/hmrc/agent-helpdesk-ui-tests)
+- [agent-gran-perms-acceptance-tests](https://github.com/hmrc/agent-gran-perms-acceptance-tests/)
+- [agent-services-account-ui-tests](https://github.com/hmrc/agent-services-account-ui-tests)
+- [agent-onboarding-ui-tests](https://github.com/hmrc/agent-onboarding-ui-tests)
+- [agent-overseas-ui-tests](https://github.com/hmrc/agent-overseas-ui-tests)
+- [agent-assurance-performance-tests](https://github.com/hmrc/agent-assurance-performance-tests/)
+
 #### Check for IRSAAgent enrolment for the current logged in user
 ```
 GET   	/agent-assurance/irSaAgentEnrolment 
