@@ -23,7 +23,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.services.AgencyDetailsService
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
 trait MockAgencyDetailsService

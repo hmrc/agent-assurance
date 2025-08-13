@@ -23,8 +23,8 @@ import org.scalatest.TestSuite
 import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
 import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
 import uk.gov.hmrc.agentassurance.services.AuditService
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.http.HeaderCarrier
 
 trait MockAuditService

@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.models.utrcheck
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Utr
 
 case class UtrDetails(
   utr: Utr,

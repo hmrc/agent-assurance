@@ -28,7 +28,7 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.internalauth.client.BackendAuthComponents
 import uk.gov.hmrc.internalauth.client.IAAction

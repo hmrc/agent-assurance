@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentassurance.repositories
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 import com.codahale.metrics.MetricRegistry
 import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
@@ -34,8 +33,8 @@ import play.api.Configuration
 import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.BusinessAddress
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.SuspensionDetails
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.crypto.Crypted
 import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter

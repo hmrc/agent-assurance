@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 
 case class EmailData(
   failedCheck: Seq[String],

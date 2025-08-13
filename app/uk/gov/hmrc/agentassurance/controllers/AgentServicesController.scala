@@ -35,7 +35,7 @@ import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AgentDetailsResponse
 import uk.gov.hmrc.agentassurance.models.DmsSubmissionReference
 import uk.gov.hmrc.agentassurance.services.DmsService
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 

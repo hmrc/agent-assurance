@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
 import org.scalamock.scalatest.MockFactory
@@ -35,7 +34,7 @@ import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
+import uk.gov.hmrc.agentassurance.models.SuspensionDetails
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.internalauth.client.test.BackendAuthComponentsStub
 import uk.gov.hmrc.internalauth.client.test.StubBehaviour

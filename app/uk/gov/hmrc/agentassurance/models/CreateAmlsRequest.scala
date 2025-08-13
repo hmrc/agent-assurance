@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.models
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Utr
 
 case class CreateAmlsRequest(
   utr: Utr,

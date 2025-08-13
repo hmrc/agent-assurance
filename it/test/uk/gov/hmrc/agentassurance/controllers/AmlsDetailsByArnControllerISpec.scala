@@ -37,8 +37,8 @@ import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories._
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 

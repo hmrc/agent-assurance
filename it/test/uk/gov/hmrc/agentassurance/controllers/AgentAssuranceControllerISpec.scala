@@ -40,8 +40,8 @@ import test.uk.gov.hmrc.agentassurance.support.IntegrationSpec
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier

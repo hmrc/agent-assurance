@@ -18,9 +18,7 @@ package uk.gov.hmrc.agentassurance.services
 
 import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
-
 import scala.concurrent.ExecutionContext
-
 import org.scalatestplus.play.PlaySpec
 import play.api.mvc.Request
 import play.api.test.FakeRequest
@@ -35,9 +33,9 @@ import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException.AgentIsOnRefuseToDealList
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
+import uk.gov.hmrc.agentassurance.models.SuspensionDetails
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.agentassurance.models.Value
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.lock.MongoLockRepository

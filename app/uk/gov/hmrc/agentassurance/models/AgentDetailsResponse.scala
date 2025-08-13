@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentassurance.models
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.Writes
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Utr
 
 case class AgentDetailsResponse(
   agencyDetails: AgencyDetails,

@@ -24,7 +24,7 @@ import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.models.AmlsDetails
 import uk.gov.hmrc.agentassurance.models.AmlsStatus
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
 trait MockAmlsDetailsService

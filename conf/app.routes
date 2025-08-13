@@ -40,10 +40,10 @@ GET          /agent-record-with-checks/arn/:arn                                 
 # REGRESSION
 GET           /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.getMaaList(pagination: uk.gov.hmrc.agentassurance.binders.PaginationParameters)
 GET           /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.getR2dwList(pagination: uk.gov.hmrc.agentassurance.binders.PaginationParameters)
-GET           /refusal-to-deal-with/utr/:identifier                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.isOnR2dwList(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
-GET           /manually-assured/utr/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.isManuallyAssured(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
+GET           /refusal-to-deal-with/utr/:identifier                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.isOnR2dwList(identifier: uk.gov.hmrc.agentassurance.models.Utr)
+GET           /manually-assured/utr/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.isManuallyAssured(identifier: uk.gov.hmrc.agentassurance.models.Utr)
 POST          /refusal-to-deal-with                                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.createProperty()
-DELETE        /refusal-to-deal-with/utr/:identifier                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.deleteProperty(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
+DELETE        /refusal-to-deal-with/utr/:identifier                                        @uk.gov.hmrc.agentassurance.controllers.R2dwController.deleteProperty(identifier: uk.gov.hmrc.agentassurance.models.Utr)
 
 POST          /manually-assured                                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.createProperty()
-DELETE        /manually-assured/utr/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.deleteProperty(identifier: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
+DELETE        /manually-assured/utr/:identifier                                            @uk.gov.hmrc.agentassurance.controllers.MaaController.deleteProperty(identifier: uk.gov.hmrc.agentassurance.models.Utr)

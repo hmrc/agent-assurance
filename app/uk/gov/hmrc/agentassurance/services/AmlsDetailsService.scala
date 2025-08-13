@@ -32,8 +32,8 @@ import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.ArchivedAmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.http.UpstreamErrorResponse

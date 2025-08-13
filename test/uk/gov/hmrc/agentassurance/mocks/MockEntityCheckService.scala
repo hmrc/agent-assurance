@@ -24,7 +24,7 @@ import org.scalatest.TestSuite
 import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
 trait MockEntityCheckService

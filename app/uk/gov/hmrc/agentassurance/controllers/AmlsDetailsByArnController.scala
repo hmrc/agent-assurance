@@ -36,7 +36,7 @@ import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetailsResponse
 import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
 import uk.gov.hmrc.agentassurance.models.UkAmlsDetailsResponse
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController

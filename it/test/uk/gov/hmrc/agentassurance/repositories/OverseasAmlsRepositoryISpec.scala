@@ -25,7 +25,7 @@ import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
 import uk.gov.hmrc.agentassurance.models.OverseasAmlsEntity
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepositoryImpl
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 class OverseasAmlsRepositoryISpec

@@ -18,10 +18,8 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import javax.inject.Inject
 import javax.inject.Singleton
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
@@ -33,8 +31,8 @@ import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.SuspensionDetails
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController

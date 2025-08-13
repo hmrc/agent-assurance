@@ -35,8 +35,6 @@ import uk.gov.hmrc.agentassurance.models.AmlsError._
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
 import uk.gov.hmrc.agentassurance.util.toFuture
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference

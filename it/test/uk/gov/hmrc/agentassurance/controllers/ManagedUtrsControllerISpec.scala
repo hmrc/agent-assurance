@@ -35,7 +35,7 @@ import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
 import uk.gov.hmrc.agentassurance.models.utrcheck.UtrDetails
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepositoryImpl
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import java.time.Clock

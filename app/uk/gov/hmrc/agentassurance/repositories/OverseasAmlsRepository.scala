@@ -34,7 +34,7 @@ import org.mongodb.scala.MongoException
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.models.AmlsError._
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent
 

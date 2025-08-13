@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentassurance.connectors
 
 import scala.concurrent.ExecutionContext
-
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -37,13 +36,13 @@ import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.BusinessAddress
+import uk.gov.hmrc.agentassurance.models.SuspensionDetails
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
 import uk.gov.hmrc.agentassurance.repositories.AgencyNameCacheRepository
 import uk.gov.hmrc.agentassurance.services.CacheProvider
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
 import uk.gov.hmrc.crypto.PlainText

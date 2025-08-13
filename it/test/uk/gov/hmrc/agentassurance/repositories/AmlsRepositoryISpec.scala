@@ -31,8 +31,8 @@ import uk.gov.hmrc.agentassurance.models.AmlsSource
 import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
 import uk.gov.hmrc.agentassurance.models.UkAmlsEntity
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 class AmlsRepositoryISpec

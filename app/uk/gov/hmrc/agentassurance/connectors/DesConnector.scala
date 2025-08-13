@@ -39,8 +39,8 @@ import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
 import uk.gov.hmrc.agentassurance.models.DesAgentNameResponse
 import uk.gov.hmrc.agentassurance.models.DesRegistrationRequest
 import uk.gov.hmrc.agentassurance.services.CacheProvider
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
