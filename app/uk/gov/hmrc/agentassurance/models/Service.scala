@@ -197,23 +197,6 @@ sealed abstract class ClientIdType[+T <: TaxIdentifier](
   def isValid(value: String): Boolean
 }
 
-object ClientIdType {
-
-  val supportedTypes = Seq(
-    NinoType,
-    MtdItIdType,
-    VrnType,
-    UtrType,
-    UrnType,
-    CgtRefType,
-    PptRefType,
-    CbcIdType,
-    PlrIdType
-  )
-  def forId(id: String) = supportedTypes.find(_.id == id).getOrElse(throw new IllegalArgumentException("Invalid id:" + id))
-
-}
-
 case object NinoType
 extends ClientIdType(
   classOf[Nino],
@@ -302,34 +285,4 @@ extends ClientIdType(
   PlrId.apply
 ) {
   override def isValid(value: String): Boolean = PlrId.isValid(value)
-}
-
-case class ClientIdentifier[T <: TaxIdentifier](underlying: T) {
-
-  private val clientIdType = ClientIdType.supportedTypes
-    .find(_.clazz == underlying.getClass)
-    .getOrElse(throw new Exception("Invalid type for clientId " + underlying.getClass.getCanonicalName))
-
-  val value: String = underlying.value
-  val typeId: String = clientIdType.id
-  val enrolmentId: String = clientIdType.enrolmentId
-
-  override def toString: String = value
-
-}
-
-object ClientIdentifier {
-
-  type ClientId = ClientIdentifier[_ <: TaxIdentifier]
-
-  def apply(
-    value: String,
-    typeId: String
-  ): ClientId = ClientIdType.supportedTypes
-    .find(_.id == typeId)
-    .getOrElse(throw new IllegalArgumentException("Invalid Client Id Type: " + typeId))
-    .createUnderlying(value.replaceAll("\\s", ""))
-
-  implicit def wrap[T <: TaxIdentifier](taxId: T): ClientIdentifier[T] = ClientIdentifier(taxId)
-
 }

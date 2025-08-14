@@ -31,7 +31,6 @@ import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.stubs.EmailStub
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 class EmailConnectorISpec
 extends UnitSpec
@@ -44,12 +43,10 @@ with EmailStub {
     .build()
   val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
   val httpClient: HttpClientV2 = app.injector.instanceOf[HttpClientV2]
-  val metrics: Metrics = app.injector.instanceOf[Metrics]
   val connector: EmailConnector =
     new EmailConnectorImpl(
       appConfig,
-      httpClient,
-      metrics
+      httpClient
     )
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.global

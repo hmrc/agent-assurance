@@ -50,7 +50,6 @@ import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 import DesRegistrationRequest._
 
 case class ClientRelationship(agents: Seq[Agent])
@@ -101,7 +100,6 @@ trait DesConnector {
 @Singleton
 class DesConnectorImpl @Inject() (
   httpV2: HttpClientV2,
-  metrics: Metrics,
   agentCacheProvider: CacheProvider,
   override val configuration: Config,
   override val actorSystem: ActorSystem
@@ -198,9 +196,6 @@ with Logging {
 
     val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
 
-    val timer = metrics.defaultRegistry.timer(s"ConsumedAPI-DES-$apiName-GET")
-    timer.time()
-
     val response = httpV2
       .post(url)
       .withBody(Json.toJson(request))
@@ -210,7 +205,6 @@ with Logging {
         isInternalHost
       ): _*)
       .execute[Option[A]]
-    timer.time().stop()
     response
 
   }
@@ -227,8 +221,6 @@ with Logging {
     val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
 
     retryFor[A](s"$apiName connector get $url")(retryCondition) {
-      val timer = metrics.defaultRegistry.timer(s"ConsumedAPI-DES-$apiName-GET")
-      timer.time()
       httpV2
         .get(url)
         .setHeader(desHeaders(
@@ -238,7 +230,6 @@ with Logging {
         ): _*)
         .executeAndDeserialise[A]
         .map(result => {
-          timer.time().stop()
           result
         })
     }

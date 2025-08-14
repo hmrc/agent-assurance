@@ -32,7 +32,6 @@ import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
-import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 @ImplementedBy(classOf[EmailConnectorImpl])
 trait EmailConnector {
@@ -44,8 +43,7 @@ trait EmailConnector {
 
 class EmailConnectorImpl @Inject() (
   appConfig: AppConfig,
-  httpClient: HttpClientV2,
-  metrics: Metrics
+  httpClient: HttpClientV2
 )
 extends EmailConnector
 with HttpErrorFunctions
@@ -55,15 +53,11 @@ with Logging {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] = {
-    val timer = metrics.defaultRegistry.timer(s"Send-Email-${emailInformation.templateId}")
-    timer.time()
-
     httpClient
       .post(url"${appConfig.emailBaseUrl}/hmrc/email")
       .withBody(Json.toJson(emailInformation))
       .execute[HttpResponse]
       .map { response =>
-        timer.time().stop()
         response.status match {
           case status if is2xx(status) => ()
           case other =>
