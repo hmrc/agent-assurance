@@ -22,8 +22,8 @@ import java.time.LocalDate
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 
 sealed trait AmlsEntity
 

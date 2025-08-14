@@ -46,8 +46,8 @@ import uk.gov.hmrc.agentassurance.models.CreateAmlsRequest
 import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
 import uk.gov.hmrc.agentassurance.models.UkAmlsEntity
 import uk.gov.hmrc.agentassurance.util._
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent

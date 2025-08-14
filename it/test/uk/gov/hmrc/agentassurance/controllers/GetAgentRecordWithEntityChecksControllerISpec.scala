@@ -28,7 +28,7 @@ import test.uk.gov.hmrc.agentassurance.stubs.InternalAuthStub
 import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt

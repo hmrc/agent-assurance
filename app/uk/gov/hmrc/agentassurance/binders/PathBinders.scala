@@ -18,8 +18,8 @@ package uk.gov.hmrc.agentassurance.binders
 
 import play.api.mvc.PathBindable
 import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 

@@ -34,7 +34,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
-import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 case class ClientAllocation(
   friendlyName: String,
@@ -60,13 +59,11 @@ trait EnrolmentStoreProxyConnector {
 
 @Singleton
 class EnrolmentStoreProxyConnectorImpl @Inject() (
-  httpGet: HttpClientV2,
-  val metrics: Metrics
+  httpGet: HttpClientV2
 )(
   implicit appConfig: AppConfig
 )
-extends EnrolmentStoreProxyConnector
-with HistogramMonitor {
+extends EnrolmentStoreProxyConnector {
 
   private val emacBaseUrl: String = s"${appConfig.esProxyUrl}/enrolment-store-proxy/enrolment-store"
 
@@ -96,24 +93,18 @@ with HistogramMonitor {
     ec: ExecutionContext
   ): Future[Int] = {
     val clientListUrl = s"$emacBaseUrl/users/$userId/enrolments?type=delegated&service=$service"
-
-    reportHistogramValue(s"Size-ESP-ES2-GetAgentClientList-$service") {
-      val timer = metrics.defaultRegistry.timer(s"ConsumedAPI-ESP-ES2-GetAgentClientList-$service-GET")
-      timer.time()
-      httpGet
-        .get(url"$clientListUrl")
-        .execute[ClientAllocationResponse]
-        .map(result => {
-          timer.time().stop
-          result.clients.count {
-            _.state.toLowerCase match {
-              case "activated" => true
-              case "unknown" => true
-              case _ => false
-            }
+    httpGet
+      .get(url"$clientListUrl")
+      .execute[ClientAllocationResponse]
+      .map(result => {
+        result.clients.count {
+          _.state.toLowerCase match {
+            case "activated" => true
+            case "unknown" => true
+            case _ => false
           }
-        })
-    }
+        }
+      })
   }
 
   private def parseClients(jsonResponse: JsValue): Seq[ClientAllocation] = {

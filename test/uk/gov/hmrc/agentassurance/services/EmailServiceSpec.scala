@@ -25,7 +25,7 @@ import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockEmailConnector
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
 class EmailServiceSpec

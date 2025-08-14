@@ -23,7 +23,7 @@ import play.api.libs.json.JsResultException
 import play.api.mvc._
 import play.api.Logger
 import uk.gov.hmrc.agentassurance.controllers.ErrorResults.NoPermission
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals

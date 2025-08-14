@@ -34,8 +34,8 @@ import uk.gov.hmrc.agentassurance.models.audit.AuditDetail
 import uk.gov.hmrc.agentassurance.models.audit.EmailData
 import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
 import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditResult

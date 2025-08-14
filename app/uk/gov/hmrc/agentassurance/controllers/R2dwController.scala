@@ -33,7 +33,7 @@ import uk.gov.hmrc.agentassurance.models.pagination.PaginationLinks
 import uk.gov.hmrc.agentassurance.models.ErrorBody
 import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController

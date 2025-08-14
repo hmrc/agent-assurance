@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentassurance.connectors
 
 import scala.concurrent.ExecutionContext
-
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -31,19 +30,18 @@ import play.api.Application
 import play.api.Configuration
 import test.uk.gov.hmrc.agentassurance.stubs.DataStreamStub
 import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
-import test.uk.gov.hmrc.agentassurance.support.MetricTestSupport
 import test.uk.gov.hmrc.agentassurance.support.UnitSpec
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.BusinessAddress
+import uk.gov.hmrc.agentassurance.models.SuspensionDetails
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
 import uk.gov.hmrc.agentassurance.repositories.AgencyNameCacheRepository
 import uk.gov.hmrc.agentassurance.services.CacheProvider
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.SuspensionDetails
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
 import uk.gov.hmrc.crypto.PlainText
@@ -63,8 +61,7 @@ with GuiceOneAppPerSuite
 with WireMockSupport
 with DesStubs
 with DataStreamStub
-with CleanMongoCollectionSupport
-with MetricTestSupport {
+with CleanMongoCollectionSupport {
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.global
@@ -106,7 +103,6 @@ with MetricTestSupport {
   val desConnector =
     new DesConnectorImpl(
       app.injector.instanceOf[HttpClientV2],
-      app.injector.instanceOf[Metrics],
       cacheProvider,
       config,
       as
@@ -405,14 +401,6 @@ with MetricTestSupport {
       givenDesReturnsServerError()
       givenAuditConnector()
       an[Exception] should be thrownBy await(desConnector.getActiveCesaAgentRelationships(identifier))
-    }
-
-    "record metrics for GetStatusAgentRelationship" in {
-      givenClientHasRelationshipWithAgentInCESA(identifier, SaAgentReference("bar"))
-      givenCleanMetricRegistry()
-      givenAuditConnector()
-      await(desConnector.getActiveCesaAgentRelationships(identifier))
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-DES-GetStatusAgentRelationship-GET")
     }
 
   }

@@ -35,8 +35,8 @@ import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsRecordExists
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.models.AmlsError.UniqueKeyViolationError
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.affinityGroup
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments

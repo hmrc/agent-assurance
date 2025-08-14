@@ -33,7 +33,7 @@ import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName
 import uk.gov.hmrc.agentassurance.models.utrcheck.UtrDetails
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.services.BusinessNamesService
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 

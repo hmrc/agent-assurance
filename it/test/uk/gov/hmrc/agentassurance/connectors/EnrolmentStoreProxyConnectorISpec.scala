@@ -26,7 +26,6 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import play.api.Application
 import test.uk.gov.hmrc.agentassurance.stubs.EnrolmentStoreProxyStubs
-import test.uk.gov.hmrc.agentassurance.support.MetricTestSupport
 import test.uk.gov.hmrc.agentassurance.support.UnitSpec
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.config.AppConfig
@@ -37,7 +36,6 @@ class EnrolmentStoreProxyConnectorISpec
 extends UnitSpec
 with GuiceOneAppPerSuite
 with WireMockSupport
-with MetricTestSupport
 with EnrolmentStoreProxyStubs {
 
   override implicit lazy val app: Application = appBuilder.build()
@@ -105,7 +103,6 @@ with EnrolmentStoreProxyStubs {
         withEnrolmentState: String,
         expectedClientListSize: Int
       ) = {
-        givenCleanMetricRegistry()
         sufficientClientsAreAllocated(
           service,
           userId,
@@ -113,9 +110,6 @@ with EnrolmentStoreProxyStubs {
         )
 
         await(connector.getClientCount(service, userId)) shouldBe expectedClientListSize
-
-        timerShouldExistsAndBeenUpdated("ConsumedAPI-ESP-ES2-GetAgentClientList-IR-PAYE-GET")
-        histogramShouldExistsAndBeenUpdated("Size-ESP-ES2-GetAgentClientList-IR-PAYE", max = expectedClientListSize)
       }
 
       "enrolment state is 'Unknown'" in { // during the interim period before migration of data from GG to MDTP

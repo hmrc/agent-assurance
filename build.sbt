@@ -17,8 +17,8 @@ lazy val root = (project in file("."))
       "uk.gov.hmrc.agentassurance.binders.PathBinders._",
       "uk.gov.hmrc.agentassurance.binders._",
       "uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName",
-      "uk.gov.hmrc.agentmtdidentifiers.model.Utr",
-      "uk.gov.hmrc.agentmtdidentifiers.model.Arn",
+      "uk.gov.hmrc.agentassurance.models.Utr",
+      "uk.gov.hmrc.agentassurance.models.Arn",
       "uk.gov.hmrc.domain.Nino",
       "uk.gov.hmrc.domain.SaAgentReference"
     ),

@@ -34,8 +34,8 @@ import test.uk.gov.hmrc.agentassurance.stubs.DmsSubmissionStubs
 import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 
 class AgentServicesControllerISpec
 extends PlaySpec

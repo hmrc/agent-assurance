@@ -23,7 +23,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.mongo.lock.MongoLockRepository
 import uk.gov.hmrc.mongo.lock.TimePeriodLockService
 

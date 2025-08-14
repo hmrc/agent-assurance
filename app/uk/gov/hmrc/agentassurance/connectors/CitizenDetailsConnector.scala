@@ -34,7 +34,6 @@ import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 case class CitizenDeceased(deceased: Boolean)
 
@@ -59,8 +58,7 @@ trait CitizenDetailsConnector {
 @Singleton
 class CitizenDetailsConnectorImpl @Inject() (
   appConfig: AppConfig,
-  http: HttpClientV2,
-  metrics: Metrics
+  http: HttpClientV2
 )
 extends CitizenDetailsConnector
 with Logging {
@@ -73,13 +71,10 @@ with Logging {
     c: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Option[DeceasedCheckException]] = {
-    val timer = metrics.defaultRegistry.timer(s"ConsumedAPI-CitizenDetails-GET")
-    timer.time()
     http
       .get(url"$baseUrl/citizen-details/sautr/${saUtr.value}")
       .execute[HttpResponse]
       .map { response =>
-        timer.time().stop()
         response.status match {
           case Status.OK =>
             Json.parse(response.body).as[CitizenDeceased] match {

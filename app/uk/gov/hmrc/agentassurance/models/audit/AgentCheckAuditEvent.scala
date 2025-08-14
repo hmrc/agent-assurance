@@ -19,8 +19,8 @@ package uk.gov.hmrc.agentassurance.models.audit
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 
 case class AgentCheckAuditEvent(
   agentReferenceNumber: Arn,

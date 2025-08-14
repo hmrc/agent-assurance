@@ -60,15 +60,6 @@ extends Retries {
         }
       }
 
-    def executeAndContinue(implicit ec: ExecutionContext): Future[Unit] = requestBuilder
-      .execute[HttpResponse]
-      .map { response =>
-        response.status match {
-          case OK | CREATED | ACCEPTED | NO_CONTENT => ()
-          case _ => response.error
-        }
-      }
-
     def executeAndExpect(expected: Int)(implicit ec: ExecutionContext): Future[Unit] = requestBuilder
       .execute[HttpResponse]
       .flatMap { response =>

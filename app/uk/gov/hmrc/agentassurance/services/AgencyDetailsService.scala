@@ -25,7 +25,7 @@ import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton

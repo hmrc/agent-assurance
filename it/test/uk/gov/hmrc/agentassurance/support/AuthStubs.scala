@@ -17,7 +17,7 @@
 package test.uk.gov.hmrc.agentassurance.support
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 
 trait BasicUserAuthStubs { WiremockAware =>
   def isNotLoggedIn = {

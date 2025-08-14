@@ -31,7 +31,7 @@ import play.api.Logging
 import uk.gov.hmrc.agentassurance.models.AmlsError
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent

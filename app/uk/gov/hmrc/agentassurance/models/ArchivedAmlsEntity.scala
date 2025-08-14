@@ -23,8 +23,8 @@ import java.time.LocalDate
 import play.api.libs.json.Format
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.Utr
 
 case class ArchivedAmlsEntity(
   ukRecord: Boolean,

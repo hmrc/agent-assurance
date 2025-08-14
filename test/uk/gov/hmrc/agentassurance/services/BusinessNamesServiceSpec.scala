@@ -27,7 +27,7 @@ import org.scalatest.time.Span
 import org.scalatestplus.play.PlaySpec
 import uk.gov.hmrc.agentassurance.mocks._
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.http.HeaderCarrier
 
 class BusinessNamesServiceSpec
