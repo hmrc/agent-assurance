@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant des
+
+    Upstream->>+agent-assurance: GET /activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReference
+    agent-assurance->>+des: GET /registration/relationship/:identifierType/:identifier
+    des-->>-agent-assurance: Response
+    agent-assurance-->>-Upstream: Final Response

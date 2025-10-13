@@ -1,0 +1,38 @@
+{
+    "microservice": "agent-assurance",
+    "controller": "GetAgentRecordWithEntityChecksController",
+    "apis": [
+        {
+            "endpoint": "GET /agent-record-with-checks",
+            "description": "Retrieves the agent record with entity checks for the authenticated agent.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "des",
+                    "method": "GET",
+                    "path": "/registration/personal-details/arn/:arn",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get agent record from DES."
+                }
+            ]
+        },
+        {
+            "endpoint": "GET /agent-record-with-checks/arn/:arn",
+            "description": "Retrieves the agent record with entity checks for a given ARN (for clients).",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "des",
+                    "method": "GET",
+                    "path": "/registration/personal-details/arn/:arn",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get agent record from DES."
+                }
+            ]
+        }
+    ]
+}

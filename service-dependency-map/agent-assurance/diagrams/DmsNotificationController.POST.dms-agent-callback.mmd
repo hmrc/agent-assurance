@@ -1,0 +1,7 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+
+    Upstream->>+agent-assurance: POST /dms-agent-callback
+    agent-assurance-->>-Upstream: 200 OK

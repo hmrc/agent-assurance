@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant des
+
+    Upstream->>+agent-assurance: GET /amls-subscription/:amlsRegistrationNumber
+    agent-assurance->>+des: GET /anti-money-laundering/subscription/:amlsRegistrationNumber/status
+    des-->>-agent-assurance: AMLS subscription status
+    agent-assurance-->>-Upstream: 200 OK

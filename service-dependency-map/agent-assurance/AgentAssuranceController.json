@@ -1,0 +1,107 @@
+{
+    "microservice": "agent-assurance",
+    "controller": "AgentAssuranceController",
+    "apis": [
+        {
+            "endpoint": "GET /irSaAgentEnrolment",
+            "description": "Checks if the agent is enrolled for IR-SA.",
+            "interactions": []
+        },
+        {
+            "endpoint": "GET /activeCesaRelationship/utr/:utr/saAgentReference/:saAgentReference",
+            "description": "Checks for an active CESA relationship for a given UTR.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "des",
+                    "method": "GET",
+                    "path": "/registration/relationship/:identifierType/:identifier",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get active CESA agent relationships"
+                }
+            ]
+        },
+        {
+            "endpoint": "GET /activeCesaRelationship/nino/:nino/saAgentReference/:saAgentReference",
+            "description": "Checks for an active CESA relationship for a given NINO.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "des",
+                    "method": "GET",
+                    "path": "/registration/relationship/:identifierType/:identifier",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get active CESA agent relationships"
+                }
+            ]
+        },
+        {
+            "endpoint": "GET /acceptableNumberOfClients/service/IR-PAYE",
+            "description": "Checks if the agent has an acceptable number of PAYE clients.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "enrolment-store-proxy",
+                    "method": "GET",
+                    "path": "/enrolment-store-proxy/enrolment-store/enrolments/service/:service/client-count",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get client count for a given service"
+                }
+            ]
+        },
+        {
+            "endpoint": "GET /acceptableNumberOfClients/service/IR-SA",
+            "description": "Checks if the agent has an acceptable number of IR-SA clients.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "enrolment-store-proxy",
+                    "method": "GET",
+                    "path": "/enrolment-store-proxy/enrolment-store/enrolments/service/:service/client-count",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get client count for a given service"
+                }
+            ]
+        },
+        {
+            "endpoint": "GET /acceptableNumberOfClients/service/HMCE-VATDEC-ORG",
+            "description": "Checks if the agent has an acceptable number of VAT DEC clients.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "enrolment-store-proxy",
+                    "method": "GET",
+                    "path": "/enrolment-store-proxy/enrolment-store/enrolments/service/:service/client-count",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get client count for a given service"
+                }
+            ]
+        },
+        {
+            "endpoint": "GET /acceptableNumberOfClients/service/IR-CT",
+            "description": "Checks if the agent has an acceptable number of IR-CT clients.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "enrolment-store-proxy",
+                    "method": "GET",
+                    "path": "/enrolment-store-proxy/enrolment-store/enrolments/service/:service/client-count",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get client count for a given service"
+                }
+            ]
+        }
+    ]
+}

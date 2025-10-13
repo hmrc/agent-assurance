@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+
+    Upstream->>+agent-assurance: DELETE /manually-assured/utr/:identifier
+    agent-assurance->>+agent-assurance-mongo: Delete: Delete property from 'manually-assured' collection
+    agent-assurance-mongo-->>-agent-assurance: Success
+    agent-assurance-->>-Upstream: 204 NoContent

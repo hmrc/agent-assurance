@@ -1,0 +1,38 @@
+{
+    "microservice": "agent-assurance",
+    "controller": "AgentServicesController",
+    "apis": [
+        {
+            "endpoint": "GET /agent/agency-details/arn/:arn",
+            "description": "Retrieves agency details for a given ARN.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "des",
+                    "method": "GET",
+                    "path": "/registration/personal-details/arn/:arn",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get agent record from DES."
+                }
+            ]
+        },
+        {
+            "endpoint": "POST /agent/agency-details/arn/:arn",
+            "description": "Submits agency details to DMS.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "dms-submission",
+                    "method": "POST",
+                    "path": "/dms-submission/submit",
+                    "database": null,
+                    "operation": null,
+                    "description": "Submit document to DMS."
+                }
+            ]
+        }
+    ]
+}

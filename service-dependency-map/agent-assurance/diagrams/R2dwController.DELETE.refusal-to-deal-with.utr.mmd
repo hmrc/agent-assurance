@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+
+    Upstream->>+agent-assurance: DELETE /refusal-to-deal-with/utr/:identifier
+    agent-assurance->>+agent-assurance-mongo: Delete: Delete property from 'refusal-to-deal-with' collection
+    agent-assurance-mongo-->>-agent-assurance: Success
+    agent-assurance-->>-Upstream: 204 NoContent

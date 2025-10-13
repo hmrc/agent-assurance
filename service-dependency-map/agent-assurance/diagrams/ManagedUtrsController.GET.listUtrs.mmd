@@ -1,0 +1,13 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+    participant des
+
+    Upstream->>+agent-assurance: GET /managed-utrs/collection/:collection
+    agent-assurance->>+agent-assurance-mongo: Read: Find UTRs in collection
+    agent-assurance-mongo-->>-agent-assurance: UTRs
+    agent-assurance->>+des: GET /registration/business-details/utr/:utr
+    des-->>-agent-assurance: Business Names
+    agent-assurance-->>-Upstream: Paginated list of UTRs with business names

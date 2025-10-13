@@ -1,0 +1,750 @@
+openapi: 3.0.0
+info:
+  title: Agent Assurance API
+  description: API for agent assurance processes, including AMLS checks, client count verification, and managing agent lists.
+  version: v2.38.0
+servers:
+  - url: http://localhost:9565
+    description: Local development server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /irSaAgentEnrolment:
+    get:
+      summary: Check for IR-SA Agent Enrolment
+      description: Verifies if the authenticated agent is enrolled for the IR-SA service.
+      tags:
+        - Agent Assurance
+      responses:
+        "204":
+          description: Agent is enrolled for IR-SA.
+        "401":
+          description: Unauthorized.
+
+  /activeCesaRelationship/utr/{utr}/saAgentReference/{saAgentReference}:
+    get:
+      summary: Check Active CESA Relationship by UTR
+      description: Checks for an active CESA relationship for a given client UTR and agent SA reference.
+      tags:
+        - Agent Assurance
+      parameters:
+        - name: utr
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: saAgentReference
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Active relationship exists.
+        "403":
+          description: No active relationship found.
+
+  /activeCesaRelationship/nino/{nino}/saAgentReference/{saAgentReference}:
+    get:
+      summary: Check Active CESA Relationship by NINO
+      description: Checks for an active CESA relationship for a given client NINO and agent SA reference.
+      tags:
+        - Agent Assurance
+      parameters:
+        - name: nino
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: saAgentReference
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Active relationship exists.
+        "403":
+          description: No active relationship found.
+
+  /acceptableNumberOfClients/service/{service}:
+    get:
+      summary: Check Acceptable Number of Clients
+      description: Verifies if the agent has an acceptable number of clients for a given service.
+      tags:
+        - Agent Assurance
+      parameters:
+        - name: service
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - IR-PAYE
+              - IR-SA
+              - HMCE-VATDEC-ORG
+              - IR-CT
+      responses:
+        "204":
+          description: Agent has an acceptable number of clients.
+        "403":
+          description: Agent does not have an acceptable number of clients.
+
+  /managed-utrs/collection/{collection}:
+    get:
+      summary: List UTRs in a Collection
+      description: Retrieves a paginated list of UTRs for a given collection (e.g., manually-assured).
+      tags:
+        - Managed Utrs
+      parameters:
+        - name: collection
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: A paginated list of UTRs.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UtrListResponse"
+    post:
+      summary: Add UTR to a Collection
+      description: Adds or updates a UTR in a specified collection.
+      tags:
+        - Managed Utrs
+      parameters:
+        - name: collection
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Value"
+      responses:
+        "201":
+          description: UTR added successfully.
+        "400":
+          description: Invalid JSON or UTR.
+
+  /managed-utrs/utr/{utr}:
+    get:
+      summary: Get UTR Details
+      description: Gets details for a specific UTR, including assurance status and optionally the business name.
+      tags:
+        - Managed Utrs
+      parameters:
+        - name: utr
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: nameRequired
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Details for the specified UTR.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UtrDetails"
+
+  /managed-utrs/collection/{collection}/utr/{utr}:
+    delete:
+      summary: Remove UTR from a Collection
+      description: Removes a UTR from a specified collection.
+      tags:
+        - Managed Utrs
+      parameters:
+        - name: collection
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: utr
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: UTR removed successfully.
+
+  /amls:
+    post:
+      summary: Store AMLS Details
+      description: Stores AMLS details for a UK agent.
+      tags:
+        - Agent Assurance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAmlsRequest"
+      responses:
+        "201":
+          description: AMLS details stored successfully.
+        "400":
+          description: Invalid request.
+        "403":
+          description: ARN already set.
+
+  /amls/utr/{identifier}:
+    put:
+      summary: Update AMLS Details
+      description: Updates AMLS details with an ARN for a given UTR.
+      tags:
+        - Agent Assurance
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Arn"
+      responses:
+        "200":
+          description: AMLS details updated successfully.
+        "400":
+          description: Invalid ARN.
+        "404":
+          description: No existing AMLS details found.
+    get:
+      summary: Get AMLS Details
+      description: Retrieves AMLS details for a given UTR.
+      tags:
+        - Agent Assurance
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: AMLS details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AmlsDetailsResponse"
+        "404":
+          description: Not Found.
+
+  /amls-subscription/{amlsRegistrationNumber}:
+    get:
+      summary: Get AMLS Subscription Status
+      description: Retrieves AMLS subscription status from DES.
+      tags:
+        - Agent Assurance
+      parameters:
+        - name: amlsRegistrationNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: AMLS subscription status.
+        "404":
+          description: Not Found.
+
+  /overseas-agents/amls:
+    post:
+      summary: Store Overseas AMLS Details
+      description: Stores AMLS details for an overseas agent.
+      tags:
+        - Agent Assurance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OverseasAmlsEntity"
+      responses:
+        "201":
+          description: AMLS details stored successfully.
+        "409":
+          description: AMLS record already exists.
+
+  /amls/arn/{arn}:
+    get:
+      summary: Get AMLS Details by ARN
+      description: Retrieves AMLS details for a given ARN.
+      tags:
+        - Amls Details By Arn
+      parameters:
+        - name: arn
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: AMLS details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AmlsDetailsResponse"
+    post:
+      summary: Store AMLS Details by ARN
+      description: Stores AMLS details for a given ARN.
+      tags:
+        - Amls Details By Arn
+      parameters:
+        - name: arn
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AmlsRequest"
+      responses:
+        "201":
+          description: AMLS details stored successfully.
+
+  /agent/agency-details/arn/{arn}:
+    get:
+      summary: Get Agency Details
+      description: Retrieves agency details for a given ARN.
+      tags:
+        - Agent Services
+      parameters:
+        - name: arn
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agency details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgencyDetails"
+        "204":
+          description: No content.
+    post:
+      summary: Submit Agency Details to DMS
+      description: Submits agency details to the DMS queue.
+      tags:
+        - Agent Services
+      parameters:
+        - name: arn
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Successfully submitted to DMS.
+
+  /agent/verify-entity:
+    post:
+      summary: Verify Agent Entity
+      description: Verifies an agent's entity based on their ARN.
+      tags:
+        - Entity Check
+      responses:
+        "200":
+          description: Suspension details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuspensionDetails"
+        "204":
+          description: No suspension details found.
+
+  /client/verify-entity:
+    post:
+      summary: Verify Agent Entity (for Clients)
+      description: Verifies an agent's entity based on an identifier provided by a client.
+      tags:
+        - Entity Check
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEntityRequest"
+      responses:
+        "200":
+          description: Suspension details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuspensionDetails"
+        "204":
+          description: No suspension details found.
+
+  /dms-agent-callback:
+    post:
+      summary: DMS Callback
+      description: Handles DMS notification callbacks.
+      tags:
+        - Dms Notification
+      responses:
+        "200":
+          description: Callback received.
+
+  /agent-record-with-checks:
+    get:
+      summary: Get Agent Record with Checks
+      description: Retrieves the agent record with entity checks for the authenticated agent.
+      tags:
+        - Get Agent Record With Entity Checks
+      responses:
+        "200":
+          description: Agent record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentRecord"
+
+  /agent-record-with-checks/arn/{arn}:
+    get:
+      summary: Get Agent Record with Checks by ARN
+      description: Retrieves the agent record with entity checks for a given ARN.
+      tags:
+        - Get Agent Record With Entity Checks
+      parameters:
+        - name: arn
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentRecord"
+
+  /manually-assured:
+    get:
+      summary: Get Manually Assured List
+      description: Retrieves a paginated list of manually assured UTRs.
+      tags:
+        - Maa
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: A paginated list of UTRs.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UtrListResponse"
+    post:
+      summary: Add to Manually Assured List
+      description: Adds a UTR to the manually assured list.
+      tags:
+        - Maa
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Value"
+      responses:
+        "201":
+          description: UTR added successfully.
+        "409":
+          description: Property already exists.
+
+  /manually-assured/utr/{identifier}:
+    get:
+      summary: Check if Manually Assured
+      description: Checks if a UTR is on the manually assured list.
+      tags:
+        - Maa
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: UTR is manually assured.
+        "403":
+          description: UTR is not manually assured.
+    delete:
+      summary: Remove from Manually Assured List
+      description: Removes a UTR from the manually assured list.
+      tags:
+        - Maa
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: UTR removed successfully.
+        "404":
+          description: Not Found.
+
+  /refusal-to-deal-with:
+    get:
+      summary: Get Refusal to Deal With List
+      description: Retrieves a paginated list of UTRs on the refusal to deal with list.
+      tags:
+        - R2dw
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: A paginated list of UTRs.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UtrListResponse"
+    post:
+      summary: Add to Refusal to Deal With List
+      description: Adds a UTR to the refusal to deal with list.
+      tags:
+        - R2dw
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Value"
+      responses:
+        "201":
+          description: UTR added successfully.
+        "409":
+          description: Property already exists.
+
+  /refusal-to-deal-with/utr/{identifier}:
+    get:
+      summary: Check if on Refusal to Deal With List
+      description: Checks if a UTR is on the refusal to deal with list.
+      tags:
+        - R2dw
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: UTR is not on the list.
+        "403":
+          description: UTR is on the list.
+    delete:
+      summary: Remove from Refusal to Deal With List
+      description: Removes a UTR from the refusal to deal with list.
+      tags:
+        - R2dw
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: UTR removed successfully.
+        "404":
+          description: Not Found.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Value:
+      type: object
+      properties:
+        value:
+          type: string
+
+    Arn:
+      type: object
+      properties:
+        arn:
+          type: string
+
+    CreateAmlsRequest:
+      type: object
+      properties:
+        utr:
+          type: string
+        amlsDetails:
+          $ref: "#/components/schemas/AmlsDetails"
+
+    AmlsDetails:
+      type: object
+      properties:
+        supervisoryBody:
+          type: string
+        membershipNumber:
+          type: string
+        membershipExpiresOn:
+          type: string
+          format: date
+
+    OverseasAmlsEntity:
+      type: object
+      properties:
+        arn:
+          type: string
+        amlsDetails:
+          $ref: "#/components/schemas/OverseasAmlsDetails"
+
+    OverseasAmlsDetails:
+      type: object
+      properties:
+        supervisoryBody:
+          type: string
+        membershipNumber:
+          type: string
+
+    AmlsRequest:
+      type: object
+      properties:
+        amlsLibraryReference:
+          type: string
+        supervisoryBody:
+          type: string
+        membershipNumber:
+          type: string
+        membershipExpiresOn:
+          type: string
+          format: date
+
+    VerifyEntityRequest:
+      type: object
+      properties:
+        identifier:
+          type: string
+
+    UtrListResponse:
+      type: object
+      properties:
+        utrs:
+          type: array
+          items:
+            $ref: "#/components/schemas/UtrItem"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
+
+    UtrItem:
+      type: object
+      properties:
+        utr:
+          type: string
+        status:
+          type: string
+
+    UtrDetails:
+      type: object
+      properties:
+        utr:
+          type: string
+        status:
+          type: string
+        businessName:
+          type: string
+
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+
+    AmlsDetailsResponse:
+      type: object
+      properties:
+        utr:
+          type: string
+        amlsDetails:
+          $ref: "#/components/schemas/AmlsDetails"
+
+    AgentRecord:
+      type: object
+      properties:
+        arn:
+          type: string
+        agentName:
+          type: string
+        status:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+    SuspensionDetails:
+      type: object
+      properties:
+        suspensionStatus:
+          type: boolean
+        regimePayload:
+          type: array
+          items:
+            type: object
+
+    AgencyDetails:
+      type: object
+      properties:
+        arn:
+          type: string
+        agencyName:
+          type: string
+        agencyAddress:
+          type: object
