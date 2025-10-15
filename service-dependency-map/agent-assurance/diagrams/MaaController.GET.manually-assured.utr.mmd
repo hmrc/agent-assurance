@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+
+    Upstream->>+agent-assurance: GET /manually-assured/utr/:identifier
+    agent-assurance->>+agent-assurance-mongo: Read: Check if property exists in 'manually-assured' collection
+    agent-assurance-mongo-->>-agent-assurance: Boolean
+    agent-assurance-->>-Upstream: 200 OK or 403 Forbidden

@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant des
+
+    Upstream->>+agent-assurance: POST /agent/verify-entity
+    agent-assurance->>+des: GET /registration/personal-details/arn/:arn
+    des-->>-agent-assurance: Agent record
+    agent-assurance-->>-Upstream: Suspension details

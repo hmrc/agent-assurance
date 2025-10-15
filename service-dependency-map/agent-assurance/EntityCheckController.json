@@ -1,0 +1,38 @@
+{
+    "microservice": "agent-assurance",
+    "controller": "EntityCheckController",
+    "apis": [
+        {
+            "endpoint": "POST /agent/verify-entity",
+            "description": "Verifies an agent's entity based on their ARN.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "des",
+                    "method": "GET",
+                    "path": "/registration/personal-details/arn/:arn",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get agent record from DES."
+                }
+            ]
+        },
+        {
+            "endpoint": "POST /client/verify-entity",
+            "description": "Verifies an agent's entity based on an identifier provided by a client.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "API Call",
+                    "service": "des",
+                    "method": "GET",
+                    "path": "/registration/personal-details/arn/:arn",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get agent record from DES."
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,15 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+    participant des
+
+    Upstream->>+agent-assurance: GET /amls/arn/:arn
+    agent-assurance->>+agent-assurance-mongo: Read: Get AMLS details by ARN
+    agent-assurance-mongo-->>-agent-assurance: AMLS details
+    alt if UK AMLS details found
+        agent-assurance->>+des: GET /anti-money-laundering/subscription/:amlsRegistrationNumber/status
+        des-->>-agent-assurance: AMLS subscription status
+    end
+    agent-assurance-->>-Upstream: AMLS details response

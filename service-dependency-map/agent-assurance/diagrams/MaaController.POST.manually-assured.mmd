@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+
+    Upstream->>+agent-assurance: POST /manually-assured
+    agent-assurance->>+agent-assurance-mongo: Create: Upsert property in 'manually-assured' collection
+    agent-assurance-mongo-->>-agent-assurance: Success
+    agent-assurance-->>-Upstream: 201 Created

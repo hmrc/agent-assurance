@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+
+    Upstream->>+agent-assurance: GET /amls/utr/:identifier
+    agent-assurance->>+agent-assurance-mongo: Read: Get AMLS details
+    agent-assurance-mongo-->>-agent-assurance: AMLS details
+    agent-assurance-->>-Upstream: 200 OK

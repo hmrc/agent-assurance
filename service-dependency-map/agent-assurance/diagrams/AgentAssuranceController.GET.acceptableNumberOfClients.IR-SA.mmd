@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant enrolment-store-proxy
+
+    Upstream->>+agent-assurance: GET /acceptableNumberOfClients/service/IR-SA
+    agent-assurance->>+enrolment-store-proxy: GET /enrolment-store-proxy/enrolment-store/enrolments/service/:service/client-count
+    enrolment-store-proxy-->>-agent-assurance: Response
+    agent-assurance-->>-Upstream: Final Response

@@ -1,0 +1,48 @@
+{
+    "microservice": "agent-assurance",
+    "controller": "AmlsDetailsByArnController",
+    "apis": [
+        {
+            "endpoint": "GET /amls/arn/:arn",
+            "description": "Retrieves AMLS details for a given ARN.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "Database",
+                    "service": null,
+                    "method": null,
+                    "path": null,
+                    "database": "agent-assurance-mongo",
+                    "operation": "Read",
+                    "description": "Get UK or Overseas AMLS details by ARN."
+                },
+                {
+                    "step": 2,
+                    "type": "API Call",
+                    "service": "des",
+                    "method": "GET",
+                    "path": "/anti-money-laundering/subscription/:amlsRegistrationNumber/status",
+                    "database": null,
+                    "operation": null,
+                    "description": "Get AMLS subscription status."
+                }
+            ]
+        },
+        {
+            "endpoint": "POST /amls/arn/:arn",
+            "description": "Stores AMLS details for a given ARN.",
+            "interactions": [
+                {
+                    "step": 1,
+                    "type": "Database",
+                    "service": null,
+                    "method": null,
+                    "path": null,
+                    "database": "agent-assurance-mongo",
+                    "operation": "Create/Update",
+                    "description": "Store AMLS request details."
+                }
+            ]
+        }
+    ]
+}

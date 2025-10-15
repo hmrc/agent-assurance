@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+
+    Upstream->>+agent-assurance: GET /refusal-to-deal-with
+    agent-assurance->>+agent-assurance-mongo: Read: Find properties in 'refusal-to-deal-with' collection
+    agent-assurance-mongo-->>-agent-assurance: Properties
+    agent-assurance-->>-Upstream: Paginated list of properties

@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+
+    Upstream->>+agent-assurance: DELETE /managed-utrs/collection/:collection/utr/:utr
+    agent-assurance->>+agent-assurance-mongo: Delete: Remove UTR from collection
+    agent-assurance-mongo-->>-agent-assurance: Success
+    agent-assurance-->>-Upstream: 204 NoContent

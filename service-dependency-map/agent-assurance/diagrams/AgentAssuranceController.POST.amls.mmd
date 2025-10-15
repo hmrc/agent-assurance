@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+
+    Upstream->>+agent-assurance: POST /amls
+    agent-assurance->>+agent-assurance-mongo: Create/Update: Store AMLS details
+    agent-assurance-mongo-->>-agent-assurance: Success
+    agent-assurance-->>-Upstream: 201 Created

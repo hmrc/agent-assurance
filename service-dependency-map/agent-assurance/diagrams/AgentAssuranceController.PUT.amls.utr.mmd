@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+
+    Upstream->>+agent-assurance: PUT /amls/utr/:identifier
+    agent-assurance->>+agent-assurance-mongo: Update: Update ARN for AMLS details
+    agent-assurance-mongo-->>-agent-assurance: Updated AMLS details
+    agent-assurance-->>-Upstream: 200 OK

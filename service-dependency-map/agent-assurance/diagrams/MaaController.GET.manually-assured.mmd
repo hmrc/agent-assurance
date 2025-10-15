@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant agent-assurance-mongo
+
+    Upstream->>+agent-assurance: GET /manually-assured
+    agent-assurance->>+agent-assurance-mongo: Read: Find properties in 'manually-assured' collection
+    agent-assurance-mongo-->>-agent-assurance: Properties
+    agent-assurance-->>-Upstream: Paginated list of properties

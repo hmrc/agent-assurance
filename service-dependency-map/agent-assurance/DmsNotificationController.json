@@ -1,0 +1,11 @@
+{
+    "microservice": "agent-assurance",
+    "controller": "DmsNotificationController",
+    "apis": [
+        {
+            "endpoint": "POST /dms-agent-callback",
+            "description": "Handles DMS notification callbacks.",
+            "interactions": []
+        }
+    ]
+}

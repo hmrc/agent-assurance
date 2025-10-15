@@ -1,0 +1,7 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+
+    Upstream->>+agent-assurance: GET /irSaAgentEnrolment
+    agent-assurance-->>-Upstream: 204 NoContent

@@ -1,0 +1,10 @@
+sequenceDiagram
+    autonumber
+    participant Upstream
+    participant agent-assurance
+    participant dms-submission
+
+    Upstream->>+agent-assurance: POST /agent/agency-details/arn/:arn
+    agent-assurance->>+dms-submission: POST /dms-submission/submit
+    dms-submission-->>-agent-assurance: DMS response
+    agent-assurance-->>-Upstream: 201 Created
