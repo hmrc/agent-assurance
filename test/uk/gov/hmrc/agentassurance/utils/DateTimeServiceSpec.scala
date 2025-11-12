@@ -32,7 +32,7 @@ with Matchers {
 
       val result = DateTimeService.nowAsString
 
-      result shouldBe "29 March 2025 10:00pm UTC"
+      result shouldBe "29 March 2025 10:00PM UTC"
     }
 
     "format the same instant in London zone correctly" in {
@@ -41,7 +41,7 @@ with Matchers {
 
       val result = DateTimeService.nowAsString
 
-      result shouldBe "29 March 2025 10:00pm GMT"
+      result shouldBe "29 March 2025 10:00PM GMT"
     }
 
     "format an instant in summer time as BST" in {
@@ -50,7 +50,7 @@ with Matchers {
 
       val result = DateTimeService.nowAsString
 
-      result shouldBe "15 July 2025 10:00am BST"
+      result shouldBe "15 July 2025 10:00AM BST"
     }
   }
 }

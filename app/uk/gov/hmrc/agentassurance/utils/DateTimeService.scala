@@ -19,10 +19,12 @@ package uk.gov.hmrc.agentassurance.utils
 import java.time.Clock
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 object DateTimeService {
   def nowAsString(implicit clock: Clock): String = DateTimeFormatter.ofPattern(
-    "d MMMM yyyy h:mma z"
+    "d MMMM yyyy h:mma z",
+    Locale.ENGLISH
   ).format(
     ZonedDateTime.now(clock)
   )
