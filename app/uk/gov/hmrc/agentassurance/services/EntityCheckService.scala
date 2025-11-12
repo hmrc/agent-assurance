@@ -28,10 +28,11 @@ import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException.AgentIsOnRefuseToDealList
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
-import uk.gov.hmrc.agentassurance.utils.UtcCurrentTimeAsString
+import uk.gov.hmrc.agentassurance.utils.DateTimeService
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
 
+import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
@@ -52,7 +53,8 @@ class EntityCheckService @Inject() (
   )(implicit
     request: Request[_],
     hc: HeaderCarrier,
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    clock: Clock
   ): Future[EntityCheckResult] = {
 
     def deceasedStatusCheck(saUtr: SaUtr): Future[Option[EntityCheckException]] = citizenConnector
@@ -133,7 +135,7 @@ class EntityCheckService @Inject() (
     def sendEmail(
       agentRecord: AgentDetailsDesResponse,
       entityCheckExceptions: Seq[EntityCheckException]
-    ): Future[Unit] = {
+    )(implicit clock: Clock): Future[Unit] = {
       val failedChecks: Seq[String] = entityCheckExceptions.collect {
         case x: EmailCheckExceptions => x.failedChecksText
       }
@@ -145,7 +147,7 @@ class EntityCheckService @Inject() (
             utr = utr.value,
             agencyName = agentRecord.agencyDetails.flatMap(_.agencyName).getOrElse(""),
             failedChecks = nonEmptyFailedChecks.mkString("|"),
-            dateTime = UtcCurrentTimeAsString()
+            dateTime = DateTimeService.nowAsString
           )
 
           mongoLockService

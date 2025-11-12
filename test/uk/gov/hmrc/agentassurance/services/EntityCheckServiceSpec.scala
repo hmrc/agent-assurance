@@ -29,7 +29,7 @@ import uk.gov.hmrc.agentassurance.models.entitycheck.DeceasedCheckException.Enti
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException.AgentIsOnRefuseToDealList
-import uk.gov.hmrc.agentassurance.utils.UtcCurrentTimeAsString
+import uk.gov.hmrc.agentassurance.utils.DateTimeService
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.CurrentTimestampSupport
@@ -156,7 +156,7 @@ with MockAuditService {
           utr = utr.value,
           agencyName = "",
           failedChecks = "Agent is deceased",
-          dateTime = UtcCurrentTimeAsString()
+          dateTime = DateTimeService.nowAsString
         )
       )
 
@@ -191,7 +191,7 @@ with MockAuditService {
           utr = utr.value,
           agencyName = "",
           failedChecks = "Agent is on the 'Refuse To Deal With' list",
-          dateTime = UtcCurrentTimeAsString()
+          dateTime = DateTimeService.nowAsString
         )
       )
 

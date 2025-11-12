@@ -16,19 +16,21 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.Request
+import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
-import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.http.HeaderCarrier
 
+import java.time.Clock
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 trait MockEntityCheckService
-extends MockFactory { this: TestSuite =>
+extends MockFactory {
+  this: TestSuite =>
 
   val mockEntityCheckService: EntityCheckService = mock[EntityCheckService]
 
@@ -37,9 +39,10 @@ extends MockFactory { this: TestSuite =>
       .verifyAgent(_: Arn)(
         _: Request[_],
         _: HeaderCarrier,
-        _: ExecutionContext
+        _: ExecutionContext,
+        _: Clock
       ))
-      .expects(arn, *, *, *)
+      .expects(arn, *, *, *, *)
       .returning(Future.successful(returns))
 
 }

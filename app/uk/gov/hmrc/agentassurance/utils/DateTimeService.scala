@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.utils
 
-import java.time.ZoneId
+import java.time.Clock
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-object UtcCurrentTimeAsString {
-  def apply(): String = DateTimeFormatter.ofPattern(
+object DateTimeService {
+  def nowAsString(implicit clock: Clock): String = DateTimeFormatter.ofPattern(
     "d MMMM yyyy h:mma z"
   ).format(
-    ZonedDateTime.now(ZoneId.of("UTC"))
+    ZonedDateTime.now(clock)
   )
 }

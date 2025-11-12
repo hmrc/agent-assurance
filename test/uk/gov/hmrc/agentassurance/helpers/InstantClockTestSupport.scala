@@ -27,3 +27,6 @@ trait InstantClockTestSupport /*extends AnyFeatureSpec with GuiceOneServerPerSui
   implicit val clock: Clock = Clock.fixed(frozenInstant, ZoneId.of("UTC"))
 
 }
+
+object InstantClockTestSupport
+extends InstantClockTestSupport
