@@ -16,17 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import java.time.format.DateTimeFormatter
-import java.time.LocalDateTime
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.connectors.CitizenDetailsConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.models.entitycheck.DeceasedCheckException.CitizenConnectorRequestFailed
 import uk.gov.hmrc.agentassurance.models.entitycheck.DeceasedCheckException.EntityDeceasedCheckFailed
 import uk.gov.hmrc.agentassurance.models.entitycheck.EmailCheckExceptions
@@ -34,15 +27,15 @@ import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException.AgentIsOnRefuseToDealList
-import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
-import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
-import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
-import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.Utr
+import uk.gov.hmrc.agentassurance.utils.UtcCurrentTimeAsString
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton
 class EntityCheckService @Inject() (
@@ -141,8 +134,6 @@ class EntityCheckService @Inject() (
       agentRecord: AgentDetailsDesResponse,
       entityCheckExceptions: Seq[EntityCheckException]
     ): Future[Unit] = {
-      val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
-
       val failedChecks: Seq[String] = entityCheckExceptions.collect {
         case x: EmailCheckExceptions => x.failedChecksText
       }
@@ -154,7 +145,7 @@ class EntityCheckService @Inject() (
             utr = utr.value,
             agencyName = agentRecord.agencyDetails.flatMap(_.agencyName).getOrElse(""),
             failedChecks = nonEmptyFailedChecks.mkString("|"),
-            dateTime = formatter.format(LocalDateTime.now())
+            dateTime = UtcCurrentTimeAsString()
           )
 
           mongoLockService

@@ -16,9 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import java.time.format.DateTimeFormatter
-import java.time.LocalDateTime
-import scala.concurrent.ExecutionContext
 import org.scalatestplus.play.PlaySpec
 import play.api.mvc.Request
 import play.api.test.FakeRequest
@@ -27,20 +24,19 @@ import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.helpers.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks._
+import uk.gov.hmrc.agentassurance.models._
 import uk.gov.hmrc.agentassurance.models.entitycheck.DeceasedCheckException.EntityDeceasedCheckFailed
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException.AgentIsOnRefuseToDealList
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
-import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
-import uk.gov.hmrc.agentassurance.models.SuspensionDetails
-import uk.gov.hmrc.agentassurance.models.Utr
-import uk.gov.hmrc.agentassurance.models.Value
+import uk.gov.hmrc.agentassurance.utils.UtcCurrentTimeAsString
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.mongo.CurrentTimestampSupport
 import uk.gov.hmrc.mongo.lock.MongoLockRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
-import uk.gov.hmrc.mongo.CurrentTimestampSupport
+
+import scala.concurrent.ExecutionContext
 
 class EntityCheckServiceSpec
 extends PlaySpec
@@ -138,9 +134,6 @@ with MockAuditService {
 
     "return Some(SuspensionDetails) and do entityChecks and sent email with deceased failed" in {
 
-      val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
-      val dateTime = formatter.format(LocalDateTime.now())
-
       val utr = Utr("1234567")
       val agentDetailsDesResponse = AgentDetailsDesResponse(
         uniqueTaxReference = Some(utr),
@@ -163,7 +156,7 @@ with MockAuditService {
           utr = utr.value,
           agencyName = "",
           failedChecks = "Agent is deceased",
-          dateTime = dateTime
+          dateTime = UtcCurrentTimeAsString()
         )
       )
 
@@ -176,9 +169,6 @@ with MockAuditService {
     }
 
     "return Some(SuspensionDetails) and do entityChecks and sent email with refusal to do list" in {
-
-      val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy h:mma")
-      val dateTime = formatter.format(LocalDateTime.now())
 
       val utr = Utr("1234567")
       val agentDetailsDesResponse = AgentDetailsDesResponse(
@@ -201,7 +191,7 @@ with MockAuditService {
           utr = utr.value,
           agencyName = "",
           failedChecks = "Agent is on the 'Refuse To Deal With' list",
-          dateTime = dateTime
+          dateTime = UtcCurrentTimeAsString()
         )
       )
 
