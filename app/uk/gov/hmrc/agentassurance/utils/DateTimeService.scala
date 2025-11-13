@@ -17,15 +17,16 @@
 package uk.gov.hmrc.agentassurance.utils
 
 import java.time.Clock
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object DateTimeService {
-  def nowAsString(implicit clock: Clock): String = DateTimeFormatter.ofPattern(
+  def nowAtLondonTime(implicit clock: Clock): String = DateTimeFormatter.ofPattern(
     "d MMMM yyyy h:mma z",
     Locale.ENGLISH
-  ).format(
+  ).withZone(ZoneId.of("Europe/London")).format(
     ZonedDateTime.now(clock)
   )
 }

@@ -24,22 +24,31 @@ class DateTimeServiceSpec
 extends AnyWordSpec
 with Matchers {
 
-  "NowAsString" should {
+  "NowAtLondonTime" should {
 
-    "format the fixed instant in UTC correctly" in {
+    "format the fixed instant in GMT correctly" in {
       val instant = Instant.parse("2025-03-29T22:00:00Z")
       implicit val clock: Clock = Clock.fixed(instant, ZoneId.of("UTC"))
 
-      val result = DateTimeService.nowAsString
+      val result = DateTimeService.nowAtLondonTime
 
-      result shouldBe "29 March 2025 10:00PM UTC"
+      result shouldBe "29 March 2025 10:00PM GMT"
+    }
+
+    "format the fixed instant in BST correctly" in {
+      val instant = Instant.parse("2025-07-10T22:00:00Z")
+      implicit val clock: Clock = Clock.fixed(instant, ZoneId.of("UTC"))
+
+      val result = DateTimeService.nowAtLondonTime
+
+      result shouldBe "10 July 2025 11:00PM BST"
     }
 
     "format the same instant in London zone correctly" in {
       val instant = Instant.parse("2025-03-29T22:00:00Z")
       implicit val clock: Clock = Clock.fixed(instant, ZoneId.of("Europe/London"))
 
-      val result = DateTimeService.nowAsString
+      val result = DateTimeService.nowAtLondonTime
 
       result shouldBe "29 March 2025 10:00PM GMT"
     }
@@ -48,7 +57,7 @@ with Matchers {
       val instant = Instant.parse("2025-07-15T09:00:00Z")
       implicit val clock: Clock = Clock.fixed(instant, ZoneId.of("Europe/London"))
 
-      val result = DateTimeService.nowAsString
+      val result = DateTimeService.nowAtLondonTime
 
       result shouldBe "15 July 2025 10:00AM BST"
     }

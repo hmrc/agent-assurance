@@ -147,7 +147,7 @@ class EntityCheckService @Inject() (
             utr = utr.value,
             agencyName = agentRecord.agencyDetails.flatMap(_.agencyName).getOrElse(""),
             failedChecks = nonEmptyFailedChecks.mkString("|"),
-            dateTime = DateTimeService.nowAsString
+            dateTime = DateTimeService.nowAtLondonTime
           )
 
           mongoLockService

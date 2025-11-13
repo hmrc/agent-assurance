@@ -156,7 +156,7 @@ with MockAuditService {
           utr = utr.value,
           agencyName = "",
           failedChecks = "Agent is deceased",
-          dateTime = DateTimeService.nowAsString
+          dateTime = DateTimeService.nowAtLondonTime
         )
       )
 
@@ -191,7 +191,7 @@ with MockAuditService {
           utr = utr.value,
           agencyName = "",
           failedChecks = "Agent is on the 'Refuse To Deal With' list",
-          dateTime = DateTimeService.nowAsString
+          dateTime = DateTimeService.nowAtLondonTime
         )
       )
 
