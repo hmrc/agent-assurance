@@ -37,8 +37,6 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import java.time.Clock
-
 @Singleton
 class EntityCheckController @Inject() (
   cc: ControllerComponents,
@@ -47,8 +45,7 @@ class EntityCheckController @Inject() (
   auth: BackendAuthComponents
 )(implicit
   ec: ExecutionContext,
-  appConfig: AppConfig,
-  clock: Clock
+  appConfig: AppConfig
 )
 extends BackendController(cc)
 with AuthActions {

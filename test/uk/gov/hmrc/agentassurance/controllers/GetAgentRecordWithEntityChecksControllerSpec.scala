@@ -44,7 +44,6 @@ import uk.gov.hmrc.internalauth.client.test.StubBehaviour
 import uk.gov.hmrc.internalauth.client.BackendAuthComponents
 import uk.gov.hmrc.internalauth.client.Predicate
 import uk.gov.hmrc.internalauth.client.Retrieval
-import uk.gov.hmrc.agentassurance.helpers.InstantClockTestSupport.clock
 import ExecutionContext.Implicits.global
 class GetAgentRecordWithEntityChecksControllerSpec
 extends PlaySpec

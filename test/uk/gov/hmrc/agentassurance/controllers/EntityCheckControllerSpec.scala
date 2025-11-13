@@ -26,7 +26,6 @@ import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
 import play.api.test._
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentassurance.helpers.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
@@ -42,7 +41,6 @@ import uk.gov.hmrc.internalauth.client.test.StubBehaviour
 import uk.gov.hmrc.internalauth.client.BackendAuthComponents
 import uk.gov.hmrc.internalauth.client.Predicate
 import uk.gov.hmrc.internalauth.client.Retrieval
-import InstantClockTestSupport.clock
 import ExecutionContext.Implicits.global
 
 class EntityCheckControllerSpec

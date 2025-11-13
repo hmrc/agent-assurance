@@ -45,7 +45,8 @@ class EntityCheckService @Inject() (
   mongoLockService: MongoLockService,
   emailService: EmailService,
   repository: PropertiesRepository,
-  auditService: AuditService
+  auditService: AuditService,
+  clock: Clock
 ) {
 
   def verifyAgent(
@@ -53,8 +54,7 @@ class EntityCheckService @Inject() (
   )(implicit
     request: Request[_],
     hc: HeaderCarrier,
-    ec: ExecutionContext,
-    clock: Clock
+    ec: ExecutionContext
   ): Future[EntityCheckResult] = {
 
     def deceasedStatusCheck(saUtr: SaUtr): Future[Option[EntityCheckException]] = citizenConnector
@@ -135,7 +135,7 @@ class EntityCheckService @Inject() (
     def sendEmail(
       agentRecord: AgentDetailsDesResponse,
       entityCheckExceptions: Seq[EntityCheckException]
-    )(implicit clock: Clock): Future[Unit] = {
+    ): Future[Unit] = {
       val failedChecks: Seq[String] = entityCheckExceptions.collect {
         case x: EmailCheckExceptions => x.failedChecksText
       }
@@ -147,7 +147,7 @@ class EntityCheckService @Inject() (
             utr = utr.value,
             agencyName = agentRecord.agencyDetails.flatMap(_.agencyName).getOrElse(""),
             failedChecks = nonEmptyFailedChecks.mkString("|"),
-            dateTime = DateTimeService.nowAtLondonTime
+            dateTime = DateTimeService.nowAtLondonTime(clock)
           )
 
           mongoLockService

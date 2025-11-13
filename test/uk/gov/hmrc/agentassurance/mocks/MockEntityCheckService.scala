@@ -24,7 +24,6 @@ import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.Clock
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -39,10 +38,9 @@ extends MockFactory {
       .verifyAgent(_: Arn)(
         _: Request[_],
         _: HeaderCarrier,
-        _: ExecutionContext,
-        _: Clock
+        _: ExecutionContext
       ))
-      .expects(arn, *, *, *, *)
+      .expects(arn, *, *, *)
       .returning(Future.successful(returns))
 
 }

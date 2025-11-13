@@ -64,7 +64,8 @@ with MockAuditService {
       mongoLockService,
       mockMockEmailService,
       mockPropertiesRepository,
-      mockAuditService
+      mockAuditService,
+      clock
     )
 
   "verifyAgent" should {
