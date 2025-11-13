@@ -2,17 +2,17 @@ import sbt.*
 
 object AppDependencies {
 
-  private val mongoVer: String = "2.7.0"
-  private val bootstrapVer: String = "10.1.0"
+  private val mongoVer: String = "2.10.0"
+  private val bootstrapVer: String = "10.4.0"
 
   lazy val compile: Seq[ModuleID] = Seq(
     "uk.gov.hmrc" %% "bootstrap-backend-play-30" % bootstrapVer,
     "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-30" % mongoVer,
     "org.julienrf" %% "play-json-derived-codecs" % "11.0.0",
-    "uk.gov.hmrc" %% "internal-auth-client-play-30" % "4.1.0",
+    "uk.gov.hmrc" %% "internal-auth-client-play-30" % "4.3.0",
     "io.github.openhtmltopdf" % "openhtmltopdf-pdfbox" % "1.1.30",
     "com.beachape" %% "enumeratum-play-json" % "1.9.0",
-    "uk.gov.hmrc" %% "crypto-json-play-30" % "8.3.0",
+    "uk.gov.hmrc" %% "crypto-json-play-30" % "8.4.0",
     "uk.gov.hmrc" %% "domain-play-30" % "11.0.0"
   )
 

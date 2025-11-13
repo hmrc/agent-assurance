@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.helpers
+package uk.gov.hmrc.agentassurance.utils
 
-import java.time._
+import java.time.Clock
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-trait InstantClockTestSupport /*extends AnyFeatureSpec with GuiceOneServerPerSuite*/ {
-
-  lazy val localDateTime: LocalDateTime = LocalDateTime.now()
-  lazy val instant: Instant = localDateTime.toInstant(ZoneOffset.UTC)
-  lazy val frozenInstant: Instant = instant
-
-  implicit val clock: Clock = Clock.fixed(frozenInstant, ZoneId.of("UTC"))
-
+object DateTimeService {
+  def nowAtLondonTime(implicit clock: Clock): String = DateTimeFormatter.ofPattern(
+    "d MMMM yyyy h:mma z",
+    Locale.ENGLISH
+  ).withZone(ZoneId.of("Europe/London")).format(
+    ZonedDateTime.now(clock)
+  )
 }
-
-object InstantClockTestSupport
-extends InstantClockTestSupport

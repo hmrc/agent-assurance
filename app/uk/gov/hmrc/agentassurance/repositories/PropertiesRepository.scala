@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentassurance.repositories
 
 import com.google.inject.ImplementedBy
-import org.mongodb.scala._
 import org.mongodb.scala.model.Aggregates.filter
 import org.mongodb.scala.model.Aggregates.limit
 import org.mongodb.scala.model.Aggregates.skip

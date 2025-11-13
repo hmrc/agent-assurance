@@ -107,6 +107,6 @@ extends MockFactory { this: TestSuite =>
     .atLeastOnce()
     .returning("test@example.com")
 
-  val mockAppConfig: AppConfig = new AppConfig(mockConfig, mockServiceConfig)
+  implicit val mockAppConfig: AppConfig = new AppConfig(mockConfig, mockServiceConfig)
 
 }

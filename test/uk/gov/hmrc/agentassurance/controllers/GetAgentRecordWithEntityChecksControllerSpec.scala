@@ -28,6 +28,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
 import play.api.test.Helpers.GET
+
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.enrolmentsWithNoIrSAAgent
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testArn
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testUtr
@@ -43,7 +44,7 @@ import uk.gov.hmrc.internalauth.client.test.StubBehaviour
 import uk.gov.hmrc.internalauth.client.BackendAuthComponents
 import uk.gov.hmrc.internalauth.client.Predicate
 import uk.gov.hmrc.internalauth.client.Retrieval
-
+import ExecutionContext.Implicits.global
 class GetAgentRecordWithEntityChecksControllerSpec
 extends PlaySpec
 with DefaultAwaitTimeout
@@ -53,7 +54,6 @@ with MockAppConfig
 with MockEntityCheckService
 with MockFactory {
 
-  implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
   val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
 
@@ -63,7 +63,7 @@ with MockFactory {
       mockEntityCheckService,
       mockAuthConnector,
       stubBackendAuthComponents
-    )(ec, mockAppConfig)
+    )
 
   "get" should {
     "return OK" in {
