@@ -26,6 +26,7 @@ import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
 import play.api.test._
 import play.api.test.Helpers._
+import uk.gov.hmrc.agentassurance.helpers.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
@@ -41,6 +42,8 @@ import uk.gov.hmrc.internalauth.client.test.StubBehaviour
 import uk.gov.hmrc.internalauth.client.BackendAuthComponents
 import uk.gov.hmrc.internalauth.client.Predicate
 import uk.gov.hmrc.internalauth.client.Retrieval
+import InstantClockTestSupport.clock
+import ExecutionContext.Implicits.global
 
 class EntityCheckControllerSpec
 extends PlaySpec
@@ -51,7 +54,6 @@ with MockAppConfig
 with MockEntityCheckService
 with MockFactory {
 
-  implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
   val as: ActorSystem = ActorSystem()
   implicit val mat: Materializer = Materializer(as)
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
@@ -63,7 +65,7 @@ with MockFactory {
       mockEntityCheckService,
       mockAuthConnector,
       stubBackendAuthComponents
-    )(ec, mockAppConfig)
+    )
 
   "agentVerifyEntity" should {
     "return NO_CONTENT" when {

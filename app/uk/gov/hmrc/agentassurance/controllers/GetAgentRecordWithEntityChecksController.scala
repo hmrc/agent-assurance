@@ -38,6 +38,8 @@ import uk.gov.hmrc.internalauth.client.ResourceLocation
 import uk.gov.hmrc.internalauth.client.ResourceType
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.Clock
+
 @Singleton
 class GetAgentRecordWithEntityChecksController @Inject() (
   cc: ControllerComponents,
@@ -46,7 +48,8 @@ class GetAgentRecordWithEntityChecksController @Inject() (
   auth: BackendAuthComponents
 )(implicit
   ec: ExecutionContext,
-  appConfig: AppConfig
+  appConfig: AppConfig,
+  clock: Clock
 )
 extends BackendController(cc)
 with AuthActions {
