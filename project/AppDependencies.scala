@@ -2,8 +2,8 @@ import sbt.*
 
 object AppDependencies {
 
-  private val mongoVer: String = "2.10.0"
-  private val bootstrapVer: String = "10.4.0"
+  private val mongoVer: String = "2.12.0"
+  private val bootstrapVer: String = "10.5.0"
   private val playVer: String = "play-30"
 
   lazy val compile: Seq[ModuleID] = Seq(
