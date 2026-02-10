@@ -4,23 +4,24 @@ object AppDependencies {
 
   private val mongoVer: String = "2.10.0"
   private val bootstrapVer: String = "10.4.0"
+  private val playVer: String = "play-30"
 
   lazy val compile: Seq[ModuleID] = Seq(
-    "uk.gov.hmrc" %% "bootstrap-backend-play-30" % bootstrapVer,
-    "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-30" % mongoVer,
-    "org.julienrf" %% "play-json-derived-codecs" % "11.0.0",
-    "uk.gov.hmrc" %% "internal-auth-client-play-30" % "4.3.0",
-    "io.github.openhtmltopdf" % "openhtmltopdf-pdfbox" % "1.1.30",
-    "com.beachape" %% "enumeratum-play-json" % "1.9.0",
-    "uk.gov.hmrc" %% "crypto-json-play-30" % "8.4.0",
-    "uk.gov.hmrc" %% "domain-play-30" % "11.0.0"
+    "uk.gov.hmrc"            %% s"bootstrap-backend-$playVer"    % bootstrapVer,
+    "uk.gov.hmrc.mongo"      %% s"hmrc-mongo-$playVer"           % mongoVer,
+    "uk.gov.hmrc"            %% s"internal-auth-client-$playVer" % "4.3.0",
+    "uk.gov.hmrc"            %% s"crypto-json-$playVer"          % "8.4.0",
+    "uk.gov.hmrc"            %% s"domain-$playVer"               % "11.0.0",
+    "org.julienrf"           %% "play-json-derived-codecs"       % "11.0.0",
+    "com.beachape"           %% "enumeratum-play-json"           % "1.9.0",
+    "io.github.openhtmltopdf" % "openhtmltopdf-pdfbox"           % "1.1.30"
   )
 
   lazy val test: Seq[ModuleID] = Seq(
-    "uk.gov.hmrc.mongo" %% "hmrc-mongo-test-play-30" % mongoVer % Test,
-    "uk.gov.hmrc" %% "bootstrap-test-play-30" % bootstrapVer % Test,
-    "org.scalamock" %% "scalamock" % "7.4.1" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.18.1" % Test
-  )
+    "uk.gov.hmrc" %% s"bootstrap-test-$playVer" % bootstrapVer,
+    "uk.gov.hmrc.mongo" %% s"hmrc-mongo-test-$playVer" % mongoVer,
+    "org.scalamock" %% "scalamock" % "7.4.1",
+    "org.scalacheck" %% "scalacheck" % "1.18.1"
+  ).map(_ % Test)
 
 }
