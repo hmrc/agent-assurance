@@ -18,10 +18,10 @@ object AppDependencies {
   )
 
   lazy val test: Seq[ModuleID] = Seq(
-    "uk.gov.hmrc" %% s"bootstrap-test-$playVer" % bootstrapVer,
+    "uk.gov.hmrc"       %% s"bootstrap-test-$playVer"  % bootstrapVer,
     "uk.gov.hmrc.mongo" %% s"hmrc-mongo-test-$playVer" % mongoVer,
-    "org.scalamock" %% "scalamock" % "7.4.1",
-    "org.scalacheck" %% "scalacheck" % "1.18.1"
+    "org.scalamock"     %% "scalamock"                 % "7.4.1",
+    "org.scalacheck"    %% "scalacheck"                % "1.18.1"
   ).map(_ % Test)
 
 }
