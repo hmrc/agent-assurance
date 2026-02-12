@@ -177,7 +177,13 @@ with Logging {
         apiName = "GetAgentNameCached",
         url = url,
         request = DesRegistrationRequest(isAnAgent = false)
-      ).map(_.flatMap(_.agentName))
+      )
+        .map(_.flatMap(_.agentName))
+        .recoverWith {
+          case e: UpstreamErrorResponse if e.statusCode == 503 =>
+            logger.warn("[DesConnector] getBusinessName returned a 503")
+            Future.successful(Some("Error retrieving name"))
+        }
     }
   }
 
