@@ -256,17 +256,21 @@ with CleanMongoCollectionSupport {
 
   "DesConnector getBusinessNameRecord" should {
     "return business name for individual for a given UTR" in {
-
       givenDESRespondsWithRegistrationData(identifier = utr, isIndividual = true)
 
       await(desConnector.getBusinessName(utr.value)) shouldBe Some(individualBusinessName)
     }
 
     "return business name for organisation for a given UTR" in {
-
       givenDESRespondsWithRegistrationData(identifier = utr, isIndividual = false)
 
       await(desConnector.getBusinessName(utr.value)) shouldBe Some(organisationBusinessName)
+    }
+
+    "return \"Error retrieving name\" for a 503 response" in {
+      givenDESReturnsErrorForRegistration(identifier = utr, responseCode = 503)
+
+      await(desConnector.getBusinessName(utr.value)) shouldBe Some("Error retrieving name")
     }
   }
 
