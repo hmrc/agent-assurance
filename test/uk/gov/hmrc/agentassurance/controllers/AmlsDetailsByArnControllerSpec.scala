@@ -190,4 +190,19 @@ with ScalaFutures {
     }
   }
 
+  "postAmlsDetails" should {
+    "return created when the request is stored" in {
+      val requestBody = Json.toJson(testUKAmlsRequest)
+
+      inSequence {
+        mockAgentAuth()(Right(()))
+        mockStoreAmlsRequest(testArn, testUKAmlsRequest)(Future.successful(Right(testAmlsDetails)))
+      }
+
+      val response = controller.postAmlsDetails(testArn)(FakeRequest().withJsonBody(requestBody))
+
+      status(response) mustBe CREATED
+    }
+  }
+
 }

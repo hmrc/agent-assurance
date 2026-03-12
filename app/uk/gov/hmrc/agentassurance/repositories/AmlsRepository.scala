@@ -24,6 +24,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import com.google.inject.ImplementedBy
+import com.mongodb.MongoException
 import com.mongodb.client.model.ReturnDocument
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.Filters.equal
@@ -52,6 +53,19 @@ import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent
 
+private sealed trait ArnUpsertResult
+
+private object ArnUpsertResult {
+
+  final case class Success(oldAmlsEntity: Option[UkAmlsEntity])
+  extends ArnUpsertResult
+  final case class DuplicateUtrIndex(utr: Utr)
+  extends ArnUpsertResult
+  final case class Failure(error: AmlsError)
+  extends ArnUpsertResult
+
+}
+
 @ImplementedBy(classOf[AmlsRepositoryImpl])
 trait AmlsRepository {
 
@@ -60,7 +74,7 @@ trait AmlsRepository {
   def createOrUpdate(
     arn: Arn,
     amlsEntity: UkAmlsEntity
-  ): Future[Option[UkAmlsEntity]]
+  ): Future[Either[AmlsError, Option[UkAmlsEntity]]]
 
   def updateArn(
     utr: Utr,
@@ -145,14 +159,10 @@ with Logging {
   override def createOrUpdate(
     arn: Arn,
     amlsEntity: UkAmlsEntity
-  ): Future[Option[UkAmlsEntity]] = {
-    collection
-      .findOneAndReplace(
-        equal("arn", arn.value),
-        amlsEntity,
-        FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE)
-      )
-      .headOption()
+  ): Future[Either[AmlsError, Option[UkAmlsEntity]]] = upsertByArn(arn, amlsEntity).flatMap {
+    case ArnUpsertResult.Success(oldAmlsEntity) => Right(oldAmlsEntity)
+    case ArnUpsertResult.DuplicateUtrIndex(utr) => repairLegacyUtrCollision(utr, amlsEntity)
+    case ArnUpsertResult.Failure(error) => Left(error)
   }
 
   override def updateArn(
@@ -227,6 +237,71 @@ with Logging {
         )
       )
       .toFuture()
+  }
+
+  private def upsertByArn(
+    arn: Arn,
+    amlsEntity: UkAmlsEntity
+  ): Future[ArnUpsertResult] = collection
+    .findOneAndReplace(
+      equal("arn", arn.value),
+      amlsEntity,
+      FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE)
+    )
+    .headOption()
+    .map(ArnUpsertResult.Success(_))
+    .recover {
+      case e =>
+        (e, amlsEntity) match {
+          case DuplicateUtrIndexFor(utr) => ArnUpsertResult.DuplicateUtrIndex(utr)
+          case _ => ArnUpsertResult.Failure(AmlsUnexpectedMongoError)
+        }
+    }
+
+  private def repairLegacyUtrCollision(
+    utr: Utr,
+    amlsEntity: UkAmlsEntity
+  ): Future[Either[AmlsError, Option[UkAmlsEntity]]] = collection
+    .find(equal("utr", utr.value))
+    .headOption()
+    .flatMap {
+      case LegacyUtrOnlyRecord(_) => replaceLegacyUtrOnlyRecord(utr, amlsEntity)
+      // Reaching a non-legacy row here means the ARN<->UTR mapping invariant has already been broken,
+      // so treat it as an unexpected persistence error rather than a recoverable ownership conflict.
+      case _ => Left(AmlsUnexpectedMongoError)
+    }.recover {
+      case _ => Left(AmlsUnexpectedMongoError)
+    }
+
+  private def replaceLegacyUtrOnlyRecord(
+    utr: Utr,
+    amlsEntity: UkAmlsEntity
+  ): Future[Either[AmlsError, Option[UkAmlsEntity]]] = collection
+    .findOneAndReplace(
+      equal("utr", utr.value),
+      amlsEntity,
+      FindOneAndReplaceOptions().returnDocument(ReturnDocument.BEFORE)
+    )
+    .headOption()
+    .map {
+      case Some(oldAmlsEntity) => Right(Some(oldAmlsEntity))
+      case None => Left(AmlsUnexpectedMongoError)
+    }
+
+  private object DuplicateUtrIndexFor {
+    def unapply(input: (MongoException, UkAmlsEntity)): Option[Utr] =
+      input match {
+        case (mongoException, amlsEntity) if mongoException.getCode == 11000 => amlsEntity.utr
+        case _ => None
+      }
+  }
+
+  private object LegacyUtrOnlyRecord {
+    def unapply(maybeEntity: Option[UkAmlsEntity]): Option[UkAmlsEntity] =
+      maybeEntity match {
+        case Some(entity) if entity.arn.isEmpty => Some(entity)
+        case _ => None
+      }
   }
 
 }

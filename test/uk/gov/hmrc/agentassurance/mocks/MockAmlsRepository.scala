@@ -78,7 +78,7 @@ extends MockFactory { this: TestSuite =>
   def mockCreateOrUpdate(
     arn: Arn,
     ukAmnlsEntity: UkAmlsEntity
-  )(response: Option[UkAmlsEntity]) = {
+  )(response: Either[AmlsError, Option[UkAmlsEntity]]) = {
     (mockAmlsRepository
       .createOrUpdate(_: Arn, _: UkAmlsEntity))
       .expects(arn, ukAmnlsEntity)

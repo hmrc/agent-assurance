@@ -22,6 +22,9 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.models.AmlsDetails
+import uk.gov.hmrc.agentassurance.models.AmlsError
+import uk.gov.hmrc.agentassurance.models.AmlsRequest
+import uk.gov.hmrc.agentassurance.models.AmlsSource
 import uk.gov.hmrc.agentassurance.models.AmlsStatus
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
 import uk.gov.hmrc.agentassurance.models.Arn
@@ -38,6 +41,26 @@ extends MockFactory { this: TestSuite =>
     (mockAmlsDetailsService
       .getAmlsDetailsByArn(_: Arn)(_: HeaderCarrier, _: Request[_]))
       .expects(arn, *, *)
+      .returning(response)
+  }
+
+  def mockStoreAmlsRequest(
+    arn: Arn,
+    amlsRequest: AmlsRequest
+  )(response: Future[Either[AmlsError, AmlsDetails]]) = {
+    (mockAmlsDetailsService
+      .storeAmlsRequest(
+        _: Arn,
+        _: AmlsRequest,
+        _: AmlsSource
+      )(_: HeaderCarrier, _: Request[_]))
+      .expects(
+        arn,
+        amlsRequest,
+        AmlsSource.Subscription,
+        *,
+        *
+      )
       .returning(response)
   }
 

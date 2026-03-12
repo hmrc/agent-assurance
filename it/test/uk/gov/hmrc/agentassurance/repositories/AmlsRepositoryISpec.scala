@@ -28,6 +28,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.Application
 import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.models.AmlsSource
+import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
 import uk.gov.hmrc.agentassurance.models.UkAmlsEntity
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
@@ -77,7 +78,7 @@ with InstantClockTestSupport {
       )
 
       val result = repository.createOrUpdate(arn, amlsEntity).futureValue
-      result mustBe None
+      result mustBe Right(None)
 
       val checkResult = repository.collection.find().toFuture().futureValue
       checkResult.size mustBe 1
@@ -111,11 +112,72 @@ with InstantClockTestSupport {
 
       repository.collection.insertOne(oldAmlsEntity).toFuture().futureValue
       val result = repository.createOrUpdate(arn, newAmlsEntity).futureValue
-      result mustBe Some(oldAmlsEntity)
+      result mustBe Right(Some(oldAmlsEntity))
 
       val checkResult = repository.collection.find().toFuture().futureValue
       checkResult.size mustBe 1
       checkResult.head mustBe newAmlsEntity.copy(createdOn = today)
+    }
+
+    "repair a legacy UTR-only record and return the old record" in {
+
+      val oldAmlsEntity = UkAmlsEntity(
+        utr = Some(utr),
+        amlsDetails = UkAmlsDetails(
+          supervisoryBody = "ACCA",
+          membershipNumber = Some("ABC123"),
+          appliedOn = None,
+          membershipExpiresOn = Some(LocalDate.parse("2020-12-31"))
+        ),
+        arn = None,
+        createdOn = LocalDate.parse("2020-01-01"),
+        amlsSource = AmlsSource.Subscription
+      )
+      val newAmlsEntity = UkAmlsEntity(
+        utr = Some(utr),
+        amlsDetails = newUkAmlsDetails,
+        arn = Some(arn),
+        createdOn = today,
+        amlsSource = AmlsSource.Subscription
+      )
+
+      repository.collection.insertOne(oldAmlsEntity).toFuture().futureValue
+
+      val result = repository.createOrUpdate(arn, newAmlsEntity).futureValue
+
+      result mustBe Right(Some(oldAmlsEntity))
+
+      val checkResult = repository.collection.find().toFuture().futureValue
+      checkResult.size mustBe 1
+      checkResult.head mustBe newAmlsEntity.copy(createdOn = today)
+    }
+
+    "return an unexpected Mongo error when the UTR belongs to another ARN" in {
+
+      val conflictingAmlsEntity = UkAmlsEntity(
+        utr = Some(utr),
+        amlsDetails = newUkAmlsDetails,
+        arn = Some(Arn("TARN0000009")),
+        createdOn = LocalDate.parse("2020-01-01"),
+        amlsSource = AmlsSource.Subscription
+      )
+      val newAmlsEntity = UkAmlsEntity(
+        utr = Some(utr),
+        amlsDetails = newUkAmlsDetails.copy(supervisoryBody = "CIOT"),
+        arn = Some(arn),
+        createdOn = today,
+        amlsSource = AmlsSource.Subscription
+      )
+
+      repository.collection.insertOne(conflictingAmlsEntity).toFuture().futureValue
+
+      val result = repository.createOrUpdate(arn, newAmlsEntity).futureValue
+
+      result mustBe Left(AmlsUnexpectedMongoError)
+
+      val checkResult = repository.collection.find().toFuture().futureValue
+      checkResult.size mustBe 1
+      checkResult.head mustBe conflictingAmlsEntity
     }
 
     "getUtr" should {

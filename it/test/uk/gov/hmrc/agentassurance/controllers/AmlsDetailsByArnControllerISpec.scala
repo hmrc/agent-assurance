@@ -287,6 +287,45 @@ with DesStubs {
         ukAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
         archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
       }
+
+      "a legacy UTR-only record exists, updating that record and archiving it" in {
+        isLoggedInAsAnAfinityGroupAgent("agent1")
+        givenDESGetAgentRecord(arn, Some(testUtr))
+        await(ukAmlsRepository.ensureIndexes())
+
+        val legacyAmlsEntity = UkAmlsEntity(
+          utr = Some(testUtr),
+          amlsDetails = UkAmlsDetails(
+            supervisoryBody = "ICAEW",
+            membershipNumber = Some("123"),
+            amlsSafeId = None,
+            agentBPRSafeId = None,
+            appliedOn = None,
+            membershipExpiresOn = Some(LocalDate.parse("2019-10-10"))
+          ),
+          arn = None,
+          createdOn = LocalDate.parse("2020-10-10"),
+          amlsSource = AmlsSource.Subscription
+        )
+
+        ukAmlsRepository.collection.insertOne(legacyAmlsEntity).toFuture().futureValue
+
+        val amlsRequest = AmlsRequest(
+          ukRecord = true,
+          supervisoryBody = "ACCA",
+          membershipNumber = "A123",
+          membershipExpiresOn = Some(LocalDate.parse("2024-12-31"))
+        )
+
+        val response = doPostRequest(Json.toJson(amlsRequest))
+        response.status mustBe CREATED
+
+        val ukAmlsRecords = ukAmlsRepository.collection.find().toFuture().futureValue
+        ukAmlsRecords.size mustBe 1
+        ukAmlsRecords.head.arn mustBe Some(arn)
+        ukAmlsRecords.head.utr mustBe Some(testUtr)
+        archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
+      }
     }
     "return 201 Created for overseas AMLS" when {
       "no previous record exists for the ARN" in {
