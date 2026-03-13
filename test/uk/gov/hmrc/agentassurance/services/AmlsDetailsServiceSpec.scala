@@ -30,6 +30,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks._
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.AmlsError.UniqueKeyViolationError
 import uk.gov.hmrc.agentassurance.models.AmlsStatus
 import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
 import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
@@ -444,7 +445,7 @@ with MockAgencyDetailsService {
     "return Right(testAmlsDetails) when storing a UK AMLS record and there was no existing record" in {
       mockGetUtr(testArn)(None)
       mockGetAgentRecord(testArn)(testAgentDetailsDesResponse)
-      mockCreateOrUpdate(testArn, testUKAmlsEntity)(None)
+      mockCreateOrUpdate(testArn, testUKAmlsEntity)(Right(None))
 
       val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
 
@@ -454,7 +455,7 @@ with MockAgencyDetailsService {
     "return Right(testAmlsDetails) when storing a UK AMLS record and there was no existing record and no utr" in {
       mockGetUtr(testArn)(None)
       mockGetAgentRecord(testArn)(testAgentDetailsDesResponseNoUtr)
-      mockCreateOrUpdate(testArn, testUKAmlsEntity.copy(utr = None))(None)
+      mockCreateOrUpdate(testArn, testUKAmlsEntity.copy(utr = None))(Right(None))
 
       val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
 
@@ -463,12 +464,21 @@ with MockAgencyDetailsService {
 
     "return Right(testAmlsDetails) when UK AMLS and there is an existing AMLS record" in {
       mockGetUtr(testArn)(Some(testUtr))
-      mockCreateOrUpdate(testArn, testUKAmlsEntity)(Some(testUKAmlsEntity))
+      mockCreateOrUpdate(testArn, testUKAmlsEntity)(Right(Some(testUKAmlsEntity)))
       mockCreate(ArchivedAmlsEntity(testArn, testUKAmlsEntity))(Right(()))
 
       val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
 
       result mustBe Right(testAmlsDetails)
+    }
+
+    "return Left(UniqueKeyViolationError) when the UK AMLS write detects a conflict" in {
+      mockGetUtr(testArn)(Some(testUtr))
+      mockCreateOrUpdate(testArn, testUKAmlsEntity)(Left(UniqueKeyViolationError))
+
+      val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
+
+      result mustBe Left(UniqueKeyViolationError)
     }
 
     "return Right(testOverseasAmlsDetails) when Overseas AMLS and there is no existing AMLS record" in {

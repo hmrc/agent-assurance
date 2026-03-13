@@ -246,10 +246,10 @@ extends Logging {
               amlsDetails = overseasAmlsDetails,
               createdDate = None
             )
-          )
+          ).map(Right(_))
       }
     }.flatMap {
-      case Some(oldAmlsEntity) =>
+      case Right(Some(oldAmlsEntity)) =>
         logger.info(
           s"[AmlsDetailsService][storeNewAmlsRequest] Old AMLS record archived, stored and returned new record"
         )
@@ -257,9 +257,12 @@ extends Logging {
           case Right(_) => Right(newAmlsDetails)
           case Left(error) => Left(error)
         }
-      case None =>
+      case Right(None) =>
         logger.info(s"[AmlsDetailsService][storeNewAmlsRequest] No old AMLS record found, returning new record")
         Future.successful(Right(newAmlsDetails))
+      case Left(error) =>
+        logger.warn(s"[AmlsDetailsService][storeNewAmlsRequest] Failed to store AMLS record: $error")
+        Future.successful(Left(error))
     }
   }
 
