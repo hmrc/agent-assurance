@@ -38,6 +38,7 @@ class AppConfig @Inject() (
 
   val authBaseUrl: String = baseUrl("auth")
   val desBaseUrl: String = baseUrl("des")
+  val agentServicesAccountBaseUrl: String = baseUrl("agent-services-account")
   val esProxyUrl: String = baseUrl("enrolment-store-proxy")
   val citizenDetailsBaseUrl: String = baseUrl("citizen-details")
 
@@ -70,6 +71,7 @@ class AppConfig @Inject() (
   val desAuthToken: String = getConf("des.authorization-token")
 
   val internalHostPatterns: Seq[Regex] = config.get[Seq[String]]("internalServiceHostPatterns").map(_.r)
+  val useAgentServicesAccountAmls: Boolean = config.get[Boolean]("features.use-agent-services-account-amls")
 
   val entityChecksLockExpires: Duration = servicesConfig.getDuration("agent.entity-check.lock.expires")
   val entityChecksEmailLockExpires: Duration = servicesConfig.getDuration("agent.entity-check.email.lock.expires")

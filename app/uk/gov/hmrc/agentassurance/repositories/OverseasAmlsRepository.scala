@@ -47,6 +47,8 @@ trait OverseasAmlsRepository {
 
   def createOrUpdate(amlsEntity: OverseasAmlsEntity): Future[Option[OverseasAmlsEntity]]
 
+  def deleteByArn(arn: Arn): Future[Unit]
+
 }
 
 @Singleton
@@ -105,5 +107,10 @@ with Logging {
       )
       .headOption()
   }
+
+  override def deleteByArn(arn: Arn): Future[Unit] = collection
+    .deleteOne(equal("arn", arn.value))
+    .toFuture()
+    .map(_ => ())
 
 }

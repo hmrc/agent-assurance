@@ -117,13 +117,15 @@ object TestConstants {
     ukRecord = true,
     "supervisory",
     "0123456789",
-    Some(membershipExpiresOnDate)
+    Some(membershipExpiresOnDate),
+    None
   )
   val testOverseasAmlsRequest: AmlsRequest = AmlsRequest(
     ukRecord = false,
     "supervisory",
     "0123456789",
-    Some(membershipExpiresOnDate)
+    Some(membershipExpiresOnDate),
+    None
   )
 
   // DES Agent Record

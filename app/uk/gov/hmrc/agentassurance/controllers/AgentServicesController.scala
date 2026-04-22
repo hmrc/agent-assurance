@@ -64,6 +64,7 @@ with Logging {
                 optUtr,
                 Some(agencyDetails),
                 _,
+                _,
                 _
               ) =>
             Ok(Json.toJson(AgentDetailsResponse(agencyDetails, optUtr)))

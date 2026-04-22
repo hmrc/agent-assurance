@@ -60,4 +60,11 @@ extends MockFactory { this: TestSuite =>
       .returning(toFuture(response))
   }
 
+  def mockDeleteOverseasAmlsByArn(arn: Arn)(response: Future[Unit]) = {
+    (mockOverseasAmlsRepository
+      .deleteByArn(_: Arn))
+      .expects(arn)
+      .returning(response)
+  }
+
 }
