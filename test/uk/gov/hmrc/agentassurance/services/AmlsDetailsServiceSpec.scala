@@ -22,28 +22,38 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 import com.mongodb.client.result.UpdateResult
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.PrivateMethodTester
 import org.scalatestplus.play.PlaySpec
+import play.api.Configuration
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks._
+import uk.gov.hmrc.agentassurance.models.AgentRecordAmlsDetails
+import uk.gov.hmrc.agentassurance.models.AgentRecordUpdateRequest
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.models.AmlsError.UniqueKeyViolationError
 import uk.gov.hmrc.agentassurance.models.AmlsStatus
 import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
 import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
+import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class AmlsDetailsServiceSpec
 extends PlaySpec
 with PrivateMethodTester
+with MockFactory
 with MockAmlsRepository
 with MockOverseasAmlsRepository
 with MockArchivedAmlsRepository
 with MockDesConnector
-with MockAgencyDetailsService {
+with MockAgencyDetailsService
+with MockAgentServicesAccountConnector
+with MockAppConfig {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: Request[Any] = FakeRequest()
@@ -54,7 +64,44 @@ with MockAgencyDetailsService {
       mockAmlsRepository,
       mockArchivedAmlsRepository,
       mockDesConnector,
-      mockAgencyDetailsService
+      mockAgencyDetailsService,
+      mockAgentServicesAccountConnector,
+      mockAppConfig
+    )
+
+  val featureOnServicesConfig: ServicesConfig = mock[ServicesConfig]
+  val featureOnConfiguration: Configuration = Configuration.from(
+    Map(
+      "internalServiceHostPatterns" -> Seq(
+        "^.*\\.service$",
+        "^.*\\.mdtp$",
+        "^localhost$"
+      ),
+      "agent-maintainer-email" -> "test@example.com",
+      "features.use-agent-services-account-amls" -> true
+    )
+  )
+
+  (featureOnServicesConfig.getInt _: String => Int).expects(*).anyNumberOfTimes().returning(1)
+  (featureOnServicesConfig.baseUrl _: String => String).expects(*).anyNumberOfTimes().returning("http://localhost:1234")
+  (featureOnServicesConfig.getConfString(_: String, _: String)).expects(*, *).anyNumberOfTimes().returning("some-string")
+  (featureOnServicesConfig.getString _: String => String).expects(*).anyNumberOfTimes().returning("some-string")
+  (featureOnServicesConfig.getBoolean _: String => Boolean).expects(*).anyNumberOfTimes().returning(false)
+  (featureOnServicesConfig.getDuration _: String => scala.concurrent.duration.Duration).expects(
+    *
+  ).anyNumberOfTimes().returning(scala.concurrent.duration.Duration.Zero)
+
+  val featureOnAppConfig: AppConfig = new AppConfig(featureOnConfiguration, featureOnServicesConfig)
+
+  def featureOnService: AmlsDetailsService =
+    new AmlsDetailsService(
+      mockOverseasAmlsRepository,
+      mockAmlsRepository,
+      mockArchivedAmlsRepository,
+      mockDesConnector,
+      mockAgencyDetailsService,
+      mockAgentServicesAccountConnector,
+      featureOnAppConfig
     )
 
   "getAmlsDetailsByArn" when {
@@ -415,6 +462,59 @@ with MockAgencyDetailsService {
     }
   }
 
+  "getAmlsDetailsByArn with ASA feature enabled" should {
+    "map non-GB ASA AMLS details to overseas status" in {
+      mockAsaGetAgentRecord(testArn)(
+        testAgentDetailsDesOverseas.copy(
+          amlsDetails = Some(AgentRecordAmlsDetails(
+            supervisoryBody = "SRA",
+            membershipNumber = "XAML00000123456",
+            evidenceObjectReference = Some("evidence-ref")
+          ))
+        )
+      )
+
+      val result = await(featureOnService.getAmlsDetailsByArn(testArn))
+
+      result mustBe (
+        AmlsStatus.ValidAmlsNonUK,
+        Some(OverseasAmlsDetails(
+          supervisoryBody = "SRA",
+          membershipNumber = Some("XAML00000123456")
+        ))
+      )
+    }
+
+    "use the ASA country to derive no-details status when no AMLS exists anywhere" in {
+      mockAsaGetAgentRecord(testArn)(testAgentDetailsDesAddressUtrResponse.copy(amlsDetails = None))
+      mockGetAmlsDetailsByArn(testArn)(None)
+      mockGetOverseasAmlsDetailsByArn(testArn)(None)
+
+      val result = await(featureOnService.getAmlsDetailsByArn(testArn))
+
+      result mustBe (AmlsStatus.NoAmlsDetailsUK, None)
+    }
+
+    "fall back to legacy details when ASA AMLS exists but country is missing" in {
+      mockAsaGetAgentRecord(testArn)(
+        testAgentDetailsDesResponse.copy(
+          agencyDetails = None,
+          amlsDetails = Some(AgentRecordAmlsDetails(
+            supervisoryBody = "SRA",
+            membershipNumber = "XAML00000123456",
+            evidenceObjectReference = None
+          ))
+        )
+      )
+      mockGetAmlsDetailsByArn(testArn)(Some(testAmlsDetails))
+      mockGetOverseasAmlsDetailsByArn(testArn)(None)
+
+      val result = await(featureOnService.getAmlsDetailsByArn(testArn))
+
+      result mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testAmlsDetails))
+    }
+  }
+
   "hasRenewalDateExpired" when {
     "not provided with a date" should {
       "return false" in {
@@ -505,6 +605,67 @@ with MockAgencyDetailsService {
       val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
 
       result mustBe Left(AmlsUnexpectedMongoError)
+    }
+  }
+
+  "storeAmlsRequest with ASA feature enabled" should {
+    "update ASA and delete legacy Mongo records on success" in {
+      mockAsaUpdateAmlsDetails(
+        AgentRecordUpdateRequest(
+          amlsDetails = Some(AgentRecordAmlsDetails(
+            "supervisory",
+            "0123456789",
+            None
+          )),
+          agencyDetails = None
+        )
+      )(Future.successful(()))
+      mockDeleteUkAmlsByArn(testArn)(Future.successful(()))
+      mockDeleteOverseasAmlsByArn(testArn)(Future.successful(()))
+
+      val result = await(featureOnService.storeAmlsRequest(testArn, testUKAmlsRequest))
+
+      result mustBe Right(testAmlsDetails)
+    }
+
+    "forward evidenceObjectReference to ASA when provided" in {
+      val requestWithEvidence = testUKAmlsRequest.copy(evidenceObjectReference = Some("evidence-ref-123"))
+
+      mockAsaUpdateAmlsDetails(
+        AgentRecordUpdateRequest(
+          amlsDetails = Some(AgentRecordAmlsDetails(
+            "supervisory",
+            "0123456789",
+            Some("evidence-ref-123")
+          )),
+          agencyDetails = None
+        )
+      )(Future.successful(()))
+      mockDeleteUkAmlsByArn(testArn)(Future.successful(()))
+      mockDeleteOverseasAmlsByArn(testArn)(Future.successful(()))
+
+      val result = await(featureOnService.storeAmlsRequest(testArn, requestWithEvidence))
+
+      result mustBe Right(testAmlsDetails)
+    }
+
+    "return success when ASA update succeeds but legacy cleanup fails" in {
+      mockAsaUpdateAmlsDetails(
+        AgentRecordUpdateRequest(
+          amlsDetails = Some(AgentRecordAmlsDetails(
+            "supervisory",
+            "0123456789",
+            None
+          )),
+          agencyDetails = None
+        )
+      )(Future.successful(()))
+      mockDeleteUkAmlsByArn(testArn)(Future.failed(new RuntimeException("cleanup failed")))
+      mockDeleteOverseasAmlsByArn(testArn)(Future.successful(()))
+
+      val result = await(featureOnService.storeAmlsRequest(testArn, testUKAmlsRequest))
+
+      result mustBe Right(testAmlsDetails)
     }
   }
 

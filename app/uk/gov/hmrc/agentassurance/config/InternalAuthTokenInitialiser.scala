@@ -82,6 +82,11 @@ with Logging {
                       |    "resourceType": "dms-submission",
                       |    "resourceLocation": "submit",
                       |    "actions": ["WRITE"]
+                      |   },
+                      |   {
+                      |    "resourceType": "agent-services-account",
+                      |    "resourceLocation": "agent-record-with-checks/arn",
+                      |    "actions": ["WRITE"]
                       |   }
                       | ]
                       |}

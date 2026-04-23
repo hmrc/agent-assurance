@@ -31,7 +31,8 @@ case class AgentDetailsDesResponse(
   uniqueTaxReference: Option[Utr],
   agencyDetails: Option[AgencyDetails],
   suspensionDetails: Option[SuspensionDetails],
-  isAnIndividual: Option[Boolean]
+  isAnIndividual: Option[Boolean],
+  amlsDetails: Option[AgentRecordAmlsDetails] = None
 )
 
 object AgentDetailsDesResponse {
@@ -50,7 +51,8 @@ object AgentDetailsDesResponse {
       )
       .and((__ \ "agencyDetails").formatNullable[AgencyDetails](AgencyDetails.agencyDetailsDatabaseFormat))
       .and((__ \ "suspensionDetails").formatNullable[SuspensionDetails])
-      .and((__ \ "isAnIndividual").formatNullable[Boolean])(
+      .and((__ \ "isAnIndividual").formatNullable[Boolean])
+      .and((__ \ "amlsDetails").formatNullable[AgentRecordAmlsDetails](AgentRecordAmlsDetails.databaseFormat))(
         AgentDetailsDesResponse.apply,
         unlift(AgentDetailsDesResponse.unapply)
       )

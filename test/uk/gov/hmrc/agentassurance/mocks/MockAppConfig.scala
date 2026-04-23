@@ -107,6 +107,12 @@ extends MockFactory { this: TestSuite =>
     .atLeastOnce()
     .returning("test@example.com")
 
+  (mockConfig
+    .get[Boolean](_: String)(_: ConfigLoader[Boolean]))
+    .expects("features.use-agent-services-account-amls", *)
+    .atLeastOnce()
+    .returning(false)
+
   implicit val mockAppConfig: AppConfig = new AppConfig(mockConfig, mockServiceConfig)
 
 }

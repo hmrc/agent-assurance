@@ -28,6 +28,7 @@ import com.mongodb.MongoException
 import com.mongodb.client.model.ReturnDocument
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.model.Filters.and
 import org.mongodb.scala.model.FindOneAndReplaceOptions
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
@@ -91,6 +92,8 @@ trait AmlsRepository {
     arn: Arn,
     date: LocalDate
   ): Future[UpdateResult]
+
+  def deleteByArn(arn: Arn): Future[Unit]
 
 }
 
@@ -238,6 +241,11 @@ with Logging {
       )
       .toFuture()
   }
+
+  override def deleteByArn(arn: Arn): Future[Unit] = collection
+    .deleteOne(and(equal("arn", arn.value)))
+    .toFuture()
+    .map(_ => ())
 
   private def upsertByArn(
     arn: Arn,
