@@ -78,6 +78,7 @@ with DesStubs {
       "stride.roles.agent-assurance" -> "maintain_agent_manually_assure",
       "internal-auth-token-enabled-on-start" -> false,
       "http-verbs.retries.intervals" -> List("1ms"),
+      "features.use-agent-services-account-amls" -> false,
       "agent.cache.enabled" -> false
     )
     .overrides(moduleWithOverrides)
