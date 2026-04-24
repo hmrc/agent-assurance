@@ -276,7 +276,15 @@ extends Logging {
             .getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, None)))
         }
         else {
-          Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(ukAmlsDetails)))
+          Future.successful(
+            (
+              if (hasRenewalDateExpired(ukAmlsDetails.membershipExpiresOn))
+                AmlsStatus.ExpiredAmlsDetailsUK
+              else
+                AmlsStatus.ValidAmlsDetailsUK,
+              Some(ukAmlsDetails)
+            )
+          )
         }
     }
 
