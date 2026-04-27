@@ -19,6 +19,30 @@ The "refusal to deal with" and "manually assured" lists are maintained by HMRC h
 
     sbt test it/test
 
+### Pre-push validation
+
+Before pushing a PR, run the relevant validation for the change.
+
+Minimum expectation:
+- run the unit and integration tests that directly cover the changed code
+- if the change affects cross-service behaviour, config, feature switches, auth, routing, connectors, or a source-of-truth change between services, run the relevant acceptance test journey as well
+- include in the PR description what was run and what was not run
+
+For AMLS / manage-account changes, also run the acceptance journey from your local `agent-services-account-ui-tests` repository:
+
+    sm2 --start AGENT_AUTHORISATION
+    sbt -Dbrowser=chrome -Denvironment=local 'testOnly specs.agent.AmlsRegistrationDetails'
+
+If the change affects the manage-account landing page, verify that it loads successfully in local before push.
+
+### Reviewer checklist
+
+Before approving, reviewers should check:
+- the author has listed the tests they ran
+- acceptance coverage was run when the change affects cross-service journeys or runtime configuration
+- any tests not run are clearly called out with a reason
+- local verification steps are clear enough to reproduce if needed
+
 ## Running the tests with coverage
 
     sbt clean coverageOn test it/test coverageReport
@@ -521,5 +545,3 @@ Response Code(s)
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
-
-
