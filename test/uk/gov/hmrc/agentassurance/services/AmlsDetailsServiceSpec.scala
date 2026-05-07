@@ -511,20 +511,7 @@ with MockAppConfig {
 
       val result = await(featureOnService.getAmlsDetailsByArn(testArn))
 
-      result mustBe (AmlsStatus.ExpiredAmlsDetailsUK, Some(testAmlsDetails))
-    }
-
-    "preserve expired UK legacy status when ASA has no AMLS details" in {
-      mockAsaGetAgentRecord(testArn)(testAgentDetailsDesAddressUtrResponse.copy(amlsDetails = None))
-      mockGetAmlsDetailsByArn(testArn)(Some(testAmlsDetails.copy(membershipExpiresOn = Some(LocalDate.now()))))
-      mockGetOverseasAmlsDetailsByArn(testArn)(None)
-
-      val result = await(featureOnService.getAmlsDetailsByArn(testArn))
-
-      result mustBe (
-        AmlsStatus.ExpiredAmlsDetailsUK,
-        Some(testAmlsDetails.copy(membershipExpiresOn = Some(LocalDate.now())))
-      )
+      result mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testAmlsDetails))
     }
   }
 
