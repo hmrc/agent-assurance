@@ -83,7 +83,7 @@ with AuthActions {
   def getUtrDetails(
     utr: Utr,
     nameRequired_ : Option[Boolean] = None
-  ) = BasicAuth { implicit request =>
+  ) = Action.async { implicit request => // TODO - this endpoint is called by both stride/normal and internal auth - we should split it into internal and normal auth versions. Unauth version is temporary
     val nameRequired: Boolean = nameRequired_.getOrElse(false)
     for {
       isManuallyAssured <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.ManuallyAssured.toString))
