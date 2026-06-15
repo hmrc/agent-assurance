@@ -19,9 +19,6 @@ package uk.gov.hmrc.agentassurance.models
 import enumeratum.Enum
 import enumeratum.EnumEntry
 import enumeratum.PlayJsonEnum
-import play.api.libs.json.*
-import uk.gov.hmrc.agentassurance.models
-import uk.gov.hmrc.agentassurance.models.dms.SubmissionItemStatus.findValues
 
 sealed trait AmlsSource4
 extends EnumEntry
@@ -30,7 +27,7 @@ object AmlsSource4
 extends Enum[AmlsSource4]
 with PlayJsonEnum[AmlsSource4]:
 
-  override val values: Seq[AmlsSource4] = findValues
+  override val values: IndexedSeq[AmlsSource4] = findValues
 
   case object Subscription
   extends AmlsSource4

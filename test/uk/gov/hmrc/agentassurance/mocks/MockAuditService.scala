@@ -38,13 +38,13 @@ extends MockFactory { this: TestSuite =>
         _: Arn,
         _: Option[Utr],
         _: Seq[AgentCheckOutcome]
-      )(_: HeaderCarrier))
+      )(using _: HeaderCarrier))
       .expects(*, *, *, *)
       .returning(Future.successful(()))
 
   def mockAuditEntityCheckFailureNotificationSent =
     (mockAuditService
-      .auditEntityCheckFailureNotificationSent(_: EntityCheckNotification)(_: HeaderCarrier))
+      .auditEntityCheckFailureNotificationSent(_: EntityCheckNotification)(using _: HeaderCarrier))
       .expects(*, *)
       .returning(Future.successful(()))
 

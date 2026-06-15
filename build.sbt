@@ -4,7 +4,7 @@ val appName = "agent-assurance"
 
 ThisBuild / majorVersion := 2
 ThisBuild / scalaVersion := "3.7.4"
-
+ThisBuild / scalacOptions += "-Wconf:msg=Flag.*repeatedly:s"
 
 lazy val root = (project in file("."))
   .settings(
@@ -35,14 +35,8 @@ lazy val root = (project in file("."))
   .disablePlugins(JUnitXmlReportPlugin)
 
 val scalaCOptions = Seq(
-  "-Yrangepos",
-//  "-Xfatal-warnings",
-  "-Xlint:-missing-interpolator,_",
-  "-Xlint:-byname-implicit",
-  "-Ywarn-dead-code",
-  "-deprecation",
+  "-Werror",
   "-feature",
-  "-unchecked",
   "-language:implicitConversions",
   "-Wconf:src=target/.*:s", // silence warnings from compiled files
   "-Wconf:src=Routes/.*:s"  // silence warnings from routes files

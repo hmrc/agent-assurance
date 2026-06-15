@@ -33,7 +33,7 @@ extends MockFactory { this: TestSuite =>
 
   def mockSendExtendedEvent(result: AuditResult) =
     (mockAuditConnector
-      .sendExtendedEvent(_: ExtendedDataEvent)(_: HeaderCarrier, _: ExecutionContext))
+      .sendExtendedEvent(_: ExtendedDataEvent)(using _: HeaderCarrier, _: ExecutionContext))
       .expects(*, *, *)
       .returning(Future.successful(result))
 

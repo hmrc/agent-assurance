@@ -28,7 +28,7 @@ trait MockArchivedAmlsRepository
 extends MockFactory { this: TestSuite =>
 
   val mockArchivedAmlsRepository = mock[ArchivedAmlsRepository]
-  def mockCreate(entity: ArchivedAmlsEntity)(response: Either[AmlsError, Unit]) = {
+  def mockCreate(entity: ArchivedAmlsEntity)(response: Either[AmlsError2, Unit]) = {
     (mockArchivedAmlsRepository
       .create(_: ArchivedAmlsEntity))
       .expects(entity)

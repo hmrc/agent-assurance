@@ -21,7 +21,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers.should
 import org.scalatest.time.Seconds
 import org.scalatest.time.Span
 import org.scalatestplus.play.PlaySpec
@@ -41,7 +41,7 @@ with ScalaFutures {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val service =
-    new BusinessNamesService(mockDesConnector)(
+    new BusinessNamesService(mockDesConnector)(using
       mockAppConfig,
       mat,
       global

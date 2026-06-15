@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.Format
-
 enum AmlsStatus2:
 
   case NoAmlsDetailsNonUK,

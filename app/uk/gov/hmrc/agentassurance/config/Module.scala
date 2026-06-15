@@ -22,9 +22,10 @@ import java.time.ZoneId
 import com.google.inject.AbstractModule
 import play.api.Configuration
 import play.api.Environment
+import scala.annotation.nowarn
 
 class Module(
-  environment: Environment,
+  @nowarn("msg=unused explicit parameter") environment: Environment,
   configuration: Configuration
 )
 extends AbstractModule {

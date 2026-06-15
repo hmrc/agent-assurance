@@ -38,21 +38,21 @@ extends MockFactory { this: TestSuite =>
 
   def mocksendPdfAccepted() = {
     (mockDmsConnector
-      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
+      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(using _: HeaderCarrier))
       .expects(*, *)
       .returning(Future.successful(HttpResponse.apply(ACCEPTED, "")))
   }
 
   def mocksendPdfUpstreamErrorResponse() = {
     (mockDmsConnector
-      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
+      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(using _: HeaderCarrier))
       .expects(*, *)
       .returning(Future.failed(UpstreamErrorResponse.apply("Error message", BAD_GATEWAY)))
   }
 
   def mocksendPdfNonFatal() = {
     (mockDmsConnector
-      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
+      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(using _: HeaderCarrier))
       .expects(*, *)
       .returning(Future.failed(new Exception("Error message")))
   }

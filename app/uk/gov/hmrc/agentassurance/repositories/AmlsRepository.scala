@@ -236,7 +236,7 @@ with Logging {
         filter = Filters.equal("arn", arn.value),
         update = Updates.combine(
           Updates.set("amlsDetails.membershipExpiresOn", date.toString),
-          Updates.set("amlsSource.Subscription", "AutomaticUpdate")
+          Updates.set("amlsSource", AmlsSource4.AutomaticUpdate.entryName)
         )
       )
       .toFuture()
@@ -297,9 +297,9 @@ with Logging {
     }
 
   private object DuplicateUtrIndexFor {
-    def unapply(input: (MongoException, UkAmlsEntity)): Option[Utr] =
+    def unapply(input: (Throwable, UkAmlsEntity)): Option[Utr] =
       input match {
-        case (mongoException, amlsEntity) if mongoException.getCode == 11000 => amlsEntity.utr
+        case (mongoException: MongoException, amlsEntity) if mongoException.getCode == 11000 => amlsEntity.utr
         case _ => None
       }
   }

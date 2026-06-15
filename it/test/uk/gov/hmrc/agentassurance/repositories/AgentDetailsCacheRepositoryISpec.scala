@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
+import org.mongodb.scala.ObservableFuture
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.codahale.metrics.MetricRegistry
@@ -63,8 +65,7 @@ with Eventually {
       override def defaultRegistry: MetricRegistry = new MetricRegistry
     }
 
-  private implicit val crypto: Encrypter
-    with Decrypter = aesCrypto("0xbYzrPV9/GmVEGazywGswm7yRYoWy2BraeJnjOUgcY=")
+  private implicit val crypto: Encrypter & Decrypter = aesCrypto("0xbYzrPV9/GmVEGazywGswm7yRYoWy2BraeJnjOUgcY=")
   private def encryptKey(key: String): String = crypto.encrypt(PlainText(key)).value
   private def decryptKey(field: String): String = crypto.decrypt(Crypted(field)).value
 

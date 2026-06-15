@@ -49,7 +49,7 @@ object UkAmlsEntity {
       .and((JsPath \ "arn").readNullable[Arn])
       .and((JsPath \ "createdOn").read[LocalDate])
       .and((JsPath \ "updatedArnOn").readNullable[LocalDate])
-      .and((JsPath \ "amlsSource").read[AmlsSource4])(UkAmlsEntity.apply _)
+      .and((JsPath \ "amlsSource").read[AmlsSource4])(UkAmlsEntity.apply)
 
   val jsonWrites: OWrites[UkAmlsEntity] = Json.writes[UkAmlsEntity]
 

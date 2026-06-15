@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import scala.Function.unlift
-
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.__
 import play.api.libs.json.Format
@@ -40,19 +38,18 @@ object AgentDetailsDesResponse {
   implicit val agentRecordDetailsFormat: OFormat[AgentDetailsDesResponse] = Json.format[AgentDetailsDesResponse]
 
   def agentRecordDatabaseDetailsFormat(implicit
-    crypto: Encrypter
-      with Decrypter
+    crypto: Encrypter & Decrypter
   ): Format[AgentDetailsDesResponse] =
     (__ \ "uniqueTaxReference")
-      .formatNullable[String](stringEncrypterDecrypter)
+      .formatNullable[String](using stringEncrypterDecrypter)
       .bimap[Option[Utr]](
         _.map(Utr(_)),
         _.map(_.value)
       )
-      .and((__ \ "agencyDetails").formatNullable[AgencyDetails](AgencyDetails.agencyDetailsDatabaseFormat))
+      .and((__ \ "agencyDetails").formatNullable[AgencyDetails](using AgencyDetails.agencyDetailsDatabaseFormat))
       .and((__ \ "suspensionDetails").formatNullable[SuspensionDetails])
       .and((__ \ "isAnIndividual").formatNullable[Boolean])
-      .and((__ \ "amlsDetails").formatNullable[AgentRecordAmlsDetails](AgentRecordAmlsDetails.databaseFormat))(
+      .and((__ \ "amlsDetails").formatNullable[AgentRecordAmlsDetails](using AgentRecordAmlsDetails.databaseFormat))(
         AgentDetailsDesResponse.apply,
         response => (response.uniqueTaxReference, response.agencyDetails, response.suspensionDetails, response.isAnIndividual, response.amlsDetails)
       )

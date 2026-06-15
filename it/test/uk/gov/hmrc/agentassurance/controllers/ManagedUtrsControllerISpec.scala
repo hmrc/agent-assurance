@@ -16,6 +16,11 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
+
+import org.mongodb.scala.SingleObservableFuture
+
 import com.google.inject.AbstractModule
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
@@ -51,7 +56,7 @@ with DesStubs
 with WireMockSupport
 with DefaultPlayMongoRepositorySupport[Property] {
 
-  override lazy val repository = new PropertiesRepositoryImpl(mongoComponent)
+  override val repository: PropertiesRepositoryImpl = new PropertiesRepositoryImpl(mongoComponent)
 
   val moduleWithOverrides: AbstractModule =
     new AbstractModule() {

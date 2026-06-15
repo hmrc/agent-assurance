@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entityCheck
+package uk.gov.hmrc.agentassurance.models.entitycheck
 
 enum EntityCheckException2(val exceptionMessage: String)
 extends Product

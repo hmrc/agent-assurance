@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.binders
 
+import scala.reflect.ClassTag
+
 import play.api.mvc.PathBindable
 
 class SimpleObjectBinder[T](
   bind: String => T,
   unbind: T => String
-)(implicit m: Manifest[T])
+)(implicit classTag: ClassTag[T])
 extends PathBindable[T] {
 
   override def bind(
@@ -32,7 +34,7 @@ extends PathBindable[T] {
       Right(bind(value))
     }
     catch {
-      case e: Throwable => Left(s"Cannot parse parameter '$key' with value '$value' as '${m.runtimeClass.getSimpleName}'")
+      case _: Throwable => Left(s"Cannot parse parameter '$key' with value '$value' as '${classTag.runtimeClass.getSimpleName}'")
     }
 
   def unbind(

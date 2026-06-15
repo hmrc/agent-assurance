@@ -89,7 +89,7 @@ trait DesConnector {
   def getAgentRecord(
     arn: Arn
   )(implicit
-    request: Request[_],
+    request: Request[?],
     hc: HeaderCarrier
   ): Future[AgentDetailsDesResponse]
 
@@ -160,7 +160,7 @@ with Logging {
   override def getAgentRecord(
     arn: Arn
   )(implicit
-    request: Request[_],
+    request: Request[?],
     hc: HeaderCarrier
   ): Future[AgentDetailsDesResponse] = {
     val url = new URI(s"$baseUrl/registration/personal-details/arn/${arn.value}").toURL
@@ -174,7 +174,6 @@ with Logging {
     val url = new URI(s"$baseUrl/registration/individual/utr/${UriEncoding.encodePathSegment(utr, "UTF-8")}").toURL
     agentCacheProvider.agentNameCache(utr) {
       postWithDesHeaders[DesRegistrationRequest, DesAgentNameResponse](
-        apiName = "GetAgentNameCached",
         url = url,
         request = DesRegistrationRequest(isAnAgent = false)
       )
@@ -191,7 +190,6 @@ with Logging {
     B,
     A: HttpReads
   ](
-    apiName: String,
     url: URL,
     request: B
   )(implicit
@@ -209,19 +207,18 @@ with Logging {
         authorizationToken,
         environment,
         isInternalHost
-      ): _*)
+      )*)
       .execute[Option[A]]
     response
 
   }
 
-  private def getWithDesHeadersWithRetry[A: HttpReads](
+  private def getWithDesHeadersWithRetry[A: Reads](
     apiName: String,
     url: URL
   )(implicit
     hc: HeaderCarrier,
-    ec: ExecutionContext,
-    x: Reads[A]
+    ec: ExecutionContext
   ): Future[A] = {
 
     val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
@@ -233,7 +230,7 @@ with Logging {
           authorizationToken,
           environment,
           isInternalHost
-        ): _*)
+        )*)
         .executeAndDeserialise[A]
         .map(result => {
           result

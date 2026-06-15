@@ -16,6 +16,11 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
+
+import org.mongodb.scala.SingleObservableFuture
+
 import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
 
@@ -39,7 +44,7 @@ import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
-import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.models.Value

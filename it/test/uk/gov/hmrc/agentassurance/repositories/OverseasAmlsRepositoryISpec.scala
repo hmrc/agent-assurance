@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.repositories
+package uk.gov.hmrc.agentassurance.repositories
+
+import org.mongodb.scala.ObservableFuture
+import org.mongodb.scala.SingleObservableFuture
 
 import java.time.LocalDate
 
@@ -33,7 +36,7 @@ extends PlaySpec
 with DefaultPlayMongoRepositorySupport[OverseasAmlsEntity]
 with InstantClockTestSupport {
 
-  override lazy val repository = new OverseasAmlsRepositoryImpl(mongoComponent)
+  override val repository: OverseasAmlsRepositoryImpl = new OverseasAmlsRepositoryImpl(mongoComponent)
 
   val arn = Arn("TARN0000001")
   val today = LocalDate.now()

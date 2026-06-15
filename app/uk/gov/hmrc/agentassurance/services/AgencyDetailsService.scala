@@ -37,6 +37,6 @@ extends Logging {
   )(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier,
-    request: Request[_]
+    request: Request[?]
   ): Future[Boolean] = desConnector.getAgentRecord(arn).map(_.agencyDetails.exists(_.hasUkAddress))
 }

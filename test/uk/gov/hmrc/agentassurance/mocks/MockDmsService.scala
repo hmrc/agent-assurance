@@ -38,7 +38,7 @@ extends MockFactory { this: TestSuite =>
         _: Option[String],
         _: Instant,
         _: DmsSubmissionReference
-      )(_: HeaderCarrier))
+      )(using _: HeaderCarrier))
       .expects(*, *, *, *)
       .returning(Future.successful(DmsResponse(Instant.now(), "")))
 

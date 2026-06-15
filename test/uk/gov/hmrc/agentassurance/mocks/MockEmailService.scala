@@ -32,7 +32,7 @@ extends MockFactory { this: TestSuite =>
 
   def mockSendEntityCheckNotification(entityCheckNotification: EntityCheckNotification) = {
     (mockMockEmailService
-      .sendEntityCheckNotification(_: EntityCheckNotification)(_: ExecutionContext, _: HeaderCarrier))
+      .sendEntityCheckNotification(_: EntityCheckNotification)(using _: ExecutionContext, _: HeaderCarrier))
       .expects(
         entityCheckNotification,
         *,

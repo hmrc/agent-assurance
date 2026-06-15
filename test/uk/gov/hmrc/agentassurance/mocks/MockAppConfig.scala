@@ -80,7 +80,7 @@ extends MockFactory { this: TestSuite =>
   (mockServiceConfig.getString(_: String)).expects(*).atLeastOnce().returning("other-string")
 
   (mockConfig
-    .get[Seq[String]](_: String)(_: ConfigLoader[Seq[String]]))
+    .get[Seq[String]](_: String)(using _: ConfigLoader[Seq[String]]))
     .expects("internalServiceHostPatterns", *)
     .atLeastOnce()
     .returning(Seq(
@@ -102,13 +102,13 @@ extends MockFactory { this: TestSuite =>
     .returning(1.second)
 
   (mockConfig
-    .get[String](_: String)(_: ConfigLoader[String]))
+    .get[String](_: String)(using _: ConfigLoader[String]))
     .expects("agent-maintainer-email", *)
     .atLeastOnce()
     .returning("test@example.com")
 
   (mockConfig
-    .get[Boolean](_: String)(_: ConfigLoader[Boolean]))
+    .get[Boolean](_: String)(using _: ConfigLoader[Boolean]))
     .expects("features.use-agent-services-account-amls", *)
     .atLeastOnce()
     .returning(false)

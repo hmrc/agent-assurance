@@ -40,7 +40,7 @@ extends MockFactory { this: TestSuite =>
 
   def mockAuth()(response: Either[String, Enrolments]) = {
     (mockAuthConnector
-      .authorise(_: Predicate, _: Retrieval[Enrolments])(_: HeaderCarrier, _: ExecutionContext))
+      .authorise(_: Predicate, _: Retrieval[Enrolments])(using _: HeaderCarrier, _: ExecutionContext))
       .expects(
         AuthProviders(GovernmentGateway),
         Retrievals.allEnrolments,
@@ -52,7 +52,7 @@ extends MockFactory { this: TestSuite =>
 
   def mockAuthWithNoRetrievals[A](retrieval: Retrieval[A])(result: A) = {
     (mockAuthConnector
-      .authorise[A](_: Predicate, _: Retrieval[A])(_: HeaderCarrier, _: ExecutionContext))
+      .authorise[A](_: Predicate, _: Retrieval[A])(using _: HeaderCarrier, _: ExecutionContext))
       .expects(
         EmptyPredicate,
         retrieval,
@@ -64,7 +64,7 @@ extends MockFactory { this: TestSuite =>
 
   def mockAgentAuth()(response: Either[String, Unit]) = {
     (mockAuthConnector
-      .authorise(_: Predicate, _: EmptyRetrieval.type)(_: HeaderCarrier, _: ExecutionContext))
+      .authorise(_: Predicate, _: EmptyRetrieval.type)(using _: HeaderCarrier, _: ExecutionContext))
       .expects(
         AuthProviders(GovernmentGateway).and(AffinityGroup.Agent),
         EmptyRetrieval,

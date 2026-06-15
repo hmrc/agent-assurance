@@ -35,8 +35,8 @@ import uk.gov.hmrc.agentassurance.helpers.TestConstants.testUtr
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException2
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.internalauth.client.test.BackendAuthComponentsStub
@@ -55,7 +55,7 @@ with MockEntityCheckService
 with MockFactory {
 
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
-  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
+  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(using stubControllerComponents(), implicitly)
 
   val controller =
     new GetAgentRecordWithEntityChecksController(
@@ -83,7 +83,7 @@ with MockFactory {
       )
 
       val result = controller
-        .get()
+        .get
         .apply(
           FakeRequest(GET, "/agent-record-with-checks")
             .withHeaders(HeaderNames.authorisation -> "Some auth token")

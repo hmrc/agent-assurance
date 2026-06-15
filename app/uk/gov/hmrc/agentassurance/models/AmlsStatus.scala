@@ -16,30 +16,49 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import julienrf.json.derived
 import play.api.libs.json.Format
+import play.api.libs.json.JsError
+import play.api.libs.json.JsResult
+import play.api.libs.json.JsString
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.JsValue
 
 sealed trait AmlsStatus
 
 object AmlsStatus {
 
-  implicit val formatAmlsSource: Format[AmlsStatus] = derived.oformat[AmlsStatus]()
-
-  final case object NoAmlsDetailsNonUK
+  case object NoAmlsDetailsNonUK
   extends AmlsStatus
-  final case object ValidAmlsNonUK
+  case object ValidAmlsNonUK
   extends AmlsStatus
 
-  final case object NoAmlsDetailsUK
+  case object NoAmlsDetailsUK
   extends AmlsStatus
-  final case object ValidAmlsDetailsUK
+  case object ValidAmlsDetailsUK
   extends AmlsStatus
-  final case object ExpiredAmlsDetailsUK
+  case object ExpiredAmlsDetailsUK
   extends AmlsStatus
 
-  final case object PendingAmlsDetails
+  case object PendingAmlsDetails
   extends AmlsStatus
-  final case object PendingAmlsDetailsRejected
+  case object PendingAmlsDetailsRejected
   extends AmlsStatus
+
+  implicit val formatAmlsStatus: Format[AmlsStatus] =
+    new Format[AmlsStatus] {
+      override def reads(json: JsValue): JsResult[AmlsStatus] =
+        json match {
+          case JsString("NoAmlsDetailsNonUK") => JsSuccess(NoAmlsDetailsNonUK)
+          case JsString("ValidAmlsNonUK") => JsSuccess(ValidAmlsNonUK)
+          case JsString("NoAmlsDetailsUK") => JsSuccess(NoAmlsDetailsUK)
+          case JsString("ValidAmlsDetailsUK") => JsSuccess(ValidAmlsDetailsUK)
+          case JsString("ExpiredAmlsDetailsUK") => JsSuccess(ExpiredAmlsDetailsUK)
+          case JsString("PendingAmlsDetails") => JsSuccess(PendingAmlsDetails)
+          case JsString("PendingAmlsDetailsRejected") => JsSuccess(PendingAmlsDetailsRejected)
+          case _ => JsError("error.expected.amlsStatus")
+        }
+
+      override def writes(amlsStatus: AmlsStatus): JsValue = JsString(amlsStatus.toString)
+    }
 
 }

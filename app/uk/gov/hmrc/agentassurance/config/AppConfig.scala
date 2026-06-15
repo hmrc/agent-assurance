@@ -32,7 +32,13 @@ class AppConfig @Inject() (
 
   val appName = "agent-assurance"
 
-  private def getConf(key: String) = servicesConfig.getConfString(key, throw new RuntimeException(s"config $key not found"))
+  private def getConf(key: String) = {
+    val missing = s"config $key not found"
+    servicesConfig.getConfString(key, missing) match {
+      case `missing` => throw new RuntimeException(missing)
+      case value => value
+    }
+  }
 
   private def baseUrl(key: String) = servicesConfig.baseUrl(key)
 

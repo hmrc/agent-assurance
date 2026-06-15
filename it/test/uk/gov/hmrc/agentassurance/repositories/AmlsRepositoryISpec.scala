@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.repositories
+package uk.gov.hmrc.agentassurance.repositories
+
+import org.mongodb.scala.ObservableFuture
+import org.mongodb.scala.SingleObservableFuture
 
 import java.time.Clock
 import java.time.LocalDate
@@ -54,7 +57,7 @@ with InstantClockTestSupport {
   protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
     .configure("internal-auth-token-enabled-on-start" -> false)
     .overrides(moduleWithOverrides)
-  override lazy val repository = new AmlsRepositoryImpl(mongoComponent)
+  override val repository: AmlsRepositoryImpl = new AmlsRepositoryImpl(mongoComponent)
 
   val arn = Arn("TARN0000001")
   val utr = Utr("1234567890")
@@ -74,7 +77,7 @@ with InstantClockTestSupport {
         amlsDetails = newUkAmlsDetails,
         arn = Some(arn),
         createdOn = today,
-        amlsSource = AmlsSource2.Subscription
+        amlsSource = AmlsSource4.Subscription
       )
 
       val result = repository.createOrUpdate(arn, amlsEntity).futureValue
@@ -98,14 +101,14 @@ with InstantClockTestSupport {
         amlsDetails = newUkAmlsDetails,
         arn = Some(arn),
         createdOn = today,
-        amlsSource = AmlsSource2.Subscription
+        amlsSource = AmlsSource4.Subscription
       )
       val oldAmlsEntity = UkAmlsEntity(
         utr = Some(utr),
         amlsDetails = oldUkAmlsDetails,
         arn = Some(arn),
         createdOn = LocalDate.parse("2020-01-01"),
-        amlsSource = AmlsSource2.Subscription
+        amlsSource = AmlsSource4.Subscription
       )
 
       repository.collection.find().toFuture().futureValue.size mustBe 0
@@ -131,14 +134,14 @@ with InstantClockTestSupport {
         ),
         arn = None,
         createdOn = LocalDate.parse("2020-01-01"),
-        amlsSource = AmlsSource2.Subscription
+        amlsSource = AmlsSource4.Subscription
       )
       val newAmlsEntity = UkAmlsEntity(
         utr = Some(utr),
         amlsDetails = newUkAmlsDetails,
         arn = Some(arn),
         createdOn = today,
-        amlsSource = AmlsSource2.Subscription
+        amlsSource = AmlsSource4.Subscription
       )
 
       repository.collection.insertOne(oldAmlsEntity).toFuture().futureValue
@@ -159,14 +162,14 @@ with InstantClockTestSupport {
         amlsDetails = newUkAmlsDetails,
         arn = Some(Arn("TARN0000009")),
         createdOn = LocalDate.parse("2020-01-01"),
-        amlsSource = AmlsSource2.Subscription
+        amlsSource = AmlsSource4.Subscription
       )
       val newAmlsEntity = UkAmlsEntity(
         utr = Some(utr),
         amlsDetails = newUkAmlsDetails.copy(supervisoryBody = "CIOT"),
         arn = Some(arn),
         createdOn = today,
-        amlsSource = AmlsSource2.Subscription
+        amlsSource = AmlsSource4.Subscription
       )
 
       repository.collection.insertOne(conflictingAmlsEntity).toFuture().futureValue
@@ -187,7 +190,7 @@ with InstantClockTestSupport {
           amlsDetails = newUkAmlsDetails,
           arn = Some(arn),
           createdOn = today,
-          amlsSource = AmlsSource2.Subscription
+          amlsSource = AmlsSource4.Subscription
         )
 
         repository.collection.insertOne(amlsEntity).toFuture().futureValue
@@ -204,7 +207,7 @@ with InstantClockTestSupport {
           amlsDetails = newUkAmlsDetails,
           arn = Some(arn),
           createdOn = today,
-          amlsSource = AmlsSource2.Subscription
+          amlsSource = AmlsSource4.Subscription
         )
 
         repository.collection.insertOne(amlsEntity).toFuture().futureValue
@@ -231,7 +234,7 @@ with InstantClockTestSupport {
           amlsDetails = oldUkAmlsDetails,
           arn = Some(arn),
           createdOn = LocalDate.parse("2020-01-01"),
-          amlsSource = AmlsSource2.Subscription
+          amlsSource = AmlsSource4.Subscription
         )
 
         repository.collection.find().toFuture().futureValue.size mustBe 0
@@ -245,7 +248,10 @@ with InstantClockTestSupport {
 
         val checkResult = repository.collection.find().toFuture().futureValue
         checkResult.size mustBe 1
-        checkResult.head mustBe oldAmlsEntity.copy(amlsDetails = oldUkAmlsDetails.copy(membershipExpiresOn = Some(newExpiryDate)))
+        checkResult.head mustBe oldAmlsEntity.copy(
+          amlsDetails = oldUkAmlsDetails.copy(membershipExpiresOn = Some(newExpiryDate)),
+          amlsSource = AmlsSource4.AutomaticUpdate
+        )
       }
     }
   }

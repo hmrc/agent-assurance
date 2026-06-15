@@ -16,6 +16,10 @@
 
 package test.uk.gov.hmrc.agentassurance.controllers
 
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+
+import org.mongodb.scala.ObservableFuture
+
 import scala.concurrent.duration._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -46,7 +50,7 @@ with GuiceOneServerPerSuite
 with WireMockSupport
 with DefaultPlayMongoRepositorySupport[OverseasAmlsEntity] {
 
-  override lazy val repository = new OverseasAmlsRepositoryImpl(mongoComponent)
+  override val repository: OverseasAmlsRepositoryImpl = new OverseasAmlsRepositoryImpl(mongoComponent)
 
   override implicit lazy val app: Application = appBuilder.build()
 

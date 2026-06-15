@@ -20,8 +20,8 @@ import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.connectors.CitizenDetailsConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException2
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.utils.DateTimeService
 import uk.gov.hmrc.domain.SaUtr
@@ -47,7 +47,7 @@ class EntityCheckService @Inject() (
   def verifyAgent(
     arn: Arn
   )(implicit
-    request: Request[_],
+    request: Request[?],
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[EntityCheckResult] = {
@@ -142,7 +142,7 @@ class EntityCheckService @Inject() (
             utr = utr.value,
             agencyName = agentRecord.agencyDetails.flatMap(_.agencyName).getOrElse(""),
             failedChecks = nonEmptyFailedChecks.mkString("|"),
-            dateTime = DateTimeService.nowAtLondonTime(clock)
+            dateTime = DateTimeService.nowAtLondonTime(using clock)
           )
 
           mongoLockService

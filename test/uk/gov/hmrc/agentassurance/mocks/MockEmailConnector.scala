@@ -40,7 +40,7 @@ extends MockFactory { this: TestSuite =>
     Future[Unit]
   ] =
     (mockEmailConnector
-      .sendEmail(_: EmailInformation)(_: HeaderCarrier, _: ExecutionContext))
+      .sendEmail(_: EmailInformation)(using _: HeaderCarrier, _: ExecutionContext))
       .expects(
         emailInformation,
         *,

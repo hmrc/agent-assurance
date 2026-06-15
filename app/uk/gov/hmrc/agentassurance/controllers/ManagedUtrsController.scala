@@ -59,7 +59,7 @@ with AuthActions {
     implicit request =>
       for {
         (total, utrs) <- repository.findProperties(
-          key.toString,
+          key.textValue,
           pagination.page,
           pagination.pageSize
         )
@@ -115,7 +115,7 @@ with AuthActions {
           Utr.isValid(newValue.value) match {
             case true =>
               repository
-                .upsertProperty(newValue.toProperty(collectionName.toString))
+                .upsertProperty(newValue.toProperty(collectionName.textValue))
                 .map(_ => Created)
             case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
           }

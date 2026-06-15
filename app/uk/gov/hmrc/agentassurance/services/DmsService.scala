@@ -67,7 +67,7 @@ class DmsService @Inject() (
         now,
         submissionReference
       )
-      response <- sendPdf(body, now)(hc)
+      response <- sendPdf(body, now)(using hc)
     } yield response
 
   private def createPdf(
@@ -140,7 +140,7 @@ class DmsService @Inject() (
     .sendPdf(body)
     .map(_ => DmsResponse(now, ""))
     .recover {
-      case error @ UpstreamErrorResponse(
+      case UpstreamErrorResponse(
             message,
             code,
             _,

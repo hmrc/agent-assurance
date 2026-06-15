@@ -33,10 +33,10 @@ extends MockFactory { this: TestSuite =>
 
   def mockIsUkAddress()(response: Boolean) =
     (mockAgencyDetailsService
-      .agencyDetailsHasUkAddress(_: Arn)(
+      .agencyDetailsHasUkAddress(_: Arn)(using
         _: ExecutionContext,
         _: HeaderCarrier,
-        _: Request[_]
+        _: Request[?]
       ))
       .expects(*, *, *, *)
       .returning(Future.successful(response))

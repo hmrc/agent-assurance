@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.controllers
+package uk.gov.hmrc.agentassurance.controllers
+
+import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
 
 import java.time.LocalDate
 

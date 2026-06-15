@@ -50,7 +50,7 @@ with MockAppConfig {
 
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
-  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
+  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(using stubControllerComponents(), implicitly)
 
   val controller =
     new DmsNotificationController(

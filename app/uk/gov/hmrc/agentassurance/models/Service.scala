@@ -34,8 +34,8 @@ sealed abstract class Service(
   val id: String,
   val invitationIdPrefix: Char,
   val enrolmentKey: String,
-  val supportedSuppliedClientIdType: ClientIdType[_ <: TaxIdentifier],
-  val supportedClientIdType: ClientIdType[_ <: TaxIdentifier]
+  val supportedSuppliedClientIdType: ClientIdType[? <: TaxIdentifier],
+  val supportedClientIdType: ClientIdType[? <: TaxIdentifier]
 ) {
 
   override def toString: String = this.id
@@ -189,7 +189,7 @@ object Service {
 }
 
 sealed abstract class ClientIdType[+T <: TaxIdentifier](
-  val clazz: Class[_],
+  val clazz: Class[?],
   val id: String,
   val enrolmentId: String,
   val createUnderlying: String => T

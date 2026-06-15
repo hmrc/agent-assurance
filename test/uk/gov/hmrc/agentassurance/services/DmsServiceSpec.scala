@@ -69,7 +69,7 @@ with MockAppConfig {
         Some(encoded),
         timestamp,
         DmsSubmissionReference("DmsSubmissionReference")
-      )(hc))
+      )(using hc))
 
       result mustBe DmsResponse(timestamp, "")
     }
@@ -96,7 +96,7 @@ with MockAppConfig {
         Some(encoded),
         timestamp,
         DmsSubmissionReference("DmsSubmissionReference")
-      )(hc))
+      )(using hc))
 
       result mustBe DmsResponse(timestamp, "")
     }

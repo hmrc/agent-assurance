@@ -30,9 +30,9 @@ import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException2
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
-import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.SuspensionDetails
 import uk.gov.hmrc.http.HeaderNames
@@ -55,7 +55,7 @@ with MockFactory {
   val as: ActorSystem = ActorSystem()
   implicit val mat: Materializer = Materializer(as)
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
-  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
+  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(using stubControllerComponents(), implicitly)
 
   val controller =
     new EntityCheckController(
@@ -81,7 +81,7 @@ with MockFactory {
         mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException2]))
 
         val result = controller
-          .agentVerifyEntity()
+          .agentVerifyEntity
           .apply(
             FakeRequest(POST, "/agent/verify-entity")
               .withHeaders(HeaderNames.authorisation -> "Some auth token")
@@ -113,7 +113,7 @@ with MockFactory {
         )
 
         val result = controller
-          .agentVerifyEntity()
+          .agentVerifyEntity
           .apply(
             FakeRequest(POST, "/agent/verify-entity")
               .withHeaders(HeaderNames.authorisation -> "Some auth token")
@@ -145,7 +145,7 @@ with MockFactory {
         mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException2]))
 
         val result = controller
-          .clientVerifyEntity()
+          .clientVerifyEntity
           .apply(
             FakeRequest(POST, "/client/verify-entity")
               .withHeaders(HeaderNames.authorisation -> "Some auth token", "Content-Type" -> "application/json")
@@ -179,7 +179,7 @@ with MockFactory {
           )
 
           val result = controller
-            .clientVerifyEntity()
+            .clientVerifyEntity
             .apply(
               FakeRequest(POST, "/client/verify-entity")
                 .withHeaders(HeaderNames.authorisation -> "Some auth token", "Content-Type" -> "application/json")
@@ -204,7 +204,7 @@ with MockFactory {
             .returning(Future.unit)
 
           val result = controller
-            .clientVerifyEntity()
+            .clientVerifyEntity
             .apply(
               FakeRequest(POST, "/client/verify-entity")
                 .withHeaders(HeaderNames.authorisation -> "Some auth token", "Content-Type" -> "application/json")

@@ -16,20 +16,35 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import julienrf.json.derived
 import play.api.libs.json.Format
+import play.api.libs.json.JsError
+import play.api.libs.json.JsResult
+import play.api.libs.json.JsString
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.JsValue
 
 sealed trait AmlsSource
 
 object AmlsSource {
 
-  implicit val formatAmlsSource: Format[AmlsSource] = derived.oformat[AmlsSource]()
+  case object Subscription
+  extends AmlsSource
+  case object AutomaticUpdate
+  extends AmlsSource
+  case object ManageAccountUpdate
+  extends AmlsSource
 
-  final case object Subscription
-  extends AmlsSource
-  final case object AutomaticUpdate
-  extends AmlsSource
-  final case object ManageAccountUpdate
-  extends AmlsSource
+  implicit val formatAmlsSource: Format[AmlsSource] =
+    new Format[AmlsSource] {
+      override def reads(json: JsValue): JsResult[AmlsSource] =
+        json match {
+          case JsString("Subscription") => JsSuccess(Subscription)
+          case JsString("AutomaticUpdate") => JsSuccess(AutomaticUpdate)
+          case JsString("ManageAccountUpdate") => JsSuccess(ManageAccountUpdate)
+          case _ => JsError("error.expected.amlsSource")
+        }
+
+      override def writes(amlsSource: AmlsSource): JsValue = JsString(amlsSource.toString)
+    }
 
 }

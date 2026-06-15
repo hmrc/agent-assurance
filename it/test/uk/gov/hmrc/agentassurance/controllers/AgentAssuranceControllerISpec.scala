@@ -16,6 +16,12 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
+
+import org.mongodb.scala.ObservableFuture
+import org.mongodb.scala.SingleObservableFuture
+
 import java.time.Clock
 import java.time.LocalDate
 
@@ -58,7 +64,7 @@ with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
 
   override implicit lazy val app: Application = appBuilder.build()
 
-  override lazy val repository = new AmlsRepositoryImpl(mongoComponent)
+  override val repository: AmlsRepositoryImpl = new AmlsRepositoryImpl(mongoComponent)
 
   val moduleWithOverrides: AbstractModule =
     new AbstractModule() {

@@ -48,14 +48,13 @@ class AgencyDetailsCacheRepository @Inject() (
 )(
   implicit
   ec: ExecutionContext,
-  @Named("aes") crypto: Encrypter
-    with Decrypter
+  @Named("aes") crypto: Encrypter & Decrypter
 )
 extends EntityCache[String, AgentDetailsDesResponse]
 with Cache[AgentDetailsDesResponse] {
 
-  lazy val format: Format[AgentDetailsDesResponse] = AgentDetailsDesResponse.agentRecordDatabaseDetailsFormat
-  lazy val cacheRepo: MongoCacheRepository[String] =
+  val format: Format[AgentDetailsDesResponse] = AgentDetailsDesResponse.agentRecordDatabaseDetailsFormat
+  val cacheRepo: MongoCacheRepository[String] =
     new MongoCacheRepository(
       mongoComponent = mongo,
       collectionName = "cache-agent-details",

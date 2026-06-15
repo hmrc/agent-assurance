@@ -27,7 +27,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Reads
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException2
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2

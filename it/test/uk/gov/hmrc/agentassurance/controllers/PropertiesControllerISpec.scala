@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.controllers
+package uk.gov.hmrc.agentassurance.controllers
+
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
 
 import java.time.Clock
 
@@ -49,7 +52,7 @@ with AgentAuthStubs
 with WireMockSupport
 with DefaultPlayMongoRepositorySupport[Property] {
 
-  override lazy val repository = new PropertiesRepositoryImpl(mongoComponent)
+  override val repository: PropertiesRepositoryImpl = new PropertiesRepositoryImpl(mongoComponent)
 
   val moduleWithOverrides: AbstractModule =
     new AbstractModule() {

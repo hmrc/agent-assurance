@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entityCheck
+package uk.gov.hmrc.agentassurance.models.entitycheck
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
