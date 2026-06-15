@@ -29,7 +29,7 @@ import play.api.mvc.ControllerComponents
 import play.api.mvc.Result
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.SuspensionDetails
@@ -61,7 +61,7 @@ with AuthActions {
   val internalAuth = auth.authorizedAction(predicate)
 
   // only for agents
-  def agentVerifyEntity: Action[AnyContent] = AuthorisedWithArn { implicit request => arn: Arn =>
+  def agentVerifyEntity: Action[AnyContent] = AuthorisedWithArn { implicit request => arn =>
     entityCheckService
       .verifyAgent(arn)
       .map(x => createResponse(x.agentRecord.suspensionDetails))

@@ -1,9 +1,9 @@
-import uk.gov.hmrc.DefaultBuildSettings
+import uk.gov.hmrc.{DefaultBuildSettings, SbtAutoBuildPlugin}
 
 val appName = "agent-assurance"
 
 ThisBuild / majorVersion := 2
-ThisBuild / scalaVersion := "2.13.18"
+ThisBuild / scalaVersion := "3.7.4"
 
 
 lazy val root = (project in file("."))
@@ -16,7 +16,7 @@ lazy val root = (project in file("."))
     routesImport ++= Seq(
       "uk.gov.hmrc.agentassurance.binders.PathBinders._",
       "uk.gov.hmrc.agentassurance.binders._",
-      "uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName",
+      "uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName2",
       "uk.gov.hmrc.agentassurance.models.Utr",
       "uk.gov.hmrc.agentassurance.models.Arn",
       "uk.gov.hmrc.domain.Nino",

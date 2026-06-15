@@ -39,7 +39,7 @@ import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
-import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.models.Value

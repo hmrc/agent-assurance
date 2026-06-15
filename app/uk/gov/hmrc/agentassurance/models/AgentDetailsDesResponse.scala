@@ -54,7 +54,7 @@ object AgentDetailsDesResponse {
       .and((__ \ "isAnIndividual").formatNullable[Boolean])
       .and((__ \ "amlsDetails").formatNullable[AgentRecordAmlsDetails](AgentRecordAmlsDetails.databaseFormat))(
         AgentDetailsDesResponse.apply,
-        unlift(AgentDetailsDesResponse.unapply)
+        response => (response.uniqueTaxReference, response.agencyDetails, response.suspensionDetails, response.isAnIndividual, response.amlsDetails)
       )
 
 }

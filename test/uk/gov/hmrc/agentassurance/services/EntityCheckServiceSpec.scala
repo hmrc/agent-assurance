@@ -25,10 +25,8 @@ import uk.gov.hmrc.agentassurance.helpers.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks._
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.models.entitycheck.DeceasedCheckException.EntityDeceasedCheckFailed
-import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
-import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
-import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException.AgentIsOnRefuseToDealList
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.utils.DateTimeService
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
@@ -86,7 +84,7 @@ with MockAuditService {
 
       result mustBe EntityCheckResult(
         agentDetailsDesResponse,
-        Seq.empty[EntityCheckException]
+        Seq.empty[EntityCheckException2]
       )
     }
 
@@ -104,7 +102,7 @@ with MockAuditService {
 
       val result = await(service.verifyAgent(testArn))
 
-      result mustBe EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException])
+      result mustBe EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException2])
     }
 
     "return Some(SuspensionDetails) and do entityChecks and do not sent email" in {
@@ -129,7 +127,7 @@ with MockAuditService {
 
       result mustBe EntityCheckResult(
         agentDetailsDesResponse,
-        Seq.empty[EntityCheckException]
+        Seq.empty[EntityCheckException2]
       )
     }
 
@@ -146,7 +144,7 @@ with MockAuditService {
         agentDetailsDesResponse
       )
 
-      mockGetCitizenDeceasedFlag(SaUtr(utr.value))(Some(EntityDeceasedCheckFailed))
+      mockGetCitizenDeceasedFlag(SaUtr(utr.value))(Some(EntityCheckException2.EntityDeceasedCheckFailed))
       mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(response = false)
       mockAuditEntityChecksPerformed
       mockAuditEntityCheckFailureNotificationSent
@@ -165,7 +163,7 @@ with MockAuditService {
 
       result mustBe EntityCheckResult(
         agentDetailsDesResponse,
-        List(EntityDeceasedCheckFailed)
+        List(EntityCheckException2.EntityDeceasedCheckFailed)
       )
     }
 
@@ -200,7 +198,7 @@ with MockAuditService {
 
       result mustBe EntityCheckResult(
         agentDetailsDesResponse,
-        List(AgentIsOnRefuseToDealList)
+        List(EntityCheckException2.AgentIsOnRefuseToDealList)
       )
     }
 

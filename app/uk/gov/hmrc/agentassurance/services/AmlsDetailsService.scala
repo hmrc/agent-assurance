@@ -16,30 +16,26 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import java.time.LocalDate
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.collection.immutable.::
-import scala.collection.immutable.Nil
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
-import play.api.mvc.Request
 import play.api.Logging
+import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.AgentServicesAccountConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentassurance.models._
+import uk.gov.hmrc.agentassurance.models.*
+import uk.gov.hmrc.agentassurance.models.AmlsSource4.Subscription
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.ArchivedAmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
-import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse.Upstream5xxResponse
+
+import java.time.LocalDate
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton
 class AmlsDetailsService @Inject() (
@@ -57,8 +53,8 @@ extends Logging {
     arn: Arn
   )(implicit
     hc: HeaderCarrier,
-    request: Request[_]
-  ): Future[(AmlsStatus, Option[AmlsDetails])] = {
+    request: Request[?]
+  ): Future[(AmlsStatus2, Option[AmlsDetails])] = {
     if (appConfig.useAgentServicesAccountAmls)
       getAmlsDetailsFromAgentServicesAccount(arn)
     else
@@ -69,12 +65,12 @@ extends Logging {
     arn: Arn
   )(implicit
     hc: HeaderCarrier,
-    request: Request[_]
-  ): Future[(AmlsStatus, Option[AmlsDetails])] = {
+    request: Request[?]
+  ): Future[(AmlsStatus2, Option[AmlsDetails])] = {
     getLegacyAmlsDetails(arn).map {
       case None => // No AMLS record found
         handleNoAmlsDetails(arn) // Scenarios: #1, #2
-      case Some(overseasAmlsDetails: OverseasAmlsDetails) => Future.successful((AmlsStatus.ValidAmlsNonUK, Some(overseasAmlsDetails))) // Scenario #7
+      case Some(overseasAmlsDetails: OverseasAmlsDetails) => Future.successful((AmlsStatus2.ValidAmlsNonUK, Some(overseasAmlsDetails))) // Scenario #7
       case Some(ukAmlsDetails: UkAmlsDetails) =>
         if (ukAmlsDetails.supervisoryBodyIsHmrc) {
           ukAmlsDetails.membershipNumber
@@ -90,17 +86,17 @@ extends Logging {
                 }
               }
               else
-                Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(ukAmlsDetails)))
+                Future.successful((AmlsStatus2.ValidAmlsDetailsUK, Some(ukAmlsDetails)))
             }
-            .getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, None))) // Scenario #10
+            .getOrElse(Future.successful((AmlsStatus2.NoAmlsDetailsUK, None))) // Scenario #10
         }
         else { // supervisoryBodyIsNotHmrc
           Future.successful(
             (
               if (hasRenewalDateExpired(ukAmlsDetails.membershipExpiresOn))
-                AmlsStatus.ExpiredAmlsDetailsUK // Scenarios: #4a, #4b
+                AmlsStatus2.ExpiredAmlsDetailsUK // Scenarios: #4a, #4b
               else
-                AmlsStatus.ValidAmlsDetailsUK, // Scenario #3
+                AmlsStatus2.ValidAmlsDetailsUK, // Scenario #3
               Some(ukAmlsDetails)
             )
           )
@@ -112,8 +108,8 @@ extends Logging {
     arn: Arn
   )(implicit
     hc: HeaderCarrier,
-    request: Request[_]
-  ): Future[(AmlsStatus, Option[AmlsDetails])] = agentServicesAccountConnector.getAgentRecord(arn).flatMap { agentRecord =>
+    request: Request[?]
+  ): Future[(AmlsStatus2, Option[AmlsDetails])] = agentServicesAccountConnector.getAgentRecord(arn).flatMap { agentRecord =>
     agentRecord.amlsDetails match {
       case Some(amlsDetails) =>
         agentRecord.agencyDetails.map(_.hasUkAddress) match {
@@ -146,17 +142,17 @@ extends Logging {
     isUkOverride: Option[Boolean] = None
   )(implicit
     hc: HeaderCarrier,
-    request: Request[_]
-  ): Future[(AmlsStatus, Option[AmlsDetails])] = {
+    request: Request[?]
+  ): Future[(AmlsStatus2, Option[AmlsDetails])] = {
     isUkOverride
       .map(Future.successful)
       .getOrElse(agencyDetailsService.agencyDetailsHasUkAddress(arn))
       .map { isUk =>
         (
           if (isUk)
-            AmlsStatus.NoAmlsDetailsUK // Scenario #1
+            AmlsStatus2.NoAmlsDetailsUK // Scenario #1
           else
-            AmlsStatus.NoAmlsDetailsNonUK, // Scenario #2
+            AmlsStatus2.NoAmlsDetailsNonUK, // Scenario #2
           None
         )
       }
@@ -169,13 +165,13 @@ extends Logging {
     asaAmlsDetails: UkAmlsDetails
   )(
     implicit hc: HeaderCarrier
-  ): Future[AmlsStatus] = {
+  ): Future[AmlsStatus2] = {
     desConnector
       .getAmlsSubscriptionStatus(membershipNumber)
       .map { desAmlsRecord =>
         desAmlsRecord.formBundleStatus match {
-          case "Pending" => AmlsStatus.PendingAmlsDetails
-          case "Rejected" => AmlsStatus.PendingAmlsDetailsRejected
+          case "Pending" => AmlsStatus2.PendingAmlsDetails
+          case "Rejected" => AmlsStatus2.PendingAmlsDetailsRejected
           case "Approved" | "ApprovedWithConditions" =>
             // check if ETMP has more recent expiry date
             val amlsExpiryDate = findCorrectExpiryDate(
@@ -184,15 +180,15 @@ extends Logging {
               asaAmlsDetails.membershipExpiresOn
             )
             if (hasRenewalDateExpired(amlsExpiryDate))
-              AmlsStatus.ExpiredAmlsDetailsUK
+              AmlsStatus2.ExpiredAmlsDetailsUK
             else
-              AmlsStatus.ValidAmlsDetailsUK
+              AmlsStatus2.ValidAmlsDetailsUK
           case _ =>
             // catch all where we won't use the ETMP record and just use ASA
             if (hasRenewalDateExpired(asaAmlsDetails.membershipExpiresOn))
-              AmlsStatus.ExpiredAmlsDetailsUK
+              AmlsStatus2.ExpiredAmlsDetailsUK
             else
-              AmlsStatus.ValidAmlsDetailsUK
+              AmlsStatus2.ValidAmlsDetailsUK
         }
       }
       .recover {
@@ -200,13 +196,13 @@ extends Logging {
           logger.warn(
             s"DES API#1028 returned the following response - status: ${error.statusCode}, message: ${error.message}"
           )
-          AmlsStatus.ValidAmlsDetailsUK // temp fix for initial release todo - create a new status to handle errors
+          AmlsStatus2.ValidAmlsDetailsUK // temp fix for initial release todo - create a new status to handle errors
         case Upstream5xxResponse(error)
             if error.statusCode == 503 && (error.message.contains("REGIME") | error.message.contains("Technical")) =>
           logger.warn(
             s"DES API#1028 returned the following response - status: ${error.statusCode}, message: ${error.message}"
           )
-          AmlsStatus.ValidAmlsDetailsUK // temp fix for initial release todo - create a new status to handle errors
+          AmlsStatus2.ValidAmlsDetailsUK // temp fix for initial release todo - create a new status to handle errors
       }
   }
 
@@ -257,9 +253,9 @@ extends Logging {
   private def deriveStatusFromDetails(
     arn: Arn,
     details: AmlsDetails
-  )(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] =
+  )(implicit hc: HeaderCarrier): Future[(AmlsStatus2, Option[AmlsDetails])] =
     details match {
-      case overseasAmlsDetails: OverseasAmlsDetails => Future.successful((AmlsStatus.ValidAmlsNonUK, Some(overseasAmlsDetails)))
+      case overseasAmlsDetails: OverseasAmlsDetails => Future.successful((AmlsStatus2.ValidAmlsNonUK, Some(overseasAmlsDetails)))
       case ukAmlsDetails: UkAmlsDetails =>
         if (ukAmlsDetails.supervisoryBodyIsHmrc) {
           ukAmlsDetails.membershipNumber
@@ -271,24 +267,24 @@ extends Logging {
                   ukAmlsDetails
                 ).map(amlsStatus => (amlsStatus, Some(ukAmlsDetails)))
               else
-                Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(ukAmlsDetails)))
+                Future.successful((AmlsStatus2.ValidAmlsDetailsUK, Some(ukAmlsDetails)))
             }
-            .getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, None)))
+            .getOrElse(Future.successful((AmlsStatus2.NoAmlsDetailsUK, None)))
         }
         else {
-          Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(ukAmlsDetails)))
+          Future.successful((AmlsStatus2.ValidAmlsDetailsUK, Some(ukAmlsDetails)))
         }
     }
 
   def storeAmlsRequest(
     arn: Arn,
     amlsRequest: AmlsRequest,
-    amlsSource: AmlsSource = AmlsSource.Subscription
+    amlsSource: AmlsSource4 = AmlsSource4.Subscription
   )(
     implicit
     hc: HeaderCarrier,
     request: Request[_]
-  ): Future[Either[AmlsError, AmlsDetails]] = {
+  ): Future[Either[AmlsError2, AmlsDetails]] = {
     if (appConfig.useAgentServicesAccountAmls) {
       val updateRequest = AgentRecordUpdateRequest(
         amlsDetails = Some(AgentRecordAmlsDetails(
@@ -308,7 +304,7 @@ extends Logging {
             }
             .map(_ => Right(amlsRequest.toAmlsEntity(amlsRequest)))
         }
-        .recover { case _ => Left(AmlsError.AmlsUnexpectedMongoError) }
+        .recover { case _ => Left(AmlsError2.AmlsUnexpectedMongoError) }
     }
     else {
 

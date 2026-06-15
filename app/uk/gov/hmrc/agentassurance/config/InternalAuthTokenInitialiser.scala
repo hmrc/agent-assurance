@@ -18,16 +18,15 @@ package uk.gov.hmrc.agentassurance.config
 
 import javax.inject.Inject
 import javax.inject.Singleton
-
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import org.apache.pekko.Done
 import play.api.http.Status.CREATED
 import play.api.libs.json.Json
 import play.api.Logging
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw

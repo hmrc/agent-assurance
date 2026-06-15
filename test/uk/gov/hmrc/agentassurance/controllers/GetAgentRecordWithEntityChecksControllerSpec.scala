@@ -35,8 +35,8 @@ import uk.gov.hmrc.agentassurance.helpers.TestConstants.testUtr
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
-import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
-import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.internalauth.client.test.BackendAuthComponentsStub
@@ -78,7 +78,7 @@ with MockFactory {
       mockVerifyEntitySuccess(testArn)(
         EntityCheckResult(
           agentDetailsDesResponse,
-          Seq.empty[EntityCheckException]
+          Seq.empty[EntityCheckException2]
         )
       )
 
@@ -109,7 +109,7 @@ with MockFactory {
       mockVerifyEntitySuccess(testArn)(
         EntityCheckResult(
           agentDetailsDesResponse,
-          Seq.empty[EntityCheckException]
+          Seq.empty[EntityCheckException2]
         )
       )
 

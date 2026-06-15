@@ -45,7 +45,7 @@ object AgentRecordAmlsDetails {
       .and((__ \ "membershipNumber").format[String](stringEncrypterDecrypter))
       .and((__ \ "evidenceObjectReference").formatNullable[String](stringEncrypterDecrypter))(
         AgentRecordAmlsDetails.apply,
-        unlift(AgentRecordAmlsDetails.unapply)
+        details => (details.supervisoryBody, details.membershipNumber, details.evidenceObjectReference)
       )
 
 }

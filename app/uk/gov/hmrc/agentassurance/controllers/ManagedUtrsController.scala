@@ -29,7 +29,7 @@ import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.models.pagination.PaginatedResources
 import uk.gov.hmrc.agentassurance.models.pagination.PaginationLinks
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr._
-import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName
+import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName2
 import uk.gov.hmrc.agentassurance.models.utrcheck.UtrDetails
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.services.BusinessNamesService
@@ -54,7 +54,7 @@ with AuthActions {
 
   def listUtrs(
     pagination: PaginationParameters,
-    key: CollectionName
+    key: CollectionName2
   ): Action[AnyContent] = BasicAuth {
     implicit request =>
       for {
@@ -86,8 +86,8 @@ with AuthActions {
   ) = Action.async { implicit request => // TODO - this endpoint is called by both stride/normal and internal auth - we should split it into internal and normal auth versions. Unauth version is temporary
     val nameRequired: Boolean = nameRequired_.getOrElse(false)
     for {
-      isManuallyAssured <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.ManuallyAssured.toString))
-      isRefusalToDealWith <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.RefusalToDealWith.toString))
+      isManuallyAssured <- repository.propertyExists(Value(utr.value).toProperty(CollectionName2.ManuallyAssured.textValue))
+      isRefusalToDealWith <- repository.propertyExists(Value(utr.value).toProperty(CollectionName2.RefusalToDealWith.textValue))
       businessName <-
         if (nameRequired)
           businessNamesService.get(utr.value)
@@ -105,7 +105,7 @@ with AuthActions {
     }
   }
 
-  def upsertUtr(collectionName: CollectionName): Action[JsValue] =
+  def upsertUtr(collectionName: CollectionName2): Action[JsValue] =
     BasicAuth(parse.json) { implicit request =>
       request.body.validate[Value].fold(
         errors => {
@@ -125,7 +125,7 @@ with AuthActions {
 
   def removeUtr(
     identifier: Utr,
-    key: CollectionName
+    key: CollectionName2
   ): Action[AnyContent] = BasicAuth { _ =>
     repository
       .deleteProperty(

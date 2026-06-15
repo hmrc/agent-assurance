@@ -86,7 +86,7 @@ object TestConstants {
     arn = Some(testArn),
     createdOn = today,
     updatedArnOn = None,
-    amlsSource = AmlsSource.Subscription
+    amlsSource = AmlsSource4.Subscription
   )
 
   val testHmrcAmlsDetails: UkAmlsDetails = UkAmlsDetails(

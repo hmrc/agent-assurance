@@ -49,7 +49,7 @@ class AmlsDataController @Inject() (
 extends BackendController(cc)
 with AuthActions {
 
-  def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request => arn: Arn =>
+  def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request => arn =>
     request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match {
       case Some(JsSuccess(amlsRequest, _)) =>
         if (amlsRequest.isUk) {

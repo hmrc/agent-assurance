@@ -49,7 +49,7 @@ object AgencyDetails {
       .and((__ \ "agencyTelephone").formatNullable[String](stringEncrypterDecrypter))
       .and((__ \ "agencyAddress").formatNullable[BusinessAddress](BusinessAddress.businessAddressDatabaseFormat))(
         AgencyDetails.apply,
-        unlift(AgencyDetails.unapply)
+        details => (details.agencyName, details.agencyEmail, details.agencyTelephone, details.agencyAddress)
       )
 
 }
@@ -79,7 +79,7 @@ object BusinessAddress {
       .and((__ \ "postalCode").formatNullable[String](stringEncrypterDecrypter))
       .and((__ \ "countryCode").format[String](stringEncrypterDecrypter))(
         BusinessAddress.apply,
-        unlift(BusinessAddress.unapply)
+        address => (address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode, address.countryCode)
       )
   }
 

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entityCheck
+package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.Format
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentassurance.models.Arn
+enum AmlsError2:
 
-case class VerifyEntityRequest(identifier: Arn)
+  case ArnAlreadySetError,
+    NoExistingAmlsError,
+    UniqueKeyViolationError,
+    AmlsUnexpectedMongoError,
+    AmlsRecordExists
 
-object VerifyEntityRequest {
-  implicit val format: Format[VerifyEntityRequest] = Json.format[VerifyEntityRequest]
-}
+end AmlsError2

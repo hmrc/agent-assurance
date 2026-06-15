@@ -16,20 +16,19 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
+import java.net.URI
 import java.net.URL
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import com.google.inject.ImplementedBy
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
-import play.api.libs.json._
-import play.api.libs.json.Reads._
+import play.api.libs.json.*
+import play.api.libs.json.Reads.*
 import play.api.mvc.Request
 import play.api.Logging
 import play.utils.UriEncoding
@@ -48,9 +47,10 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.http.HttpReads
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import DesRegistrationRequest._
+import DesRegistrationRequest.*
+import play.api.libs.ws.writeableOf_JsValue
 
 case class ClientRelationship(agents: Seq[Agent])
 
@@ -132,7 +132,7 @@ with Logging {
       UriEncoding.encodePathSegment(clientType, "UTF-8")
     }
 
-    val url = new URL(s"$baseUrl/registration/relationship/$encodedClientType/$encodedClientId")
+    val url = new URI(s"$baseUrl/registration/relationship/$encodedClientType/$encodedClientId").toURL
 
     getWithDesHeadersWithRetry[ClientRelationship]("GetStatusAgentRelationship", url)
       .map(
@@ -152,7 +152,7 @@ with Logging {
     amlsRegistrationNumber: String
   )(implicit hc: HeaderCarrier): Future[AmlsSubscriptionRecord] = {
     val encodedRegNumber = UriEncoding.encodePathSegment(amlsRegistrationNumber, UTF_8.name)
-    val url = new URL(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status")
+    val url = new URI(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status").toURL
     getWithDesHeadersWithRetry[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
   }
 
@@ -163,7 +163,7 @@ with Logging {
     request: Request[_],
     hc: HeaderCarrier
   ): Future[AgentDetailsDesResponse] = {
-    val url = new URL(s"$baseUrl/registration/personal-details/arn/${arn.value}")
+    val url = new URI(s"$baseUrl/registration/personal-details/arn/${arn.value}").toURL
     agentCacheProvider.agentDetailsCache(arn.value) {
       getWithDesHeadersWithRetry[AgentDetailsDesResponse]("GetAgentRecordCached", url)
     }
@@ -171,7 +171,7 @@ with Logging {
 
   // API#1163 Registration
   override def getBusinessName(utr: String)(implicit hc: HeaderCarrier): Future[Option[String]] = {
-    val url = new URL(s"$baseUrl/registration/individual/utr/${UriEncoding.encodePathSegment(utr, "UTF-8")}")
+    val url = new URI(s"$baseUrl/registration/individual/utr/${UriEncoding.encodePathSegment(utr, "UTF-8")}").toURL
     agentCacheProvider.agentNameCache(utr) {
       postWithDesHeaders[DesRegistrationRequest, DesAgentNameResponse](
         apiName = "GetAgentNameCached",
@@ -187,7 +187,7 @@ with Logging {
     }
   }
 
-  def postWithDesHeaders[
+  private def postWithDesHeaders[
     B,
     A: HttpReads
   ](
@@ -248,7 +248,7 @@ with Logging {
    * See https://github.com/hmrc/http-verbs?tab=readme-ov-file#propagation-of-headers
    * */
 
-  def desHeaders(
+  private def desHeaders(
     authToken: String,
     env: String,
     isInternalHost: Boolean
