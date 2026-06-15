@@ -51,7 +51,7 @@ class GetAgentRecordWithEntityChecksController @Inject() (
 extends BackendController(cc)
 with AuthActions {
 
-  def get: Action[AnyContent] = AuthorisedWithArn { implicit request => arn: Arn =>
+  def get: Action[AnyContent] = AuthorisedWithArn { implicit request => arn =>
     entityCheckService.verifyAgent(arn).map(entityCheckResult => Ok(Json.toJson(entityCheckResult.agentRecord)))
   }
 

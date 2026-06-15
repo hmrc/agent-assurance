@@ -27,8 +27,8 @@ import org.scalatestplus.play.PlaySpec
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.Application
 import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
-import uk.gov.hmrc.agentassurance.models.AmlsSource
-import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.AmlsSource4
+import uk.gov.hmrc.agentassurance.models.AmlsError2.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
 import uk.gov.hmrc.agentassurance.models.UkAmlsEntity
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
@@ -74,7 +74,7 @@ with InstantClockTestSupport {
         amlsDetails = newUkAmlsDetails,
         arn = Some(arn),
         createdOn = today,
-        amlsSource = AmlsSource.Subscription
+        amlsSource = AmlsSource2.Subscription
       )
 
       val result = repository.createOrUpdate(arn, amlsEntity).futureValue
@@ -98,14 +98,14 @@ with InstantClockTestSupport {
         amlsDetails = newUkAmlsDetails,
         arn = Some(arn),
         createdOn = today,
-        amlsSource = AmlsSource.Subscription
+        amlsSource = AmlsSource2.Subscription
       )
       val oldAmlsEntity = UkAmlsEntity(
         utr = Some(utr),
         amlsDetails = oldUkAmlsDetails,
         arn = Some(arn),
         createdOn = LocalDate.parse("2020-01-01"),
-        amlsSource = AmlsSource.Subscription
+        amlsSource = AmlsSource2.Subscription
       )
 
       repository.collection.find().toFuture().futureValue.size mustBe 0
@@ -131,14 +131,14 @@ with InstantClockTestSupport {
         ),
         arn = None,
         createdOn = LocalDate.parse("2020-01-01"),
-        amlsSource = AmlsSource.Subscription
+        amlsSource = AmlsSource2.Subscription
       )
       val newAmlsEntity = UkAmlsEntity(
         utr = Some(utr),
         amlsDetails = newUkAmlsDetails,
         arn = Some(arn),
         createdOn = today,
-        amlsSource = AmlsSource.Subscription
+        amlsSource = AmlsSource2.Subscription
       )
 
       repository.collection.insertOne(oldAmlsEntity).toFuture().futureValue
@@ -159,14 +159,14 @@ with InstantClockTestSupport {
         amlsDetails = newUkAmlsDetails,
         arn = Some(Arn("TARN0000009")),
         createdOn = LocalDate.parse("2020-01-01"),
-        amlsSource = AmlsSource.Subscription
+        amlsSource = AmlsSource2.Subscription
       )
       val newAmlsEntity = UkAmlsEntity(
         utr = Some(utr),
         amlsDetails = newUkAmlsDetails.copy(supervisoryBody = "CIOT"),
         arn = Some(arn),
         createdOn = today,
-        amlsSource = AmlsSource.Subscription
+        amlsSource = AmlsSource2.Subscription
       )
 
       repository.collection.insertOne(conflictingAmlsEntity).toFuture().futureValue
@@ -187,7 +187,7 @@ with InstantClockTestSupport {
           amlsDetails = newUkAmlsDetails,
           arn = Some(arn),
           createdOn = today,
-          amlsSource = AmlsSource.Subscription
+          amlsSource = AmlsSource2.Subscription
         )
 
         repository.collection.insertOne(amlsEntity).toFuture().futureValue
@@ -204,7 +204,7 @@ with InstantClockTestSupport {
           amlsDetails = newUkAmlsDetails,
           arn = Some(arn),
           createdOn = today,
-          amlsSource = AmlsSource.Subscription
+          amlsSource = AmlsSource2.Subscription
         )
 
         repository.collection.insertOne(amlsEntity).toFuture().futureValue
@@ -231,7 +231,7 @@ with InstantClockTestSupport {
           amlsDetails = oldUkAmlsDetails,
           arn = Some(arn),
           createdOn = LocalDate.parse("2020-01-01"),
-          amlsSource = AmlsSource.Subscription
+          amlsSource = AmlsSource2.Subscription
         )
 
         repository.collection.find().toFuture().futureValue.size mustBe 0

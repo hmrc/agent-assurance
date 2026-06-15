@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entityCheck
+package uk.gov.hmrc.agentassurance.models
 
 import play.api.libs.json.Format
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentassurance.models.Arn
 
-case class VerifyEntityRequest(identifier: Arn)
+enum AmlsStatus2:
 
-object VerifyEntityRequest {
-  implicit val format: Format[VerifyEntityRequest] = Json.format[VerifyEntityRequest]
-}
+  case NoAmlsDetailsNonUK,
+    ValidAmlsNonUK,
+    NoAmlsDetailsUK,
+    ValidAmlsDetailsUK,
+    ExpiredAmlsDetailsUK,
+    PendingAmlsDetails,
+    PendingAmlsDetailsRejected
+
+end AmlsStatus2

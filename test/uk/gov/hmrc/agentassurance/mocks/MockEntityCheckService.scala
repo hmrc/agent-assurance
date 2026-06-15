@@ -20,7 +20,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.http.HeaderCarrier
 

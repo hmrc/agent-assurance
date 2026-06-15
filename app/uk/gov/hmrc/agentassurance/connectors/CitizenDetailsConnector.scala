@@ -18,10 +18,8 @@ package uk.gov.hmrc.agentassurance.connectors
 
 import javax.inject.Inject
 import javax.inject.Singleton
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import com.google.inject.ImplementedBy
 import play.api.http.Status
 import play.api.libs.json.JsPath
@@ -29,11 +27,11 @@ import play.api.libs.json.Json
 import play.api.libs.json.Reads
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.entitycheck.DeceasedCheckException
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException2
 import uk.gov.hmrc.domain.SaUtr
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 
 case class CitizenDeceased(deceased: Boolean)
 
@@ -51,7 +49,7 @@ trait CitizenDetailsConnector {
   )(implicit
     c: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[DeceasedCheckException]]
+  ): Future[Option[EntityCheckException2]]
 
 }
 
@@ -70,7 +68,7 @@ with Logging {
   )(implicit
     c: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[DeceasedCheckException]] = {
+  ): Future[Option[EntityCheckException2]] = {
     http
       .get(url"$baseUrl/citizen-details/sautr/${saUtr.value}")
       .execute[HttpResponse]
@@ -79,9 +77,9 @@ with Logging {
           case Status.OK =>
             Json.parse(response.body).as[CitizenDeceased] match {
               case x: CitizenDeceased if !x.deceased => None
-              case _ => Some(DeceasedCheckException.EntityDeceasedCheckFailed)
+              case _ => Some(EntityCheckException2.EntityDeceasedCheckFailed)
             }
-          case e => Some(DeceasedCheckException.CitizenConnectorRequestFailed(e))
+          case e => Some(EntityCheckException2.CitizenConnectorRequestFailed(e))
         }
       }
 

@@ -799,7 +799,7 @@ with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
               amlsDetails = amlsDetails,
               arn = Some(arn),
               createdOn = LocalDate.now(),
-              amlsSource = AmlsSource.Subscription
+              amlsSource = AmlsSource4.Subscription
             )
           )
           .toFuture()
@@ -812,7 +812,7 @@ with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
               amlsDetails = amlsDetails,
               arn = None,
               createdOn = LocalDate.now(),
-              amlsSource = AmlsSource.Subscription
+              amlsSource = AmlsSource4.Subscription
             )
           )
           .toFuture()

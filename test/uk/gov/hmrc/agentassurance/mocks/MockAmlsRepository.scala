@@ -23,7 +23,7 @@ import scala.concurrent.Future
 import org.mongodb.scala.result.UpdateResult
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
-import uk.gov.hmrc.agentassurance.models.AmlsError
+import uk.gov.hmrc.agentassurance.models.AmlsError2
 import uk.gov.hmrc.agentassurance.models.CreateAmlsRequest
 import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
 import uk.gov.hmrc.agentassurance.models.UkAmlsEntity

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entityCheck
+package uk.gov.hmrc.agentassurance.models
 
-import play.api.libs.json.Format
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentassurance.models.Arn
+import play.api.libs.json.*
 
-case class VerifyEntityRequest(identifier: Arn)
+case class AmlsSource3(amlsSource: String)
 
-object VerifyEntityRequest {
-  implicit val format: Format[VerifyEntityRequest] = Json.format[VerifyEntityRequest]
-}
+object AmlsSource3:
+
+  implicit val amlsSource3Reads: Reads[AmlsSource3] = Json.reads[AmlsSource3]
+  implicit val amlsSource3Writes: OWrites[AmlsSource3] = Json.writes[AmlsSource3]
+
+//  implicit val amlsSource3Formats: OFormat[AmlsSource3] = OFormat(amlsSource3Reads, amlsSource3Writes)
+  implicit val amlsSource3Formats: OFormat[AmlsSource3] = Json.format[AmlsSource3]
+
+end AmlsSource3

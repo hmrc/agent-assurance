@@ -30,9 +30,9 @@ import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
-import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
-import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
-import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.SuspensionDetails
 import uk.gov.hmrc.http.HeaderNames
@@ -78,7 +78,7 @@ with MockFactory {
           isAnIndividual = None
         )
 
-        mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException]))
+        mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException2]))
 
         val result = controller
           .agentVerifyEntity()
@@ -108,7 +108,7 @@ with MockFactory {
         mockVerifyEntitySuccess(testArn)(
           EntityCheckResult(
             agentDetailsDesResponse,
-            Seq.empty[EntityCheckException]
+            Seq.empty[EntityCheckException2]
           )
         )
 
@@ -142,7 +142,7 @@ with MockFactory {
           isAnIndividual = None
         )
 
-        mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException]))
+        mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException2]))
 
         val result = controller
           .clientVerifyEntity()
@@ -174,7 +174,7 @@ with MockFactory {
           mockVerifyEntitySuccess(testArn)(
             EntityCheckResult(
               agentDetailsDesResponse,
-              Seq.empty[EntityCheckException]
+              Seq.empty[EntityCheckException2]
             )
           )
 

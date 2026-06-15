@@ -18,16 +18,15 @@ package uk.gov.hmrc.agentassurance.connectors
 
 import javax.inject.Inject
 import javax.inject.Singleton
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import com.typesafe.config.Config
 import com.google.inject.ImplementedBy
 import org.apache.pekko.actor.ActorSystem
 import play.api.libs.json.Json
 import play.api.mvc.Request
 import play.api.Logging
+import play.api.libs.ws.writeableOf_JsValue
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AgentRecordUpdateRequest
@@ -42,7 +41,7 @@ trait AgentServicesAccountConnector {
   def getAgentRecord(arn: Arn)(implicit hc: HeaderCarrier): Future[AgentDetailsDesResponse]
 
   def updateAmlsDetails(request: AgentRecordUpdateRequest)(implicit
-    request0: Request[_],
+    request0: Request[?],
     hc: HeaderCarrier
   ): Future[Unit]
 
@@ -67,7 +66,7 @@ with Logging {
     .executeAndDeserialise[AgentDetailsDesResponse]
 
   override def updateAmlsDetails(request: AgentRecordUpdateRequest)(implicit
-    request0: Request[_],
+    request0: Request[?],
     hc: HeaderCarrier
   ): Future[Unit] = httpClient
     .put(url"$baseUrl/agent-services-account/agent-record-update")

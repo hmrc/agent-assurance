@@ -33,7 +33,7 @@ case class UkAmlsEntity(
   arn: Option[Arn] = None,
   createdOn: LocalDate,
   updatedArnOn: Option[LocalDate] = None,
-  amlsSource: AmlsSource
+  amlsSource: AmlsSource4
 )
 extends AmlsEntity
 
@@ -43,13 +43,13 @@ object UkAmlsEntity {
   import play.api.libs.json._
 
   val jsonReads: Reads[UkAmlsEntity] =
-    (__ \ "utr")
+    (JsPath \ "utr")
       .readNullable[Utr]
-      .and((__ \ "amlsDetails").read[UkAmlsDetails])
-      .and((__ \ "arn").readNullable[Arn])
-      .and((__ \ "createdOn").read[LocalDate])
-      .and((__ \ "updatedArnOn").readNullable[LocalDate])
-      .and((__ \ "amlsSource").readWithDefault[AmlsSource](AmlsSource.Subscription))(UkAmlsEntity.apply _)
+      .and((JsPath \ "amlsDetails").read[UkAmlsDetails])
+      .and((JsPath \ "arn").readNullable[Arn])
+      .and((JsPath \ "createdOn").read[LocalDate])
+      .and((JsPath \ "updatedArnOn").readNullable[LocalDate])
+      .and((JsPath \ "amlsSource").read[AmlsSource4])(UkAmlsEntity.apply _)
 
   val jsonWrites: OWrites[UkAmlsEntity] = Json.writes[UkAmlsEntity]
 

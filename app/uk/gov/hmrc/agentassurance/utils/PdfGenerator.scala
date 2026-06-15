@@ -30,7 +30,7 @@ object PdfGenerator {
       .usePdfAConformance(PdfRendererBuilder.PdfAConformance.PDFA_3_U)
       .withHtmlContent(html, null)
       .withProducer("HMRC")
-      .useFastMode
+//      .useFastMode
       .toStream(os)
       .buildPdfRenderer()
     renderer.createPDF()
