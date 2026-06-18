@@ -1,9 +1,9 @@
-import uk.gov.hmrc.{DefaultBuildSettings, SbtAutoBuildPlugin}
+import uk.gov.hmrc.DefaultBuildSettings
 
 val appName = "agent-assurance"
 
 ThisBuild / majorVersion := 2
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "2.13.18"
 
 
 lazy val root = (project in file("."))
