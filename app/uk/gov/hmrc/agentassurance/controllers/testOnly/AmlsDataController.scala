@@ -16,12 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.controllers.testOnly
 
-import java.time.LocalDate
-import javax.inject.Inject
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import play.api.libs.json.Format
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
@@ -29,16 +23,16 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
-import uk.gov.hmrc.agentassurance.models.CreateAmlsRequest
-import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
-import uk.gov.hmrc.agentassurance.models.OverseasAmlsEntity
-import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
+import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
-import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import java.time.LocalDate
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class AmlsDataController @Inject() (
   overseasAmlsRepository: OverseasAmlsRepository,

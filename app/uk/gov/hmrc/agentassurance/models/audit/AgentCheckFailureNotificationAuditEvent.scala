@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.agentassurance.models.audit
 
-import java.time.LocalDateTime
-
 import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 import uk.gov.hmrc.agentassurance.models.Arn
+
+import java.time.LocalDateTime
 
 case class EmailData(
   failedCheck: Seq[String],

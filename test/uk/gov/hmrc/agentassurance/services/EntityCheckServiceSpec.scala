@@ -25,8 +25,8 @@ import uk.gov.hmrc.agentassurance.helpers.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks._
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException2
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckResult
 import uk.gov.hmrc.agentassurance.utils.DateTimeService
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
@@ -50,7 +50,7 @@ with MockAuditService {
   implicit val ac: AppConfig = mockAppConfig
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-  implicit val req: Request[_] = FakeRequest()
+  implicit val req: Request[?] = FakeRequest()
 
   val mongoLockRepository = new MongoLockRepository(mongoComponent, new CurrentTimestampSupport)
   val mongoLockService = new MongoLockService(mongoLockRepository)

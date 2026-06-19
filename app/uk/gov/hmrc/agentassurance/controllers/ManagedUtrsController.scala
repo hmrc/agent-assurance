@@ -25,15 +25,15 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
 import uk.gov.hmrc.agentassurance.models.ErrorBody
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.models.pagination.PaginatedResources
 import uk.gov.hmrc.agentassurance.models.pagination.PaginationLinks
-import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr._
+import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr.*
 import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName2
 import uk.gov.hmrc.agentassurance.models.utrcheck.UtrDetails
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.services.BusinessNamesService
-import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 

@@ -16,25 +16,24 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import com.google.inject.ImplementedBy
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
-import play.api.libs.json.Format
 import play.api.Logging
-import uk.gov.hmrc.agentassurance.models.AmlsError2
+import play.api.libs.json.Format
 import uk.gov.hmrc.agentassurance.models.AmlsError2.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.AmlsError2
 import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
 import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.mongo.MongoComponent
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[ArchivedAmlsRepositoryImpl])
 trait ArchivedAmlsRepository {

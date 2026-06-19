@@ -16,25 +16,25 @@
 
 package uk.gov.hmrc.agentassurance.auth
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
-import play.api.libs.json.JsResultException
-import play.api.mvc._
 import play.api.Logger
+import play.api.libs.json.JsResultException
+import play.api.mvc.*
 import uk.gov.hmrc.agentassurance.controllers.ErrorResults.NoPermission
 import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.*
+import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.affinityGroup
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.credentials
 import uk.gov.hmrc.auth.core.retrieve.Credentials
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 trait AuthActions
 extends AuthorisedFunctions

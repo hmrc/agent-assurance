@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import play.api.libs.json.Json.toJson
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
-import play.api.libs.json.Json.toJson
 import play.api.libs.json.Writes
 import play.api.mvc.Results.Forbidden
 

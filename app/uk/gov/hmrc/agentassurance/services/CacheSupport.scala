@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import play.api.Configuration
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.repositories.AgencyDetailsCacheRepository
 import uk.gov.hmrc.agentassurance.repositories.AgencyNameCacheRepository
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 trait Cache[T] {
   def apply(key: String)(

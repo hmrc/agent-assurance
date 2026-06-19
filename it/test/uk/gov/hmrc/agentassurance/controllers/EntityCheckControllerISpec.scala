@@ -39,7 +39,6 @@ import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
-import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.models.Value
@@ -48,6 +47,7 @@ import uk.gov.hmrc.agentassurance.repositories.PropertiesRepositoryImpl
 import uk.gov.hmrc.agentassurance.stubs.CitizenDetailsStubs
 import uk.gov.hmrc.agentassurance.stubs.EmailStub
 import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.entityChecks.VerifyEntityRequest
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 

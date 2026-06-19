@@ -17,15 +17,14 @@
 package uk.gov.hmrc.agentassurance.services
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers.should
 import org.scalatest.time.Seconds
 import org.scalatest.time.Span
 import org.scalatestplus.play.PlaySpec
-import uk.gov.hmrc.agentassurance.mocks._
+import uk.gov.hmrc.agentassurance.mocks.*
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
 import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.http.HeaderCarrier
@@ -42,6 +41,7 @@ with ScalaFutures {
 
   val service =
     new BusinessNamesService(mockDesConnector)(
+      using
       mockAppConfig,
       mat,
       global

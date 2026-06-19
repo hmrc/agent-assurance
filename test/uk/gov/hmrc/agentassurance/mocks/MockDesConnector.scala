@@ -35,7 +35,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 trait MockDesConnector
 extends MockFactory { this: TestSuite =>
 
-  val mockDesConnector = mock[DesConnector]
+  val mockDesConnector: DesConnector = mock[DesConnector]
 
   def mockGetActiveCesaAgentRelationships(ti: TaxIdentifier)(
     response: Either[String, Seq[SaAgentReference]]
@@ -45,7 +45,7 @@ extends MockFactory { this: TestSuite =>
     Future[Seq[SaAgentReference]]
   ] = {
     (mockDesConnector
-      .getActiveCesaAgentRelationships(_: TaxIdentifier)(_: HeaderCarrier))
+      .getActiveCesaAgentRelationships(_: TaxIdentifier)(using _: HeaderCarrier))
       .expects(ti, *)
       .returning(
         response.fold[Future[Seq[SaAgentReference]]](e => Future.failed(new Exception(e)), r => toFuture(r))
@@ -60,7 +60,7 @@ extends MockFactory { this: TestSuite =>
     Future[AmlsSubscriptionRecord]
   ] = {
     (mockDesConnector
-      .getAmlsSubscriptionStatus(_: String)(_: HeaderCarrier))
+      .getAmlsSubscriptionStatus(_: String)(using _: HeaderCarrier))
       .expects(registrationNumber, *)
       .returning(response)
   }
@@ -69,12 +69,12 @@ extends MockFactory { this: TestSuite =>
     arn: Arn
   )(response: AgentDetailsDesResponse): CallHandler3[
     Arn,
-    Request[_],
+    Request[?],
     HeaderCarrier,
     Future[AgentDetailsDesResponse]
   ] =
     (mockDesConnector
-      .getAgentRecord(_: Arn)(_: Request[_], _: HeaderCarrier))
+      .getAgentRecord(_: Arn)(using _: Request[?], _: HeaderCarrier))
       .expects(arn, *, *)
       .returning(Future.successful(response))
 
@@ -86,7 +86,7 @@ extends MockFactory { this: TestSuite =>
     Future[Option[String]]
   ] =
     (mockDesConnector
-      .getBusinessName(_: String)(_: HeaderCarrier))
+      .getBusinessName(_: String)(using _: HeaderCarrier))
       .expects(utr, *)
       .returning(Future.successful(response))
 

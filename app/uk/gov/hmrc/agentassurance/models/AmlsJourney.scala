@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import java.time.LocalDate
-
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentassurance.models.Utr
+
+import java.time.LocalDate
 
 case class AmlsJourney(
   status: String,

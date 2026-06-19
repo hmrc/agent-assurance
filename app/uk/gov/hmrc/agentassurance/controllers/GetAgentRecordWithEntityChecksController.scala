@@ -16,27 +16,21 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.internalauth.client.BackendAuthComponents
-import uk.gov.hmrc.internalauth.client.IAAction
-import uk.gov.hmrc.internalauth.client.Predicate
-import uk.gov.hmrc.internalauth.client.Resource
-import uk.gov.hmrc.internalauth.client.ResourceLocation
-import uk.gov.hmrc.internalauth.client.ResourceType
+import uk.gov.hmrc.internalauth.client.*
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
 
 @Singleton
 class GetAgentRecordWithEntityChecksController @Inject() (

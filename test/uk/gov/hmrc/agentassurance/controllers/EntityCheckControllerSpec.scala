@@ -24,23 +24,24 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
-import play.api.test._
-import play.api.test.Helpers._
-import uk.gov.hmrc.agentassurance.helpers.TestConstants._
+import play.api.test.*
+import play.api.test.Helpers.*
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.*
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException2
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
-import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.SuspensionDetails
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entityChecks.VerifyEntityRequest
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.internalauth.client.test.BackendAuthComponentsStub
 import uk.gov.hmrc.internalauth.client.test.StubBehaviour
 import uk.gov.hmrc.internalauth.client.BackendAuthComponents
 import uk.gov.hmrc.internalauth.client.Predicate
 import uk.gov.hmrc.internalauth.client.Retrieval
+
 import ExecutionContext.Implicits.global
 
 class EntityCheckControllerSpec
@@ -55,7 +56,7 @@ with MockFactory {
   val as: ActorSystem = ActorSystem()
   implicit val mat: Materializer = Materializer(as)
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
-  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
+  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(using stubControllerComponents(), implicitly)
 
   val controller =
     new EntityCheckController(
@@ -81,7 +82,7 @@ with MockFactory {
         mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException2]))
 
         val result = controller
-          .agentVerifyEntity()
+          .agentVerifyEntity
           .apply(
             FakeRequest(POST, "/agent/verify-entity")
               .withHeaders(HeaderNames.authorisation -> "Some auth token")
@@ -113,7 +114,7 @@ with MockFactory {
         )
 
         val result = controller
-          .agentVerifyEntity()
+          .agentVerifyEntity
           .apply(
             FakeRequest(POST, "/agent/verify-entity")
               .withHeaders(HeaderNames.authorisation -> "Some auth token")
@@ -145,7 +146,7 @@ with MockFactory {
         mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException2]))
 
         val result = controller
-          .clientVerifyEntity()
+          .clientVerifyEntity
           .apply(
             FakeRequest(POST, "/client/verify-entity")
               .withHeaders(HeaderNames.authorisation -> "Some auth token", "Content-Type" -> "application/json")
@@ -179,7 +180,7 @@ with MockFactory {
           )
 
           val result = controller
-            .clientVerifyEntity()
+            .clientVerifyEntity
             .apply(
               FakeRequest(POST, "/client/verify-entity")
                 .withHeaders(HeaderNames.authorisation -> "Some auth token", "Content-Type" -> "application/json")
@@ -204,7 +205,7 @@ with MockFactory {
             .returning(Future.unit)
 
           val result = controller
-            .clientVerifyEntity()
+            .clientVerifyEntity
             .apply(
               FakeRequest(POST, "/client/verify-entity")
                 .withHeaders(HeaderNames.authorisation -> "Some auth token", "Content-Type" -> "application/json")

@@ -52,6 +52,7 @@ with ScalaFutures {
       mockAuthConnector,
       stubControllerComponents()
     )(
+      using
       mockAppConfig,
       ExecutionContext.global
     )

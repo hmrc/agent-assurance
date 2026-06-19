@@ -82,12 +82,12 @@ with MockAppConfig {
     )
   )
 
-  (featureOnServicesConfig.getInt _: String => Int).expects(*).anyNumberOfTimes().returning(1)
-  (featureOnServicesConfig.baseUrl _: String => String).expects(*).anyNumberOfTimes().returning("http://localhost:1234")
+  (featureOnServicesConfig.getInt: String => Int).expects(*).anyNumberOfTimes().returning(1)
+  (featureOnServicesConfig.baseUrl: String => String).expects(*).anyNumberOfTimes().returning("http://localhost:1234")
   (featureOnServicesConfig.getConfString(_: String, _: String)).expects(*, *).anyNumberOfTimes().returning("some-string")
-  (featureOnServicesConfig.getString _: String => String).expects(*).anyNumberOfTimes().returning("some-string")
-  (featureOnServicesConfig.getBoolean _: String => Boolean).expects(*).anyNumberOfTimes().returning(false)
-  (featureOnServicesConfig.getDuration _: String => scala.concurrent.duration.Duration).expects(
+  (featureOnServicesConfig.getString: String => String).expects(*).anyNumberOfTimes().returning("some-string")
+  (featureOnServicesConfig.getBoolean: String => Boolean).expects(*).anyNumberOfTimes().returning(false)
+  (featureOnServicesConfig.getDuration: String => scala.concurrent.duration.Duration).expects(
     *
   ).anyNumberOfTimes().returning(scala.concurrent.duration.Duration.Zero)
 

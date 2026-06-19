@@ -32,7 +32,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 trait MockAgentServicesAccountConnector
 extends MockFactory { this: TestSuite =>
 
-  val mockAgentServicesAccountConnector = mock[AgentServicesAccountConnector]
+  val mockAgentServicesAccountConnector: AgentServicesAccountConnector = mock[AgentServicesAccountConnector]
 
   def mockAsaGetAgentRecord(
     arn: Arn
@@ -42,7 +42,7 @@ extends MockFactory { this: TestSuite =>
     Future[AgentDetailsDesResponse]
   ] =
     (mockAgentServicesAccountConnector
-      .getAgentRecord(_: Arn)(_: HeaderCarrier))
+      .getAgentRecord(_: Arn)(using _: HeaderCarrier))
       .expects(arn, *)
       .returning(Future.successful(response))
 
@@ -50,12 +50,12 @@ extends MockFactory { this: TestSuite =>
     request: AgentRecordUpdateRequest
   )(response: Future[Unit]): CallHandler3[
     AgentRecordUpdateRequest,
-    Request[_],
+    Request[?],
     HeaderCarrier,
     Future[Unit]
   ] =
     (mockAgentServicesAccountConnector
-      .updateAmlsDetails(_: AgentRecordUpdateRequest)(_: Request[_], _: HeaderCarrier))
+      .updateAmlsDetails(_: AgentRecordUpdateRequest)(using _: Request[?], _: HeaderCarrier))
       .expects(request, *, *)
       .returning(response)
 

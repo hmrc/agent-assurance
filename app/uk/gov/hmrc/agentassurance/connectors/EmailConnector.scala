@@ -16,21 +16,22 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import javax.inject.Inject
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 import com.google.inject.ImplementedBy
-import play.api.libs.json.Json
 import play.api.Logging
+import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.EmailInformation
-import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpErrorFunctions
-import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
+import uk.gov.hmrc.http.client.HttpClientV2
+
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[EmailConnectorImpl])
 trait EmailConnector {

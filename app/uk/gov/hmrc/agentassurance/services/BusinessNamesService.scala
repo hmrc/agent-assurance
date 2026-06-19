@@ -16,21 +16,20 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
+import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.stream.Materializer
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
 import uk.gov.hmrc.http.HeaderCarrier
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
 @Singleton
 class BusinessNamesService @Inject() (desConnector: DesConnector)(

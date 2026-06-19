@@ -16,22 +16,17 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import javax.inject._
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
+import play.api.Logger
 import play.api.libs.json.JsError
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
-import play.api.mvc._
-import play.api.Logger
+import play.api.mvc.*
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.connectors.EnrolmentStoreProxyConnector
-import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.models.AmlsError2._
+import uk.gov.hmrc.agentassurance.models.*
+import uk.gov.hmrc.agentassurance.models.AmlsError2.*
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
 import uk.gov.hmrc.agentassurance.util.toFuture
@@ -41,6 +36,10 @@ import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import javax.inject.*
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton
 class AgentAssuranceController @Inject() (

@@ -22,7 +22,6 @@ import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.AgentServicesAccountConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.*
-import uk.gov.hmrc.agentassurance.models.AmlsSource4.Subscription
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.ArchivedAmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
@@ -283,7 +282,7 @@ extends Logging {
   )(
     implicit
     hc: HeaderCarrier,
-    request: Request[_]
+    request: Request[?]
   ): Future[Either[AmlsError2, AmlsDetails]] = {
     if (appConfig.useAgentServicesAccountAmls) {
       val updateRequest = AgentRecordUpdateRequest(
@@ -310,7 +309,7 @@ extends Logging {
 
       val newAmlsDetails: AmlsDetails = amlsRequest.toAmlsEntity(amlsRequest)
 
-      {
+      val storedAmlsDetails: Future[Either[AmlsError2, Option[AmlsEntity]]] =
         newAmlsDetails match {
           case ukAmlsDetails: UkAmlsDetails =>
             getOrRetrieveUtr(arn)
@@ -326,6 +325,10 @@ extends Logging {
                   )
                 )
               )
+              .map {
+                case Right(oldAmlsEntity) => Right(oldAmlsEntity.map(entity => entity: AmlsEntity))
+                case Left(error) => Left(error)
+              }
           case overseasAmlsDetails: OverseasAmlsDetails =>
             overseasAmlsRepository.createOrUpdate(
               OverseasAmlsEntity(
@@ -333,9 +336,10 @@ extends Logging {
                 amlsDetails = overseasAmlsDetails,
                 createdDate = None
               )
-            ).map(Right(_))
+            ).map(oldAmlsEntity => Right(oldAmlsEntity.map(entity => entity: AmlsEntity)))
         }
-      }.flatMap {
+
+      storedAmlsDetails.flatMap {
         case Right(Some(oldAmlsEntity)) =>
           logger.info(
             s"[AmlsDetailsService][storeNewAmlsRequest] Old AMLS record archived, stored and returned new record"
@@ -356,7 +360,7 @@ extends Logging {
 
   private def getOrRetrieveUtr(arn: Arn)(implicit
     hc: HeaderCarrier,
-    request: Request[_]
+    request: Request[?]
   ): Future[Option[Utr]] =
     for {
       a <- amlsRepository.getUtr(arn)

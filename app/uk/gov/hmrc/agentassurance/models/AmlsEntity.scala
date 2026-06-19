@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
-
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
+
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
 
 sealed trait AmlsEntity
 
@@ -39,19 +39,19 @@ extends AmlsEntity
 
 object UkAmlsEntity {
 
-  import play.api.libs.functional.syntax._
-  import play.api.libs.json._
+  import play.api.libs.functional.syntax.*
+  import play.api.libs.json.*
 
-  val jsonReads: Reads[UkAmlsEntity] =
+  private val jsonReads: Reads[UkAmlsEntity] =
     (JsPath \ "utr")
       .readNullable[Utr]
       .and((JsPath \ "amlsDetails").read[UkAmlsDetails])
       .and((JsPath \ "arn").readNullable[Arn])
       .and((JsPath \ "createdOn").read[LocalDate])
       .and((JsPath \ "updatedArnOn").readNullable[LocalDate])
-      .and((JsPath \ "amlsSource").read[AmlsSource4])(UkAmlsEntity.apply _)
+      .and((JsPath \ "amlsSource").read[AmlsSource4])(UkAmlsEntity.apply)
 
-  val jsonWrites: OWrites[UkAmlsEntity] = Json.writes[UkAmlsEntity]
+  private val jsonWrites: OWrites[UkAmlsEntity] = Json.writes[UkAmlsEntity]
 
   implicit val amlsEntityFormat: OFormat[UkAmlsEntity] = OFormat(jsonReads, jsonWrites)
 

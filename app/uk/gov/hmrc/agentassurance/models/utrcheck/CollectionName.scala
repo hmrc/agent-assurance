@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.models.utrcheck
 
-import CollectionName._
+import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName.*
 
 sealed trait CollectionName {
   override def toString: String =

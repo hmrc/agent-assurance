@@ -16,17 +16,16 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
-import play.api.mvc.Request
 import play.api.Logging
+import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.http.HeaderCarrier
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton
 class AgencyDetailsService @Inject() (desConnector: DesConnector)
@@ -37,6 +36,6 @@ extends Logging {
   )(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier,
-    request: Request[_]
+    request: Request[?]
   ): Future[Boolean] = desConnector.getAgentRecord(arn).map(_.agencyDetails.exists(_.hasUkAddress))
 }

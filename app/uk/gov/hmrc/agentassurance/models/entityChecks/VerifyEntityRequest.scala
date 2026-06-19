@@ -14,32 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models
+package uk.gov.hmrc.agentassurance.models.entityChecks
 
-import julienrf.json.derived
 import play.api.libs.json.Format
+import play.api.libs.json.Json
+import uk.gov.hmrc.agentassurance.models.Arn
 
-sealed trait AmlsStatus
+case class VerifyEntityRequest(identifier: Arn)
 
-object AmlsStatus {
-
-  implicit val formatAmlsSource: Format[AmlsStatus] = derived.oformat[AmlsStatus]()
-
-  final case object NoAmlsDetailsNonUK
-  extends AmlsStatus
-  final case object ValidAmlsNonUK
-  extends AmlsStatus
-
-  final case object NoAmlsDetailsUK
-  extends AmlsStatus
-  final case object ValidAmlsDetailsUK
-  extends AmlsStatus
-  final case object ExpiredAmlsDetailsUK
-  extends AmlsStatus
-
-  final case object PendingAmlsDetails
-  extends AmlsStatus
-  final case object PendingAmlsDetailsRejected
-  extends AmlsStatus
-
+object VerifyEntityRequest {
+  implicit val format: Format[VerifyEntityRequest] = Json.format[VerifyEntityRequest]
 }

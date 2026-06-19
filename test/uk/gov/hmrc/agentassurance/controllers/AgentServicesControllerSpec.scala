@@ -52,6 +52,7 @@ with ScalaFutures {
       mockDmsService,
       stubControllerComponents()
     )(
+      using
       mockAppConfig,
       ExecutionContext.global
     )

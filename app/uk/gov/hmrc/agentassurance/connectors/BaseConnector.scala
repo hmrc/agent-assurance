@@ -16,17 +16,17 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.JsResult
 import play.api.libs.json.Reads
-import uk.gov.hmrc.http.client.RequestBuilder
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.Retries
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.RequestBuilder
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 trait BaseConnector
 extends Retries {

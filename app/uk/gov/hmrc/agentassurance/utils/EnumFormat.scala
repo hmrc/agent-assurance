@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.utils
 
 import enumeratum.Enum
 import enumeratum.EnumEntry
-import play.api.libs.json._
+import play.api.libs.json.*
 
 object EnumFormat {
 

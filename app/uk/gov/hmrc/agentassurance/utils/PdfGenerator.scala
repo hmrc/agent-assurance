@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.agentassurance.utils
 
-import java.io.ByteArrayOutputStream
-
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
+
+import java.io.ByteArrayOutputStream
 
 object PdfGenerator {
   def buildPdf(html: String): ByteArrayOutputStream = {

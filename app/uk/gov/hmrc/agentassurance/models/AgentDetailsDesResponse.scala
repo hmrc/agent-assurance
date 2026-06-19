@@ -16,16 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import scala.Function.unlift
-
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json.__
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.crypto.json.JsonEncryption.stringEncrypterDecrypter
+import play.api.libs.json.__
 import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
+import uk.gov.hmrc.crypto.json.JsonEncryption.stringEncrypterDecrypter
 
 case class AgentDetailsDesResponse(
   uniqueTaxReference: Option[Utr],
@@ -41,18 +39,18 @@ object AgentDetailsDesResponse {
 
   def agentRecordDatabaseDetailsFormat(implicit
     crypto: Encrypter
-      with Decrypter
+      & Decrypter
   ): Format[AgentDetailsDesResponse] =
     (__ \ "uniqueTaxReference")
-      .formatNullable[String](stringEncrypterDecrypter)
+      .formatNullable[String](using stringEncrypterDecrypter)
       .bimap[Option[Utr]](
         _.map(Utr(_)),
         _.map(_.value)
       )
-      .and((__ \ "agencyDetails").formatNullable[AgencyDetails](AgencyDetails.agencyDetailsDatabaseFormat))
+      .and((__ \ "agencyDetails").formatNullable[AgencyDetails](using AgencyDetails.agencyDetailsDatabaseFormat))
       .and((__ \ "suspensionDetails").formatNullable[SuspensionDetails])
       .and((__ \ "isAnIndividual").formatNullable[Boolean])
-      .and((__ \ "amlsDetails").formatNullable[AgentRecordAmlsDetails](AgentRecordAmlsDetails.databaseFormat))(
+      .and((__ \ "amlsDetails").formatNullable[AgentRecordAmlsDetails](using AgentRecordAmlsDetails.databaseFormat))(
         AgentDetailsDesResponse.apply,
         response => (response.uniqueTaxReference, response.agencyDetails, response.suspensionDetails, response.isAnIndividual, response.amlsDetails)
       )

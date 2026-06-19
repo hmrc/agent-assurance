@@ -34,8 +34,8 @@ sealed abstract class Service(
   val id: String,
   val invitationIdPrefix: Char,
   val enrolmentKey: String,
-  val supportedSuppliedClientIdType: ClientIdType[_ <: TaxIdentifier],
-  val supportedClientIdType: ClientIdType[_ <: TaxIdentifier]
+  val supportedSuppliedClientIdType: ClientIdType[? <: TaxIdentifier],
+  val supportedClientIdType: ClientIdType[? <: TaxIdentifier]
 ) {
 
   override def toString: String = this.id
@@ -161,7 +161,7 @@ object Service {
     MtdItIdType
   )
 
-  val supportedServices: Seq[Service] = Seq(
+  private val supportedServices: Seq[Service] = Seq(
     MtdIt,
     Vat,
     PersonalIncomeRecord,
@@ -175,9 +175,9 @@ object Service {
     MtdItSupp
   )
 
-  def findById(id: String): Option[Service] = supportedServices.find(_.id == id)
+  private def findById(id: String): Option[Service] = supportedServices.find(_.id == id)
 
-  def forId(id: String): Service = findById(id).getOrElse(throw new Exception("Not a valid service id: " + id))
+  private def forId(id: String): Service = findById(id).getOrElse(throw new Exception("Not a valid service id: " + id))
 
   def apply(id: String): Service = forId(id)
   def unapply(service: Service): Option[String] = Some(service.id)
@@ -189,7 +189,7 @@ object Service {
 }
 
 sealed abstract class ClientIdType[+T <: TaxIdentifier](
-  val clazz: Class[_],
+  val clazz: Class[?],
   val id: String,
   val enrolmentId: String,
   val createUnderlying: String => T

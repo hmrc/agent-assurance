@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
-import scala.concurrent.Future
+import org.scalamock.handlers.CallHandler3
+import org.scalamock.handlers.CallHandler5
 
+import scala.concurrent.Future
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.Request
@@ -36,10 +38,15 @@ extends MockFactory { this: TestSuite =>
   val mockAmlsDetailsService: AmlsDetailsService = mock[AmlsDetailsService]
 
   def mockGetAmlsDetailsByArn(arn: Arn)(
-    response: Future[(AmlsStatus, Option[AmlsDetails])]
-  ) = {
+    response: Future[(AmlsStatus2, Option[AmlsDetails])]
+  ): CallHandler3[
+    Arn,
+    HeaderCarrier,
+    Request[?],
+    Future[(AmlsStatus2, Option[AmlsDetails])]
+  ] = {
     (mockAmlsDetailsService
-      .getAmlsDetailsByArn(_: Arn)(_: HeaderCarrier, _: Request[_]))
+      .getAmlsDetailsByArn(_: Arn)(using _: HeaderCarrier, _: Request[?]))
       .expects(arn, *, *)
       .returning(response)
   }
@@ -47,17 +54,24 @@ extends MockFactory { this: TestSuite =>
   def mockStoreAmlsRequest(
     arn: Arn,
     amlsRequest: AmlsRequest
-  )(response: Future[Either[AmlsError, AmlsDetails]]) = {
+  )(response: Future[Either[AmlsError2, AmlsDetails]]): CallHandler5[
+    Arn,
+    AmlsRequest,
+    AmlsSource4,
+    HeaderCarrier,
+    Request[?],
+    Future[Either[AmlsError2, AmlsDetails]]
+  ] = {
     (mockAmlsDetailsService
       .storeAmlsRequest(
         _: Arn,
         _: AmlsRequest,
         _: AmlsSource4
-      )(_: HeaderCarrier, _: Request[_]))
+      )(using _: HeaderCarrier, _: Request[?]))
       .expects(
         arn,
         amlsRequest,
-        AmlsSource2.Subscription,
+        AmlsSource4.Subscription,
         *,
         *
       )

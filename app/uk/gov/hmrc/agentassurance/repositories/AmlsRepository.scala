@@ -16,43 +16,31 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import java.time.LocalDate
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import com.google.inject.ImplementedBy
 import com.mongodb.MongoException
 import com.mongodb.client.model.ReturnDocument
-import org.mongodb.scala.model.Filters
-import org.mongodb.scala.model.Filters.equal
-import org.mongodb.scala.model.Filters.and
-import org.mongodb.scala.model.FindOneAndReplaceOptions
-import org.mongodb.scala.model.IndexModel
-import org.mongodb.scala.model.IndexOptions
-import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.ReplaceOptions
-import org.mongodb.scala.model.Updates
-import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.MongoWriteException
+import org.mongodb.scala.model.*
+import org.mongodb.scala.model.Filters.and
+import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.model.Indexes.ascending
+import org.mongodb.scala.result.UpdateResult
 import play.api.Logging
-import uk.gov.hmrc.agentassurance.models.AmlsError2
+import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.AmlsError2.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.models.AmlsError2.ArnAlreadySetError
 import uk.gov.hmrc.agentassurance.models.AmlsError2.NoExistingAmlsError
 import uk.gov.hmrc.agentassurance.models.AmlsError2.UniqueKeyViolationError
-import uk.gov.hmrc.agentassurance.models.AmlsSource4
-import uk.gov.hmrc.agentassurance.models.CreateAmlsRequest
-import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
-import uk.gov.hmrc.agentassurance.models.UkAmlsEntity
-import uk.gov.hmrc.agentassurance.util._
-import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.Utr
+import uk.gov.hmrc.agentassurance.util.*
+import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.mongo.MongoComponent
+
+import java.time.LocalDate
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 private sealed trait ArnUpsertResult
 
@@ -189,7 +177,7 @@ with Logging {
                 .replaceOne(equal("utr", utr.value), toUpdate)
                 .toFuture()
                 .map {
-                  case updateResult =>
+                  updateResult =>
                     if (updateResult.getModifiedCount == 1L)
                       Right(toUpdate.amlsDetails)
                     else {
@@ -202,10 +190,9 @@ with Logging {
                 }
                 .recover {
                   case e: MongoWriteException if e.getError.getCode == 11000 => Left(UniqueKeyViolationError)
-                  case e => {
+                  case e =>
                     logger.warn(s"unexpected error when updating AMLS record with ARN ${e.getMessage}")
                     Left(AmlsUnexpectedMongoError)
-                  }
                 }
           }
         case None => Left(NoExistingAmlsError)
@@ -261,7 +248,10 @@ with Logging {
     .recover {
       case e =>
         (e, amlsEntity) match {
-          case DuplicateUtrIndexFor(utr) => ArnUpsertResult.DuplicateUtrIndex(utr)
+          case (mongoException: MongoException, amlsEntity: UkAmlsEntity) if mongoException.getCode == 11000 =>
+            val utr = amlsEntity.utr.get
+            ArnUpsertResult.DuplicateUtrIndex(utr)
+//          case DuplicateUtrIndexFor(utr) => ArnUpsertResult.DuplicateUtrIndex(utr)
           case _ => ArnUpsertResult.Failure(AmlsUnexpectedMongoError)
         }
     }
@@ -295,14 +285,6 @@ with Logging {
       case Some(oldAmlsEntity) => Right(Some(oldAmlsEntity))
       case None => Left(AmlsUnexpectedMongoError)
     }
-
-  private object DuplicateUtrIndexFor {
-    def unapply(input: (MongoException, UkAmlsEntity)): Option[Utr] =
-      input match {
-        case (mongoException, amlsEntity) if mongoException.getCode == 11000 => amlsEntity.utr
-        case _ => None
-      }
-  }
 
   private object LegacyUtrOnlyRecord {
     def unapply(maybeEntity: Option[UkAmlsEntity]): Option[UkAmlsEntity] =

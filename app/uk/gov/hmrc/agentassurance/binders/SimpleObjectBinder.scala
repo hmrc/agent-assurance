@@ -32,7 +32,7 @@ extends PathBindable[T] {
       Right(bind(value))
     }
     catch {
-      case e: Throwable => Left(s"Cannot parse parameter '$key' with value '$value' as '${m.runtimeClass.getSimpleName}'")
+      case e: Throwable => Left(s"Cannot parse parameter '$key' with value '$value' as '${m.runtimeClass.getSimpleName}' because of error: $e")
     }
 
   def unbind(

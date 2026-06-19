@@ -16,11 +16,12 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import org.scalamock.handlers.CallHandler4
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckResult
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -33,10 +34,17 @@ extends MockFactory {
 
   val mockEntityCheckService: EntityCheckService = mock[EntityCheckService]
 
-  def mockVerifyEntitySuccess(arn: Arn)(returns: EntityCheckResult) =
+  def mockVerifyEntitySuccess(arn: Arn)(returns: EntityCheckResult): CallHandler4[
+    Arn,
+    Request[?],
+    HeaderCarrier,
+    ExecutionContext,
+    Future[EntityCheckResult]
+  ] =
     (mockEntityCheckService
       .verifyAgent(_: Arn)(
-        _: Request[_],
+        using
+        _: Request[?],
         _: HeaderCarrier,
         _: ExecutionContext
       ))

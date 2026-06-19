@@ -16,22 +16,23 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import javax.inject.Inject
-import javax.inject.Singleton
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 import com.google.inject.ImplementedBy
+import play.api.Logging
 import play.api.http.Status
 import play.api.libs.json.JsPath
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
-import play.api.Logging
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException2
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.*
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HttpReads.Implicits.*
+import uk.gov.hmrc.http.client.HttpClientV2
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 case class CitizenDeceased(deceased: Boolean)
 

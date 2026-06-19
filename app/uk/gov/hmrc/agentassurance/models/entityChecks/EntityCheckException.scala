@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entitycheck
+package uk.gov.hmrc.agentassurance.models.entityChecks
 
 sealed trait EmailCheckExceptions {
   def failedChecksText: String

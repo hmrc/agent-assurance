@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import org.scalamock.handlers.CallHandler4
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
@@ -36,11 +37,17 @@ import uk.gov.hmrc.http.HeaderCarrier
 trait MockInternalAuth
 extends MockFactory { this: TestSuite =>
 
-  val mockAuthConnector = mock[AuthConnector]
+  val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
-  def mockAuth()(response: Either[String, Enrolments]) = {
+  def mockAuth()(response: Either[String, Enrolments]): CallHandler4[
+    Predicate,
+    Retrieval[Enrolments],
+    HeaderCarrier,
+    ExecutionContext,
+    Future[Enrolments]
+  ] = {
     (mockAuthConnector
-      .authorise(_: Predicate, _: Retrieval[Enrolments])(_: HeaderCarrier, _: ExecutionContext))
+      .authorise(_: Predicate, _: Retrieval[Enrolments])(using _: HeaderCarrier, _: ExecutionContext))
       .expects(
         AuthProviders(GovernmentGateway),
         Retrievals.allEnrolments,
@@ -50,9 +57,15 @@ extends MockFactory { this: TestSuite =>
       .returning(response.fold[Future[Enrolments]](e => Future.failed(new Exception(e)), r => Future.successful(r)))
   }
 
-  def mockAuthWithNoRetrievals[A](retrieval: Retrieval[A])(result: A) = {
+  def mockAuthWithNoRetrievals[A](retrieval: Retrieval[A])(result: A): CallHandler4[
+    Predicate,
+    Retrieval[A],
+    HeaderCarrier,
+    ExecutionContext,
+    Future[A]
+  ] = {
     (mockAuthConnector
-      .authorise[A](_: Predicate, _: Retrieval[A])(_: HeaderCarrier, _: ExecutionContext))
+      .authorise[A](_: Predicate, _: Retrieval[A])(using _: HeaderCarrier, _: ExecutionContext))
       .expects(
         EmptyPredicate,
         retrieval,
@@ -62,9 +75,15 @@ extends MockFactory { this: TestSuite =>
       .returning(Future.successful(result))
   }
 
-  def mockAgentAuth()(response: Either[String, Unit]) = {
+  def mockAgentAuth()(response: Either[String, Unit]): CallHandler4[
+    Predicate,
+    EmptyRetrieval.type,
+    HeaderCarrier,
+    ExecutionContext,
+    Future[Unit]
+  ] = {
     (mockAuthConnector
-      .authorise(_: Predicate, _: EmptyRetrieval.type)(_: HeaderCarrier, _: ExecutionContext))
+      .authorise(_: Predicate, _: EmptyRetrieval.type)(using _: HeaderCarrier, _: ExecutionContext))
       .expects(
         AuthProviders(GovernmentGateway).and(AffinityGroup.Agent),
         EmptyRetrieval,

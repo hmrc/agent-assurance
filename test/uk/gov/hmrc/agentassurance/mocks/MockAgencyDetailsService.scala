@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import org.scalamock.handlers.CallHandler4
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.Request
@@ -29,14 +30,21 @@ import uk.gov.hmrc.http.HeaderCarrier
 trait MockAgencyDetailsService
 extends MockFactory { this: TestSuite =>
 
-  val mockAgencyDetailsService = mock[AgencyDetailsService]
+  val mockAgencyDetailsService: AgencyDetailsService = mock[AgencyDetailsService]
 
-  def mockIsUkAddress()(response: Boolean) =
+  def mockIsUkAddress()(response: Boolean): CallHandler4[
+    Arn,
+    ExecutionContext,
+    HeaderCarrier,
+    Request[?],
+    Future[Boolean]
+  ] =
     (mockAgencyDetailsService
       .agencyDetailsHasUkAddress(_: Arn)(
+        using
         _: ExecutionContext,
         _: HeaderCarrier,
-        _: Request[_]
+        _: Request[?]
       ))
       .expects(*, *, *, *)
       .returning(Future.successful(response))

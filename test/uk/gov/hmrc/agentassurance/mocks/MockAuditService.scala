@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
-import scala.concurrent.Future
+import org.scalamock.handlers.CallHandler2
+import org.scalamock.handlers.CallHandler4
 
+import scala.concurrent.Future
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
@@ -32,19 +34,29 @@ extends MockFactory { this: TestSuite =>
 
   val mockAuditService: AuditService = mock[AuditService]
 
-  def mockAuditEntityChecksPerformed =
+  def mockAuditEntityChecksPerformed: CallHandler4[
+    Arn,
+    Option[Utr],
+    Seq[AgentCheckOutcome],
+    HeaderCarrier,
+    Unit
+  ] =
     (mockAuditService
       .auditEntityChecksPerformed(
         _: Arn,
         _: Option[Utr],
         _: Seq[AgentCheckOutcome]
-      )(_: HeaderCarrier))
+      )(using _: HeaderCarrier))
       .expects(*, *, *, *)
       .returning(Future.successful(()))
 
-  def mockAuditEntityCheckFailureNotificationSent =
+  def mockAuditEntityCheckFailureNotificationSent: CallHandler2[
+    EntityCheckNotification,
+    HeaderCarrier,
+    Unit
+  ] =
     (mockAuditService
-      .auditEntityCheckFailureNotificationSent(_: EntityCheckNotification)(_: HeaderCarrier))
+      .auditEntityCheckFailureNotificationSent(_: EntityCheckNotification)(using _: HeaderCarrier))
       .expects(*, *)
       .returning(Future.successful(()))
 

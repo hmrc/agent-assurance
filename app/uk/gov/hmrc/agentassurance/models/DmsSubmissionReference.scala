@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import scala.util.Random
-
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
+
+import scala.util.Random
 
 case class DmsSubmissionReference(submissionReference: String)
 extends Product

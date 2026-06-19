@@ -16,6 +16,29 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
+import com.google.inject.ImplementedBy
+import com.typesafe.config.Config
+import org.apache.pekko.actor.ActorSystem
+import play.api.Logging
+import play.api.libs.json.*
+import play.api.libs.json.Reads.*
+import play.api.libs.ws.writeableOf_JsValue
+import play.api.mvc.Request
+import play.utils.UriEncoding
+import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.agentassurance.models.*
+import uk.gov.hmrc.agentassurance.models.DesRegistrationRequest.*
+import uk.gov.hmrc.agentassurance.services.CacheProvider
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.domain.SaAgentReference
+import uk.gov.hmrc.domain.TaxIdentifier
+import uk.gov.hmrc.http.HttpReads.Implicits.*
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderNames
+import uk.gov.hmrc.http.HttpReads
+import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.HttpClientV2
+
 import java.net.URI
 import java.net.URL
 import java.nio.charset.StandardCharsets.UTF_8
@@ -24,33 +47,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import com.google.inject.ImplementedBy
-import com.typesafe.config.Config
-import org.apache.pekko.actor.ActorSystem
-import play.api.libs.json.*
-import play.api.libs.json.Reads.*
-import play.api.mvc.Request
-import play.api.Logging
-import play.utils.UriEncoding
-import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
-import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
-import uk.gov.hmrc.agentassurance.models.DesAgentNameResponse
-import uk.gov.hmrc.agentassurance.models.DesRegistrationRequest
-import uk.gov.hmrc.agentassurance.services.CacheProvider
-import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.Utr
-import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.domain.SaAgentReference
-import uk.gov.hmrc.domain.TaxIdentifier
-import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HeaderNames
-import uk.gov.hmrc.http.HttpReads
-import uk.gov.hmrc.http.HttpReads.Implicits.*
-import uk.gov.hmrc.http.UpstreamErrorResponse
-import DesRegistrationRequest.*
-import play.api.libs.ws.writeableOf_JsValue
 
 case class ClientRelationship(agents: Seq[Agent])
 
@@ -89,7 +85,7 @@ trait DesConnector {
   def getAgentRecord(
     arn: Arn
   )(implicit
-    request: Request[_],
+    request: Request[?],
     hc: HeaderCarrier
   ): Future[AgentDetailsDesResponse]
 
@@ -160,7 +156,7 @@ with Logging {
   override def getAgentRecord(
     arn: Arn
   )(implicit
-    request: Request[_],
+    request: Request[?],
     hc: HeaderCarrier
   ): Future[AgentDetailsDesResponse] = {
     val url = new URI(s"$baseUrl/registration/personal-details/arn/${arn.value}").toURL
@@ -174,7 +170,6 @@ with Logging {
     val url = new URI(s"$baseUrl/registration/individual/utr/${UriEncoding.encodePathSegment(utr, "UTF-8")}").toURL
     agentCacheProvider.agentNameCache(utr) {
       postWithDesHeaders[DesRegistrationRequest, DesAgentNameResponse](
-        apiName = "GetAgentNameCached",
         url = url,
         request = DesRegistrationRequest(isAnAgent = false)
       )
@@ -191,7 +186,6 @@ with Logging {
     B,
     A: HttpReads
   ](
-    apiName: String,
     url: URL,
     request: B
   )(implicit
@@ -209,12 +203,11 @@ with Logging {
         authorizationToken,
         environment,
         isInternalHost
-      ): _*)
+      )*)
       .execute[Option[A]]
     response
 
   }
-
   private def getWithDesHeadersWithRetry[A: HttpReads](
     apiName: String,
     url: URL
@@ -227,17 +220,15 @@ with Logging {
     val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
 
     retryFor[A](s"$apiName connector get $url")(retryCondition) {
-      httpV2
+      val response = httpV2
         .get(url)
         .setHeader(desHeaders(
           authorizationToken,
           environment,
           isInternalHost
-        ): _*)
+        )*)
         .executeAndDeserialise[A]
-        .map(result => {
-          result
-        })
+      response
     }
   }
 

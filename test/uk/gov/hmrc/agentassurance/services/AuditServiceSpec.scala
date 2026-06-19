@@ -38,7 +38,7 @@ with MockAuditConnector {
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
   implicit val hc: HeaderCarrier = new HeaderCarrier()
-  val auditService = new AuditService(mockAuditConnector)(ec, mockAppConfig)
+  val auditService = new AuditService(mockAuditConnector)(using ec, mockAppConfig)
 
   "auditEntityCheckFailureNotificationSent" should {
     "send audit event" in {

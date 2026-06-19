@@ -16,12 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import play.api.libs.json.JsError
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
@@ -30,16 +24,16 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.AmlsRequest
-import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
-import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetailsResponse
-import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
-import uk.gov.hmrc.agentassurance.models.UkAmlsDetailsResponse
+import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
-import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton
 class AmlsDetailsByArnController @Inject() (

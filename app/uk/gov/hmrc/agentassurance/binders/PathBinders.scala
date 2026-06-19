@@ -17,18 +17,53 @@
 package uk.gov.hmrc.agentassurance.binders
 
 import play.api.mvc.PathBindable
-import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName2
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
+import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName2
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 
 object PathBinders {
 
-  implicit object NinoBinder
-  extends SimpleObjectBinder[Nino](Nino.apply, _.value)
-  implicit object SaAgentReferenceBinder
-  extends SimpleObjectBinder[SaAgentReference](SaAgentReference.apply, _.value)
+//  implicit object NinoBinder
+//  extends SimpleObjectBinder[Nino](Nino.apply, _.value)
+//  implicit object SaAgentReferenceBinder
+//  extends SimpleObjectBinder[SaAgentReference](SaAgentReference.apply, _.value)
+
+  implicit val ninoBinder: PathBindable[Nino] =
+    new PathBindable[Nino] {
+      override def bind(
+        key: String,
+        value: String
+      ): Either[String, Nino] = {
+        if (Nino.isValid(value))
+          Right(Nino(value))
+        else
+          Left("Invalid NINO")
+      }
+
+      override def unbind(
+        key: String,
+        nino: Nino
+      ): String = nino.value
+    }
+
+  implicit val saAgentReferenceBinder: PathBindable[SaAgentReference] =
+    new PathBindable[SaAgentReference] {
+      override def bind(
+        key: String,
+        value: String
+      ): Either[String, SaAgentReference] = {
+
+        Right(SaAgentReference(value))
+
+      }
+
+      override def unbind(
+        key: String,
+        saAgentReference: SaAgentReference
+      ): String = saAgentReference.value
+    }
 
   implicit val utrBinder: PathBindable[Utr] =
     new PathBindable[Utr] {

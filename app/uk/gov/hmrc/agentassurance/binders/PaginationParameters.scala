@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.agentassurance.binders
 
-import scala.util.Try
-
 import play.api.mvc.QueryStringBindable
+
+import scala.util.Try
 
 case class PaginationParameters(
   page: Int,

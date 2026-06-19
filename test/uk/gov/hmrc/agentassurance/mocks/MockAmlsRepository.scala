@@ -37,7 +37,7 @@ extends MockFactory { this: TestSuite =>
 
   val mockAmlsRepository = mock[AmlsRepository]
 
-  def mockCreateAmls(createAmlsRequest: CreateAmlsRequest)(response: Either[AmlsError, Unit]) = {
+  def mockCreateAmls(createAmlsRequest: CreateAmlsRequest)(response: Either[AmlsError2, Unit]) = {
     (mockAmlsRepository
       .createOrUpdate(_: CreateAmlsRequest))
       .expects(createAmlsRequest)
@@ -47,7 +47,7 @@ extends MockFactory { this: TestSuite =>
   def mockUpdateAmls(
     utr: Utr,
     arn: Arn
-  )(response: Either[AmlsError, UkAmlsDetails]) = {
+  )(response: Either[AmlsError2, UkAmlsDetails]) = {
     (mockAmlsRepository
       .updateArn(_: Utr, _: Arn))
       .expects(utr, arn)
@@ -78,7 +78,7 @@ extends MockFactory { this: TestSuite =>
   def mockCreateOrUpdate(
     arn: Arn,
     ukAmnlsEntity: UkAmlsEntity
-  )(response: Either[AmlsError, Option[UkAmlsEntity]]) = {
+  )(response: Either[AmlsError2, Option[UkAmlsEntity]]) = {
     (mockAmlsRepository
       .createOrUpdate(_: Arn, _: UkAmlsEntity))
       .expects(arn, ukAmnlsEntity)

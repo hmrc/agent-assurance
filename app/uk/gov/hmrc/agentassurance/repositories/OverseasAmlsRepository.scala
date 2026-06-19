@@ -16,27 +16,25 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import java.time.Clock
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import com.google.inject.ImplementedBy
 import com.mongodb.client.model.ReturnDocument
+import org.mongodb.scala.MongoException
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.FindOneAndReplaceOptions
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.MongoException
 import play.api.Logging
-import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.models.AmlsError2._
-import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.agentassurance.models.*
+import uk.gov.hmrc.agentassurance.models.AmlsError2.*
 import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+
+import java.time.Clock
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[OverseasAmlsRepositoryImpl])
 trait OverseasAmlsRepository {

@@ -16,24 +16,25 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import javax.inject.Inject
-import javax.inject.Singleton
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import com.typesafe.config.Config
 import com.google.inject.ImplementedBy
+import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
-import play.api.libs.json.Json
-import play.api.mvc.Request
 import play.api.Logging
+import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
+import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AgentRecordUpdateRequest
 import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
+import uk.gov.hmrc.http.client.HttpClientV2
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[AgentServicesAccountConnectorImpl])
 trait AgentServicesAccountConnector {

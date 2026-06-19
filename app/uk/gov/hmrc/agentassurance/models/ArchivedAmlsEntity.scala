@@ -16,15 +16,15 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import java.time.temporal.ChronoUnit
-import java.time.Instant
-import java.time.LocalDate
-
 import play.api.libs.json.Format
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
+
+import java.time.Instant
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 case class ArchivedAmlsEntity(
   ukRecord: Boolean,

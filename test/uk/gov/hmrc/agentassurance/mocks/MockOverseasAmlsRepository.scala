@@ -32,7 +32,7 @@ extends MockFactory { this: TestSuite =>
 
   val mockOverseasAmlsRepository = mock[OverseasAmlsRepository]
 
-  def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError, Unit]) = {
+  def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError2, Unit]) = {
     (mockOverseasAmlsRepository
       .create(_: OverseasAmlsEntity))
       .expects(amlsEntity)

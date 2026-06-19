@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentassurance
 
+import scala.language.implicitConversions
 import scala.concurrent.Future
 
 package object util {

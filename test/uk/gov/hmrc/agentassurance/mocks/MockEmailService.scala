@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import org.scalamock.handlers.CallHandler3
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
@@ -28,11 +29,16 @@ import uk.gov.hmrc.http.HeaderCarrier
 trait MockEmailService
 extends MockFactory { this: TestSuite =>
 
-  val mockMockEmailService = mock[EmailService]
+  val mockMockEmailService: EmailService = mock[EmailService]
 
-  def mockSendEntityCheckNotification(entityCheckNotification: EntityCheckNotification) = {
+  def mockSendEntityCheckNotification(entityCheckNotification: EntityCheckNotification): CallHandler3[
+    EntityCheckNotification,
+    ExecutionContext,
+    HeaderCarrier,
+    Future[Unit]
+  ] = {
     (mockMockEmailService
-      .sendEntityCheckNotification(_: EntityCheckNotification)(_: ExecutionContext, _: HeaderCarrier))
+      .sendEntityCheckNotification(_: EntityCheckNotification)(using _: ExecutionContext, _: HeaderCarrier))
       .expects(
         entityCheckNotification,
         *,
