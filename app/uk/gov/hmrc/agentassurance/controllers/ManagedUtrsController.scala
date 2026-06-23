@@ -59,7 +59,7 @@ with AuthActions {
     implicit request =>
       for {
         (total, utrs) <- repository.findProperties(
-          key.toString,
+          key.textValue,
           pagination.page,
           pagination.pageSize
         )
@@ -83,7 +83,7 @@ with AuthActions {
   def getUtrDetails(
     utr: Utr,
     nameRequired_ : Option[Boolean] = None
-  ) = Action.async { implicit request => // TODO - this endpoint is called by both stride/normal and internal auth - we should split it into internal and normal auth versions. Unauth version is temporary
+  ): Action[AnyContent] = Action.async { implicit request => // TODO - this endpoint is called by both stride/normal and internal auth - we should split it into internal and normal auth versions. Unauth version is temporary
     val nameRequired: Boolean = nameRequired_.getOrElse(false)
     for {
       isManuallyAssured <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.ManuallyAssured.textValue))
@@ -112,12 +112,13 @@ with AuthActions {
           Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_JSON", JsError.toJson(errors).toString))))
         },
         newValue => {
-          Utr.isValid(newValue.value) match {
-            case true =>
-              repository
-                .upsertProperty(newValue.toProperty(collectionName.toString))
-                .map(_ => Created)
-            case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
+          if (Utr.isValid(newValue.value)) {
+            repository
+              .upsertProperty(newValue.toProperty(collectionName.textValue))
+              .map(_ => Created)
+          }
+          else {
+            Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
           }
         }
       )
@@ -129,7 +130,7 @@ with AuthActions {
   ): Action[AnyContent] = BasicAuth { _ =>
     repository
       .deleteProperty(
-        Value(identifier.value).toProperty(key.toString)
+        Value(identifier.value).toProperty(key.textValue)
       )
       .map(_ => NoContent)
   }

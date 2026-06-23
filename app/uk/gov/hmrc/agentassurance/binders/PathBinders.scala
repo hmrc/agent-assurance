@@ -113,7 +113,7 @@ object PathBinders {
       override def unbind(
         key: String,
         utrAc: CollectionName
-      ): String = utrAc.toString
+      ): String = utrAc.textValue
     }
 
 }
