@@ -26,7 +26,7 @@ import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.connectors.EnrolmentStoreProxyConnector
 import uk.gov.hmrc.agentassurance.models.*
-import uk.gov.hmrc.agentassurance.models.AmlsError2.*
+import uk.gov.hmrc.agentassurance.models.AmlsError.*
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
 import uk.gov.hmrc.agentassurance.util.toFuture

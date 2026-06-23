@@ -26,7 +26,7 @@ import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.models.*
-import uk.gov.hmrc.agentassurance.models.AmlsError2.*
+import uk.gov.hmrc.agentassurance.models.AmlsError.*
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
@@ -39,7 +39,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[OverseasAmlsRepositoryImpl])
 trait OverseasAmlsRepository {
 
-  def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError2, Unit]]
+  def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]]
 
   def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]]
 
@@ -67,7 +67,7 @@ with Logging {
 
   override lazy val requiresTtlIndex: Boolean = false
 
-  def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError2, Unit]] = {
+  def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]] = {
     collection
       .find(equal("arn", amlsEntity.arn.value))
       .headOption()

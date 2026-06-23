@@ -23,7 +23,7 @@ import scala.concurrent.Future
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import uk.gov.hmrc.agentassurance.connectors.CitizenDetailsConnector
-import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -32,11 +32,11 @@ extends MockFactory { this: TestSuite =>
 
   val mockCitizenDetailsConnector: CitizenDetailsConnector = mock[CitizenDetailsConnector]
 
-  def mockGetCitizenDeceasedFlag(saUtr: SaUtr)(response: Option[EntityCheckException2]): CallHandler3[
+  def mockGetCitizenDeceasedFlag(saUtr: SaUtr)(response: Option[EntityCheckException]): CallHandler3[
     SaUtr,
     HeaderCarrier,
     ExecutionContext,
-    Future[Option[EntityCheckException2]]
+    Future[Option[EntityCheckException]]
   ] = {
     (mockCitizenDetailsConnector
       .getCitizenDeceasedFlag(_: SaUtr)(using _: HeaderCarrier, _: ExecutionContext))

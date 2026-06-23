@@ -20,7 +20,7 @@ import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.connectors.CitizenDetailsConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.*
-import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckResult
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.utils.DateTimeService
@@ -52,12 +52,12 @@ class EntityCheckService @Inject() (
     ec: ExecutionContext
   ): Future[EntityCheckResult] = {
 
-    def deceasedStatusCheck(saUtr: SaUtr): Future[Option[EntityCheckException2]] = citizenConnector
+    def deceasedStatusCheck(saUtr: SaUtr): Future[Option[EntityCheckException]] = citizenConnector
       .getCitizenDeceasedFlag(saUtr)
 
-    def refusalToDealCheck(utr: Utr): Future[Option[EntityCheckException2]] = {
+    def refusalToDealCheck(utr: Utr): Future[Option[EntityCheckException]] = {
       repository.propertyExists(Value(utr.value).toProperty("refusal-to-deal-with")).map {
-        case true => Some(EntityCheckException2.AgentIsOnRefuseToDealList)
+        case true => Some(EntityCheckException.AgentIsOnRefuseToDealList)
         case false => None
       }
     }
@@ -66,7 +66,7 @@ class EntityCheckService @Inject() (
       arn: Arn,
       utr: Utr,
       isAnIndividual: Option[Boolean]
-    ): Future[Seq[EntityCheckException2]] = {
+    ): Future[Seq[EntityCheckException]] = {
       val checksRequired =
         if (isAnIndividual.contains(true)) {
           Seq(deceasedStatusCheck(SaUtr(utr.value)), refusalToDealCheck(utr))
@@ -83,11 +83,11 @@ class EntityCheckService @Inject() (
           case Some(entityCheckExceptions) =>
             val onRefusalListAgentCheckOutcomes: AgentCheckOutcome = entityCheckExceptions
               .collectFirst {
-                case EntityCheckException2.AgentIsOnRefuseToDealList =>
+                case EntityCheckException.AgentIsOnRefuseToDealList =>
                   AgentCheckOutcome(
                     agentCheckType = "onRefusalList",
                     isSuccessful = false,
-                    failureReason = Some(EntityCheckException2.AgentIsOnRefuseToDealList.exceptionMessage)
+                    failureReason = Some(EntityCheckException.AgentIsOnRefuseToDealList.exceptionMessage)
                   )
               }
               .getOrElse(AgentCheckOutcome(
@@ -98,13 +98,13 @@ class EntityCheckService @Inject() (
 
             val isDeceasedAgentCheckOutcome: AgentCheckOutcome = entityCheckExceptions
               .collectFirst {
-                case EntityCheckException2.EntityDeceasedCheckFailed =>
+                case EntityCheckException.EntityDeceasedCheckFailed =>
                   AgentCheckOutcome(
                     agentCheckType = "isDeceased",
                     isSuccessful = false,
-                    failureReason = Some(EntityCheckException2.EntityDeceasedCheckFailed.exceptionMessage)
+                    failureReason = Some(EntityCheckException.EntityDeceasedCheckFailed.exceptionMessage)
                   )
-                case x @ EntityCheckException2.CitizenConnectorRequestFailed(_) =>
+                case x @ EntityCheckException.CitizenConnectorRequestFailed(_) =>
                   AgentCheckOutcome(
                     agentCheckType = "isDeceased",
                     isSuccessful = false,
@@ -123,16 +123,16 @@ class EntityCheckService @Inject() (
               agentCheckOutcomes = Seq(isDeceasedAgentCheckOutcome, onRefusalListAgentCheckOutcomes)
             )
             entityCheckExceptions
-          case None => Seq.empty[EntityCheckException2]
+          case None => Seq.empty[EntityCheckException]
         }
     }
 
     def sendEmail(
       agentRecord: AgentDetailsDesResponse,
-      entityCheckExceptions: Seq[EntityCheckException2]
+      entityCheckExceptions: Seq[EntityCheckException]
     ): Future[Unit] = {
       val failedChecks: Seq[String] = entityCheckExceptions.collect {
-        case x: EntityCheckException2 => x.exceptionMessage
+        case x: EntityCheckException => x.exceptionMessage
       }
 
       (agentRecord.uniqueTaxReference, failedChecks) match {
@@ -166,7 +166,7 @@ class EntityCheckService @Inject() (
           _,
           agentRecord.isAnIndividual
         ))
-        .getOrElse(Future.successful(Seq.empty[EntityCheckException2]))
+        .getOrElse(Future.successful(Seq.empty[EntityCheckException]))
       _ <- sendEmail(agentRecord, entityChecksResult)
     } yield EntityCheckResult(
       agentRecord,

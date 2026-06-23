@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,25 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-enum AmlsStatus2:
+import enumeratum.Enum
+import enumeratum.EnumEntry
+import enumeratum.PlayJsonEnum
+import uk.gov.hmrc.agentassurance.models
 
-  case NoAmlsDetailsNonUK,
-    ValidAmlsNonUK,
-    NoAmlsDetailsUK,
-    ValidAmlsDetailsUK,
-    ExpiredAmlsDetailsUK,
-    PendingAmlsDetails,
-    PendingAmlsDetailsRejected
+sealed trait AmlsSource
+extends EnumEntry
 
-end AmlsStatus2
+object AmlsSource
+extends Enum[AmlsSource]
+with PlayJsonEnum[AmlsSource]:
+
+  override val values: IndexedSeq[AmlsSource] = findValues
+
+  case object Subscription
+  extends AmlsSource
+  case object AutomaticUpdate
+  extends AmlsSource
+  case object ManageAccountUpdate
+  extends AmlsSource
+
+end AmlsSource

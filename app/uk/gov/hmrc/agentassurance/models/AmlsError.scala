@@ -16,23 +16,12 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-sealed trait AmlsError
+enum AmlsError:
 
-object AmlsError {
+  case ArnAlreadySetError,
+    NoExistingAmlsError,
+    UniqueKeyViolationError,
+    AmlsUnexpectedMongoError,
+    AmlsRecordExists
 
-  case object ArnAlreadySetError
-  extends AmlsError
-
-  case object NoExistingAmlsError
-  extends AmlsError
-
-  case object UniqueKeyViolationError
-  extends AmlsError
-
-  case object AmlsUnexpectedMongoError
-  extends AmlsError
-
-  case object AmlsRecordExists
-  extends AmlsError
-
-}
+end AmlsError

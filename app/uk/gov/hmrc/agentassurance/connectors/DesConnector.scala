@@ -208,7 +208,7 @@ with Logging {
     response
 
   }
-  private def getWithDesHeadersWithRetry[A: HttpReads](
+  private def getWithDesHeadersWithRetry[A](
     apiName: String,
     url: URL
   )(implicit

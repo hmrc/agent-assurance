@@ -111,8 +111,7 @@ with MetricTestSupport {
 
     val sourcePart: Source[ByteString, NotUsed] = Source.single(ByteString.fromString("SomePdfBytes"))
     val source: Source[
-      MultipartFormData.Part[Source[ByteString, NotUsed]]
-        with Serializable,
+      MultipartFormData.Part[Source[ByteString, NotUsed]] & Serializable,
       NotUsed
     ] = Source(
       Seq(
@@ -167,7 +166,7 @@ with MetricTestSupport {
           )
       )
 
-      dmsConnector.sendPdf(source)(hc).futureValue
+      dmsConnector.sendPdf(source)(using hc).futureValue
     }
 
     "must fail when the server returns another status" in {
@@ -179,7 +178,7 @@ with MetricTestSupport {
               .withStatus(INTERNAL_SERVER_ERROR)
           )
       )
-      dmsConnector.sendPdf(source)(hc).failed.futureValue
+      dmsConnector.sendPdf(source)(using hc).failed.futureValue
     }
   }
 

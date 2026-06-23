@@ -23,7 +23,7 @@ import play.api.libs.json.JsPath
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.HttpReads.Implicits.*
@@ -50,7 +50,7 @@ trait CitizenDetailsConnector {
   )(implicit
     c: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[EntityCheckException2]]
+  ): Future[Option[EntityCheckException]]
 
 }
 
@@ -69,7 +69,7 @@ with Logging {
   )(implicit
     c: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[EntityCheckException2]] = {
+  ): Future[Option[EntityCheckException]] = {
     http
       .get(url"$baseUrl/citizen-details/sautr/${saUtr.value}")
       .execute[HttpResponse]
@@ -78,9 +78,9 @@ with Logging {
           case Status.OK =>
             Json.parse(response.body).as[CitizenDeceased] match {
               case x: CitizenDeceased if !x.deceased => None
-              case _ => Some(EntityCheckException2.EntityDeceasedCheckFailed)
+              case _ => Some(EntityCheckException.EntityDeceasedCheckFailed)
             }
-          case e => Some(EntityCheckException2.CitizenConnectorRequestFailed(e))
+          case e => Some(EntityCheckException.CitizenConnectorRequestFailed(e))
         }
       }
 

@@ -16,21 +16,21 @@
 
 package test.uk.gov.hmrc.agentassurance.support
 
-import scala.jdk.CollectionConverters._
-
+import scala.jdk.CollectionConverters.*
 import com.codahale.metrics.MetricRegistry
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.Suite
 import play.api.Application
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
+import scala.compiletime.uninitialized
+
 trait MetricTestSupport {
-  self: Suite
-    with Matchers =>
+  self: Suite & Matchers =>
 
   def app: Application
 
-  private var metricsRegistry: MetricRegistry = _
+  private var metricsRegistry: MetricRegistry = uninitialized
 
   def givenCleanMetricRegistry(): Unit = {
     val registry = app.injector.instanceOf[Metrics].defaultRegistry

@@ -20,7 +20,7 @@ import scala.concurrent.Future
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
-import uk.gov.hmrc.agentassurance.models.AmlsError2
+import uk.gov.hmrc.agentassurance.models.AmlsError
 import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
 import uk.gov.hmrc.agentassurance.repositories.ArchivedAmlsRepository
 
@@ -28,7 +28,7 @@ trait MockArchivedAmlsRepository
 extends MockFactory { this: TestSuite =>
 
   val mockArchivedAmlsRepository = mock[ArchivedAmlsRepository]
-  def mockCreate(entity: ArchivedAmlsEntity)(response: Either[AmlsError2, Unit]) = {
+  def mockCreate(entity: ArchivedAmlsEntity)(response: Either[AmlsError, Unit]) = {
     (mockArchivedAmlsRepository
       .create(_: ArchivedAmlsEntity))
       .expects(entity)

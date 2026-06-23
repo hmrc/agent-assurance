@@ -17,23 +17,23 @@
 package test.uk.gov.hmrc.agentassurance.controllers
 
 import java.time.LocalDate
-
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.Await
-
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.libs.ws.BodyWritable
 import play.api.libs.ws.WSClient
-import play.api.test.Helpers._
+import play.api.libs.ws.WSResponse
+import play.api.test.Helpers.*
 import play.api.Application
+import play.api.libs.ws.WSBodyWritables.writeableOf_String
 import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
 import test.uk.gov.hmrc.agentassurance.stubs.DmsSubmissionStubs
 import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
-import uk.gov.hmrc.agentassurance.models._
+import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
 
@@ -67,9 +67,9 @@ with DmsSubmissionStubs {
 
   override def irAgentReference: String = "IRSA-123"
 
-  val wsClient = app.injector.instanceOf[WSClient]
+  val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  def doGETRequest() = Await.result(
+  def doGETRequest(): WSResponse = Await.result(
     wsClient
       .url(url)
       .withHttpHeaders("Authorization" -> "Bearer XYZ")
@@ -77,7 +77,7 @@ with DmsSubmissionStubs {
     15.seconds
   )
 
-  def doPOSTRequest[T](body: T)(implicit wr: BodyWritable[T]) = Await.result(
+  def doPOSTRequest[T](body: T)(implicit wr: BodyWritable[T]): WSResponse = Await.result(
     wsClient
       .url(url)
       .withHttpHeaders("Authorization" -> "Bearer XYZ")
@@ -106,7 +106,7 @@ with DmsSubmissionStubs {
     amlsDetails = testAmlsDetails,
     arn = Some(arn),
     createdOn = testCreatedDate,
-    amlsSource = AmlsSource4.Subscription
+    amlsSource = AmlsSource.Subscription
   )
 
   "GET /agent/agency-details/:arn" should {

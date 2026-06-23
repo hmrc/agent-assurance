@@ -18,14 +18,13 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import java.time.Clock
 import java.time.LocalDate
-
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
-
 import com.google.inject.AbstractModule
+import org.mongodb.scala.gridfs.ObservableFuture
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
@@ -33,12 +32,14 @@ import play.api.libs.ws.WSClient
 import play.api.libs.ws.WSResponse
 import play.api.test.Helpers.CONTENT_TYPE
 import play.api.Application
+import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
 import test.uk.gov.hmrc.agentassurance.stubs.EnrolmentStoreProxyStubs
 import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.IntegrationSpec
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
-import uk.gov.hmrc.agentassurance.models._
+import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
@@ -58,7 +59,7 @@ with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
 
   override implicit lazy val app: Application = appBuilder.build()
 
-  override lazy val repository = new AmlsRepositoryImpl(mongoComponent)
+  override val repository: AmlsRepositoryImpl = new AmlsRepositoryImpl(mongoComponent)
 
   val moduleWithOverrides: AbstractModule =
     new AbstractModule() {
@@ -113,7 +114,7 @@ with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
 
   implicit val defaultTimeout: Duration = 5 seconds
 
-  def await[A](future: Future[A])(implicit timeout: Duration) = Await.result(future, timeout)
+  def await[A](future: Future[A])(implicit timeout: Duration): A = Await.result(future, timeout)
 
   override def irAgentReference: String = "IRSA-123"
 
@@ -799,7 +800,7 @@ with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
               amlsDetails = amlsDetails,
               arn = Some(arn),
               createdOn = LocalDate.now(),
-              amlsSource = AmlsSource4.Subscription
+              amlsSource = AmlsSource.Subscription
             )
           )
           .toFuture()
@@ -812,7 +813,7 @@ with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
               amlsDetails = amlsDetails,
               arn = None,
               createdOn = LocalDate.now(),
-              amlsSource = AmlsSource4.Subscription
+              amlsSource = AmlsSource.Subscription
             )
           )
           .toFuture()

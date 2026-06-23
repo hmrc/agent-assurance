@@ -16,102 +16,55 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
-import scala.concurrent.duration.DurationInt
-
-import org.scalamock.scalatest.MockFactory
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.eq as equal
+import org.mockito.Mockito.when
 import org.scalatest.TestSuite
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.ConfigLoader
 import play.api.Configuration
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import scala.concurrent.duration.DurationInt
+
 trait MockAppConfig
-extends MockFactory { this: TestSuite =>
+extends MockitoSugar { this: TestSuite =>
 
   val mockServiceConfig: ServicesConfig = mock[ServicesConfig]
   val mockConfig: Configuration = mock[Configuration]
 
-  (mockServiceConfig
-    .getInt(_: String))
-    .expects("rate-limiter.business-names.max-calls-per-second")
-    .atLeastOnce()
-    .returning(10)
+  when(mockServiceConfig.getInt(any[String])).thenReturn(1)
+  when(mockServiceConfig.getInt(equal("rate-limiter.business-names.max-calls-per-second"))).thenReturn(10)
+  when(mockServiceConfig.baseUrl(any[String])).thenReturn("some-url")
+  when(mockServiceConfig.getString(any[String])).thenReturn("other-string")
+  when(mockServiceConfig.getString(equal("stride.roles.agent-assurance"))).thenReturn("maintain_agent_manually_assure")
+  when(mockServiceConfig.getString(equal("internal-auth.token"))).thenReturn("YWdlbnQtYXNzdXJhbmNl")
+  when(mockServiceConfig.getBoolean(equal("internal-auth-token-enabled-on-start"))).thenReturn(false)
+  when(mockServiceConfig.getString(equal("microservice.services.dms-submission.contact-details-submission.callbackEndpoint"))).thenReturn("callbackEndpoint")
+  when(mockServiceConfig.getString(equal("microservice.services.dms-submission.contact-details-submission.businessArea"))).thenReturn("businessArea")
+  when(mockServiceConfig.getString(equal("microservice.services.dms-submission.contact-details-submission.customerId"))).thenReturn("customerId")
+  when(mockServiceConfig.getString(equal("microservice.services.dms-submission.contact-details-submission.source"))).thenReturn("source")
+  when(mockServiceConfig.getDuration(any[String])).thenReturn(1.second)
+  when(mockServiceConfig.getDuration(equal("agent.entity-check.lock.expires"))).thenReturn(1.second)
+  when(mockServiceConfig.getDuration(equal("agent.entity-check.email.lock.expires"))).thenReturn(1.second)
 
-  (mockServiceConfig.getInt(_: String)).expects(*).atLeastOnce().returning(1)
-  (mockServiceConfig.baseUrl(_: String)).expects(*).atLeastOnce().returning("some-url")
-  (mockServiceConfig.getConfString(_: String, _: String)).expects(*, *).atLeastOnce().returning("some-string")
-  (mockServiceConfig
-    .getString(_: String))
-    .expects("stride.roles.agent-assurance")
-    .atLeastOnce()
-    .returning("maintain_agent_manually_assure")
-  (mockServiceConfig
-    .getString(_: String))
-    .expects("internal-auth.token")
-    .atLeastOnce()
-    .returning("YWdlbnQtYXNzdXJhbmNl")
-  (mockServiceConfig
-    .getBoolean(_: String))
-    .expects("internal-auth-token-enabled-on-start")
-    .atLeastOnce()
-    .returning(false)
-  (mockServiceConfig
-    .getString(_: String))
-    .expects("microservice.services.dms-submission.contact-details-submission.callbackEndpoint")
-    .atLeastOnce()
-    .returning("callbackEndpoint")
-  (mockServiceConfig
-    .getString(_: String))
-    .expects("microservice.services.dms-submission.contact-details-submission.businessArea")
-    .atLeastOnce()
-    .returning("businessArea")
-//  (mockServiceConfig.getString(_: String)).expects("microservice.services.dms-submission.contact-details-submission.classificationType)").atLeastOnce().returning("classificationType")
-  (mockServiceConfig
-    .getString(_: String))
-    .expects("microservice.services.dms-submission.contact-details-submission.customerId")
-    .atLeastOnce()
-    .returning("customerId")
-//  (mockServiceConfig.getString(_: String)).expects("microservice.services.dms-submission.contact-details-submission.formId)").atLeastOnce().returning("formId")
-  (mockServiceConfig
-    .getString(_: String))
-    .expects("microservice.services.dms-submission.contact-details-submission.source")
-    .atLeastOnce()
-    .returning("source")
-  (mockServiceConfig.getString(_: String)).expects(*).atLeastOnce().returning("other-string")
-
-  (mockConfig
-    .get[Seq[String]](_: String)(using _: ConfigLoader[Seq[String]]))
-    .expects("internalServiceHostPatterns", *)
-    .atLeastOnce()
-    .returning(Seq(
+  when(mockConfig.get[Seq[String]](equal("internalServiceHostPatterns"))(using any[ConfigLoader[Seq[String]]]))
+    .thenReturn(Seq(
       "^.*\\.service$",
       "^.*\\.mdtp$",
       "^localhost$"
     ))
+  when(mockConfig.get[String](equal("microservice.services.des.environment"))(using any[ConfigLoader[String]]))
+    .thenReturn("test")
+  when(mockConfig.get[String](equal("microservice.services.des.authorization-token"))(using any[ConfigLoader[String]]))
+    .thenReturn("secret")
 
-  (mockServiceConfig
-    .getDuration(_: String))
-    .expects("agent.entity-check.lock.expires")
-    .atLeastOnce()
-    .returning(1.second)
+  when(mockConfig.get[String](equal("agent-maintainer-email"))(using any[ConfigLoader[String]]))
+    .thenReturn("test@example.com")
 
-  (mockServiceConfig
-    .getDuration(_: String))
-    .expects("agent.entity-check.email.lock.expires")
-    .atLeastOnce()
-    .returning(1.second)
-
-  (mockConfig
-    .get[String](_: String)(using _: ConfigLoader[String]))
-    .expects("agent-maintainer-email", *)
-    .atLeastOnce()
-    .returning("test@example.com")
-
-  (mockConfig
-    .get[Boolean](_: String)(using _: ConfigLoader[Boolean]))
-    .expects("features.use-agent-services-account-amls", *)
-    .atLeastOnce()
-    .returning(false)
+  when(mockConfig.get[Boolean](equal("features.use-agent-services-account-amls"))(using any[ConfigLoader[Boolean]]))
+    .thenReturn(false)
 
   implicit val mockAppConfig: AppConfig = new AppConfig(mockConfig, mockServiceConfig)
 

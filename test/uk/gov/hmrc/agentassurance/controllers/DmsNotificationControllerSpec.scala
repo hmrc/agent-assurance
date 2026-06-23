@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatestplus.play.PlaySpec
 import play.api.http.Status.BAD_REQUEST
@@ -69,10 +71,12 @@ with MockAppConfig {
     "return OK" when {
       "when receiving a correct notifications from DMS" in {
 
-        (mockStubBehaviour
-          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-          .expects(*, *)
-          .returning(Future.unit)
+        when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
+
+//        (mockStubBehaviour
+//          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//          .expects(*, *)
+//          .returning(Future.unit)
 
         val request = FakeRequest(POST, routes.DmsNotificationController.dmsCallback().url)
           .withHeaders(HeaderNames.authorisation -> "Some auth token")
@@ -86,10 +90,12 @@ with MockAppConfig {
 
     "return BAD_REQUEST" when {
       "when an invalid request is received" in {
-        (mockStubBehaviour
-          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-          .expects(*, *)
-          .returning(Future.unit)
+        when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
+
+//        (mockStubBehaviour
+//          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//          .expects(*, *)
+//          .returning(Future.unit)
 
         val request = FakeRequest(POST, routes.DmsNotificationController.dmsCallback().url)
           .withHeaders(HeaderNames.authorisation -> "Some auth token")
@@ -114,10 +120,12 @@ with MockAppConfig {
       }
 
       "when the user is not authorised" in {
-        (mockStubBehaviour
-          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-          .expects(*, *)
-          .returning(Future.failed(new RuntimeException()))
+        when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.failed(new RuntimeException()))
+
+//        (mockStubBehaviour
+//          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//          .expects(*, *)
+//          .returning(Future.failed(new RuntimeException()))
 
         val request = FakeRequest(POST, routes.DmsNotificationController.dmsCallback().url)
           .withHeaders(HeaderNames.authorisation -> "Some auth token")

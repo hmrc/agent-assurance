@@ -27,10 +27,10 @@ import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.result.UpdateResult
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.models.*
-import uk.gov.hmrc.agentassurance.models.AmlsError2.AmlsUnexpectedMongoError
-import uk.gov.hmrc.agentassurance.models.AmlsError2.ArnAlreadySetError
-import uk.gov.hmrc.agentassurance.models.AmlsError2.NoExistingAmlsError
-import uk.gov.hmrc.agentassurance.models.AmlsError2.UniqueKeyViolationError
+import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.AmlsError.ArnAlreadySetError
+import uk.gov.hmrc.agentassurance.models.AmlsError.NoExistingAmlsError
+import uk.gov.hmrc.agentassurance.models.AmlsError.UniqueKeyViolationError
 import uk.gov.hmrc.agentassurance.util.*
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
@@ -50,7 +50,7 @@ private object ArnUpsertResult {
   extends ArnUpsertResult
   final case class DuplicateUtrIndex(utr: Utr)
   extends ArnUpsertResult
-  final case class Failure(error: AmlsError2)
+  final case class Failure(error: AmlsError)
   extends ArnUpsertResult
 
 }
@@ -58,17 +58,17 @@ private object ArnUpsertResult {
 @ImplementedBy(classOf[AmlsRepositoryImpl])
 trait AmlsRepository {
 
-  def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError2, Unit]]
+  def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError, Unit]]
 
   def createOrUpdate(
     arn: Arn,
     amlsEntity: UkAmlsEntity
-  ): Future[Either[AmlsError2, Option[UkAmlsEntity]]]
+  ): Future[Either[AmlsError, Option[UkAmlsEntity]]]
 
   def updateArn(
     utr: Utr,
     arn: Arn
-  ): Future[Either[AmlsError2, UkAmlsDetails]]
+  ): Future[Either[AmlsError, UkAmlsDetails]]
 
   def getAmlDetails(utr: Utr): Future[Option[UkAmlsDetails]]
 
@@ -117,7 +117,7 @@ with Logging {
 
   override lazy val requiresTtlIndex: Boolean = false
 
-  override def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError2, Unit]] = {
+  override def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError, Unit]] = {
 
     val utr = createAmlsRequest.utr.value
 
@@ -135,7 +135,7 @@ with Logging {
                 amlsDetails = createAmlsRequest.amlsDetails,
                 arn = None,
                 createdOn = LocalDate.now(),
-                amlsSource = AmlsSource4.Subscription
+                amlsSource = AmlsSource.Subscription
               ),
               ReplaceOptions().upsert(true)
             )
@@ -150,7 +150,7 @@ with Logging {
   override def createOrUpdate(
     arn: Arn,
     amlsEntity: UkAmlsEntity
-  ): Future[Either[AmlsError2, Option[UkAmlsEntity]]] = upsertByArn(arn, amlsEntity).flatMap {
+  ): Future[Either[AmlsError, Option[UkAmlsEntity]]] = upsertByArn(arn, amlsEntity).flatMap {
     case ArnUpsertResult.Success(oldAmlsEntity) => Right(oldAmlsEntity)
     case ArnUpsertResult.DuplicateUtrIndex(utr) => repairLegacyUtrCollision(utr, amlsEntity)
     case ArnUpsertResult.Failure(error) => Left(error)
@@ -159,7 +159,7 @@ with Logging {
   override def updateArn(
     utr: Utr,
     arn: Arn
-  ): Future[Either[AmlsError2, UkAmlsDetails]] = {
+  ): Future[Either[AmlsError, UkAmlsDetails]] = {
     collection
       .find(equal("utr", utr.value))
       .headOption()
@@ -221,10 +221,7 @@ with Logging {
     collection
       .updateOne(
         filter = Filters.equal("arn", arn.value),
-        update = Updates.combine(
-          Updates.set("amlsDetails.membershipExpiresOn", date.toString),
-          Updates.set("amlsSource.Subscription", "AutomaticUpdate")
-        )
+        update = Updates.set("amlsDetails.membershipExpiresOn", date.toString)
       )
       .toFuture()
   }
@@ -259,7 +256,7 @@ with Logging {
   private def repairLegacyUtrCollision(
     utr: Utr,
     amlsEntity: UkAmlsEntity
-  ): Future[Either[AmlsError2, Option[UkAmlsEntity]]] = collection
+  ): Future[Either[AmlsError, Option[UkAmlsEntity]]] = collection
     .find(equal("utr", utr.value))
     .headOption()
     .flatMap {
@@ -274,7 +271,7 @@ with Logging {
   private def replaceLegacyUtrOnlyRecord(
     utr: Utr,
     amlsEntity: UkAmlsEntity
-  ): Future[Either[AmlsError2, Option[UkAmlsEntity]]] = collection
+  ): Future[Either[AmlsError, Option[UkAmlsEntity]]] = collection
     .findOneAndReplace(
       equal("utr", utr.value),
       amlsEntity,

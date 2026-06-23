@@ -25,7 +25,7 @@ import uk.gov.hmrc.agentassurance.helpers.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks._
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckResult
 import uk.gov.hmrc.agentassurance.utils.DateTimeService
 import uk.gov.hmrc.domain.SaUtr
@@ -84,7 +84,7 @@ with MockAuditService {
 
       result mustBe EntityCheckResult(
         agentDetailsDesResponse,
-        Seq.empty[EntityCheckException2]
+        Seq.empty[EntityCheckException]
       )
     }
 
@@ -102,7 +102,7 @@ with MockAuditService {
 
       val result = await(service.verifyAgent(testArn))
 
-      result mustBe EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException2])
+      result mustBe EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException])
     }
 
     "return Some(SuspensionDetails) and do entityChecks and do not sent email" in {
@@ -127,7 +127,7 @@ with MockAuditService {
 
       result mustBe EntityCheckResult(
         agentDetailsDesResponse,
-        Seq.empty[EntityCheckException2]
+        Seq.empty[EntityCheckException]
       )
     }
 
@@ -144,7 +144,7 @@ with MockAuditService {
         agentDetailsDesResponse
       )
 
-      mockGetCitizenDeceasedFlag(SaUtr(utr.value))(Some(EntityCheckException2.EntityDeceasedCheckFailed))
+      mockGetCitizenDeceasedFlag(SaUtr(utr.value))(Some(EntityCheckException.EntityDeceasedCheckFailed))
       mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(response = false)
       mockAuditEntityChecksPerformed
       mockAuditEntityCheckFailureNotificationSent
@@ -163,7 +163,7 @@ with MockAuditService {
 
       result mustBe EntityCheckResult(
         agentDetailsDesResponse,
-        List(EntityCheckException2.EntityDeceasedCheckFailed)
+        List(EntityCheckException.EntityDeceasedCheckFailed)
       )
     }
 
@@ -198,7 +198,7 @@ with MockAuditService {
 
       result mustBe EntityCheckResult(
         agentDetailsDesResponse,
-        List(EntityCheckException2.AgentIsOnRefuseToDealList)
+        List(EntityCheckException.AgentIsOnRefuseToDealList)
       )
     }
 

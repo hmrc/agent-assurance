@@ -40,7 +40,7 @@ class BusinessNamesService @Inject() (desConnector: DesConnector)(
 )
 extends Logging {
 
-  val maxCallsPerSecondBusinessNames: Int = appConfig.maxCallsPerSecondBusinessNames
+  private val maxCallsPerSecondBusinessNames: Int = appConfig.maxCallsPerSecondBusinessNames
 
   def get(utrs: Seq[String])(implicit headerCarrier: HeaderCarrier): Future[Set[BusinessNameByUtr]] = {
     Source(utrs.toList)

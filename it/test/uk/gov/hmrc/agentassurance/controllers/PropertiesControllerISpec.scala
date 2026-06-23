@@ -17,22 +17,22 @@
 package test.uk.gov.hmrc.agentassurance.controllers
 
 import java.time.Clock
-
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
-
 import com.google.inject.AbstractModule
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.WSResponse
 import play.api.Application
+import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.UnitSpec
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
@@ -49,7 +49,7 @@ with AgentAuthStubs
 with WireMockSupport
 with DefaultPlayMongoRepositorySupport[Property] {
 
-  override lazy val repository = new PropertiesRepositoryImpl(mongoComponent)
+  override val repository: PropertiesRepositoryImpl = new PropertiesRepositoryImpl(mongoComponent)
 
   val moduleWithOverrides: AbstractModule =
     new AbstractModule() {
@@ -85,7 +85,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
   def createProperty(
     key: String,
     value: String
-  ) = wsClient
+  ): Future[WSResponse] = wsClient
     .url(s"$url/$key")
     .withHttpHeaders("Authorization" -> "Bearer XYZ")
     .post(Json.obj("value" -> value))
@@ -109,11 +109,11 @@ with DefaultPlayMongoRepositorySupport[Property] {
   ): Future[WSResponse] = wsClient.url(s"$url/$key/utr/$identifier").withHttpHeaders("Authorization" -> "Bearer XYZ").delete()
 
   "a getProperty entire List for refusal-to-deal-with" should {
-    behave.like(getPropertyList("refusal-to-deal-with"))
+    behave.like(fetchPropertyList("refusal-to-deal-with"))
   }
 
   "a getProperty entire List for manually-assured" should {
-    behave.like(getPropertyList("manually-assured"))
+    behave.like(fetchPropertyList("manually-assured"))
   }
 
   "a createProperty endpoint for refusal-to-deal-with" should {
@@ -140,7 +140,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
     behave.like(deletePropertyTests("manually-assured", false))
   }
 
-  def createPropertyTests(key: String) = {
+  def createPropertyTests(key: String): Unit = {
 
     "return 201 when property is not already present" in {
       isLoggedInWithoutUserId
@@ -200,7 +200,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
   def identifierExistsTests(
     key: String,
     isR2dw: Boolean = true
-  ) = {
+  ): Unit = {
     "return 200 OK when property is present" in {
       isLoggedInWithoutUserId
 
@@ -230,7 +230,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
     }
   }
 
-  def getPropertyList(key: String) = {
+  def fetchPropertyList(key: String): Unit = {
     "return 200 OK when properties are present in first page" in {
       isLoggedInWithoutUserId
 
@@ -316,7 +316,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
   def deletePropertyTests(
     key: String,
     isR2dw: Boolean = true
-  ) = {
+  ): Unit = {
     "return 204 when property is present" in {
       isLoggedInWithoutUserId
       Await.result(createProperty(key, "4000000009"), 10 seconds)

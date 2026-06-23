@@ -16,10 +16,10 @@
 
 package test.uk.gov.hmrc.agentassurance.repositories
 
+import org.mongodb.scala.ObservableFuture
+
 import java.time.LocalDate
-
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import org.scalatestplus.play.PlaySpec
 import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
@@ -33,10 +33,10 @@ extends PlaySpec
 with DefaultPlayMongoRepositorySupport[OverseasAmlsEntity]
 with InstantClockTestSupport {
 
-  override lazy val repository = new OverseasAmlsRepositoryImpl(mongoComponent)
+  override val repository: OverseasAmlsRepositoryImpl = new OverseasAmlsRepositoryImpl(mongoComponent)
 
   val arn = Arn("TARN0000001")
-  val today = LocalDate.now()
+  val today: LocalDate = LocalDate.now()
   val newOverseasAmlsDetails = OverseasAmlsDetails(
     supervisoryBody = "Australian AC",
     membershipNumber = Some("ii77")

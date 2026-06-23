@@ -24,10 +24,10 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.models.AmlsDetails
-import uk.gov.hmrc.agentassurance.models.AmlsError2
+import uk.gov.hmrc.agentassurance.models.AmlsError
 import uk.gov.hmrc.agentassurance.models.AmlsRequest
-import uk.gov.hmrc.agentassurance.models.AmlsSource4
-import uk.gov.hmrc.agentassurance.models.AmlsStatus2
+import uk.gov.hmrc.agentassurance.models.AmlsSource
+import uk.gov.hmrc.agentassurance.models.AmlsStatus
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.http.HeaderCarrier
@@ -38,12 +38,12 @@ extends MockFactory { this: TestSuite =>
   val mockAmlsDetailsService: AmlsDetailsService = mock[AmlsDetailsService]
 
   def mockGetAmlsDetailsByArn(arn: Arn)(
-    response: Future[(AmlsStatus2, Option[AmlsDetails])]
+    response: Future[(AmlsStatus, Option[AmlsDetails])]
   ): CallHandler3[
     Arn,
     HeaderCarrier,
     Request[?],
-    Future[(AmlsStatus2, Option[AmlsDetails])]
+    Future[(AmlsStatus, Option[AmlsDetails])]
   ] = {
     (mockAmlsDetailsService
       .getAmlsDetailsByArn(_: Arn)(using _: HeaderCarrier, _: Request[?]))
@@ -54,24 +54,24 @@ extends MockFactory { this: TestSuite =>
   def mockStoreAmlsRequest(
     arn: Arn,
     amlsRequest: AmlsRequest
-  )(response: Future[Either[AmlsError2, AmlsDetails]]): CallHandler5[
+  )(response: Future[Either[AmlsError, AmlsDetails]]): CallHandler5[
     Arn,
     AmlsRequest,
-    AmlsSource4,
+    AmlsSource,
     HeaderCarrier,
     Request[?],
-    Future[Either[AmlsError2, AmlsDetails]]
+    Future[Either[AmlsError, AmlsDetails]]
   ] = {
     (mockAmlsDetailsService
       .storeAmlsRequest(
         _: Arn,
         _: AmlsRequest,
-        _: AmlsSource4
+        _: AmlsSource
       )(using _: HeaderCarrier, _: Request[?]))
       .expects(
         arn,
         amlsRequest,
-        AmlsSource4.Subscription,
+        AmlsSource.Subscription,
         *,
         *
       )

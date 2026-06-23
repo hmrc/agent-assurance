@@ -17,9 +17,9 @@
 package uk.gov.hmrc.agentassurance.models.entityChecks
 
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
-import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException
 
 case class EntityCheckResult(
   agentRecord: AgentDetailsDesResponse,
-  entityCheckExceptions: Seq[EntityCheckException2]
+  entityCheckExceptions: Seq[EntityCheckException]
 )

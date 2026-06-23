@@ -11,10 +11,10 @@ GET           /acceptableNumberOfClients/service/IR-SA                          
 GET           /acceptableNumberOfClients/service/HMCE-VATDEC-ORG                           @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfVatDecOrgClients
 GET           /acceptableNumberOfClients/service/IR-CT                                     @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.acceptableNumberOfIRCTClients
 
-GET           /managed-utrs/collection/:collection                                         @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.listUtrs(pagination: PaginationParameters, collection: CollectionName2)
-POST          /managed-utrs/collection/:collection                                         @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.upsertUtr(collection: CollectionName2)
+GET           /managed-utrs/collection/:collection                                         @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.listUtrs(pagination: PaginationParameters, collection: CollectionName)
+POST          /managed-utrs/collection/:collection                                         @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.upsertUtr(collection: CollectionName)
 GET           /managed-utrs/utr/:utr                                                       @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.getUtrDetails(utr: Utr, nameRequired: Option[Boolean])
-DELETE        /managed-utrs/collection/:collection/utr/:utr                                @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.removeUtr(utr: Utr, collection: CollectionName2)
+DELETE        /managed-utrs/collection/:collection/utr/:utr                                @uk.gov.hmrc.agentassurance.controllers.ManagedUtrsController.removeUtr(utr: Utr, collection: CollectionName)
 
 POST          /amls                                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.storeAmlsDetails()
 PUT           /amls/utr/:identifier                                                        @uk.gov.hmrc.agentassurance.controllers.AgentAssuranceController.updateAmlsDetails(identifier: Utr)

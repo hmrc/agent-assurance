@@ -16,7 +16,7 @@ lazy val root = (project in file("."))
     routesImport ++= Seq(
       "uk.gov.hmrc.agentassurance.binders.PathBinders._",
       "uk.gov.hmrc.agentassurance.binders._",
-      "uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName2",
+      "uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName",
       "uk.gov.hmrc.agentassurance.models.Utr",
       "uk.gov.hmrc.agentassurance.models.Arn",
       "uk.gov.hmrc.domain.Nino",

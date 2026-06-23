@@ -16,38 +16,15 @@
 
 package uk.gov.hmrc.agentassurance.models.entityChecks
 
-sealed trait EmailCheckExceptions {
-  def failedChecksText: String
-}
-
-sealed trait EntityCheckException
+enum EntityCheckException(val exceptionMessage: String)
 extends Product
-with Serializable
+with Serializable:
 
-sealed trait DeceasedCheckException
-extends EntityCheckException
+  case CitizenConnectorRequestFailed(code: Int)
+  extends EntityCheckException(s"The request to fetch the citizen details failed with a response status code of $code")
+  case EntityDeceasedCheckFailed
+  extends EntityCheckException("Agent is deceased")
+  case AgentIsOnRefuseToDealList
+  extends EntityCheckException("Agent is on the 'Refuse To Deal With' list")
 
-object DeceasedCheckException {
-
-  case class CitizenConnectorRequestFailed(code: Int)
-  extends DeceasedCheckException
-
-  case object EntityDeceasedCheckFailed
-  extends DeceasedCheckException
-  with EmailCheckExceptions {
-    override val failedChecksText: String = "Agent is deceased"
-  }
-
-}
-
-sealed trait RefusalCheckException
-extends EntityCheckException
-
-object RefusalCheckException {
-
-  case object AgentIsOnRefuseToDealList
-  extends RefusalCheckException
-  with EmailCheckExceptions {
-    override val failedChecksText: String = "Agent is on the 'Refuse To Deal With' list"
-  }
-}
+end EntityCheckException

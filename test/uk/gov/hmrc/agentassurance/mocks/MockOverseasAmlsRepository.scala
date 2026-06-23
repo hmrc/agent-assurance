@@ -20,7 +20,7 @@ import scala.concurrent.Future
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
-import uk.gov.hmrc.agentassurance.models.AmlsError2
+import uk.gov.hmrc.agentassurance.models.AmlsError
 import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
 import uk.gov.hmrc.agentassurance.models.OverseasAmlsEntity
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
@@ -32,7 +32,7 @@ extends MockFactory { this: TestSuite =>
 
   val mockOverseasAmlsRepository = mock[OverseasAmlsRepository]
 
-  def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError2, Unit]) = {
+  def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError, Unit]) = {
     (mockOverseasAmlsRepository
       .create(_: OverseasAmlsEntity))
       .expects(amlsEntity)

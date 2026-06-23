@@ -33,7 +33,7 @@ case class UkAmlsEntity(
   arn: Option[Arn] = None,
   createdOn: LocalDate,
   updatedArnOn: Option[LocalDate] = None,
-  amlsSource: AmlsSource4
+  amlsSource: AmlsSource
 )
 extends AmlsEntity
 
@@ -49,7 +49,7 @@ object UkAmlsEntity {
       .and((JsPath \ "arn").readNullable[Arn])
       .and((JsPath \ "createdOn").read[LocalDate])
       .and((JsPath \ "updatedArnOn").readNullable[LocalDate])
-      .and((JsPath \ "amlsSource").read[AmlsSource4])(UkAmlsEntity.apply)
+      .and((JsPath \ "amlsSource").readWithDefault[AmlsSource](AmlsSource.Subscription))(UkAmlsEntity.apply)
 
   private val jsonWrites: OWrites[UkAmlsEntity] = Json.writes[UkAmlsEntity]
 

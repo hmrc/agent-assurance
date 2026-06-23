@@ -22,8 +22,8 @@ import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
 import play.api.Logging
 import play.api.libs.json.Format
-import uk.gov.hmrc.agentassurance.models.AmlsError2.AmlsUnexpectedMongoError
-import uk.gov.hmrc.agentassurance.models.AmlsError2
+import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.AmlsError
 import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.mongo.MongoComponent
@@ -37,7 +37,7 @@ import scala.concurrent.Future
 
 @ImplementedBy(classOf[ArchivedAmlsRepositoryImpl])
 trait ArchivedAmlsRepository {
-  def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError2, Unit]]
+  def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]]
 }
 
 @Singleton
@@ -60,7 +60,7 @@ extends PlayMongoRepository[ArchivedAmlsEntity](
 with ArchivedAmlsRepository
 with Logging {
 
-  override def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError2, Unit]] = {
+  override def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]] = {
     collection
       .insertOne(archivedAmlsEntity)
       .toFuture()

@@ -17,12 +17,15 @@
 package uk.gov.hmrc.agentassurance.controllers
 
 import com.google.inject.AbstractModule
+import org.mongodb.scala.SingleObservableFuture
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
+import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.WSResponse
 import play.api.test.Helpers.NOT_FOUND
@@ -51,7 +54,7 @@ with DesStubs
 with WireMockSupport
 with DefaultPlayMongoRepositorySupport[Property] {
 
-  override lazy val repository = new PropertiesRepositoryImpl(mongoComponent)
+  override val repository: PropertiesRepositoryImpl = new PropertiesRepositoryImpl(mongoComponent)
 
   val moduleWithOverrides: AbstractModule =
     new AbstractModule() {
@@ -87,7 +90,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
   def getUtrDetails(
     utr: Utr,
-    nameRequired: java.lang.Boolean = (null)
+    nameRequired: java.lang.Boolean = null
   ): Future[WSResponse] = wsClient
     .url(s"$baseUrl/agent-assurance/managed-utrs/utr/${utr.value}${Option(nameRequired).map(nr => s"?nameRequired=$nr").getOrElse("")}")
     .withHttpHeaders("Authorization" -> "Bearer XYZ")
@@ -119,11 +122,11 @@ with DefaultPlayMongoRepositorySupport[Property] {
     .post(Json.obj("value" -> value))
 
   "a getProperty entire List for refusal-to-deal-with" should {
-    behave.like(getUtrDetailsList("refusal-to-deal-with"))
+    behave.like(extractUtrDetailsList("refusal-to-deal-with"))
   }
 
   "a getProperty entire List for manually-assured" should {
-    behave.like(getUtrDetailsList("manually-assured"))
+    behave.like(extractUtrDetailsList("manually-assured"))
   }
 
   "a identifier exists in  getProperty endpoint for refusal-to-deal-with" should {
@@ -148,7 +151,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
   private val utr4000000009: Utr = Utr("4000000009")
 
-  def getUtrDetailsList(collection: String) = {
+  def extractUtrDetailsList(collection: String): Unit = {
     "return 200 OK when properties are present in first page" in {
       isLoggedInWithoutUserId
 
@@ -157,10 +160,10 @@ with DefaultPlayMongoRepositorySupport[Property] {
       givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
       givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
 
-      (repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture()).futureValue
+      repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture().futureValue
 
       val response =
         listUtrs(
@@ -199,11 +202,11 @@ with DefaultPlayMongoRepositorySupport[Property] {
       givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
       givenDESRespondsWithRegistrationData(identifier = Utr("9660717105"), isIndividual = false)
 
-      (repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = collection, value = "9660717105")).toFuture()).futureValue
+      repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = collection, value = "9660717105")).toFuture().futureValue
 
       val response =
         listUtrs(
@@ -242,10 +245,10 @@ with DefaultPlayMongoRepositorySupport[Property] {
       givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
       givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
 
-      (repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture()).futureValue
+      repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = collection, value = "4660717102")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = collection, value = "2660717103")).toFuture().futureValue
 
       val response =
         listUtrs(
@@ -288,13 +291,13 @@ with DefaultPlayMongoRepositorySupport[Property] {
     }
   }
 
-  def checkUtr() = {
+  def checkUtr(): Unit = {
 
     "return 200 OK and correct payload when utr on manually-assured and not refusal-to-deal-with" in {
       isLoggedInWithoutUserId
       givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
 
-      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
+      repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
@@ -311,8 +314,8 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
       givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
 
-      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
+      repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture().futureValue
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
@@ -329,7 +332,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
       givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
 
-      (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
+      repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture().futureValue
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
@@ -362,7 +365,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
       givenDESReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
 
-      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
+      repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
@@ -378,8 +381,8 @@ with DefaultPlayMongoRepositorySupport[Property] {
     "return 200 OK and correct payload when utr on manually-assured and on refusal-to-deal-with and no name" in {
       isLoggedInWithoutUserId
       givenDESReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
-      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
-      (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
+      repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
+      repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture().futureValue
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
@@ -396,7 +399,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       isLoggedInWithoutUserId
       givenDESReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
 
-      (repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture()).futureValue
+      repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture().futureValue
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
@@ -427,7 +430,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
     "return 200 OK and correct payload when utr on manually-assured and not refusal-to-deal-with and no name is not required" in {
       isLoggedInWithoutUserId
       givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
-      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
+      repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = false).futureValue
       response.status shouldBe OK
@@ -443,7 +446,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
     "nameRequired is optional and defaults to false" in {
       isLoggedInWithoutUserId
       givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
-      (repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture()).futureValue
+      repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
 
       val response = getUtrDetails(utr = utr4000000009).futureValue
       response.status shouldBe OK
@@ -457,7 +460,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
     }
   }
 
-  def upsertUtrTests(collectionName: String) = {
+  def upsertUtrTests(collectionName: String): Unit = {
 
     "return 201 when property is not already present" in {
       isLoggedInWithoutUserId
@@ -512,7 +515,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
   def deletePropertyTests(
     key: String
-  ) = {
+  ): Unit = {
     "return 204 when property is present" in {
       isLoggedInWithoutUserId
       upsertUtr(key, "4000000009").futureValue

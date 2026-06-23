@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-enum AmlsError2:
+enum AmlsStatus:
 
-  case ArnAlreadySetError,
-    NoExistingAmlsError,
-    UniqueKeyViolationError,
-    AmlsUnexpectedMongoError,
-    AmlsRecordExists
+  case NoAmlsDetailsNonUK,
+    ValidAmlsNonUK,
+    NoAmlsDetailsUK,
+    ValidAmlsDetailsUK,
+    ExpiredAmlsDetailsUK,
+    PendingAmlsDetails,
+    PendingAmlsDetailsRejected
 
-end AmlsError2
+end AmlsStatus

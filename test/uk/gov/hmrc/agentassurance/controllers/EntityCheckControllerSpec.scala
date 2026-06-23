@@ -20,6 +20,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import org.scalamock.scalatest.MockFactory
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
 import org.scalatestplus.play.PlaySpec
@@ -32,7 +34,7 @@ import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.SuspensionDetails
-import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException2
+import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.entityChecks.VerifyEntityRequest
 import uk.gov.hmrc.http.HeaderNames
@@ -79,7 +81,7 @@ with MockFactory {
           isAnIndividual = None
         )
 
-        mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException2]))
+        mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException]))
 
         val result = controller
           .agentVerifyEntity
@@ -109,7 +111,7 @@ with MockFactory {
         mockVerifyEntitySuccess(testArn)(
           EntityCheckResult(
             agentDetailsDesResponse,
-            Seq.empty[EntityCheckException2]
+            Seq.empty[EntityCheckException]
           )
         )
 
@@ -131,10 +133,12 @@ with MockFactory {
     "return NO_CONTENT" when {
       "not suspended and a POST request to /client/verify-entity" in {
 
-        (mockStubBehaviour
-          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-          .expects(*, *)
-          .returning(Future.unit)
+        when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
+
+//        (mockStubBehaviour
+//          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//          .expects(*, *)
+//          .returning(Future.unit)
 
         val agentDetailsDesResponse = AgentDetailsDesResponse(
           uniqueTaxReference = None,
@@ -143,7 +147,7 @@ with MockFactory {
           isAnIndividual = None
         )
 
-        mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException2]))
+        mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException]))
 
         val result = controller
           .clientVerifyEntity
@@ -160,10 +164,12 @@ with MockFactory {
       "return OK" when {
         "suspended and a POST request to /client/verify-entity" in {
 
-          (mockStubBehaviour
-            .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-            .expects(*, *)
-            .returning(Future.unit)
+          when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
+
+//            (mockStubBehaviour
+//            .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//            .expects(*, *)
+//            .returning(Future.unit)
 
           val agentDetailsDesResponse = AgentDetailsDesResponse(
             uniqueTaxReference = None,
@@ -175,7 +181,7 @@ with MockFactory {
           mockVerifyEntitySuccess(testArn)(
             EntityCheckResult(
               agentDetailsDesResponse,
-              Seq.empty[EntityCheckException2]
+              Seq.empty[EntityCheckException]
             )
           )
 
@@ -198,11 +204,12 @@ with MockFactory {
 
       "return Bad request" when {
         "invalid request" in {
+          when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
 
-          (mockStubBehaviour
-            .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-            .expects(*, *)
-            .returning(Future.unit)
+//            (mockStubBehaviour
+//            .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//            .expects(*, *)
+//            .returning(Future.unit)
 
           val result = controller
             .clientVerifyEntity

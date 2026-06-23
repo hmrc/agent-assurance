@@ -23,7 +23,7 @@ import scala.concurrent.Future
 import org.mongodb.scala.result.UpdateResult
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
-import uk.gov.hmrc.agentassurance.models.AmlsError2
+import uk.gov.hmrc.agentassurance.models.AmlsError
 import uk.gov.hmrc.agentassurance.models.CreateAmlsRequest
 import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
 import uk.gov.hmrc.agentassurance.models.UkAmlsEntity
@@ -37,7 +37,7 @@ extends MockFactory { this: TestSuite =>
 
   val mockAmlsRepository = mock[AmlsRepository]
 
-  def mockCreateAmls(createAmlsRequest: CreateAmlsRequest)(response: Either[AmlsError2, Unit]) = {
+  def mockCreateAmls(createAmlsRequest: CreateAmlsRequest)(response: Either[AmlsError, Unit]) = {
     (mockAmlsRepository
       .createOrUpdate(_: CreateAmlsRequest))
       .expects(createAmlsRequest)
@@ -47,7 +47,7 @@ extends MockFactory { this: TestSuite =>
   def mockUpdateAmls(
     utr: Utr,
     arn: Arn
-  )(response: Either[AmlsError2, UkAmlsDetails]) = {
+  )(response: Either[AmlsError, UkAmlsDetails]) = {
     (mockAmlsRepository
       .updateArn(_: Utr, _: Arn))
       .expects(utr, arn)
@@ -78,7 +78,7 @@ extends MockFactory { this: TestSuite =>
   def mockCreateOrUpdate(
     arn: Arn,
     ukAmnlsEntity: UkAmlsEntity
-  )(response: Either[AmlsError2, Option[UkAmlsEntity]]) = {
+  )(response: Either[AmlsError, Option[UkAmlsEntity]]) = {
     (mockAmlsRepository
       .createOrUpdate(_: Arn, _: UkAmlsEntity))
       .expects(arn, ukAmnlsEntity)

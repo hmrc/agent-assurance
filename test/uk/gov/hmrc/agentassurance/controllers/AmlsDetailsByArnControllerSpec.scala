@@ -29,7 +29,7 @@ import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks.MockAmlsDetailsService
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
-import uk.gov.hmrc.agentassurance.models.AmlsStatus2
+import uk.gov.hmrc.agentassurance.models.AmlsStatus
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.affinityGroup
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.credentials
@@ -78,7 +78,7 @@ with ScalaFutures {
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
           )
-          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus2.NoAmlsDetailsUK, None)))
+          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus.NoAmlsDetailsUK, None)))
         }
 
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
@@ -93,7 +93,7 @@ with ScalaFutures {
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithStride.and(None).and(Some(Credentials("", "PrivilegedApplication")))
           )
-          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus2.NoAmlsDetailsUK, None)))
+          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus.NoAmlsDetailsUK, None)))
         }
 
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
@@ -108,7 +108,7 @@ with ScalaFutures {
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
           )
-          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus2.ValidAmlsDetailsUK, Some(testAmlsDetails))))
+          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(testAmlsDetails))))
         }
 
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
@@ -130,7 +130,7 @@ with ScalaFutures {
             enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
           )
           mockGetAmlsDetailsByArn(testArn)(
-            Future.successful((AmlsStatus2.ValidAmlsNonUK, Some(testOverseasAmlsDetails)))
+            Future.successful((AmlsStatus.ValidAmlsNonUK, Some(testOverseasAmlsDetails)))
           )
         }
 
@@ -149,7 +149,7 @@ with ScalaFutures {
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithStride.and(None).and(Some(Credentials("", "PrivilegedApplication")))
           )
-          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus2.ValidAmlsDetailsUK, Some(testAmlsDetails))))
+          mockGetAmlsDetailsByArn(testArn)(Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(testAmlsDetails))))
         }
 
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
@@ -162,7 +162,7 @@ with ScalaFutures {
             enrolmentsWithStride.and(None).and(Some(Credentials("", "PrivilegedApplication")))
           )
           mockGetAmlsDetailsByArn(testArn)(
-            Future.successful((AmlsStatus2.ValidAmlsNonUK, Some(testOverseasAmlsDetails)))
+            Future.successful((AmlsStatus.ValidAmlsNonUK, Some(testOverseasAmlsDetails)))
           )
         }
 

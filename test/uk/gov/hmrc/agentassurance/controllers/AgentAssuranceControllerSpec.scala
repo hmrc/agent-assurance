@@ -32,9 +32,9 @@ import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.helpers.TestConstants._
 import uk.gov.hmrc.agentassurance.mocks._
 import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.models.AmlsError2.AmlsRecordExists
-import uk.gov.hmrc.agentassurance.models.AmlsError2.AmlsUnexpectedMongoError
-import uk.gov.hmrc.agentassurance.models.AmlsError2.UniqueKeyViolationError
+import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsRecordExists
+import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.AmlsError.UniqueKeyViolationError
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.auth.core._

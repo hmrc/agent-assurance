@@ -17,10 +17,9 @@
 package test.uk.gov.hmrc.agentassurance.support
 
 import java.net.ServerSocket
+import java.net.URI
 import java.net.URL
-
 import scala.annotation.tailrec
-
 import com.github.tomakehurst.wiremock.client.WireMock.configureFor
 import com.github.tomakehurst.wiremock.client.WireMock.reset
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
@@ -48,7 +47,7 @@ with BeforeAndAfterEach {
   val wireMockPort: Int = WireMockSupport.wireMockPort
   val wireMockHost = "localhost"
   val wireMockBaseUrlAsString = s"http://$wireMockHost:$wireMockPort"
-  val wireMockBaseUrl = new URL(wireMockBaseUrlAsString)
+  val wireMockBaseUrl: URL = new URI(wireMockBaseUrlAsString).toURL
   protected implicit val implicitWireMockBaseUrl: WireMockBaseUrl = WireMockBaseUrl(wireMockBaseUrl)
 
   protected def basicWireMockConfig(): WireMockConfiguration = wireMockConfig()
@@ -79,27 +78,24 @@ object Port
 extends Logging {
 
   val rnd = new scala.util.Random
-  val range = 8000 to 39999
-  val usedPorts = List[Int]()
+  val range: Seq[Int] = 8000 to 39999
+  val usedPorts: List[Int] = List[Int]()
 
   @tailrec
   def randomAvailable: Int =
     range(rnd.nextInt(range.length)) match {
       case 8080 => randomAvailable
       case 8090 => randomAvailable
-      case p: Int => {
-        available(p) match {
-          case false => {
-            logger.debug(s"Port $p is in use, trying another")
-            randomAvailable
-          }
-          case true => {
-            logger.debug("Taking port : " + p)
-            usedPorts :+ p
-            p
-          }
+      case p: Int =>
+        if (available(p)) {
+          logger.debug("Taking port : " + p)
+          usedPorts :+ p
+          p
         }
-      }
+        else {
+          logger.debug(s"Port $p is in use, trying another")
+          randomAvailable
+        }
     }
 
   private def available(p: Int): Boolean = {
@@ -115,7 +111,7 @@ extends Logging {
       }
     }
     catch {
-      case t: Throwable => false
+      case _: Throwable => false
     }
     finally {
       if (socket != null)

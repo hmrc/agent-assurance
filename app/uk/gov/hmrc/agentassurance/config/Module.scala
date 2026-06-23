@@ -18,11 +18,14 @@ package uk.gov.hmrc.agentassurance.config
 
 import com.google.inject.AbstractModule
 import play.api.Configuration
+import play.api.Environment
 
 import java.time.Clock
 import java.time.ZoneId
+import scala.annotation.unused
 
 class Module(
+  @unused environment: Environment,
   configuration: Configuration
 )
 extends AbstractModule {

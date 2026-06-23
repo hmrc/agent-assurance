@@ -17,26 +17,29 @@
 package test.uk.gov.hmrc.agentassurance.controllers
 
 import java.time.LocalDate
-
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import com.google.inject.AbstractModule
+import org.mongodb.scala.ObservableFuture
+import org.mongodb.scala.SingleObservableFuture
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.libs.ws.BodyWritable
 import play.api.libs.ws.WSClient
-import play.api.test.Helpers._
+import play.api.libs.ws.WSResponse
+import play.api.test.Helpers.*
 import play.api.Application
+import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
 import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
-import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.repositories._
+import uk.gov.hmrc.agentassurance.models.*
+import uk.gov.hmrc.agentassurance.repositories.*
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -88,9 +91,9 @@ with DesStubs {
 
   override def irAgentReference: String = "IRSA-123"
 
-  val wsClient = app.injector.instanceOf[WSClient]
+  val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  def doRequest() = Await.result(
+  def doRequest(): WSResponse = Await.result(
     wsClient
       .url(url)
       .withHttpHeaders("Authorization" -> "Bearer XYZ")
@@ -98,7 +101,7 @@ with DesStubs {
     15.seconds
   )
 
-  def doPostRequest[T](body: T)(implicit writes: BodyWritable[T]) = Await.result(
+  def doPostRequest[T](body: T)(implicit writes: BodyWritable[T]): WSResponse = Await.result(
     wsClient
       .url(url)
       .withHttpHeaders("Authorization" -> "Bearer XYZ", CONTENT_TYPE -> "application/json")
@@ -141,7 +144,7 @@ with DesStubs {
     amlsDetails = testAmlsDetails,
     arn = Some(arn),
     createdOn = testCreatedDate,
-    amlsSource = AmlsSource4.Subscription
+    amlsSource = AmlsSource.Subscription
   )
 
   "GET /amls/arn/:arn" should {
@@ -235,7 +238,7 @@ with DesStubs {
           ),
           arn = Some(arn),
           createdOn = LocalDate.parse("2020-10-10"),
-          amlsSource = AmlsSource4.Subscription
+          amlsSource = AmlsSource.Subscription
         )
 
         ukAmlsRepository.collection.insertOne(ukAmlsEntity).toFuture().futureValue
@@ -270,7 +273,7 @@ with DesStubs {
           ),
           arn = Some(arn),
           createdOn = LocalDate.parse("2020-10-10"),
-          amlsSource = AmlsSource4.Subscription
+          amlsSource = AmlsSource.Subscription
         )
 
         ukAmlsRepository.collection.insertOne(ukAmlsEntity).toFuture().futureValue
@@ -306,7 +309,7 @@ with DesStubs {
           ),
           arn = None,
           createdOn = LocalDate.parse("2020-10-10"),
-          amlsSource = AmlsSource4.Subscription
+          amlsSource = AmlsSource.Subscription
         )
 
         ukAmlsRepository.collection.insertOne(legacyAmlsEntity).toFuture().futureValue
