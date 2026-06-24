@@ -326,7 +326,7 @@ extends Logging {
                 )
               )
               .map {
-                case Right(oldAmlsEntity) => Right(oldAmlsEntity.map(entity => entity: AmlsEntity))
+                case Right(maybeUkAmlsEntity) => Right(maybeUkAmlsEntity)
                 case Left(error) => Left(error)
               }
           case overseasAmlsDetails: OverseasAmlsDetails =>
@@ -336,7 +336,7 @@ extends Logging {
                 amlsDetails = overseasAmlsDetails,
                 createdDate = None
               )
-            ).map(oldAmlsEntity => Right(oldAmlsEntity.map(entity => entity: AmlsEntity)))
+            ).map(maybeOverseasAmlsEntity => Right(maybeOverseasAmlsEntity))
         }
 
       storedAmlsDetails.flatMap {
