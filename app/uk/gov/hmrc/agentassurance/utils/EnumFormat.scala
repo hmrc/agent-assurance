@@ -20,7 +20,7 @@ import enumeratum.Enum
 import enumeratum.EnumEntry
 import play.api.libs.json.*
 
-object EnumFormat {
+object EnumFormat:
 
   @SuppressWarnings(
     Array(
@@ -38,4 +38,3 @@ object EnumFormat {
     },
     Writes(v => JsString(v.entryName))
   )
-}

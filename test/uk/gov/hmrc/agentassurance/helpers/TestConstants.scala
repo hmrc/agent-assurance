@@ -28,7 +28,7 @@ import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.SaUtr
 
-object TestConstants {
+object TestConstants:
 
   val irSaAgentEnrolment: Set[Enrolment] = Set(
     Enrolment(
@@ -189,4 +189,3 @@ object TestConstants {
   )
   val testAgentDetailsDesResponseNoUtr: AgentDetailsDesResponse = testAgentDetailsDesResponse.copy(uniqueTaxReference = None)
 
-}

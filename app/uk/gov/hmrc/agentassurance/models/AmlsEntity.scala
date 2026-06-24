@@ -37,35 +37,31 @@ case class UkAmlsEntity(
 )
 extends AmlsEntity
 
-object UkAmlsEntity {
+object UkAmlsEntity:
 
   import play.api.libs.functional.syntax.*
   import play.api.libs.json.*
 
-  private val jsonReads: Reads[UkAmlsEntity] =
-    (JsPath \ "utr")
-      .readNullable[Utr]
-      .and((JsPath \ "amlsDetails").read[UkAmlsDetails])
-      .and((JsPath \ "arn").readNullable[Arn])
-      .and((JsPath \ "createdOn").read[LocalDate])
-      .and((JsPath \ "updatedArnOn").readNullable[LocalDate])
-      .and((JsPath \ "amlsSource").readWithDefault[AmlsSource](AmlsSource.Subscription))(UkAmlsEntity.apply)
+  private val jsonReads: Reads[UkAmlsEntity] = (JsPath \ "utr")
+    .readNullable[Utr]
+    .and((JsPath \ "amlsDetails").read[UkAmlsDetails])
+    .and((JsPath \ "arn").readNullable[Arn])
+    .and((JsPath \ "createdOn").read[LocalDate])
+    .and((JsPath \ "updatedArnOn").readNullable[LocalDate])
+    .and((JsPath \ "amlsSource").readWithDefault[AmlsSource](AmlsSource.Subscription))(UkAmlsEntity.apply)
 
   private val jsonWrites: OWrites[UkAmlsEntity] = Json.writes[UkAmlsEntity]
 
   implicit val amlsEntityFormat: OFormat[UkAmlsEntity] = OFormat(jsonReads, jsonWrites)
 
-}
 
 case class OverseasAmlsEntity(
   arn: Arn,
   amlsDetails: OverseasAmlsDetails,
   createdDate: Option[Instant]
 )
-extends AmlsEntity {
+extends AmlsEntity:
   def withDefaultCreatedDate(implicit clock: Clock): OverseasAmlsEntity = copy(createdDate = Some(createdDate.getOrElse(Instant.now(clock))))
-}
 
-object OverseasAmlsEntity {
+object OverseasAmlsEntity:
   implicit val format: Format[OverseasAmlsEntity] = Json.format[OverseasAmlsEntity]
-}

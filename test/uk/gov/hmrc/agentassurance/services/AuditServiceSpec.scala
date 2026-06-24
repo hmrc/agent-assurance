@@ -34,14 +34,14 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult
 class AuditServiceSpec
 extends PlaySpec
 with MockAppConfig
-with MockAuditConnector {
+with MockAuditConnector:
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
   implicit val hc: HeaderCarrier = new HeaderCarrier()
   val auditService = new AuditService(mockAuditConnector)(using ec, mockAppConfig)
 
-  "auditEntityCheckFailureNotificationSent" should {
-    "send audit event" in {
+  "auditEntityCheckFailureNotificationSent" should:
+    "send audit event" in:
       val nowTime = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
 
       mockSendExtendedEvent(AuditResult.Success)
@@ -55,11 +55,9 @@ with MockAuditConnector {
           nowTime.toString
         )
       )
-    }
-  }
 
-  "auditEntityChecksPerformed" should {
-    "send audit event" in {
+  "auditEntityChecksPerformed" should:
+    "send audit event" in:
 
       mockSendExtendedEvent(AuditResult.Success)
 
@@ -79,7 +77,4 @@ with MockAuditConnector {
           )
         )
       )
-    }
-  }
 
-}

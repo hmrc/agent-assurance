@@ -50,7 +50,7 @@ class AgentServicesController @Inject() (
 )
 extends BackendController(cc)
 with AuthActions
-with Logging {
+with Logging:
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
@@ -58,7 +58,7 @@ with Logging {
     withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
       desConnector
         .getAgentRecord(arn)
-        .map {
+        .map:
           case _ @AgentDetailsDesResponse(
                 optUtr,
                 Some(agencyDetails),
@@ -68,24 +68,20 @@ with Logging {
               ) =>
             Ok(Json.toJson(AgentDetailsResponse(agencyDetails, optUtr)))
           case _ => NoContent
-        }
     }
 
   def postAgencyDetails(arn: Arn): Action[AnyContent] =
-    withAffinityGroupAgentOrStride(strideRoles) {
+    withAffinityGroupAgentOrStride(strideRoles):
       implicit request =>
-        for {
+        for
           dmsResponse <- dmsService.submitToDms(
             request.body.asText,
             Instant.now().truncatedTo(ChronoUnit.SECONDS),
             DmsSubmissionReference.create
           )
-        } yield {
+        yield
           logger.info(
             s"Dms Submission successful for ${arn.value}: ${dmsResponse.reference} at ${dmsResponse.processingDate}"
           )
           Created
-        }
-    }
 
-}

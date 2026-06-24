@@ -38,21 +38,18 @@ class BusinessNamesService @Inject() (desConnector: DesConnector)(
   mat: Materializer,
   ec: ExecutionContext
 )
-extends Logging {
+extends Logging:
 
   private val maxCallsPerSecondBusinessNames: Int = appConfig.maxCallsPerSecondBusinessNames
 
-  def get(utrs: Seq[String])(implicit headerCarrier: HeaderCarrier): Future[Set[BusinessNameByUtr]] = {
+  def get(utrs: Seq[String])(implicit headerCarrier: HeaderCarrier): Future[Set[BusinessNameByUtr]] =
     Source(utrs.toList)
       .throttle(maxCallsPerSecondBusinessNames, 1.second)
       .mapAsync(parallelism = 1) { utrStr =>
         get(utrStr).map(an => BusinessNameByUtr(utrStr, an))
       }
       .runWith(Sink.collection[BusinessNameByUtr, Set[BusinessNameByUtr]])
-  }
 
-  def get(utr: String)(implicit headerCarrier: HeaderCarrier): Future[Option[String]] = {
+  def get(utr: String)(implicit headerCarrier: HeaderCarrier): Future[Option[String]] =
     desConnector.getBusinessName(utr)
-  }
 
-}

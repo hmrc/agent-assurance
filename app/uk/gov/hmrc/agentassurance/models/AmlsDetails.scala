@@ -32,7 +32,7 @@ case class UkAmlsDetails(
   appliedOn: Option[LocalDate],
   membershipExpiresOn: Option[LocalDate]
 )
-extends AmlsDetails {
+extends AmlsDetails:
 
   private val validMemNoRegex: Regex = "^X[A-Z]ML00000[0-9]{6}$".r
   val isPending: Boolean = appliedOn.nonEmpty && membershipExpiresOn.isEmpty
@@ -41,11 +41,9 @@ extends AmlsDetails {
   val isExpired: Boolean = membershipExpiresOn.forall(LocalDate.now.isAfter(_))
   val hasValidMembershipNumber: Boolean = membershipNumber.exists(validMemNoRegex.matches(_))
 
-}
 
-object UkAmlsDetails {
+object UkAmlsDetails:
   implicit val format: Format[UkAmlsDetails] = Json.format[UkAmlsDetails]
-}
 
 case class OverseasAmlsDetails(
   supervisoryBody: String,
@@ -53,6 +51,5 @@ case class OverseasAmlsDetails(
 )
 extends AmlsDetails
 
-object OverseasAmlsDetails {
+object OverseasAmlsDetails:
   implicit val format: Format[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]
-}

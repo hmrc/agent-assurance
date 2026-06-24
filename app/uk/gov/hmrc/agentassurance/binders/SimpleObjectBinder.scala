@@ -22,22 +22,19 @@ class SimpleObjectBinder[T](
   bind: String => T,
   unbind: T => String
 )(implicit m: Manifest[T])
-extends PathBindable[T] {
+extends PathBindable[T]:
 
   override def bind(
     key: String,
     value: String
   ): Either[String, T] =
-    try {
+    try
       Right(bind(value))
-    }
-    catch {
+    catch
       case e: Throwable => Left(s"Cannot parse parameter '$key' with value '$value' as '${m.runtimeClass.getSimpleName}' because of error: $e")
-    }
 
   def unbind(
     key: String,
     value: T
   ): String = unbind(value)
 
-}

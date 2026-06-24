@@ -36,9 +36,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @ImplementedBy(classOf[ArchivedAmlsRepositoryImpl])
-trait ArchivedAmlsRepository {
+trait ArchivedAmlsRepository:
   def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]]
-}
 
 @Singleton
 class ArchivedAmlsRepositoryImpl @Inject() (mongoComponent: MongoComponent)(implicit ec: ExecutionContext)
@@ -58,17 +57,15 @@ extends PlayMongoRepository[ArchivedAmlsEntity](
   )
 )
 with ArchivedAmlsRepository
-with Logging {
+with Logging:
 
-  override def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]] = {
+  override def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]] =
     collection
       .insertOne(archivedAmlsEntity)
       .toFuture()
       .map(result =>
-        if (result.wasAcknowledged())
+        if result.wasAcknowledged() then
           Right(())
         else
           Left(AmlsUnexpectedMongoError)
       )
-  }
-}

@@ -53,7 +53,7 @@ class AgencyNameCacheRepository @Inject() (
     & Decrypter
 )
 extends EntityCache[String, Option[String]]
-with Cache[Option[String]] {
+with Cache[Option[String]]:
 
   val format: Format[Option[String]] = Format(Reads.optionWithNull[String], Writes.optionWithNull[String])
   val cacheRepo: MongoCacheRepository[String] =
@@ -70,14 +70,14 @@ with Cache[Option[String]] {
 
   def apply(
     key: String
-  )(body: => Future[Option[String]])(implicit ec: ExecutionContext): Future[Option[String]] = {
+  )(body: => Future[Option[String]])(implicit ec: ExecutionContext): Future[Option[String]] =
     val encryptedKey = crypto.encrypt(PlainText(key)).value
-    getFromCache(encryptedKey).flatMap {
+    getFromCache(encryptedKey).flatMap:
       case Some(v) =>
         record.counter(s"Count-$key-from-cache")
         Future.successful(v)
       case None =>
-        body.andThen {
+        body.andThen:
           case Success(v) =>
             record.counter(s"Count-$key-from-source")
             v.map(notNoneV =>
@@ -85,8 +85,4 @@ with Cache[Option[String]] {
                 .map(_ => Some(notNoneV))
             ).getOrElse(Future.successful(None))
 
-        }
-    }
-  }
 
-}

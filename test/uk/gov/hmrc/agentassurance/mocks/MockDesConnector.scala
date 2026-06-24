@@ -43,14 +43,13 @@ extends MockFactory { this: TestSuite =>
     TaxIdentifier,
     HeaderCarrier,
     Future[Seq[SaAgentReference]]
-  ] = {
+  ] =
     (mockDesConnector
       .getActiveCesaAgentRelationships(_: TaxIdentifier)(using _: HeaderCarrier))
       .expects(ti, *)
       .returning(
         response.fold[Future[Seq[SaAgentReference]]](e => Future.failed(new Exception(e)), r => toFuture(r))
       )
-  }
 
   def mockGetAmlsSubscriptionStatus(registrationNumber: String)(
     response: Future[AmlsSubscriptionRecord]
@@ -58,12 +57,11 @@ extends MockFactory { this: TestSuite =>
     String,
     HeaderCarrier,
     Future[AmlsSubscriptionRecord]
-  ] = {
+  ] =
     (mockDesConnector
       .getAmlsSubscriptionStatus(_: String)(using _: HeaderCarrier))
       .expects(registrationNumber, *)
       .returning(response)
-  }
 
   def mockGetAgentRecord(
     arn: Arn

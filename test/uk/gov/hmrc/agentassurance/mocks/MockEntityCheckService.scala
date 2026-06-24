@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 trait MockEntityCheckService
-extends MockFactory {
+extends MockFactory:
   this: TestSuite =>
 
   val mockEntityCheckService: EntityCheckService = mock[EntityCheckService]
@@ -51,4 +51,3 @@ extends MockFactory {
       .expects(arn, *, *, *)
       .returning(Future.successful(returns))
 
-}

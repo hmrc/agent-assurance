@@ -50,7 +50,7 @@ import scala.util.control.NonFatal
 class DmsService @Inject() (
   dmsConnector: DmsConnector,
   appConfig: AppConfig
-)(implicit ec: ExecutionContext) {
+)(implicit ec: ExecutionContext):
 
   def submitToDms(
     base64EncodedDmsSubmissionHtml: Option[String],
@@ -59,7 +59,7 @@ class DmsService @Inject() (
   )(
     implicit hc: HeaderCarrier
   ): Future[DmsResponse] =
-    for {
+    for
       pdf <- createPdf(base64EncodedDmsSubmissionHtml)
       body <- createBody(
         pdf,
@@ -67,7 +67,7 @@ class DmsService @Inject() (
         submissionReference
       )
       response <- sendPdf(body, now)(using hc)
-    } yield response
+    yield response
 
   private def createPdf(
     base64EncodedDmsSubmissionHtml: Option[String]
@@ -110,7 +110,7 @@ class DmsService @Inject() (
     pdf: ByteArrayOutputStream,
     dateOfReceipt: String,
     submissionReference: DmsSubmissionReference
-  ): Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed] = {
+  ): Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed] =
 
     Source(
       Seq(
@@ -130,7 +130,6 @@ class DmsService @Inject() (
         )
       )
     )
-  }
 
   def sendPdf(
     body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed],
@@ -138,7 +137,7 @@ class DmsService @Inject() (
   )(implicit hc: HeaderCarrier): Future[DmsResponse] = dmsConnector
     .sendPdf(body)
     .map(_ => DmsResponse(now, ""))
-    .recover {
+    .recover:
       case UpstreamErrorResponse(
             message,
             code,
@@ -151,6 +150,4 @@ class DmsService @Inject() (
           code
         )
       case NonFatal(e) => throw new InternalServerException(s"send PDF failed with error:${e.getCause}")
-    }
 
-}

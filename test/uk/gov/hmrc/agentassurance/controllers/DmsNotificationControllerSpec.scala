@@ -48,7 +48,7 @@ class DmsNotificationControllerSpec
 extends PlaySpec
 with DefaultAwaitTimeout
 with MockFactory
-with MockAppConfig {
+with MockAppConfig:
 
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
@@ -67,9 +67,9 @@ with MockAppConfig {
     failureReason = None
   )
 
-  "dmsCallback" should {
-    "return OK" when {
-      "when receiving a correct notifications from DMS" in {
+  "dmsCallback" should:
+    "return OK" when:
+      "when receiving a correct notifications from DMS" in:
 
         when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
 
@@ -85,11 +85,9 @@ with MockAppConfig {
         val result = controller.dmsCallback()(request)
         status(result) mustBe OK
 
-      }
-    }
 
-    "return BAD_REQUEST" when {
-      "when an invalid request is received" in {
+    "return BAD_REQUEST" when:
+      "when an invalid request is received" in:
         when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
 
 //        (mockStubBehaviour
@@ -104,22 +102,18 @@ with MockAppConfig {
         val result = controller.dmsCallback()(request)
         status(result) mustBe BAD_REQUEST
 
-      }
-    }
 
-    "fail" when {
-      "for an unauthenticated user" in {
+    "fail" when:
+      "for an unauthenticated user" in:
         val request = FakeRequest(POST, routes.DmsNotificationController.dmsCallback().url)
           .withBody(Json.toJson(dmsNotification))
 
         val result = controller.dmsCallback()(request)
-        Try(status(result)) match {
+        Try(status(result)) match
           case Success(_) => fail()
           case Failure(_) =>
-        }
-      }
 
-      "when the user is not authorised" in {
+      "when the user is not authorised" in:
         when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.failed(new RuntimeException()))
 
 //        (mockStubBehaviour
@@ -132,13 +126,8 @@ with MockAppConfig {
           .withBody(Json.toJson(dmsNotification))
 
         val result = controller.dmsCallback()(request)
-        Try(status(result)) match {
+        Try(status(result)) match
           case Success(_) => fail()
           case Failure(_) =>
-        }
-      }
-    }
 
-  }
 
-}

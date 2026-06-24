@@ -27,24 +27,21 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @Singleton
-class MongoLockService @Inject() (mongoLockRepository: MongoLockRepository)(implicit appConfig: AppConfig) {
+class MongoLockService @Inject() (mongoLockRepository: MongoLockRepository)(implicit appConfig: AppConfig):
 
-  def dailyLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] = {
+  def dailyLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] =
     val lockService = TimePeriodLockService(
       mongoLockRepository,
       lockId = s"verify-utr-daily-${utr.value}",
       ttl = appConfig.entityChecksLockExpires
     )
     lockService.withRenewedLock(body)
-  }
 
-  def emailLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] = {
+  def emailLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] =
     val lockService = TimePeriodLockService(
       mongoLockRepository,
       lockId = s"verify-utr-email-${utr.value}",
       ttl = appConfig.entityChecksEmailLockExpires
     )
     lockService.withRenewedLock(body)
-  }
 
-}

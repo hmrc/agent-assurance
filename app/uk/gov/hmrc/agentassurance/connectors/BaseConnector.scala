@@ -29,13 +29,12 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 trait BaseConnector
-extends Retries {
+extends Retries:
 
-  def retryCondition: PartialFunction[Exception, Boolean] = {
+  def retryCondition: PartialFunction[Exception, Boolean] =
     case e: UpstreamErrorResponse if UpstreamErrorResponse.Upstream5xxResponse.unapply(e).isDefined => true
-  }
 
-  implicit class HttpResponseHelpers(response: HttpResponse) {
+  implicit class HttpResponseHelpers(response: HttpResponse):
 
     def as[A](implicit reads: Reads[A]): Future[A] = response.json
       .validate[A]
@@ -44,9 +43,8 @@ extends Retries {
 
     def error[A]: Future[A] = Future.failed(UpstreamErrorResponse(response.body, response.status))
 
-  }
 
-  implicit class RequestBuilderHelpers(requestBuilder: RequestBuilder) {
+  implicit class RequestBuilderHelpers(requestBuilder: RequestBuilder):
 
     def executeAndDeserialise[T](implicit
       ec: ExecutionContext,
@@ -54,21 +52,17 @@ extends Retries {
     ): Future[T] = requestBuilder
       .execute[HttpResponse]
       .flatMap { response =>
-        response.status match {
+        response.status match
           case OK | CREATED | ACCEPTED => response.as[T]
           case _ => response.error
-        }
       }
 
     def executeAndExpect(expected: Int)(implicit ec: ExecutionContext): Future[Unit] = requestBuilder
       .execute[HttpResponse]
       .flatMap { response =>
-        response.status match {
+        response.status match
           case `expected` => Future.successful(())
           case _ => response.error
-        }
       }
 
-  }
 
-}

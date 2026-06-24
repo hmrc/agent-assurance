@@ -40,15 +40,15 @@ case class ArchivedAmlsEntity(
   membershipExpiresOn: Option[LocalDate]
 )
 
-object ArchivedAmlsEntity {
+object ArchivedAmlsEntity:
 
   implicit val format: Format[ArchivedAmlsEntity] = Json.format[ArchivedAmlsEntity]
 
   def apply(
     arn: Arn,
     amlsEntity: AmlsEntity
-  ): ArchivedAmlsEntity = {
-    amlsEntity match {
+  ): ArchivedAmlsEntity =
+    amlsEntity match
       case uk: UkAmlsEntity =>
         val amlsDetails = uk.amlsDetails
         ArchivedAmlsEntity(
@@ -77,10 +77,7 @@ object ArchivedAmlsEntity {
           appliedOn = None,
           membershipExpiresOn = None
         )
-    }
-  }
 
-}
 
 // for the ASA AMLS journey (using POST /amls/arn/:arn)
 case class AmlsRequest(
@@ -89,9 +86,9 @@ case class AmlsRequest(
   membershipNumber: String,
   membershipExpiresOn: Option[LocalDate],
   evidenceObjectReference: Option[String] = None
-) {
-  def toAmlsEntity(amlsRequest: AmlsRequest): AmlsDetails = {
-    if (amlsRequest.ukRecord)
+):
+  def toAmlsEntity(amlsRequest: AmlsRequest): AmlsDetails =
+    if amlsRequest.ukRecord then
       UkAmlsDetails(
         supervisoryBody = amlsRequest.supervisoryBody,
         membershipNumber = Some(amlsRequest.membershipNumber),
@@ -105,9 +102,6 @@ case class AmlsRequest(
         supervisoryBody = amlsRequest.supervisoryBody,
         membershipNumber = Some(amlsRequest.membershipNumber)
       )
-  }
-}
 
-object AmlsRequest {
+object AmlsRequest:
   implicit val format: Format[AmlsRequest] = Json.format[AmlsRequest]
-}

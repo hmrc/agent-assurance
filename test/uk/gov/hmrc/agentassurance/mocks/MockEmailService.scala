@@ -36,7 +36,7 @@ extends MockFactory { this: TestSuite =>
     ExecutionContext,
     HeaderCarrier,
     Future[Unit]
-  ] = {
+  ] =
     (mockMockEmailService
       .sendEntityCheckNotification(_: EntityCheckNotification)(using _: ExecutionContext, _: HeaderCarrier))
       .expects(
@@ -45,6 +45,5 @@ extends MockFactory { this: TestSuite =>
         *
       )
       .returning(Future.successful(()))
-  }
 
 }

@@ -28,7 +28,7 @@ import scala.util.matching.Regex
 class AppConfig @Inject() (
   config: Configuration,
   servicesConfig: ServicesConfig
-) {
+):
 
   val appName = "agent-assurance"
 
@@ -81,4 +81,3 @@ class AppConfig @Inject() (
 
   val maxCallsPerSecondBusinessNames: Int = servicesConfig.getInt("rate-limiter.business-names.max-calls-per-second")
 
-}

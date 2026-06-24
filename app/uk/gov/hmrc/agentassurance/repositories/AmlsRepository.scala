@@ -44,7 +44,7 @@ import scala.concurrent.Future
 
 private sealed trait ArnUpsertResult
 
-private object ArnUpsertResult {
+private object ArnUpsertResult:
 
   final case class Success(oldAmlsEntity: Option[UkAmlsEntity])
   extends ArnUpsertResult
@@ -53,10 +53,9 @@ private object ArnUpsertResult {
   final case class Failure(error: AmlsError)
   extends ArnUpsertResult
 
-}
 
 @ImplementedBy(classOf[AmlsRepositoryImpl])
-trait AmlsRepository {
+trait AmlsRepository:
 
   def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError, Unit]]
 
@@ -83,7 +82,6 @@ trait AmlsRepository {
 
   def deleteByArn(arn: Arn): Future[Unit]
 
-}
 
 @Singleton
 class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
@@ -113,18 +111,18 @@ extends PlayMongoRepository[UkAmlsEntity](
   replaceIndexes = true // TODO WG - remove that
 )
 with AmlsRepository
-with Logging {
+with Logging:
 
   override lazy val requiresTtlIndex: Boolean = false
 
-  override def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError, Unit]] = {
+  override def createOrUpdate(createAmlsRequest: CreateAmlsRequest): Future[Either[AmlsError, Unit]] =
 
     val utr = createAmlsRequest.utr.value
 
     collection
       .find(equal("utr", utr))
       .headOption()
-      .flatMap {
+      .flatMap:
         case Some(amlsEntity) if amlsEntity.arn.isDefined => Left(ArnAlreadySetError)
         case _ =>
           collection
@@ -140,34 +138,30 @@ with Logging {
               ReplaceOptions().upsert(true)
             )
             .toFuture()
-            .map {
+            .map:
               case updateResult if updateResult.getModifiedCount < 2L => Right(())
               case _ => Left(AmlsUnexpectedMongoError)
-            }
-      }
-  }
 
   override def createOrUpdate(
     arn: Arn,
     amlsEntity: UkAmlsEntity
-  ): Future[Either[AmlsError, Option[UkAmlsEntity]]] = upsertByArn(arn, amlsEntity).flatMap {
+  ): Future[Either[AmlsError, Option[UkAmlsEntity]]] = upsertByArn(arn, amlsEntity).flatMap:
     case ArnUpsertResult.Success(oldAmlsEntity) => Right(oldAmlsEntity)
     case ArnUpsertResult.DuplicateUtrIndex(utr) => repairLegacyUtrCollision(utr, amlsEntity)
     case ArnUpsertResult.Failure(error) => Left(error)
-  }
 
   override def updateArn(
     utr: Utr,
     arn: Arn
-  ): Future[Either[AmlsError, UkAmlsDetails]] = {
+  ): Future[Either[AmlsError, UkAmlsDetails]] =
     collection
       .find(equal("utr", utr.value))
       .headOption()
-      .flatMap {
+      .flatMap:
         case Some(existingEntity) =>
-          existingEntity.arn match {
+          existingEntity.arn match
             case Some(existingArn) =>
-              if (existingArn.value == arn.value)
+              if existingArn.value == arn.value then
                 Right(existingEntity.amlsDetails)
               else
                 Left(ArnAlreadySetError)
@@ -176,28 +170,22 @@ with Logging {
               collection
                 .replaceOne(equal("utr", utr.value), toUpdate)
                 .toFuture()
-                .map {
+                .map:
                   updateResult =>
-                    if (updateResult.getModifiedCount == 1L)
+                    if updateResult.getModifiedCount == 1L then
                       Right(toUpdate.amlsDetails)
-                    else {
+                    else
                       logger.warn(
                         s"error updating AMLS record with ARN - acknowledged: " +
                           s"${updateResult.wasAcknowledged()}, modified count: ${updateResult.getModifiedCount}"
                       )
                       Left(AmlsUnexpectedMongoError)
-                    }
-                }
-                .recover {
+                .recover:
                   case e: MongoWriteException if e.getError.getCode == 11000 => Left(UniqueKeyViolationError)
                   case e =>
                     logger.warn(s"unexpected error when updating AMLS record with ARN ${e.getMessage}")
                     Left(AmlsUnexpectedMongoError)
-                }
-          }
         case None => Left(NoExistingAmlsError)
-      }
-  }
 
   override def getAmlDetails(utr: Utr): Future[Option[UkAmlsDetails]] = collection
     .find(equal("utr", utr.value))
@@ -217,14 +205,13 @@ with Logging {
   override def updateExpiryDate(
     arn: Arn,
     date: LocalDate
-  ): Future[UpdateResult] = {
+  ): Future[UpdateResult] =
     collection
       .updateOne(
         filter = Filters.equal("arn", arn.value),
         update = Updates.set("amlsDetails.membershipExpiresOn", date.toString)
       )
       .toFuture()
-  }
 
   override def deleteByArn(arn: Arn): Future[Unit] = collection
     .deleteOne(and(equal("arn", arn.value)))
@@ -242,16 +229,14 @@ with Logging {
     )
     .headOption()
     .map(ArnUpsertResult.Success(_))
-    .recover {
+    .recover:
       case e =>
-        (e, amlsEntity) match {
+        (e, amlsEntity) match
           case (mongoException: MongoException, amlsEntity: UkAmlsEntity) if mongoException.getCode == 11000 =>
             val utr = amlsEntity.utr.get
             ArnUpsertResult.DuplicateUtrIndex(utr)
 //          case DuplicateUtrIndexFor(utr) => ArnUpsertResult.DuplicateUtrIndex(utr)
           case _ => ArnUpsertResult.Failure(AmlsUnexpectedMongoError)
-        }
-    }
 
   private def repairLegacyUtrCollision(
     utr: Utr,
@@ -264,9 +249,8 @@ with Logging {
       // Reaching a non-legacy row here means the ARN<->UTR mapping invariant has already been broken,
       // so treat it as an unexpected persistence error rather than a recoverable ownership conflict.
       case _ => Left(AmlsUnexpectedMongoError)
-    }.recover {
+    }.recover:
       case _ => Left(AmlsUnexpectedMongoError)
-    }
 
   private def replaceLegacyUtrOnlyRecord(
     utr: Utr,
@@ -278,17 +262,13 @@ with Logging {
       FindOneAndReplaceOptions().returnDocument(ReturnDocument.BEFORE)
     )
     .headOption()
-    .map {
+    .map:
       case Some(oldAmlsEntity) => Right(Some(oldAmlsEntity))
       case None => Left(AmlsUnexpectedMongoError)
-    }
 
-  private object LegacyUtrOnlyRecord {
+  private object LegacyUtrOnlyRecord:
     def unapply(maybeEntity: Option[UkAmlsEntity]): Option[UkAmlsEntity] =
-      maybeEntity match {
+      maybeEntity match
         case Some(entity) if entity.arn.isEmpty => Some(entity)
         case _ => None
-      }
-  }
 
-}

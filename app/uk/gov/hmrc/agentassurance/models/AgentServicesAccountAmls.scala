@@ -30,29 +30,26 @@ case class AgentRecordAmlsDetails(
   evidenceObjectReference: Option[String] = None
 )
 
-object AgentRecordAmlsDetails {
+object AgentRecordAmlsDetails:
 
   implicit val format: Format[AgentRecordAmlsDetails] = Json.format[AgentRecordAmlsDetails]
 
   def databaseFormat(implicit
     crypto: Encrypter
       & Decrypter
-  ): Format[AgentRecordAmlsDetails] =
-    (__ \ "supervisoryBody")
-      .format[String](using stringEncrypterDecrypter)
-      .and((__ \ "membershipNumber").format[String](using stringEncrypterDecrypter))
-      .and((__ \ "evidenceObjectReference").formatNullable[String](using stringEncrypterDecrypter))(
-        AgentRecordAmlsDetails.apply,
-        details => (details.supervisoryBody, details.membershipNumber, details.evidenceObjectReference)
-      )
+  ): Format[AgentRecordAmlsDetails] = (__ \ "supervisoryBody")
+    .format[String](using stringEncrypterDecrypter)
+    .and((__ \ "membershipNumber").format[String](using stringEncrypterDecrypter))
+    .and((__ \ "evidenceObjectReference").formatNullable[String](using stringEncrypterDecrypter))(
+      AgentRecordAmlsDetails.apply,
+      details => (details.supervisoryBody, details.membershipNumber, details.evidenceObjectReference)
+    )
 
-}
 
 case class AgentRecordUpdateRequest(
   amlsDetails: Option[AgentRecordAmlsDetails],
   agencyDetails: Option[AgencyDetails] = None
 )
 
-object AgentRecordUpdateRequest {
+object AgentRecordUpdateRequest:
   implicit val format: Format[AgentRecordUpdateRequest] = Json.format[AgentRecordUpdateRequest]
-}

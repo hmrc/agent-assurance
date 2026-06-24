@@ -24,6 +24,5 @@ case class ErrorBody(
   message: String
 )
 
-object ErrorBody {
+object ErrorBody:
   implicit val errorBodyFormat: Format[ErrorBody] = Json.format[ErrorBody]
-}

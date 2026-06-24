@@ -40,33 +40,30 @@ extends MockFactory { this: TestSuite =>
     Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed],
     HeaderCarrier,
     Future[Unit]
-  ] = {
+  ] =
     (mockDmsConnector
       .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(using _: HeaderCarrier))
       .expects(*, *)
       .returning(Future.successful(HttpResponse.apply(ACCEPTED, "")))
-  }
 
   def mocksendPdfUpstreamErrorResponse(): CallHandler2[
     Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed],
     HeaderCarrier,
     Future[Unit]
-  ] = {
+  ] =
     (mockDmsConnector
       .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(using _: HeaderCarrier))
       .expects(*, *)
       .returning(Future.failed(UpstreamErrorResponse.apply("Error message", BAD_GATEWAY)))
-  }
 
   def mocksendPdfNonFatal(): CallHandler2[
     Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed],
     HeaderCarrier,
     Future[Unit]
-  ] = {
+  ] =
     (mockDmsConnector
       .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(using _: HeaderCarrier))
       .expects(*, *)
       .returning(Future.failed(new Exception("Error message")))
-  }
 
 }

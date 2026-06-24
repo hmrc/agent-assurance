@@ -44,7 +44,7 @@ class MaaController @Inject() (
   val authConnector: AuthConnector
 )(implicit ec: ExecutionContext)
 extends BackendController(controllerComponents)
-with AuthActions {
+with AuthActions:
 
   val key = "manually-assured"
 
@@ -54,23 +54,20 @@ with AuthActions {
       .validate[Value]
       .getOrElse(throw new BadRequestException("json failed validation"))
 
-    Utr.isValid(newValue.value) match {
+    Utr.isValid(newValue.value) match
       case true => {
         val propertyConverted = newValue.toProperty(key)
-        repository.propertyExists(propertyConverted).flatMap {
+        repository.propertyExists(propertyConverted).flatMap:
           case false => repository.upsertProperty(propertyConverted).map(_ => Created)
           case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
-        }
       }
       case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
-    }
   }
 
   def isManuallyAssured(identifier: Utr) = BasicAuth { _ =>
-    repository.propertyExists(Value(identifier.value).toProperty(key)).map {
+    repository.propertyExists(Value(identifier.value).toProperty(key)).map:
       case true => Ok
       case false => Forbidden
-    }
   }
 
   def getMaaList(pagination: PaginationParameters): Action[AnyContent] = BasicAuth { implicit request =>
@@ -78,7 +75,7 @@ with AuthActions {
       key,
       pagination.page,
       pagination.pageSize
-    ).map {
+    ).map:
       case (total, properties) =>
         val response = PaginatedResources(
           PaginationLinks.apply(
@@ -93,15 +90,12 @@ with AuthActions {
         )
 
         Ok(Json.toJson(response))
-    }
   }
 
   def deleteProperty(identifier: Utr) = BasicAuth { _ =>
     val newProperty = Value(identifier.value).toProperty(key)
-    repository.propertyExists(newProperty).flatMap {
+    repository.propertyExists(newProperty).flatMap:
       case true => repository.deleteProperty(newProperty).map(_ => NoContent)
       case false => Future.successful(NotFound)
-    }
   }
 
-}

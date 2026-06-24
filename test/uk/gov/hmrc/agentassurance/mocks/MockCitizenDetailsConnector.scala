@@ -37,11 +37,10 @@ extends MockFactory { this: TestSuite =>
     HeaderCarrier,
     ExecutionContext,
     Future[Option[EntityCheckException]]
-  ] = {
+  ] =
     (mockCitizenDetailsConnector
       .getCitizenDeceasedFlag(_: SaUtr)(using _: HeaderCarrier, _: ExecutionContext))
       .expects(saUtr, *, *)
       .returning(Future.successful(response))
-  }
 
 }

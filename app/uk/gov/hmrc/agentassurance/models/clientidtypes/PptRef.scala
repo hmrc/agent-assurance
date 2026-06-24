@@ -23,17 +23,15 @@ import uk.gov.hmrc.domain.TaxIdentifier
 case class PptRef(value: String)
 extends TaxIdentifier
 
-object PptRef {
+object PptRef:
 
   private val pattern = "X[A-Z]PPT000[0-9]{7}".r
 
   def isValid(ppt: String): Boolean =
-    ppt match {
+    ppt match
       case pattern(_*) => true
       case _ => false
-    }
 
   implicit val reads: SimpleObjectReads[PptRef] = new SimpleObjectReads[PptRef]("value", PptRef.apply)
   implicit val writes: SimpleObjectWrites[PptRef] = new SimpleObjectWrites[PptRef](_.value)
 
-}

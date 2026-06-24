@@ -23,17 +23,15 @@ import uk.gov.hmrc.domain.TaxIdentifier
 case class Vrn(value: String)
 extends TaxIdentifier
 
-object Vrn {
+object Vrn:
 
   private val vrnPattern = "[0-9]{9}".r
 
   def isValid(vrn: String): Boolean =
-    vrn match {
+    vrn match
       case vrnPattern(_*) => true
       case _ => false
-    }
 
   implicit val vrnReads: SimpleObjectReads[Vrn] = new SimpleObjectReads[Vrn]("value", Vrn.apply)
   implicit val vrnWrites: SimpleObjectWrites[Vrn] = new SimpleObjectWrites[Vrn](_.value)
 
-}

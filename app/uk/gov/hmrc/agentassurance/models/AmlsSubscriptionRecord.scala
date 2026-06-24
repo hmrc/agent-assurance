@@ -29,6 +29,5 @@ case class AmlsSubscriptionRecord(
   suspended: Option[Boolean]
 )
 
-object AmlsSubscriptionRecord {
+object AmlsSubscriptionRecord:
   implicit val amlsSubscriptionRecordFormat: Format[AmlsSubscriptionRecord] = Json.format[AmlsSubscriptionRecord]
-}

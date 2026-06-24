@@ -24,11 +24,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class TestOnlyController @Inject() (ctrl: AgentAssuranceController) {
+class TestOnlyController @Inject() (ctrl: AgentAssuranceController):
 
   def acceptableNumberOfClientsForAny(
     service: String,
     minimumAcceptableNumberOfClients: Int
   ): Action[AnyContent] = ctrl.acceptableNumberOfClients(service, minimumAcceptableNumberOfClients)
 
-}

@@ -26,6 +26,5 @@ case class EmailInformation(
   force: Boolean = true
 )
 
-object EmailInformation {
+object EmailInformation:
   implicit val writes: OWrites[EmailInformation] = Json.writes
-}

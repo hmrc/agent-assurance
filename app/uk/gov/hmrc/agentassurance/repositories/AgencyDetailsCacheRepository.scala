@@ -52,7 +52,7 @@ class AgencyDetailsCacheRepository @Inject() (
     & Decrypter
 )
 extends EntityCache[String, AgentDetailsDesResponse]
-with Cache[AgentDetailsDesResponse] {
+with Cache[AgentDetailsDesResponse]:
 
   val format: Format[AgentDetailsDesResponse] = AgentDetailsDesResponse.agentRecordDatabaseDetailsFormat
   val cacheRepo: MongoCacheRepository[String] =
@@ -69,19 +69,15 @@ with Cache[AgentDetailsDesResponse] {
 
   def apply(
     key: String
-  )(body: => Future[AgentDetailsDesResponse])(implicit ec: ExecutionContext): Future[AgentDetailsDesResponse] = {
+  )(body: => Future[AgentDetailsDesResponse])(implicit ec: ExecutionContext): Future[AgentDetailsDesResponse] =
     val encryptedKey = crypto.encrypt(PlainText(key)).value
-    getFromCache(encryptedKey).flatMap {
+    getFromCache(encryptedKey).flatMap:
       case Some(v) =>
         record.counter(s"Count-$key-from-cache")
         Future.successful(v)
       case None =>
-        body.andThen {
+        body.andThen:
           case Success(v) =>
             record.counter(s"Count-$key-from-source")
             putCache(encryptedKey)(v).map(_ => v)
-        }
-    }
-  }
 
-}

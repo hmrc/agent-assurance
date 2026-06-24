@@ -45,7 +45,7 @@ extends MockFactory { this: TestSuite =>
     HeaderCarrier,
     ExecutionContext,
     Future[Enrolments]
-  ] = {
+  ] =
     (mockAuthConnector
       .authorise(_: Predicate, _: Retrieval[Enrolments])(using _: HeaderCarrier, _: ExecutionContext))
       .expects(
@@ -55,7 +55,6 @@ extends MockFactory { this: TestSuite =>
         *
       )
       .returning(response.fold[Future[Enrolments]](e => Future.failed(new Exception(e)), r => Future.successful(r)))
-  }
 
   def mockAuthWithNoRetrievals[A](retrieval: Retrieval[A])(result: A): CallHandler4[
     Predicate,
@@ -63,7 +62,7 @@ extends MockFactory { this: TestSuite =>
     HeaderCarrier,
     ExecutionContext,
     Future[A]
-  ] = {
+  ] =
     (mockAuthConnector
       .authorise[A](_: Predicate, _: Retrieval[A])(using _: HeaderCarrier, _: ExecutionContext))
       .expects(
@@ -73,7 +72,6 @@ extends MockFactory { this: TestSuite =>
         *
       )
       .returning(Future.successful(result))
-  }
 
   def mockAgentAuth()(response: Either[String, Unit]): CallHandler4[
     Predicate,
@@ -81,7 +79,7 @@ extends MockFactory { this: TestSuite =>
     HeaderCarrier,
     ExecutionContext,
     Future[Unit]
-  ] = {
+  ] =
     (mockAuthConnector
       .authorise(_: Predicate, _: EmptyRetrieval.type)(using _: HeaderCarrier, _: ExecutionContext))
       .expects(
@@ -91,6 +89,5 @@ extends MockFactory { this: TestSuite =>
         *
       )
       .returning(response.fold[Future[Unit]](e => Future.failed(new Exception(e)), r => Future.successful(r)))
-  }
 
 }

@@ -22,7 +22,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Writes
 import play.api.mvc.Results.Forbidden
 
-object ErrorResults {
+object ErrorResults:
 
   case class ErrorBody(
     code: String,
@@ -30,12 +30,10 @@ object ErrorResults {
   )
 
   implicit val errorBodyWrites: Writes[ErrorBody] =
-    new Writes[ErrorBody] {
+    new Writes[ErrorBody]:
       override def writes(body: ErrorBody): JsValue = Json.obj("code" -> body.code, "message" -> body.message)
-    }
 
   val NoPermission = Forbidden(
     toJson(ErrorBody("NO_PERMISSION", "The logged in user is not permitted to perform the operation."))
   )
 
-}

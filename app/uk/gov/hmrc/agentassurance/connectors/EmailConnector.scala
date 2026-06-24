@@ -34,12 +34,11 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @ImplementedBy(classOf[EmailConnectorImpl])
-trait EmailConnector {
+trait EmailConnector:
   def sendEmail(emailInformation: EmailInformation)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]
-}
 
 class EmailConnectorImpl @Inject() (
   appConfig: AppConfig,
@@ -47,25 +46,22 @@ class EmailConnectorImpl @Inject() (
 )
 extends EmailConnector
 with HttpErrorFunctions
-with Logging {
+with Logging:
 
   def sendEmail(emailInformation: EmailInformation)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Unit] = {
+  ): Future[Unit] =
     httpClient
       .post(url"${appConfig.emailBaseUrl}/hmrc/email")
       .withBody(Json.toJson(emailInformation))
       .execute[HttpResponse]
       .map { response =>
-        response.status match {
+        response.status match
           case status if is2xx(status) => ()
           case other =>
             logger.error(s"unexpected status from email service, status: $other")
             ()
-        }
       }
 
-  }
 
-}

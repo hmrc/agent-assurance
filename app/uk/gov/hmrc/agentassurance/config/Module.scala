@@ -28,22 +28,18 @@ class Module(
   @unused environment: Environment,
   configuration: Configuration
 )
-extends AbstractModule {
+extends AbstractModule:
 
-  override def configure(): Unit = {
+  override def configure(): Unit =
     bind(classOf[Clock]).toInstance(Clock.system(ZoneId.systemDefault()))
 
     val internalAuthTokenEnabled: Boolean = configuration.get[Boolean]("internal-auth-token-enabled-on-start")
 
-    if (internalAuthTokenEnabled) {
+    if internalAuthTokenEnabled then
       bind(classOf[InternalAuthTokenInitialiser])
         .to(classOf[InternalAuthTokenInitialiserImpl])
         .asEagerSingleton()
-    }
-    else {
+    else
       bind(classOf[InternalAuthTokenInitialiser])
         .to(classOf[NoOpInternalAuthTokenInitialiser])
         .asEagerSingleton()
-    }
-  }
-}

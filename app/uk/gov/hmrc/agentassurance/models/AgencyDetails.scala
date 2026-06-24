@@ -30,27 +30,24 @@ case class AgencyDetails(
   agencyEmail: Option[String],
   agencyTelephone: Option[String],
   agencyAddress: Option[BusinessAddress]
-) {
+):
   val hasUkAddress: Boolean = agencyAddress.exists(_.countryCode == "GB")
-}
-object AgencyDetails {
+object AgencyDetails:
 
   implicit val agencyDetailsFormat: Format[AgencyDetails] = Json.format[AgencyDetails]
 
   def agencyDetailsDatabaseFormat(implicit
     crypto: Encrypter
       & Decrypter
-  ): Format[AgencyDetails] =
-    (__ \ "agencyName")
-      .formatNullable[String](using stringEncrypterDecrypter)
-      .and((__ \ "agencyEmail").formatNullable[String](using stringEncrypterDecrypter))
-      .and((__ \ "agencyTelephone").formatNullable[String](using stringEncrypterDecrypter))
-      .and((__ \ "agencyAddress").formatNullable[BusinessAddress](using BusinessAddress.businessAddressDatabaseFormat))(
-        AgencyDetails.apply,
-        details => (details.agencyName, details.agencyEmail, details.agencyTelephone, details.agencyAddress)
-      )
+  ): Format[AgencyDetails] = (__ \ "agencyName")
+    .formatNullable[String](using stringEncrypterDecrypter)
+    .and((__ \ "agencyEmail").formatNullable[String](using stringEncrypterDecrypter))
+    .and((__ \ "agencyTelephone").formatNullable[String](using stringEncrypterDecrypter))
+    .and((__ \ "agencyAddress").formatNullable[BusinessAddress](using BusinessAddress.businessAddressDatabaseFormat))(
+      AgencyDetails.apply,
+      details => (details.agencyName, details.agencyEmail, details.agencyTelephone, details.agencyAddress)
+    )
 
-}
 
 case class BusinessAddress(
   addressLine1: String,
@@ -61,14 +58,14 @@ case class BusinessAddress(
   countryCode: String
 )
 
-object BusinessAddress {
+object BusinessAddress:
 
   implicit val format: OFormat[BusinessAddress] = Json.format
 
   def businessAddressDatabaseFormat(implicit
     crypto: Encrypter
       & Decrypter
-  ): Format[BusinessAddress] = {
+  ): Format[BusinessAddress] =
     (__ \ "addressLine1")
       .format[String](using stringEncrypterDecrypter)
       .and((__ \ "addressLine2").formatNullable[String](using stringEncrypterDecrypter))
@@ -79,6 +76,4 @@ object BusinessAddress {
         BusinessAddress.apply,
         address => (address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode, address.countryCode)
       )
-  }
 
-}

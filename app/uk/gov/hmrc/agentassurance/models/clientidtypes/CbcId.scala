@@ -23,17 +23,15 @@ import uk.gov.hmrc.domain.TaxIdentifier
 case class CbcId(value: String)
 extends TaxIdentifier
 
-object CbcId {
+object CbcId:
 
   private val pattern = "^X[A-Z]CBC[0-9]{10}$".r
 
   def isValid(cbcId: String): Boolean =
-    cbcId match {
+    cbcId match
       case pattern(_*) => true
       case _ => false
-    }
 
   implicit val reads: SimpleObjectReads[CbcId] = new SimpleObjectReads[CbcId]("value", CbcId.apply)
   implicit val writes: SimpleObjectWrites[CbcId] = new SimpleObjectWrites[CbcId](_.value)
 
-}

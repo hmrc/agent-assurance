@@ -31,7 +31,7 @@ import uk.gov.hmrc.mongo.CurrentTimestampSupport
 class MongoLockServiceSpec
 extends PlaySpec
 with CleanMongoCollectionSupport
-with MockAppConfig {
+with MockAppConfig:
 
   val mongoLockRepository = new MongoLockRepository(mongoComponent, new CurrentTimestampSupport)
   implicit val ac: AppConfig = mockAppConfig
@@ -41,23 +41,18 @@ with MockAppConfig {
   val utr1 = Utr("1234567")
   val utr2 = Utr("1234567")
 
-  "MongoLockServiceSpec" should {
-    "return Some(value) when not locked" in {
+  "MongoLockServiceSpec" should:
+    "return Some(value) when not locked" in:
       await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
-    }
-    "return None when locked" in {
+    "return None when locked" in:
       await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
       await(service.dailyLock(utr1)(Future.successful(()))) mustBe None
-    }
 
-    "return Some(value) after TTL 1 second when locked" in {
+    "return Some(value) after TTL 1 second when locked" in:
       await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
       Thread.sleep(500)
       await(service.dailyLock(utr1)(Future.successful(()))) mustBe None
       Thread.sleep(600)
       await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
-    }
 
-  }
 
-}

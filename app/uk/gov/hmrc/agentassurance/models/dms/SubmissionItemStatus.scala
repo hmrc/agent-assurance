@@ -25,7 +25,7 @@ sealed abstract class SubmissionItemStatus
 extends EnumEntry
 
 object SubmissionItemStatus
-extends Enum[SubmissionItemStatus] {
+extends Enum[SubmissionItemStatus]:
 
   implicit val format: Format[SubmissionItemStatus] = EnumFormat(SubmissionItemStatus)
 
@@ -46,4 +46,3 @@ extends Enum[SubmissionItemStatus] {
 
   override def values: IndexedSeq[SubmissionItemStatus] = findValues
 
-}

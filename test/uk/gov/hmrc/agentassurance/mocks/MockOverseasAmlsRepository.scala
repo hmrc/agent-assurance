@@ -32,39 +32,34 @@ extends MockFactory { this: TestSuite =>
 
   val mockOverseasAmlsRepository = mock[OverseasAmlsRepository]
 
-  def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError, Unit]) = {
+  def mockCreateOverseasAmls(amlsEntity: OverseasAmlsEntity)(response: Either[AmlsError, Unit]) =
     (mockOverseasAmlsRepository
       .create(_: OverseasAmlsEntity))
       .expects(amlsEntity)
       .returning(toFuture(response))
-  }
 
-  def mockGetOverseasAmlsDetailsByArn(arn: Arn)(response: Option[OverseasAmlsDetails]) = {
+  def mockGetOverseasAmlsDetailsByArn(arn: Arn)(response: Option[OverseasAmlsDetails]) =
     (mockOverseasAmlsRepository
       .getOverseasAmlsDetailsByArn(_: Arn))
       .expects(arn)
       .returning(toFuture(response))
-  }
 
-  def mockGetOverseasAmlsDetailsByArnFuture(arn: Arn)(response: Future[Option[OverseasAmlsDetails]]) = {
+  def mockGetOverseasAmlsDetailsByArnFuture(arn: Arn)(response: Future[Option[OverseasAmlsDetails]]) =
     (mockOverseasAmlsRepository
       .getOverseasAmlsDetailsByArn(_: Arn))
       .expects(arn)
       .returning(response)
-  }
 
-  def mockCreateOrUpdate(amlsEntity: OverseasAmlsEntity)(response: Option[OverseasAmlsEntity]) = {
+  def mockCreateOrUpdate(amlsEntity: OverseasAmlsEntity)(response: Option[OverseasAmlsEntity]) =
     (mockOverseasAmlsRepository
       .createOrUpdate(_: OverseasAmlsEntity))
       .expects(amlsEntity)
       .returning(toFuture(response))
-  }
 
-  def mockDeleteOverseasAmlsByArn(arn: Arn)(response: Future[Unit]) = {
+  def mockDeleteOverseasAmlsByArn(arn: Arn)(response: Future[Unit]) =
     (mockOverseasAmlsRepository
       .deleteByArn(_: Arn))
       .expects(arn)
       .returning(response)
-  }
 
 }

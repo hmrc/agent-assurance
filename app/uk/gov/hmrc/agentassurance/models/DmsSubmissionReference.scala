@@ -24,9 +24,8 @@ import scala.util.Random
 case class DmsSubmissionReference(submissionReference: String)
 extends Product
 
-object DmsSubmissionReference {
+object DmsSubmissionReference:
 
   def create: DmsSubmissionReference = DmsSubmissionReference(Random.alphanumeric.take(12).mkString.map(_.toUpper))
   implicit val format: OFormat[DmsSubmissionReference] = Json.format[DmsSubmissionReference]
 
-}

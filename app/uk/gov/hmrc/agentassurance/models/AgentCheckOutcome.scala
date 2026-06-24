@@ -25,6 +25,5 @@ case class AgentCheckOutcome(
   failureReason: Option[String]
 )
 
-object AgentCheckOutcome {
+object AgentCheckOutcome:
   implicit val format: Format[AgentCheckOutcome] = Json.format[AgentCheckOutcome]
-}

@@ -31,13 +31,13 @@ import scala.concurrent.Future
 class EmailService @Inject() (
   emailConnector: EmailConnector,
   appConfig: AppConfig
-) {
+):
   def sendEntityCheckNotification(
     entityCheckNotification: EntityCheckNotification
   )(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
-  ): Future[Unit] = {
+  ): Future[Unit] =
     emailConnector.sendEmail(
       EmailInformation(
         to = Seq(appConfig.agentMaintainerEmail),
@@ -51,6 +51,4 @@ class EmailService @Inject() (
         )
       )
     )
-  }
 
-}

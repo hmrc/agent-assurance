@@ -56,7 +56,7 @@ with MockOverseasAmlsRepository
 with MockEnrolmentStoreProxyConnector
 with MockDesConnector
 with MockAppConfig
-with BeforeAndAfterEach {
+with BeforeAndAfterEach:
 
   implicit val appConfig: AppConfig = mockAppConfig
 
@@ -72,95 +72,77 @@ with BeforeAndAfterEach {
 
   implicit val hc: HeaderCarrier = new HeaderCarrier
 
-  "AgentAssuranceController" when {
-    "enrolledForIrSAAgent is called" should {
-      "return NO_CONTENT where the current user is enrolled in IR-SA-AGENT" in {
+  "AgentAssuranceController" when:
+    "enrolledForIrSAAgent is called" should:
+      "return NO_CONTENT where the current user is enrolled in IR-SA-AGENT" in:
         mockAuth()(Right(enrolmentsWithIrSAAgent))
 
         val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
         status(response) mustBe NO_CONTENT
-      }
 
-      "return FORBIDDEN where the current user is not enrolled in IR-SA-AGENT" in {
+      "return FORBIDDEN where the current user is not enrolled in IR-SA-AGENT" in:
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
         val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
         status(response) mustBe FORBIDDEN
-      }
 
-      "return FORBIDDEN where the current user has no enrolments" in {
+      "return FORBIDDEN where the current user has no enrolments" in:
         mockAuth()(Right(enrolmentsWithoutIrSAAgent))
         val response = controller.enrolledForIrSAAgent()(FakeRequest())
 
         status(response) mustBe FORBIDDEN
-      }
-    }
 
-    "activeCesaRelationship is called with NINO" should {
-      "return OK where the user provides a valid NINO and saAgentReference nad has an active relationship in CESA" in {
-        inSequence {
+    "activeCesaRelationship is called with NINO" should:
+      "return OK where the user provides a valid NINO and saAgentReference nad has an active relationship in CESA" in:
+        inSequence:
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
           mockGetActiveCesaAgentRelationships(testNino)(Right(Seq(testSaAgentReference)))
-        }
 
         val response = controller.activeCesaRelationshipWithNino(testNino, testSaAgentReference)(FakeRequest())
         status(response) mustBe OK
-      }
 
-      "return FORBIDDEN when called with a valid NINO that is not active in CESA" in {
-        inSequence {
+      "return FORBIDDEN when called with a valid NINO that is not active in CESA" in:
+        inSequence:
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
           mockGetActiveCesaAgentRelationships(testNino)(Right(Seq.empty))
-        }
 
         val response = controller.activeCesaRelationshipWithNino(testNino, testSaAgentReference)(FakeRequest())
         status(response) mustBe FORBIDDEN
-      }
 
-      "return FORBIDDEN when called with a valid NINO that is active in CESA but with a different IRAgentReference" in {
-        inSequence {
+      "return FORBIDDEN when called with a valid NINO that is active in CESA but with a different IRAgentReference" in:
+        inSequence:
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
           mockGetActiveCesaAgentRelationships(testNino)(Right(Seq(SaAgentReference("IRSA-456"))))
-        }
         val response = controller.activeCesaRelationshipWithNino(testNino, testSaAgentReference)(FakeRequest())
 
         status(response) mustBe FORBIDDEN
-      }
-    }
 
-    "activeCesaRelationship is called with UTR" should {
-      "return OK where the user provides a valid UTR and saAgentReference nad has an active relationship in CESA" in {
-        inSequence {
+    "activeCesaRelationship is called with UTR" should:
+      "return OK where the user provides a valid UTR and saAgentReference nad has an active relationship in CESA" in:
+        inSequence:
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
           mockGetActiveCesaAgentRelationships(testUtr)(Right(Seq(testSaAgentReference)))
-        }
         val response = controller.activeCesaRelationshipWithUtr(testUtr, testSaAgentReference)(FakeRequest())
 
         status(response) mustBe OK
-      }
 
-      "return FORBIDDEN when called with a valid UTR that is not active in CESA" in {
-        inSequence {
+      "return FORBIDDEN when called with a valid UTR that is not active in CESA" in:
+        inSequence:
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
           mockGetActiveCesaAgentRelationships(testUtr)(Right(Seq.empty))
-        }
         val response = controller.activeCesaRelationshipWithUtr(testUtr, testSaAgentReference)(FakeRequest())
         status(response) mustBe FORBIDDEN
-      }
 
-      "return FORBIDDEN when called with a valid UTR that is active in CESA but with a different IRAgentReference" in {
-        inSequence {
+      "return FORBIDDEN when called with a valid UTR that is active in CESA but with a different IRAgentReference" in:
+        inSequence:
           mockAuthWithNoRetrievals(EmptyRetrieval)(())
           mockGetActiveCesaAgentRelationships(testUtr)(Right(Seq(SaAgentReference("IRSA-456"))))
-        }
         val response = controller.activeCesaRelationshipWithUtr(testUtr, testSaAgentReference)(FakeRequest())
 
         status(response) mustBe FORBIDDEN
-      }
-    }
 
-    "getAmlsDetails" should {
+    "getAmlsDetails" should:
 
       val utr = Utr("7000000002")
 
@@ -170,35 +152,31 @@ with BeforeAndAfterEach {
             .withHeaders(CONTENT_TYPE -> "application/json")
         )
 
-      "not an agent or stride should return forbidden" in {
+      "not an agent or stride should return forbidden" in:
 
-        inSequence {
+        inSequence:
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithoutIrSAAgent.and(None).and(None)
           )
-        }
 
         val response = doRequest()
         status(response) mustBe FORBIDDEN
 
-      }
 
-      "an agent with non existing utr record should return not found" in {
+      "an agent with non existing utr record should return not found" in:
 
-        inSequence {
+        inSequence:
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
           )
           mockGetAmls(utr)(None)
-        }
 
         val response = doRequest()
         status(response) mustBe NOT_FOUND
 
-      }
 
-      "an agent with existing aml record should return amls details" in {
-        inSequence {
+      "an agent with existing aml record should return amls details" in:
+        inSequence:
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
           )
@@ -212,27 +190,23 @@ with BeforeAndAfterEach {
               )
             )
           )
-        }
 
         val response = doRequest()
         status(response) mustBe OK
-      }
 
-      "a stride user with non existing utr record user should return not found" in {
+      "a stride user with non existing utr record user should return not found" in:
 
-        inSequence {
+        inSequence:
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithStride.and(None).and(Some(Credentials("", "PrivilegedApplication")))
           )
           mockGetAmls(utr)(None)
-        }
 
         val response = doRequest()
         status(response) mustBe NOT_FOUND
-      }
 
-      "a stride user with existing aml record should return amls details" in {
-        inSequence {
+      "a stride user with existing aml record should return amls details" in:
+        inSequence:
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithStride.and(None).and(Some(Credentials("", "PrivilegedApplication")))
           )
@@ -246,15 +220,12 @@ with BeforeAndAfterEach {
               )
             )
           )
-        }
 
         val response = doRequest()
         status(response) mustBe OK
-      }
 
-    }
 
-    "storeAmlsDetails" should {
+    "storeAmlsDetails" should:
 
       val amlsDetails = UkAmlsDetails(
         "supervisory",
@@ -271,19 +242,17 @@ with BeforeAndAfterEach {
             .withHeaders(CONTENT_TYPE -> "application/json")
         )
 
-      "store amlsDetails successfully in mongo" in {
+      "store amlsDetails successfully in mongo" in:
 
-        inSequence {
+        inSequence:
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
           )
           mockCreateAmls(createAmlsRequest)(Right(()))
-        }
         val response = doRequest()
         status(response) mustBe CREATED
-      }
 
-      "return bad_request if the utr is not valid" in {
+      "return bad_request if the utr is not valid" in:
 
         val amlsRequestWithInvalidUtr = createAmlsRequest.copy(utr = Utr("61122334455"))
 
@@ -293,21 +262,18 @@ with BeforeAndAfterEach {
 
         val response = doRequest(amlsRequestWithInvalidUtr)
         status(response) mustBe BAD_REQUEST
-      }
 
-      "handle mongo errors during storing amlsDetails" in {
+      "handle mongo errors during storing amlsDetails" in:
 
-        inSequence {
+        inSequence:
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
           )
           mockCreateAmls(createAmlsRequest)(Left(AmlsUnexpectedMongoError))
-        }
         val response = doRequest()
         status(response) mustBe INTERNAL_SERVER_ERROR
-      }
 
-      "handle invalid amlsDetails json case in the request" in {
+      "handle invalid amlsDetails json case in the request" in:
 
         mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
           enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
@@ -321,9 +287,8 @@ with BeforeAndAfterEach {
           )
 
         status(response) mustBe BAD_REQUEST
-      }
 
-      "handle no json case in the request" in {
+      "handle no json case in the request" in:
 
         mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
           enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
@@ -332,9 +297,8 @@ with BeforeAndAfterEach {
         val response = controller.storeAmlsDetails()(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
         status(response) mustBe BAD_REQUEST
-      }
 
-      "accept registered AMLS details without a date (APB-5382)" in {
+      "accept registered AMLS details without a date (APB-5382)" in:
         val amlsDetailsNoDateR = UkAmlsDetails(
           "supervisoryBody",
           membershipNumber = Some("0123456789"),
@@ -343,19 +307,17 @@ with BeforeAndAfterEach {
         )
         val createAmlsRequestNoDateR = CreateAmlsRequest(testUtr, amlsDetailsNoDateR)
 
-        inSequence {
+        inSequence:
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
           )
           mockCreateAmls(createAmlsRequestNoDateR)(Right(()))
-        }
 
         val responseR = doRequest(createAmlsRequestNoDateR)
 
         status(responseR) mustBe CREATED
-      }
 
-      "accept pending AMLS details without a date (APB-5382)" in {
+      "accept pending AMLS details without a date (APB-5382)" in:
         val amlsDetailsNoDateL = UkAmlsDetails(
           "supervisoryBody",
           membershipNumber = Some(testValidApplicationReferenceNumber),
@@ -364,19 +326,17 @@ with BeforeAndAfterEach {
         )
         val createAmlsRequestNoDateL = CreateAmlsRequest(testUtr, amlsDetailsNoDateL)
 
-        inSequence {
+        inSequence:
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
           )
           mockCreateAmls(createAmlsRequestNoDateL)(Right(()))
-        }
 
         val responseL = doRequest(createAmlsRequestNoDateL)
 
         status(responseL) mustBe CREATED
-      }
 
-      "accept pending AMLS details without a reference number" in {
+      "accept pending AMLS details without a reference number" in:
         val amlsDetailsNoDateL = UkAmlsDetails(
           "supervisoryBody",
           membershipNumber = None,
@@ -385,20 +345,17 @@ with BeforeAndAfterEach {
         )
         val createAmlsRequestNoDateL = CreateAmlsRequest(testUtr, amlsDetailsNoDateL)
 
-        inSequence {
+        inSequence:
           mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
             enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
           )
           mockCreateAmls(createAmlsRequestNoDateL)(Right(()))
-        }
 
         val responseL = doRequest(createAmlsRequestNoDateL)
 
         status(responseL) mustBe CREATED
-      }
-    }
 
-    "updateAmlsDetails" should {
+    "updateAmlsDetails" should:
 
       val utr = Utr("7000000002")
       val arn = Arn("AARN0000002")
@@ -410,9 +367,9 @@ with BeforeAndAfterEach {
             .withHeaders(CONTENT_TYPE -> "application/json")
         )
 
-      "update existing amlsDetails successfully in mongo" in {
+      "update existing amlsDetails successfully in mongo" in:
 
-        inSequence {
+        inSequence:
           mockAgentAuth()(Right(()))
           mockUpdateAmls(utr, arn)(
             Right(
@@ -424,48 +381,26 @@ with BeforeAndAfterEach {
               )
             )
           )
-        }
         val response = doRequest()
         status(response) mustBe OK
         contentAsString(response) must include("supervisory")
-      }
 
-      "handle mongo errors during updating amls with Arn" in {
+      "handle mongo errors during updating amls with Arn" in:
 
-        inSequence {
+        inSequence:
           mockAgentAuth()(Right(()))
           mockUpdateAmls(utr, arn)(Left(AmlsUnexpectedMongoError))
-        }
         val response = doRequest()
         status(response) mustBe INTERNAL_SERVER_ERROR
-      }
 
-      "handle allow duplicate ARN errors from mongo" in {
-        inSequence {
+      "handle allow duplicate ARN errors from mongo" in:
+        inSequence:
           mockAgentAuth()(Right(()))
           mockUpdateAmls(utr, arn)(Left(UniqueKeyViolationError))
-        }
         val response = doRequest()
         status(response) mustBe BAD_REQUEST
-      }
 
-      "handle Arns which don't match the ARN pattern json case in the request" in {
-
-        mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
-          enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
-        )
-
-        val response =
-          controller.storeAmlsDetails()(
-            FakeRequest()
-              .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
-              .withHeaders(CONTENT_TYPE -> "application/json")
-          )
-
-        status(response) mustBe BAD_REQUEST
-      }
-
-      "handle invalid Arn json case in the request" in {
+      "handle Arns which don't match the ARN pattern json case in the request" in:
 
         mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
           enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
@@ -479,9 +414,23 @@ with BeforeAndAfterEach {
           )
 
         status(response) mustBe BAD_REQUEST
-      }
 
-      "handle no json case in the request" in {
+      "handle invalid Arn json case in the request" in:
+
+        mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
+          enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
+        )
+
+        val response =
+          controller.storeAmlsDetails()(
+            FakeRequest()
+              .withJsonBody(Json.toJson("""{"invalid": "amls-json"}"""))
+              .withHeaders(CONTENT_TYPE -> "application/json")
+          )
+
+        status(response) mustBe BAD_REQUEST
+
+      "handle no json case in the request" in:
 
         mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
           enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
@@ -490,11 +439,9 @@ with BeforeAndAfterEach {
         val response = controller.storeAmlsDetails()(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
         status(response) mustBe BAD_REQUEST
-      }
 
-    }
 
-    "storeOverseasAmlsDetails" should {
+    "storeOverseasAmlsDetails" should:
       val arn = Arn("AARN0000002")
 
       val amlsDetails = OverseasAmlsDetails("supervisoryBody", Some("0123456789"))
@@ -510,17 +457,15 @@ with BeforeAndAfterEach {
           .withHeaders(CONTENT_TYPE -> "application/json")
       )
 
-      "store amlsDetails successfully in mongo" in {
+      "store amlsDetails successfully in mongo" in:
 
-        inSequence {
+        inSequence:
           mockAgentAuth()(Right(()))
           mockCreateOverseasAmls(overseasAmlsEntity)(Right(()))
-        }
         val response = doRequest()
         status(response) mustBe CREATED
-      }
 
-      "return bad_request if the ARN is not valid" in {
+      "return bad_request if the ARN is not valid" in:
 
         val amlsRequestWithInvalidArn = overseasAmlsEntity.copy(arn = Arn("61122334455"))
 
@@ -528,30 +473,25 @@ with BeforeAndAfterEach {
 
         val response = doRequest(amlsRequestWithInvalidArn)
         status(response) mustBe BAD_REQUEST
-      }
 
-      "return conflict if the record already available in the database" in {
+      "return conflict if the record already available in the database" in:
 
-        inSequence {
+        inSequence:
           mockAgentAuth()(Right(()))
           mockCreateOverseasAmls(overseasAmlsEntity)(Left(AmlsRecordExists))
-        }
 
         val response = doRequest()
         status(response) mustBe CONFLICT
-      }
 
-      "handle mongo errors during storing amlsDetails" in {
+      "handle mongo errors during storing amlsDetails" in:
 
-        inSequence {
+        inSequence:
           mockAgentAuth()(Right(Credentials("", "")))
           mockCreateOverseasAmls(overseasAmlsEntity)(Left(AmlsUnexpectedMongoError))
-        }
         val response = doRequest()
         status(response) mustBe INTERNAL_SERVER_ERROR
-      }
 
-      "handle invalid amlsDetails json case in the request" in {
+      "handle invalid amlsDetails json case in the request" in:
 
         mockAgentAuth()(Right(()))
 
@@ -562,17 +502,12 @@ with BeforeAndAfterEach {
         )
 
         status(response) mustBe BAD_REQUEST
-      }
 
-      "handle no json case in the request" in {
+      "handle no json case in the request" in:
 
         mockAgentAuth()(Right(()))
 
         val response = controller.storeOverseasAmlsDetails(FakeRequest().withHeaders(CONTENT_TYPE -> "application/json"))
 
         status(response) mustBe BAD_REQUEST
-      }
-    }
-  }
 
-}

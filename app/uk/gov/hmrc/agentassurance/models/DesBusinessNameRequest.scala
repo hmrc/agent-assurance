@@ -25,6 +25,5 @@ case class DesRegistrationRequest(
   isAnAgent: Boolean
 )
 
-object DesRegistrationRequest {
+object DesRegistrationRequest:
   implicit val formats: Format[DesRegistrationRequest] = Json.format[DesRegistrationRequest]
-}

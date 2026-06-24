@@ -37,76 +37,67 @@ extends MockFactory { this: TestSuite =>
 
   val mockAmlsRepository = mock[AmlsRepository]
 
-  def mockCreateAmls(createAmlsRequest: CreateAmlsRequest)(response: Either[AmlsError, Unit]) = {
+  def mockCreateAmls(createAmlsRequest: CreateAmlsRequest)(response: Either[AmlsError, Unit]) =
     (mockAmlsRepository
       .createOrUpdate(_: CreateAmlsRequest))
       .expects(createAmlsRequest)
       .returning(toFuture(response))
-  }
 
   def mockUpdateAmls(
     utr: Utr,
     arn: Arn
-  )(response: Either[AmlsError, UkAmlsDetails]) = {
+  )(response: Either[AmlsError, UkAmlsDetails]) =
     (mockAmlsRepository
       .updateArn(_: Utr, _: Arn))
       .expects(utr, arn)
       .returning(toFuture(response))
-  }
 
-  def mockGetAmls(utr: Utr)(response: Option[UkAmlsDetails]) = {
+  def mockGetAmls(utr: Utr)(response: Option[UkAmlsDetails]) =
     (mockAmlsRepository
       .getAmlDetails(_: Utr))
       .expects(utr)
       .returning(toFuture(response))
-  }
 
-  def mockGetAmlsDetailsByArn(arn: Arn)(response: Option[UkAmlsDetails]) = {
+  def mockGetAmlsDetailsByArn(arn: Arn)(response: Option[UkAmlsDetails]) =
     (mockAmlsRepository
       .getAmlsDetailsByArn(_: Arn))
       .expects(arn)
       .returning(toFuture(response))
-  }
 
-  def mockGetAmlsDetailsByArnFuture(arn: Arn)(response: Future[Option[UkAmlsDetails]]) = {
+  def mockGetAmlsDetailsByArnFuture(arn: Arn)(response: Future[Option[UkAmlsDetails]]) =
     (mockAmlsRepository
       .getAmlsDetailsByArn(_: Arn))
       .expects(arn)
       .returning(response)
-  }
 
   def mockCreateOrUpdate(
     arn: Arn,
     ukAmnlsEntity: UkAmlsEntity
-  )(response: Either[AmlsError, Option[UkAmlsEntity]]) = {
+  )(response: Either[AmlsError, Option[UkAmlsEntity]]) =
     (mockAmlsRepository
       .createOrUpdate(_: Arn, _: UkAmlsEntity))
       .expects(arn, ukAmnlsEntity)
       .returning(toFuture(response))
-  }
 
-  def mockGetUtr(arn: Arn)(response: Option[Utr]) = {
+  def mockGetUtr(arn: Arn)(response: Option[Utr]) =
     (mockAmlsRepository
       .getUtr(_: Arn))
       .expects(arn)
       .returning(toFuture(response))
-  }
 
   def mockUpdateExpiryDate(
     arn: Arn,
     date: LocalDate
-  )(response: UpdateResult) = {
+  )(response: UpdateResult) =
     (mockAmlsRepository
       .updateExpiryDate(_: Arn, _: LocalDate))
       .expects(arn, date)
       .returning(toFuture(response))
-  }
 
-  def mockDeleteUkAmlsByArn(arn: Arn)(response: Future[Unit]) = {
+  def mockDeleteUkAmlsByArn(arn: Arn)(response: Future[Unit]) =
     (mockAmlsRepository
       .deleteByArn(_: Arn))
       .expects(arn)
       .returning(response)
-  }
 
 }

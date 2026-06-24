@@ -22,6 +22,5 @@ import uk.gov.hmrc.agentassurance.models.Arn
 
 case class VerifyEntityRequest(identifier: Arn)
 
-object VerifyEntityRequest {
+object VerifyEntityRequest:
   implicit val format: Format[VerifyEntityRequest] = Json.format[VerifyEntityRequest]
-}

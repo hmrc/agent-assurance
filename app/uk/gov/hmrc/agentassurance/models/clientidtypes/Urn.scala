@@ -24,17 +24,15 @@ case class Urn(value: String)
 extends TaxIdentifier
 with TrustTaxIdentifier
 
-object Urn {
+object Urn:
 
   private val urnPattern = "^((?i)[a-z]{2}trust[0-9]{8})$".r
 
   def isValid(urn: String): Boolean =
-    urn match {
+    urn match
       case urnPattern(_*) => true
       case _ => false
-    }
 
   implicit val urnReads: SimpleObjectReads[Urn] = new SimpleObjectReads[Urn]("value", Urn.apply)
   implicit val urnWrites: SimpleObjectWrites[Urn] = new SimpleObjectWrites[Urn](_.value)
 
-}

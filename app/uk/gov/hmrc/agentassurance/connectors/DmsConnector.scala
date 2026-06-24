@@ -42,19 +42,17 @@ class DmsConnector @Inject() (
   override val configuration: Config,
   override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
-extends BaseConnector {
+extends BaseConnector:
 
   private def dmsHeaders: (String, String) = HeaderNames.authorisation -> appConfig.internalAuthToken
 
   def sendPdf(
     body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed]
   )(implicit hc: HeaderCarrier): Future[Unit] =
-    retryFor[Unit]("DMS submission")(retryCondition) {
+    retryFor[Unit]("DMS submission")(retryCondition):
       httpClient
         .post(url"${appConfig.dmsSubmissionUrl}")
         .setHeader(dmsHeaders)
         .withBody(body)
         .executeAndExpect(ACCEPTED)
-    }
 
-}

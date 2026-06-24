@@ -29,7 +29,7 @@ import scala.concurrent.Future
 
 @Singleton
 class AgencyDetailsService @Inject() (desConnector: DesConnector)
-extends Logging {
+extends Logging:
 
   def agencyDetailsHasUkAddress(
     arn: Arn
@@ -38,4 +38,3 @@ extends Logging {
     hc: HeaderCarrier,
     request: Request[?]
   ): Future[Boolean] = desConnector.getAgentRecord(arn).map(_.agencyDetails.exists(_.hasUkAddress))
-}

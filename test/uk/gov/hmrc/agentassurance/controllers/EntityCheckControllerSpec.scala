@@ -53,7 +53,7 @@ with GuiceOneAppPerTest
 with MockAuthConnector
 with MockAppConfig
 with MockEntityCheckService
-with MockFactory {
+with MockFactory:
 
   val as: ActorSystem = ActorSystem()
   implicit val mat: Materializer = Materializer(as)
@@ -68,9 +68,9 @@ with MockFactory {
       stubBackendAuthComponents
     )
 
-  "agentVerifyEntity" should {
-    "return NO_CONTENT" when {
-      "not suspended and a POST request to /agent/verify-entity" in {
+  "agentVerifyEntity" should:
+    "return NO_CONTENT" when:
+      "not suspended and a POST request to /agent/verify-entity" in:
 
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
 
@@ -93,11 +93,9 @@ with MockFactory {
 
         status(result) mustBe NO_CONTENT
 
-      }
-    }
 
-    "return OK" when {
-      "suspended and a POST request to /agent/verify-entity" in {
+    "return OK" when:
+      "suspended and a POST request to /agent/verify-entity" in:
 
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
 
@@ -125,13 +123,10 @@ with MockFactory {
 
         status(result) mustBe OK
 
-      }
-    }
-  }
 
-  "clientVerifyEntity" should {
-    "return NO_CONTENT" when {
-      "not suspended and a POST request to /client/verify-entity" in {
+  "clientVerifyEntity" should:
+    "return NO_CONTENT" when:
+      "not suspended and a POST request to /client/verify-entity" in:
 
         when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
 
@@ -159,10 +154,9 @@ with MockFactory {
 
         status(result) mustBe NO_CONTENT
 
-      }
 
-      "return OK" when {
-        "suspended and a POST request to /client/verify-entity" in {
+      "return OK" when:
+        "suspended and a POST request to /client/verify-entity" in:
 
           when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
 
@@ -199,11 +193,9 @@ with MockFactory {
             SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))
           )
 
-        }
-      }
 
-      "return Bad request" when {
-        "invalid request" in {
+      "return Bad request" when:
+        "invalid request" in:
           when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
 
 //            (mockStubBehaviour
@@ -221,9 +213,4 @@ with MockFactory {
 
           status(result) mustBe BAD_REQUEST
           contentAsString(result) mustBe "Invalid Arn"
-        }
-      }
-    }
-  }
 
-}

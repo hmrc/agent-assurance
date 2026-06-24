@@ -37,7 +37,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @ImplementedBy(classOf[AgentServicesAccountConnectorImpl])
-trait AgentServicesAccountConnector {
+trait AgentServicesAccountConnector:
 
   def getAgentRecord(arn: Arn)(implicit hc: HeaderCarrier): Future[AgentDetailsDesResponse]
 
@@ -46,7 +46,6 @@ trait AgentServicesAccountConnector {
     hc: HeaderCarrier
   ): Future[Unit]
 
-}
 
 @Singleton
 class AgentServicesAccountConnectorImpl @Inject() (
@@ -57,7 +56,7 @@ class AgentServicesAccountConnectorImpl @Inject() (
 )(implicit ec: ExecutionContext)
 extends AgentServicesAccountConnector
 with BaseConnector
-with Logging {
+with Logging:
 
   private val baseUrl = appConfig.agentServicesAccountBaseUrl
 
@@ -74,4 +73,3 @@ with Logging {
     .withBody(Json.toJson(request))
     .executeAndExpect(200)
 
-}

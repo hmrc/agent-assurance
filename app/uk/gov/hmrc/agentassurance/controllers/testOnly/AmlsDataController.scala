@@ -41,48 +41,42 @@ class AmlsDataController @Inject() (
   override val authConnector: AuthConnector
 )(implicit ex: ExecutionContext)
 extends BackendController(cc)
-with AuthActions {
+with AuthActions:
 
   def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request => arn =>
-    request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match {
+    request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match
       case Some(JsSuccess(amlsRequest, _)) =>
-        if (amlsRequest.isUk) {
-          createUkAmlsRecord(arn, amlsRequest).map {
+        if amlsRequest.isUk then
+          createUkAmlsRecord(arn, amlsRequest).map:
             case Right(_) => Created
             case _ => InternalServerError
-          }
-        }
-        else {
-          createOverseasAmlsRecord(arn, amlsRequest.membershipNumber).map {
+        else
+          createOverseasAmlsRecord(arn, amlsRequest.membershipNumber).map:
             case Right(_) => Created
             case _ => InternalServerError
-          }
-        }
       case _ => Future.successful(BadRequest)
-    }
 
   }
 
   private def createUkAmlsRecord(
     arn: Arn,
     amlsRequest: AmlsDataRequest
-  ) = {
+  ) =
     val body =
-      if (amlsRequest.isHmrc)
+      if amlsRequest.isHmrc then
         "HM Revenue and Customs (HMRC)"
       else
         "Law Society of Scotland"
     val maybeMembershipNumber =
-      if (amlsRequest.membershipNumber.isEmpty)
+      if amlsRequest.membershipNumber.isEmpty then
         None
       else
         Some(amlsRequest.membershipNumber)
     val dateExpiredOn =
-      amlsRequest.isExpired match {
+      amlsRequest.isExpired match
         case Some(true) => Some(LocalDate.now())
         case Some(false) => Some(LocalDate.now().plusMonths(12))
         case _ => None
-      }
     val utr: String = Math.random().*(1000000000).toString.substring(2, 12)
 
     amlsRepository
@@ -99,14 +93,13 @@ with AuthActions {
       )
       .flatMap(_ => amlsRepository.updateArn(Utr(utr), arn))
 
-  }
 
   private def createOverseasAmlsRecord(
     arn: Arn,
     membershipNumber: String
-  ) = {
+  ) =
     val maybeMembershipNumber =
-      if (membershipNumber.isEmpty)
+      if membershipNumber.isEmpty then
         None
       else
         Some(membershipNumber)
@@ -121,7 +114,6 @@ with AuthActions {
         createdDate = None
       )
     )
-  }
 
   case class AmlsDataRequest(
     isUk: Boolean,
@@ -131,8 +123,6 @@ with AuthActions {
     appliedOn: Option[LocalDate] = None
   )
 
-  object AmlsDataRequest {
+  object AmlsDataRequest:
     implicit val format: Format[AmlsDataRequest] = Json.format[AmlsDataRequest]
-  }
 
-}

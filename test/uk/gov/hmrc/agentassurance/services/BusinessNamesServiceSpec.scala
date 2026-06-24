@@ -33,7 +33,7 @@ class BusinessNamesServiceSpec
 extends PlaySpec
 with MockDesConnector
 with MockAppConfig
-with ScalaFutures {
+with ScalaFutures:
 
   implicit val system: ActorSystem = ActorSystem("test-system")
   implicit val mat: Materializer = Materializer(system)
@@ -51,26 +51,23 @@ with ScalaFutures {
   val utr2 = Utr("1234567892")
   val utr3 = Utr("1234567893")
 
-  "BusinessNamesService get(utr)" must {
-    "return business name if connector returns Some" in {
+  "BusinessNamesService get(utr)" must:
+    "return business name if connector returns Some" in:
       mockGetBusinessNameRecord(utr.value)(Some("HMRC"))
 
       service.get(utr.value).map { result =>
         result mustBe Some("HMRC")
       }
-    }
 
-    "return None if connector returns None" in {
+    "return None if connector returns None" in:
       mockGetBusinessNameRecord(utr.value)(None)
 
       service.get(utr.value).map { result =>
         result mustBe None
       }
-    }
-  }
 
-  "BusinessNamesService get(Seq[utr])" must {
-    "return set of BusinessNameByUtr for all UTRs" in {
+  "BusinessNamesService get(Seq[utr])" must:
+    "return set of BusinessNameByUtr for all UTRs" in:
       val utrs = Seq(
         utr.value,
         utr1.value,
@@ -82,17 +79,12 @@ with ScalaFutures {
         utr2 -> None
       )
 
-      expectedResults.foreach {
+      expectedResults.foreach:
         case (utr, nameOpt) => mockGetBusinessNameRecord(utr.value)(nameOpt)
-      }
 
       whenReady(service.get(utrs), timeout(Span(2, Seconds))) { result =>
-        result should contain allElementsOf expectedResults.collect {
+        result should contain allElementsOf expectedResults.collect:
           case (utrStr, name) => BusinessNameByUtr(utrStr.value, name)
-        }
       }
 
-    }
-  }
 
-}

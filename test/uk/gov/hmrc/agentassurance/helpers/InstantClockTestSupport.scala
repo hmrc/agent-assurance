@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.helpers
 
 import java.time._
 
-trait InstantClockTestSupport /*extends AnyFeatureSpec with GuiceOneServerPerSuite*/ {
+trait InstantClockTestSupport /*extends AnyFeatureSpec with GuiceOneServerPerSuite*/ :
 
   lazy val localDateTime: LocalDateTime = LocalDateTime.now()
   lazy val instant: Instant = localDateTime.toInstant(ZoneOffset.UTC)
@@ -26,7 +26,6 @@ trait InstantClockTestSupport /*extends AnyFeatureSpec with GuiceOneServerPerSui
 
   implicit val clock: Clock = Clock.fixed(frozenInstant, ZoneId.of("UTC"))
 
-}
 
 object InstantClockTestSupport
 extends InstantClockTestSupport

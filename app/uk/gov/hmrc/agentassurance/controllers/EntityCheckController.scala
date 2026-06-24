@@ -48,7 +48,7 @@ class EntityCheckController @Inject() (
   appConfig: AppConfig
 )
 extends BackendController(cc)
-with AuthActions {
+with AuthActions:
 
   private val predicate = Predicate.Permission(
     resource = Resource(
@@ -71,19 +71,16 @@ with AuthActions {
   // only for clients or stride
   def clientVerifyEntity: Action[JsValue] =
     internalAuth.async(parse.json) { implicit request =>
-      request.body.validate[VerifyEntityRequest] match {
+      request.body.validate[VerifyEntityRequest] match
         case JsSuccess(value, _) =>
           entityCheckService
             .verifyAgent(value.identifier)
             .map(x => createResponse(x.agentRecord.suspensionDetails))
         case _ => Future.successful(BadRequest("Invalid Arn"))
-      }
     }
 
-  private val createResponse: Option[SuspensionDetails] => Result = {
+  private val createResponse: Option[SuspensionDetails] => Result =
     case None => NoContent
     case Some(suspensionDetails) if !suspensionDetails.suspensionStatus => NoContent
     case suspensionDetails => Ok(Json.toJson(suspensionDetails))
-  }
 
-}

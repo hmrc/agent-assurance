@@ -36,14 +36,13 @@ import scala.concurrent.Future
 
 case class CitizenDeceased(deceased: Boolean)
 
-object CitizenDeceased {
+object CitizenDeceased:
   implicit val reads: Reads[CitizenDeceased] = (JsPath \ "deceased")
     .readNullable[Boolean]
     .map(x => CitizenDeceased(x.getOrElse(false)))
-}
 
 @ImplementedBy(classOf[CitizenDetailsConnectorImpl])
-trait CitizenDetailsConnector {
+trait CitizenDetailsConnector:
 
   def getCitizenDeceasedFlag(
     saUtr: SaUtr
@@ -52,7 +51,6 @@ trait CitizenDetailsConnector {
     ec: ExecutionContext
   ): Future[Option[EntityCheckException]]
 
-}
 
 @Singleton
 class CitizenDetailsConnectorImpl @Inject() (
@@ -60,7 +58,7 @@ class CitizenDetailsConnectorImpl @Inject() (
   http: HttpClientV2
 )
 extends CitizenDetailsConnector
-with Logging {
+with Logging:
 
   private val baseUrl = appConfig.citizenDetailsBaseUrl
 
@@ -69,21 +67,17 @@ with Logging {
   )(implicit
     c: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[EntityCheckException]] = {
+  ): Future[Option[EntityCheckException]] =
     http
       .get(url"$baseUrl/citizen-details/sautr/${saUtr.value}")
       .execute[HttpResponse]
       .map { response =>
-        response.status match {
+        response.status match
           case Status.OK =>
-            Json.parse(response.body).as[CitizenDeceased] match {
+            Json.parse(response.body).as[CitizenDeceased] match
               case x: CitizenDeceased if !x.deceased => None
               case _ => Some(EntityCheckException.EntityDeceasedCheckFailed)
-            }
           case e => Some(EntityCheckException.CitizenConnectorRequestFailed(e))
-        }
       }
 
-  }
 
-}

@@ -24,26 +24,22 @@ import uk.gov.hmrc.domain.TaxIdentifier
 case class Arn(value: String)
 extends TaxIdentifier
 
-object Arn {
+object Arn:
 
   private val arnPattern = "^[A-Z]ARN[0-9]{7}$".r
 
   def isValid(arn: String): Boolean =
-    arn match {
+    arn match
       case arnPattern(_*) => ArnCheck.isValid(arn)
       case _ => false
-    }
 
   implicit val arnReads: SimpleObjectReads[Arn] = new SimpleObjectReads[Arn]("value", Arn.apply)
   implicit val arnWrites: SimpleObjectWrites[Arn] = new SimpleObjectWrites[Arn](_.value)
 
-}
 
 private object ArnCheck
-extends Modulus23Check {
+extends Modulus23Check:
 
-  def isValid(arn: String): Boolean = {
+  def isValid(arn: String): Boolean =
     val suffix: String = arn.substring(1)
     calculateCheckCharacter(suffix) == arn.charAt(0)
-  }
-}

@@ -21,37 +21,31 @@ import org.scalatest.matchers.should.Matchers
 
 class VrnSpec
 extends AnyFlatSpec
-with Matchers {
+with Matchers:
 
   val reference97 = "101747696"
   val reference9755 = "101747641"
 
-  "isValid" should "return true if the vrn matches regex" in {
+  "isValid" should "return true if the vrn matches regex" in:
     Vrn.isValid(reference97) shouldBe true
     Vrn.isValid(reference9755) shouldBe true
     Vrn.isValid("123456789") shouldBe true
     Vrn.isValid("234567890") shouldBe true
-  }
 
-  "isValid" should "return false if the vrn contains non-numbers" in {
+  "isValid" should "return false if the vrn contains non-numbers" in:
     Vrn.isValid("a" + reference97.substring(1)) shouldBe false
     Vrn.isValid("a" + reference9755.substring(1)) shouldBe false
-  }
 
-  "isValid" should "return false if the vrn contains more than 9 numbers" in {
+  "isValid" should "return false if the vrn contains more than 9 numbers" in:
     Vrn.isValid("1" + reference97) shouldBe false
     Vrn.isValid("1" + reference9755) shouldBe false
-  }
 
-  "isValid" should "return false if the vrn contains fewer than 9 numbers" in {
+  "isValid" should "return false if the vrn contains fewer than 9 numbers" in:
     Vrn.isValid(reference97.substring(1)) shouldBe false
     Vrn.isValid(reference9755.substring(1)) shouldBe false
-  }
 
-  "isValid" should "return false if the vrn contains whitespace" in {
+  "isValid" should "return false if the vrn contains whitespace" in:
     Vrn.isValid(" " + reference97) shouldBe false
     Vrn.isValid("\t" + reference97) shouldBe false
     Vrn.isValid("         ") shouldBe false
-  }
 
-}

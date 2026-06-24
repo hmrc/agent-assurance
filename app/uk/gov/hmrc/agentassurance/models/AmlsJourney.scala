@@ -30,6 +30,5 @@ case class AmlsJourney(
   newExpirationDate: Option[LocalDate] = None
 )
 
-object AmlsJourney {
+object AmlsJourney:
   implicit val format: Format[AmlsJourney] = Json.format[AmlsJourney]
-}

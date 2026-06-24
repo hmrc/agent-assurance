@@ -54,7 +54,7 @@ with GuiceOneAppPerTest
 with MockAuthConnector
 with MockAppConfig
 with MockEntityCheckService
-with MockFactory {
+with MockFactory:
 
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
   val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(using stubControllerComponents(), implicitly)
@@ -67,8 +67,8 @@ with MockFactory {
       stubBackendAuthComponents
     )
 
-  "get" should {
-    "return OK" in {
+  "get" should:
+    "return OK" in:
 
       mockAuth()(Right(enrolmentsWithNoIrSAAgent))
       val agentDetailsDesResponse = AgentDetailsDesResponse(
@@ -92,11 +92,9 @@ with MockFactory {
         )
 
       status(result) mustBe OK
-    }
-  }
 
-  "get with Arn" should {
-    "return OK" in {
+  "get with Arn" should:
+    "return OK" in:
       when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
 
 //      (mockStubBehaviour
@@ -125,7 +123,4 @@ with MockFactory {
         )
 
       status(result) mustBe OK
-    }
-  }
 
-}

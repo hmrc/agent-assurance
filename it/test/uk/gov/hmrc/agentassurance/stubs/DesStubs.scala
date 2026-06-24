@@ -31,7 +31,7 @@ import uk.gov.hmrc.domain.TaxIdentifier
 
 trait DesStubs {
 
-  def givenClientIdentifierIsInvalid(identifier: TaxIdentifier) = {
+  def givenClientIdentifierIsInvalid(identifier: TaxIdentifier): StubMapping = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlMatching(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -45,7 +45,7 @@ trait DesStubs {
   def givenClientHasRelationshipWithAgentInCESA(
     identifier: TaxIdentifier,
     agentId: SaAgentReference
-  ) = {
+  ): StubMapping = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -62,7 +62,7 @@ trait DesStubs {
   def givenClientHasRelationshipWithMultipleAgentsInCESA(
     identifier: TaxIdentifier,
     agentIds: Seq[SaAgentReference]
-  ) = {
+  ): StubMapping = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -79,7 +79,7 @@ trait DesStubs {
   def givenClientRelationshipWithAgentCeasedInCESA(
     identifier: TaxIdentifier,
     agentId: String
-  ) = {
+  ): StubMapping = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -94,7 +94,7 @@ trait DesStubs {
   def givenAllClientRelationshipsWithAgentsCeasedInCESA(
     identifier: TaxIdentifier,
     agentIds: Seq[String]
-  ) = {
+  ): StubMapping = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -108,7 +108,7 @@ trait DesStubs {
     )
   }
 
-  def givenClientIsUnknown404(identifier: TaxIdentifier) = {
+  def givenClientIsUnknown404(identifier: TaxIdentifier): StubMapping = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -119,7 +119,7 @@ trait DesStubs {
     )
   }
 
-  def givenClientHasNoActiveRelationshipWithAgentInCESA(identifier: TaxIdentifier) = {
+  def givenClientHasNoActiveRelationshipWithAgentInCESA(identifier: TaxIdentifier): StubMapping = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -131,7 +131,7 @@ trait DesStubs {
     )
   }
 
-  def givenClientHasNoRelationshipWithAnyAgentInCESA(identifier: TaxIdentifier) = {
+  def givenClientHasNoRelationshipWithAnyAgentInCESA(identifier: TaxIdentifier): StubMapping = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -143,7 +143,7 @@ trait DesStubs {
     )
   }
 
-  def givenClientIsUnknownInCESAFor(identifier: TaxIdentifier) = {
+  def givenClientIsUnknownInCESAFor(identifier: TaxIdentifier): StubMapping = {
     val identifierType = clientIdentifierType(identifier)
     stubFor(
       get(urlEqualTo(s"/registration/relationship/$identifierType/${identifier.value}"))
@@ -151,21 +151,21 @@ trait DesStubs {
     )
   }
 
-  def givenDesReturnsServerError() = {
+  def givenDesReturnsServerError(): StubMapping = {
     stubFor(
       get(urlMatching(s"/registration/.*"))
         .willReturn(aResponse().withStatus(500))
     )
   }
 
-  def givenDesReturnBadGateway() = {
+  def givenDesReturnBadGateway(): StubMapping = {
     stubFor(
       get(urlMatching(s"/registration/.*"))
         .willReturn(aResponse().withStatus(502))
     )
   }
 
-  def givenDesReturnsServiceUnavailable() = {
+  def givenDesReturnsServiceUnavailable(): StubMapping = {
     stubFor(
       get(urlMatching(s"/registration/.*"))
         .willReturn(aResponse().withStatus(503))
@@ -175,7 +175,7 @@ trait DesStubs {
   def amlsSubscriptionRecordExists(
     amlsRegNumber: String,
     status: String = "Approved"
-  ) = {
+  ): StubMapping = {
     stubFor(
       get(urlEqualTo(s"/anti-money-laundering/subscription/$amlsRegNumber/status"))
         .willReturn(
@@ -195,7 +195,7 @@ trait DesStubs {
   def amlsSubscriptionRecordFails(
     amlsRegNumber: String,
     status: Int
-  ) = {
+  ): StubMapping = {
     stubFor(
       get(urlEqualTo(s"/anti-money-laundering/subscription/$amlsRegNumber/status"))
         .willReturn(
@@ -244,7 +244,7 @@ trait DesStubs {
       )
   )
 
-  def givenAgentIsUnknown404(arn: Arn) = {
+  def givenAgentIsUnknown404(arn: Arn): StubMapping = {
     stubFor(
       get(urlEqualTo(s"/registration/personal-details/arn/${arn.value}"))
         .willReturn(
@@ -287,7 +287,7 @@ trait DesStubs {
   def personalDetailsResponseBodyWithValidData(
     optUtr: Option[Utr],
     overseas: Boolean
-  ) =
+  ): String =
     s"""
        |{
        |   "isAnOrganisation" : true,
@@ -296,10 +296,11 @@ trait DesStubs {
        |   },
        |   "isAnAgent" : true,
        |   "safeId" : "XB0000100101711",
-       |   """.stripMargin ++ optUtr
-      .map(utr => s""" "uniqueTaxReference": "${utr.value}",
-                     |""".stripMargin)
-      .getOrElse("") ++
+       |   """.stripMargin ++
+      optUtr
+        .map(utr => s""" "uniqueTaxReference": "${utr.value}",
+                       |""".stripMargin)
+        .getOrElse("") ++
       s""" "agencyDetails" : {
          |      "agencyAddress" : {
          |         "addressLine2" : "Grange Central",
@@ -344,7 +345,7 @@ trait DesStubs {
   def suspendedAgentRecord(
     optUtr: Option[Utr],
     isIndividual: Boolean
-  ) = {
+  ): String = {
 
     s"""
        |{
@@ -373,7 +374,7 @@ trait DesStubs {
   def noSuspendedDetailsAgentRecord(
     optUtr: Option[Utr],
     isIndividual: Boolean
-  ) = {
+  ): String = {
 
     s"""
        |{
@@ -395,7 +396,7 @@ trait DesStubs {
          | }""".stripMargin
   }
 
-  def noPersonalDetailsResponseBodyWithValidData(optUtr: Option[Utr]) =
+  def noPersonalDetailsResponseBodyWithValidData(optUtr: Option[Utr]): String =
     s"""
        |{
        |   "isAnOrganisation" : true,
@@ -404,10 +405,11 @@ trait DesStubs {
        |   },
        |   "isAnAgent" : true,
        |   "safeId" : "XB0000100101711",
-       |   """.stripMargin ++ optUtr
-      .map(utr => s""" "uniqueTaxReference": "${utr.value}",
-                     |""".stripMargin)
-      .getOrElse("") ++
+       |   """.stripMargin ++
+      optUtr
+        .map(utr => s""" "uniqueTaxReference": "${utr.value}",
+                       |""".stripMargin)
+        .getOrElse("") ++
       s""" "suspensionDetails": {"suspensionStatus": false},
          |   "organisation" : {
          |      "organisationName" : "CT AGENT 183",
@@ -528,7 +530,7 @@ trait DesStubs {
     else
       registrationDataForOrganisation
 
-  val registrationDataForOrganisation =
+  val registrationDataForOrganisation: String =
     s"""
        |{
        |   "contactDetails" : {},
@@ -555,7 +557,7 @@ trait DesStubs {
        |}
      """.stripMargin
 
-  val registrationDataForIndividual =
+  val registrationDataForIndividual: String =
     s"""
        |{
        |   "isAnIndividual" : true,
@@ -582,7 +584,7 @@ trait DesStubs {
        |}
      """.stripMargin
 
-  val invalidRegistrationData =
+  val invalidRegistrationData: String =
     s"""
        |{
        |   "isAnIndividual" : true,
@@ -604,7 +606,7 @@ trait DesStubs {
        |}
      """.stripMargin
 
-  val failureResponseBody =
+  val failureResponseBody: String =
     """
       |{
       |   "code" : "SOME_FAILURE",

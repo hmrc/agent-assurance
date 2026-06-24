@@ -45,7 +45,7 @@ import scala.concurrent.Future
 class AuditService @Inject() (auditConnector: AuditConnector)(implicit
   ec: ExecutionContext,
   appConfig: AppConfig
-) {
+):
 
   def auditEntityChecksPerformed(
     arn: Arn,
@@ -73,7 +73,7 @@ class AuditService @Inject() (auditConnector: AuditConnector)(implicit
     )
   )
 
-  private def audit[A <: AuditDetail: Writes](a: A)(implicit hc: HeaderCarrier): Future[AuditResult] = {
+  private def audit[A <: AuditDetail: Writes](a: A)(implicit hc: HeaderCarrier): Future[AuditResult] =
     auditConnector
       .sendExtendedEvent(
         ExtendedDataEvent(
@@ -84,8 +84,6 @@ class AuditService @Inject() (auditConnector: AuditConnector)(implicit
           tags = hc.toAuditTags()
         )
       )
-  }
 
   private val auditSource = "agent-assurance"
 
-}

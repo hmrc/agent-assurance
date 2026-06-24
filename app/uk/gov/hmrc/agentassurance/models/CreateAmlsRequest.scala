@@ -25,6 +25,5 @@ case class CreateAmlsRequest(
   amlsDetails: UkAmlsDetails
 )
 
-object CreateAmlsRequest {
+object CreateAmlsRequest:
   implicit val format: Format[CreateAmlsRequest] = Json.format[CreateAmlsRequest]
-}

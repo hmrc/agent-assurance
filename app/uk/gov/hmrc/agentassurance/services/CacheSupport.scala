@@ -26,39 +26,36 @@ import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-trait Cache[T] {
+trait Cache[T]:
   def apply(key: String)(
     body: => Future[T]
   )(implicit ec: ExecutionContext): Future[T]
-}
 
 class DoNotCache[T]
-extends Cache[T] {
+extends Cache[T]:
   def apply(key: String)(
     body: => Future[T]
   )(implicit ec: ExecutionContext): Future[T] = body
-}
 
 @Singleton
 class CacheProvider @Inject() (
   agencyDetailsCache: AgencyDetailsCacheRepository,
   agencyNameCache: AgencyNameCacheRepository,
   configuration: Configuration
-) {
+):
 
   val cacheEnabled = configuration.underlying.getBoolean("agent.cache.enabled")
   val cacheNameEnabled = configuration.underlying.getBoolean("agent.name.cache.enabled")
 
   val agentDetailsCache: Cache[AgentDetailsDesResponse] =
-    if (cacheEnabled)
+    if cacheEnabled then
       agencyDetailsCache
     else
       new DoNotCache[AgentDetailsDesResponse]
 
   val agentNameCache: Cache[Option[String]] =
-    if (cacheNameEnabled)
+    if cacheNameEnabled then
       agencyNameCache
     else
       new DoNotCache[Option[String]]
 
-}

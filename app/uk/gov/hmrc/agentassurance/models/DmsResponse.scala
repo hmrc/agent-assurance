@@ -26,6 +26,5 @@ case class DmsResponse(
   reference: String
 )
 
-object DmsResponse {
+object DmsResponse:
   implicit val format: OFormat[DmsResponse] = Json.format[DmsResponse]
-}

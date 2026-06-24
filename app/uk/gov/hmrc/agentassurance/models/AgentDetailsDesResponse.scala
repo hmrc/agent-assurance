@@ -33,26 +33,24 @@ case class AgentDetailsDesResponse(
   amlsDetails: Option[AgentRecordAmlsDetails] = None
 )
 
-object AgentDetailsDesResponse {
+object AgentDetailsDesResponse:
 
   implicit val agentRecordDetailsFormat: OFormat[AgentDetailsDesResponse] = Json.format[AgentDetailsDesResponse]
 
   def agentRecordDatabaseDetailsFormat(implicit
     crypto: Encrypter
       & Decrypter
-  ): Format[AgentDetailsDesResponse] =
-    (__ \ "uniqueTaxReference")
-      .formatNullable[String](using stringEncrypterDecrypter)
-      .bimap[Option[Utr]](
-        _.map(Utr(_)),
-        _.map(_.value)
-      )
-      .and((__ \ "agencyDetails").formatNullable[AgencyDetails](using AgencyDetails.agencyDetailsDatabaseFormat))
-      .and((__ \ "suspensionDetails").formatNullable[SuspensionDetails])
-      .and((__ \ "isAnIndividual").formatNullable[Boolean])
-      .and((__ \ "amlsDetails").formatNullable[AgentRecordAmlsDetails](using AgentRecordAmlsDetails.databaseFormat))(
-        AgentDetailsDesResponse.apply,
-        response => (response.uniqueTaxReference, response.agencyDetails, response.suspensionDetails, response.isAnIndividual, response.amlsDetails)
-      )
+  ): Format[AgentDetailsDesResponse] = (__ \ "uniqueTaxReference")
+    .formatNullable[String](using stringEncrypterDecrypter)
+    .bimap[Option[Utr]](
+      _.map(Utr(_)),
+      _.map(_.value)
+    )
+    .and((__ \ "agencyDetails").formatNullable[AgencyDetails](using AgencyDetails.agencyDetailsDatabaseFormat))
+    .and((__ \ "suspensionDetails").formatNullable[SuspensionDetails])
+    .and((__ \ "isAnIndividual").formatNullable[Boolean])
+    .and((__ \ "amlsDetails").formatNullable[AgentRecordAmlsDetails](using AgentRecordAmlsDetails.databaseFormat))(
+      AgentDetailsDesResponse.apply,
+      response => (response.uniqueTaxReference, response.agencyDetails, response.suspensionDetails, response.isAnIndividual, response.amlsDetails)
+    )
 
-}

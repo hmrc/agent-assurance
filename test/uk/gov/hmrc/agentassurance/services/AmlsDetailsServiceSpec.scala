@@ -55,7 +55,7 @@ with MockArchivedAmlsRepository
 with MockDesConnector
 with MockAgencyDetailsService
 with MockAgentServicesAccountConnector
-with MockAppConfig {
+with MockAppConfig:
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: Request[Any] = FakeRequest()
@@ -113,10 +113,10 @@ with MockAppConfig {
       featureOnAppConfig
     )
 
-  "getAmlsDetailsByArn" when {
+  "getAmlsDetailsByArn" when:
 
-    "there is no ASA AMLS record" should {
-      "return (NoAMLSDetailsUK, None) if the agency has a UK address - Scenario #1" in {
+    "there is no ASA AMLS record" should:
+      "return (NoAMLSDetailsUK, None) if the agency has a UK address - Scenario #1" in:
         mockGetAmlsDetailsByArn(testArn)(None)
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockIsUkAddress()(response = true)
@@ -124,8 +124,7 @@ with MockAppConfig {
         val result = await(service.getAmlsDetailsByArn(testArn))
 
         result mustBe (AmlsStatus.NoAmlsDetailsUK, None)
-      }
-      "return (NoAMLSDetailsNonUK, None) if the agency does not have a UK address - Scenario #2" in {
+      "return (NoAMLSDetailsNonUK, None) if the agency does not have a UK address - Scenario #2" in:
         mockGetAmlsDetailsByArn(testArn)(None)
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockIsUkAddress()(response = false)
@@ -133,19 +132,16 @@ with MockAppConfig {
         val result = await(service.getAmlsDetailsByArn(testArn))
 
         result mustBe (AmlsStatus.NoAmlsDetailsNonUK, None)
-      }
-    }
 
-    "there is a UK ASA AMLS record without HMRC as the supervisory body" should {
-      "return (ExpiredAMLSDetailsUK, UkAmlsDetails) if the record has expired - Scenario #3" in {
+    "there is a UK ASA AMLS record without HMRC as the supervisory body" should:
+      "return (ExpiredAMLSDetailsUK, UkAmlsDetails) if the record has expired - Scenario #3" in:
         mockGetAmlsDetailsByArn(testArn)(Some(testAmlsDetails))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
 
         val result = service.getAmlsDetailsByArn(testArn)
 
         await(result) mustBe (AmlsStatus.ExpiredAmlsDetailsUK, Some(testAmlsDetails))
-      }
-      "return (ValidAMLSDetailsUK, UkAmlsDetails) if the record has not expired - Scenario #4a" in {
+      "return (ValidAMLSDetailsUK, UkAmlsDetails) if the record has not expired - Scenario #4a" in:
         val testDate = LocalDate.now().plusWeeks(1)
         mockGetAmlsDetailsByArn(testArn)(Some(testAmlsDetails.copy(membershipExpiresOn = Some(testDate))))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
@@ -158,27 +154,23 @@ with MockAppConfig {
             testAmlsDetails.copy(membershipExpiresOn = Some(testDate))
           )
         )
-      }
-      "return (ValidAMLSDetailsUK, UkAmlsDetails) if there is no expiry date set - Scenario #4b" in {
+      "return (ValidAMLSDetailsUK, UkAmlsDetails) if there is no expiry date set - Scenario #4b" in:
         mockGetAmlsDetailsByArn(testArn)(Some(testAmlsDetails.copy(membershipExpiresOn = None)))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
 
         val result = service.getAmlsDetailsByArn(testArn)
 
         await(result) mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testAmlsDetails.copy(membershipExpiresOn = None)))
-      }
-    }
 
-    "there is a UK ASA AMLS record with HMRC as the supervisory body" should {
-      "return (NoAMLSDetailsUK, UkAmlsDetails) if there is no registration number - Scenario #10" in {
+    "there is a UK ASA AMLS record with HMRC as the supervisory body" should:
+      "return (NoAMLSDetailsUK, UkAmlsDetails) if there is no registration number - Scenario #10" in:
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetailsNoMembershipNumber))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
 
         val result = service.getAmlsDetailsByArn(testArn)
 
         await(result) mustBe (AmlsStatus.NoAmlsDetailsUK, None)
-      }
-      "return (ExpiredAMLSDetailsUK, UkAmlsDetails) if the record has expired - Scenario #5" in {
+      "return (ExpiredAMLSDetailsUK, UkAmlsDetails) if the record has expired - Scenario #5" in:
         val testDate = LocalDate.now().minusWeeks(2)
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = Some(testDate))))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
@@ -200,8 +192,7 @@ with MockAppConfig {
             testHmrcAmlsDetails.copy(membershipExpiresOn = Some(testDate))
           )
         )
-      }
-      "return (ValidAMLSDetailsUK, UkAmlsDetails) if the record has not expired - Scenario #6a" in {
+      "return (ValidAMLSDetailsUK, UkAmlsDetails) if the record has not expired - Scenario #6a" in:
         val testDate = LocalDate.now().plusWeeks(2)
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
@@ -219,8 +210,7 @@ with MockAppConfig {
         val result = service.getAmlsDetailsByArn(testArn)
 
         await(result) mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testHmrcAmlsDetails))
-      }
-      "return (ValidAMLSDetailsUK, UkAmlsDetails) if there is no expiry date set - Scenario #6b" in {
+      "return (ValidAMLSDetailsUK, UkAmlsDetails) if there is no expiry date set - Scenario #6b" in:
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None)))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
@@ -236,9 +226,8 @@ with MockAppConfig {
         val result = service.getAmlsDetailsByArn(testArn)
 
         await(result) mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None)))
-      }
 
-      "return (ValidAMLSDetailsUK, UkAmlsDetails) if the AMLS membership number is invalid and do not call DES" in {
+      "return (ValidAMLSDetailsUK, UkAmlsDetails) if the AMLS membership number is invalid and do not call DES" in:
         val testInvalidMemNo = Some("XXXXXXXXXXXX")
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None, membershipNumber = testInvalidMemNo)))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
@@ -246,22 +235,18 @@ with MockAppConfig {
         val result = service.getAmlsDetailsByArn(testArn)
 
         await(result) mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None, membershipNumber = testInvalidMemNo)))
-      }
-    }
 
-    "there is a non-UK ASA AMLS record" should {
-      "return (ValidAMLSNonUK, OverseasAmlsDetails) as there is no expiry date for non-Uk - Scenario #7" in {
+    "there is a non-UK ASA AMLS record" should:
+      "return (ValidAMLSNonUK, OverseasAmlsDetails) as there is no expiry date for non-Uk - Scenario #7" in:
         mockGetAmlsDetailsByArn(testArn)(None)
         mockGetOverseasAmlsDetailsByArn(testArn)(Some(testOverseasAmlsDetails))
 
         val result = service.getAmlsDetailsByArn(testArn)
 
         await(result) mustBe (AmlsStatus.ValidAmlsNonUK, Some(testOverseasAmlsDetails))
-      }
-    }
 
-    "there is a pending UK ASA AMLS record with HMRC as the supervisory body" should {
-      "return (PendingAMLSDetails, UkAmlsDetails) if the DES record is also 'Pending' - Scenario #8" in {
+    "there is a pending UK ASA AMLS record with HMRC as the supervisory body" should:
+      "return (PendingAMLSDetails, UkAmlsDetails) if the DES record is also 'Pending' - Scenario #8" in:
         val testDate = LocalDate.now().plusWeeks(2)
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetailsPending))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
@@ -278,8 +263,7 @@ with MockAppConfig {
         val result = await(service.getAmlsDetailsByArn(testArn))
 
         result mustBe (AmlsStatus.PendingAmlsDetails, Some(testHmrcAmlsDetailsPending))
-      }
-      "return (PendingAMLSDetailsRejected, UkAmlsDetails) if the DES record is 'Rejected' - Scenario #9" in {
+      "return (PendingAMLSDetailsRejected, UkAmlsDetails) if the DES record is 'Rejected' - Scenario #9" in:
         val testDate = LocalDate.now().plusWeeks(2)
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetailsPending))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
@@ -296,11 +280,9 @@ with MockAppConfig {
         val result = await(service.getAmlsDetailsByArn(testArn))
 
         result mustBe (AmlsStatus.PendingAmlsDetailsRejected, Some(testHmrcAmlsDetailsPending))
-      }
-    }
 
-    "there is a non-pending UK ASA AMLS record with HMRC as the supervisory body" should {
-      "return (ExpiredAMLSDetailsUK, UkAmlsDetails) if the record has expired" in {
+    "there is a non-pending UK ASA AMLS record with HMRC as the supervisory body" should:
+      "return (ExpiredAMLSDetailsUK, UkAmlsDetails) if the record has expired" in:
         val testDate = Some(LocalDate.now().minusWeeks(2))
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = testDate)))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
@@ -317,8 +299,7 @@ with MockAppConfig {
         val result = await(service.getAmlsDetailsByArn(testArn))
 
         result mustBe (AmlsStatus.ExpiredAmlsDetailsUK, Some(testHmrcAmlsDetails.copy(membershipExpiresOn = testDate)))
-      }
-      "return (ValidAMLSDetailsUK, UkAmlsDetails) if the record has not expired" in {
+      "return (ValidAMLSDetailsUK, UkAmlsDetails) if the record has not expired" in:
         val testDate = LocalDate.now().plusWeeks(2)
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
@@ -336,8 +317,7 @@ with MockAppConfig {
         val result = await(service.getAmlsDetailsByArn(testArn))
 
         result mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testHmrcAmlsDetails))
-      }
-      "return (ValidAMLSDetailsUK, UkAmlsDetails) if there is no expiry date set" in {
+      "return (ValidAMLSDetailsUK, UkAmlsDetails) if there is no expiry date set" in:
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None)))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
@@ -353,31 +333,26 @@ with MockAppConfig {
         val result = await(service.getAmlsDetailsByArn(testArn))
 
         result mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testHmrcAmlsDetails.copy(membershipExpiresOn = None)))
-      }
-    }
 
-    "unexpected failures occur" should {
-      "return the exception if the ARN has both UK and non-UK AMLS data" in {
+    "unexpected failures occur" should:
+      "return the exception if the ARN has both UK and non-UK AMLS data" in:
         mockGetAmlsDetailsByArn(testArn)(Some(testAmlsDetails))
         mockGetOverseasAmlsDetailsByArn(testArn)(Some(testOverseasAmlsDetails))
 
         intercept[Exception](
           await(service.getAmlsDetailsByArn(testArn))
         ).getMessage mustBe "[AmlsDetailsService][getAmlsDetailsByArn] ARN has both Overseas and UK AMLS details"
-      }
-      "return the exception if the call to get the ASA UK amls record fails" in {
+      "return the exception if the call to get the ASA UK amls record fails" in:
         mockGetAmlsDetailsByArnFuture(testArn)(Future.failed(new Exception("failed to return a record")))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
 
         intercept[Exception](await(service.getAmlsDetailsByArn(testArn))).getMessage mustBe "failed to return a record"
-      }
-      "return the exception if the call to get the ASA overseas amls record fails" in {
+      "return the exception if the call to get the ASA overseas amls record fails" in:
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
         mockGetOverseasAmlsDetailsByArnFuture(testArn)(Future.failed(new Exception("failed to return a record")))
 
         intercept[Exception](await(service.getAmlsDetailsByArn(testArn))).getMessage mustBe "failed to return a record"
-      }
-      "return the exception if the call to get the subscription fails" in {
+      "return the exception if the call to get the subscription fails" in:
         mockGetAmlsDetailsByArn(testArn)(Some(testHmrcAmlsDetails))
         mockGetOverseasAmlsDetailsByArn(testArn)(None)
         mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
@@ -385,15 +360,12 @@ with MockAppConfig {
         )
 
         intercept[Exception](await(service.getAmlsDetailsByArn(testArn))).getMessage mustBe "failed to return a record"
-      }
-    }
 
-  }
 
-  "findCorrectExpiryDate" when {
+  "findCorrectExpiryDate" when:
     val defaultDate = Some(LocalDate.now())
-    "both expiry dates are populated" should {
-      "return the DES expiry date if it is after the ASA expiry date" in {
+    "both expiry dates are populated" should:
+      "return the DES expiry date if it is after the ASA expiry date" in:
         val des = defaultDate.map(_.plusWeeks(1))
         val asa = defaultDate
         mockUpdateExpiryDate(testArn, des.get)(UpdateResult.acknowledged(1, null, null))
@@ -405,8 +377,7 @@ with MockAppConfig {
         )
 
         result mustBe des
-      }
-      "return the ASA expiry date if it is after the DES expiry date" in {
+      "return the ASA expiry date if it is after the DES expiry date" in:
         val des = defaultDate
         val asa = defaultDate.map(_.plusWeeks(1))
         val result = service.findCorrectExpiryDate(
@@ -416,8 +387,7 @@ with MockAppConfig {
         )
 
         result mustBe asa
-      }
-      "return the ASA expiry date if it is equal to the DES expiry date" in {
+      "return the ASA expiry date if it is equal to the DES expiry date" in:
         val des = defaultDate
         val asa = defaultDate
         val result = service.findCorrectExpiryDate(
@@ -427,11 +397,9 @@ with MockAppConfig {
         )
 
         result mustBe asa
-      }
-    }
 
-    "the DES expiry date is not populated and the ASA expiry date is populated" should {
-      "return the ASA expiry date" in {
+    "the DES expiry date is not populated and the ASA expiry date is populated" should:
+      "return the ASA expiry date" in:
         val des = None
         val asa = defaultDate
         val result = service.findCorrectExpiryDate(
@@ -441,11 +409,9 @@ with MockAppConfig {
         )
 
         result mustBe asa
-      }
-    }
 
-    "the DES expiry date is populated and the ASA expiry date is not populated" should {
-      "return the DES expiry date" in {
+    "the DES expiry date is populated and the ASA expiry date is not populated" should:
+      "return the DES expiry date" in:
         val des = defaultDate
         val asa = None
         mockUpdateExpiryDate(testArn, des.get)(UpdateResult.acknowledged(1, null, null))
@@ -457,22 +423,17 @@ with MockAppConfig {
         )
 
         result mustBe des
-      }
-    }
 
-    "neither expiry dates are provided" should {
-      "return None" in {
+    "neither expiry dates are provided" should:
+      "return None" in:
         service.findCorrectExpiryDate(
           testArn,
           None,
           None
         ) mustBe None
-      }
-    }
-  }
 
-  "getAmlsDetailsByArn with ASA feature enabled" should {
-    "map non-GB ASA AMLS details to overseas status" in {
+  "getAmlsDetailsByArn with ASA feature enabled" should:
+    "map non-GB ASA AMLS details to overseas status" in:
       mockAsaGetAgentRecord(testArn)(
         testAgentDetailsDesOverseas.copy(
           amlsDetails = Some(AgentRecordAmlsDetails(
@@ -492,9 +453,8 @@ with MockAppConfig {
           membershipNumber = Some("XAML00000123456")
         ))
       )
-    }
 
-    "use the ASA country to derive no-details status when no AMLS exists anywhere" in {
+    "use the ASA country to derive no-details status when no AMLS exists anywhere" in:
       mockAsaGetAgentRecord(testArn)(testAgentDetailsDesAddressUtrResponse.copy(amlsDetails = None))
       mockGetAmlsDetailsByArn(testArn)(None)
       mockGetOverseasAmlsDetailsByArn(testArn)(None)
@@ -502,9 +462,8 @@ with MockAppConfig {
       val result = await(featureOnService.getAmlsDetailsByArn(testArn))
 
       result mustBe (AmlsStatus.NoAmlsDetailsUK, None)
-    }
 
-    "fall back to legacy details when ASA AMLS exists but country is missing" in {
+    "fall back to legacy details when ASA AMLS exists but country is missing" in:
       mockAsaGetAgentRecord(testArn)(
         testAgentDetailsDesResponse.copy(
           agencyDetails = None,
@@ -521,37 +480,26 @@ with MockAppConfig {
       val result = await(featureOnService.getAmlsDetailsByArn(testArn))
 
       result mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testAmlsDetails))
-    }
-  }
 
-  "hasRenewalDateExpired" when {
-    "not provided with a date" should {
-      "return false" in {
+  "hasRenewalDateExpired" when:
+    "not provided with a date" should:
+      "return false" in:
         service.hasRenewalDateExpired(None) mustBe false
-      }
-    }
 
-    "provided with a date that is in the future" should {
-      "return false" in {
+    "provided with a date that is in the future" should:
+      "return false" in:
         service.hasRenewalDateExpired(Some(LocalDate.now().plusWeeks(1))) mustBe false
-      }
-    }
 
-    "provided with a date that is in the past" should {
-      "return true" in {
+    "provided with a date that is in the past" should:
+      "return true" in:
         service.hasRenewalDateExpired(Some(LocalDate.now().minusWeeks(1))) mustBe true
-      }
-    }
 
-    "provided with today's date" should {
-      "return true" in {
+    "provided with today's date" should:
+      "return true" in:
         service.hasRenewalDateExpired(Some(LocalDate.now())) mustBe true
-      }
-    }
-  }
 
-  "storeAmlsRequest" should {
-    "return Right(testAmlsDetails) when storing a UK AMLS record and there was no existing record" in {
+  "storeAmlsRequest" should:
+    "return Right(testAmlsDetails) when storing a UK AMLS record and there was no existing record" in:
       mockGetUtr(testArn)(None)
       mockGetAgentRecord(testArn)(testAgentDetailsDesResponse)
       mockCreateOrUpdate(testArn, testUKAmlsEntity)(Right(None))
@@ -559,9 +507,8 @@ with MockAppConfig {
       val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
 
       result mustBe Right(testAmlsDetails)
-    }
 
-    "return Right(testAmlsDetails) when storing a UK AMLS record and there was no existing record and no utr" in {
+    "return Right(testAmlsDetails) when storing a UK AMLS record and there was no existing record and no utr" in:
       mockGetUtr(testArn)(None)
       mockGetAgentRecord(testArn)(testAgentDetailsDesResponseNoUtr)
       mockCreateOrUpdate(testArn, testUKAmlsEntity.copy(utr = None))(Right(None))
@@ -569,9 +516,8 @@ with MockAppConfig {
       val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
 
       result mustBe Right(testAmlsDetails)
-    }
 
-    "return Right(testAmlsDetails) when UK AMLS and there is an existing AMLS record" in {
+    "return Right(testAmlsDetails) when UK AMLS and there is an existing AMLS record" in:
       mockGetUtr(testArn)(Some(testUtr))
       mockCreateOrUpdate(testArn, testUKAmlsEntity)(Right(Some(testUKAmlsEntity)))
       mockCreate(ArchivedAmlsEntity(testArn, testUKAmlsEntity))(Right(()))
@@ -579,46 +525,40 @@ with MockAppConfig {
       val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
 
       result mustBe Right(testAmlsDetails)
-    }
 
-    "return Left(UniqueKeyViolationError) when the UK AMLS write detects a conflict" in {
+    "return Left(UniqueKeyViolationError) when the UK AMLS write detects a conflict" in:
       mockGetUtr(testArn)(Some(testUtr))
       mockCreateOrUpdate(testArn, testUKAmlsEntity)(Left(UniqueKeyViolationError))
 
       val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
 
       result mustBe Left(UniqueKeyViolationError)
-    }
 
-    "return Right(testOverseasAmlsDetails) when Overseas AMLS and there is no existing AMLS record" in {
+    "return Right(testOverseasAmlsDetails) when Overseas AMLS and there is no existing AMLS record" in:
       mockCreateOrUpdate(testOverseasAmlsEntity)(None)
 
       val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
 
       result mustBe Right(testOverseasAmlsDetails)
-    }
 
-    "return Right(testOverseasAmlsDetails) when Overseas AMLS and there is an existing AMLS record" in {
+    "return Right(testOverseasAmlsDetails) when Overseas AMLS and there is an existing AMLS record" in:
       mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
       mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Right(()))
 
       val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
 
       result mustBe Right(testOverseasAmlsDetails)
-    }
 
-    "return Left(AmlsUnexpectedMongoError) when there was a problem with storing new AMLS record" in {
+    "return Left(AmlsUnexpectedMongoError) when there was a problem with storing new AMLS record" in:
       mockCreateOrUpdate(testOverseasAmlsEntity)(Some(testOverseasAmlsEntity))
       mockCreate(ArchivedAmlsEntity(testArn, testOverseasAmlsEntity))(Left(AmlsUnexpectedMongoError))
 
       val result = await(service.storeAmlsRequest(testArn, testOverseasAmlsRequest))
 
       result mustBe Left(AmlsUnexpectedMongoError)
-    }
-  }
 
-  "storeAmlsRequest with ASA feature enabled" should {
-    "update ASA and delete legacy Mongo records on success" in {
+  "storeAmlsRequest with ASA feature enabled" should:
+    "update ASA and delete legacy Mongo records on success" in:
       mockAsaUpdateAmlsDetails(
         AgentRecordUpdateRequest(
           amlsDetails = Some(AgentRecordAmlsDetails(
@@ -635,9 +575,8 @@ with MockAppConfig {
       val result = await(featureOnService.storeAmlsRequest(testArn, testUKAmlsRequest))
 
       result mustBe Right(testAmlsDetails)
-    }
 
-    "forward evidenceObjectReference to ASA when provided" in {
+    "forward evidenceObjectReference to ASA when provided" in:
       val requestWithEvidence = testUKAmlsRequest.copy(evidenceObjectReference = Some("evidence-ref-123"))
 
       mockAsaUpdateAmlsDetails(
@@ -656,9 +595,8 @@ with MockAppConfig {
       val result = await(featureOnService.storeAmlsRequest(testArn, requestWithEvidence))
 
       result mustBe Right(testAmlsDetails)
-    }
 
-    "return success when ASA update succeeds but legacy cleanup fails" in {
+    "return success when ASA update succeeds but legacy cleanup fails" in:
       mockAsaUpdateAmlsDetails(
         AgentRecordUpdateRequest(
           amlsDetails = Some(AgentRecordAmlsDetails(
@@ -675,7 +613,4 @@ with MockAppConfig {
       val result = await(featureOnService.storeAmlsRequest(testArn, testUKAmlsRequest))
 
       result mustBe Right(testAmlsDetails)
-    }
-  }
 
-}

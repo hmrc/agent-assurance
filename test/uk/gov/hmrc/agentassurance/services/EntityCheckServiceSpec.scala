@@ -45,7 +45,7 @@ with InstantClockTestSupport
 with MockAppConfig
 with MockEmailService
 with MockPropertiesRepository
-with MockAuditService {
+with MockAuditService:
 
   implicit val ac: AppConfig = mockAppConfig
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -66,8 +66,8 @@ with MockAuditService {
       clock
     )
 
-  "verifyAgent" should {
-    "return Some(SuspensionDetails) when the agent is suspended" in {
+  "verifyAgent" should:
+    "return Some(SuspensionDetails) when the agent is suspended" in:
 
       val agentDetailsDesResponse = AgentDetailsDesResponse(
         uniqueTaxReference = None,
@@ -86,9 +86,8 @@ with MockAuditService {
         agentDetailsDesResponse,
         Seq.empty[EntityCheckException]
       )
-    }
 
-    "return None when the agent is not suspended" in {
+    "return None when the agent is not suspended" in:
 
       val agentDetailsDesResponse = AgentDetailsDesResponse(
         uniqueTaxReference = None,
@@ -103,9 +102,8 @@ with MockAuditService {
       val result = await(service.verifyAgent(testArn))
 
       result mustBe EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException])
-    }
 
-    "return Some(SuspensionDetails) and do entityChecks and do not sent email" in {
+    "return Some(SuspensionDetails) and do entityChecks and do not sent email" in:
 
       val utr = Utr("1234567")
       val agentDetailsDesResponse = AgentDetailsDesResponse(
@@ -129,9 +127,8 @@ with MockAuditService {
         agentDetailsDesResponse,
         Seq.empty[EntityCheckException]
       )
-    }
 
-    "return Some(SuspensionDetails) and do entityChecks and sent email with deceased failed" in {
+    "return Some(SuspensionDetails) and do entityChecks and sent email with deceased failed" in:
 
       val utr = Utr("1234567")
       val agentDetailsDesResponse = AgentDetailsDesResponse(
@@ -165,9 +162,8 @@ with MockAuditService {
         agentDetailsDesResponse,
         List(EntityCheckException.EntityDeceasedCheckFailed)
       )
-    }
 
-    "return Some(SuspensionDetails) and do entityChecks and sent email with refusal to do list" in {
+    "return Some(SuspensionDetails) and do entityChecks and sent email with refusal to do list" in:
 
       val utr = Utr("1234567")
       val agentDetailsDesResponse = AgentDetailsDesResponse(
@@ -200,8 +196,5 @@ with MockAuditService {
         agentDetailsDesResponse,
         List(EntityCheckException.AgentIsOnRefuseToDealList)
       )
-    }
 
-  }
 
-}

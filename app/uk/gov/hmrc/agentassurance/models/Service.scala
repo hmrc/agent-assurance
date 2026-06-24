@@ -36,19 +36,17 @@ sealed abstract class Service(
   val enrolmentKey: String,
   val supportedSuppliedClientIdType: ClientIdType[? <: TaxIdentifier],
   val supportedClientIdType: ClientIdType[? <: TaxIdentifier]
-) {
+):
 
   override def toString: String = this.id
 
   override def equals(that: Any): Boolean =
-    that match {
+    that match
       case that: Service => this.id.equals(that.id)
       case _ => false
-    }
 
-}
 
-object Service {
+object Service:
 
   val HMRCMTDIT = "HMRC-MTD-IT"
   val HMRCPIR = "PERSONAL-INCOME-RECORD"
@@ -186,16 +184,14 @@ object Service {
   val writes = new SimpleObjectWrites[Service](_.id)
   implicit val format: Format[Service] = Format(reads, writes)
 
-}
 
 sealed abstract class ClientIdType[+T <: TaxIdentifier](
   val clazz: Class[?],
   val id: String,
   val enrolmentId: String,
   val createUnderlying: String => T
-) {
+):
   def isValid(value: String): Boolean
-}
 
 case object NinoType
 extends ClientIdType(
@@ -203,9 +199,8 @@ extends ClientIdType(
   "ni",
   "NINO",
   Nino.apply
-) {
+):
   override def isValid(value: String): Boolean = Nino.isValid(value)
-}
 
 case object MtdItIdType
 extends ClientIdType(
@@ -213,9 +208,8 @@ extends ClientIdType(
   "MTDITID",
   "MTDITID",
   MtdItId.apply
-) {
+):
   override def isValid(value: String): Boolean = MtdItId.isValid(value)
-}
 
 case object VrnType
 extends ClientIdType(
@@ -223,9 +217,8 @@ extends ClientIdType(
   "vrn",
   "VRN",
   Vrn.apply
-) {
+):
   override def isValid(value: String): Boolean = Vrn.isValid(value)
-}
 
 case object UtrType
 extends ClientIdType(
@@ -233,9 +226,8 @@ extends ClientIdType(
   "utr",
   "SAUTR",
   Utr.apply
-) {
+):
   override def isValid(value: String): Boolean = Utr.isValid(value)
-}
 
 case object UrnType
 extends ClientIdType(
@@ -243,9 +235,8 @@ extends ClientIdType(
   "urn",
   "URN",
   Urn.apply
-) {
+):
   override def isValid(value: String): Boolean = Urn.isValid(value)
-}
 
 case object CgtRefType
 extends ClientIdType(
@@ -253,9 +244,8 @@ extends ClientIdType(
   "CGTPDRef",
   "CGTPDRef",
   CgtRef.apply
-) {
+):
   override def isValid(value: String): Boolean = CgtRef.isValid(value)
-}
 
 case object PptRefType
 extends ClientIdType(
@@ -263,9 +253,8 @@ extends ClientIdType(
   "EtmpRegistrationNumber",
   "EtmpRegistrationNumber",
   PptRef.apply
-) {
+):
   override def isValid(value: String): Boolean = PptRef.isValid(value)
-}
 
 case object CbcIdType
 extends ClientIdType(
@@ -273,9 +262,8 @@ extends ClientIdType(
   "cbcId",
   "cbcId",
   CbcId.apply
-) {
+):
   override def isValid(value: String): Boolean = CbcId.isValid(value)
-}
 
 case object PlrIdType
 extends ClientIdType(
@@ -283,6 +271,5 @@ extends ClientIdType(
   "PLRID",
   "PLRID",
   PlrId.apply
-) {
+):
   override def isValid(value: String): Boolean = PlrId.isValid(value)
-}

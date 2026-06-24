@@ -33,15 +33,13 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
-abstract class InternalAuthTokenInitialiser {
+abstract class InternalAuthTokenInitialiser:
   val initialised: Future[Done]
-}
 
 @Singleton
 class NoOpInternalAuthTokenInitialiser @Inject()
-extends InternalAuthTokenInitialiser {
+extends InternalAuthTokenInitialiser:
   override val initialised: Future[Done] = Future.successful(Done)
-}
 
 @Singleton
 class InternalAuthTokenInitialiserImpl @Inject() (
@@ -49,26 +47,24 @@ class InternalAuthTokenInitialiserImpl @Inject() (
   httpClient: HttpClientV2
 )(implicit ec: ExecutionContext)
 extends InternalAuthTokenInitialiser
-with Logging {
+with Logging:
 
   override val initialised: Future[Done] =
-    for {
+    for
       _ <- ensureAuthToken()
-    } yield Done
+    yield Done
 
   Await.result(initialised, 30.seconds)
 
   private def ensureAuthToken(): Future[Done] = authTokenIsValid.flatMap { isValid =>
-    if (isValid) {
+    if isValid then
       logger.info("Auth token is already valid")
       Future.successful(Done)
-    }
-    else {
+    else
       createClientAuthToken()
-    }
   }
 
-  private def createClientAuthToken(): Future[Done] = {
+  private def createClientAuthToken(): Future[Done] =
     logger.info("Initialising auth token")
     httpClient
       .post(url"${appConfig.internalAuthBaseUrl}/test-only/token")(using HeaderCarrier())
@@ -94,24 +90,19 @@ with Logging {
       )
       .execute
       .flatMap { response =>
-        if (response.status == CREATED) {
+        if response.status == CREATED then
           logger.info("Auth token initialised")
           Future.successful(Done)
-        }
-        else {
+        else
           Future.failed(new RuntimeException("Unable to initialise internal-auth token"))
-        }
       }
 
-  }
 
-  private def authTokenIsValid: Future[Boolean] = {
+  private def authTokenIsValid: Future[Boolean] =
     logger.info("Checking auth token")
     httpClient
       .get(url"${appConfig.internalAuthBaseUrl}/test-only/token")(using HeaderCarrier())
       .setHeader("Authorization" -> appConfig.internalAuthToken)
       .execute
       .map(_.status == 200)
-  }
 
-}

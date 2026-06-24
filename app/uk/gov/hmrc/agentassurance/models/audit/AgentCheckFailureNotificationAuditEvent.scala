@@ -27,19 +27,16 @@ case class EmailData(
   dateChecked: LocalDateTime
 )
 
-object EmailData {
+object EmailData:
   implicit val writes: OWrites[EmailData] = Json.writes
-}
 case class AgentCheckFailureNotificationAuditEvent(
   agentReferenceNumber: Arn,
   utr: String,
   email: String,
   emailData: EmailData
 )
-extends AuditDetail {
+extends AuditDetail:
   val auditType = "AgentCheckFailureNotificationSent"
-}
 
-object AgentCheckFailureNotificationAuditEvent {
+object AgentCheckFailureNotificationAuditEvent:
   implicit val writes: OWrites[AgentCheckFailureNotificationAuditEvent] = Json.writes
-}

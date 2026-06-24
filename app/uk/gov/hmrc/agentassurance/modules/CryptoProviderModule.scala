@@ -32,11 +32,11 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 class CryptoProviderModule
-extends Module {
+extends Module:
 
   def aesCryptoInstance(configuration: Configuration): Encrypter
     & Decrypter =
-    if (configuration.underlying.getBoolean("fieldLevelEncryption.enable"))
+    if configuration.underlying.getBoolean("fieldLevelEncryption.enable") then
       SymmetricCryptoFactory.aesCryptoFromConfig("fieldLevelEncryption", configuration.underlying)
     else
       NoCrypto
@@ -49,23 +49,20 @@ extends Module {
       & Decrypter].qualifiedWith("aes").toInstance(aesCryptoInstance(configuration))
   )
 
-}
 
 /** Encrypter/decrypter that does nothing (i.e. leaves content in plaintext). Only to be used for debugging.
   */
 trait NoCrypto
 extends Encrypter
-with Decrypter {
+with Decrypter:
 
   def encrypt(plain: PlainContent): Crypted =
-    plain match {
+    plain match
       case PlainText(text) => Crypted(text)
       case PlainBytes(bytes) => Crypted(new String(Base64.getEncoder.encode(bytes), StandardCharsets.UTF_8))
-    }
   def decrypt(notEncrypted: Crypted): PlainText = PlainText(notEncrypted.value)
   def decryptAsBytes(nullEncrypted: Crypted): PlainBytes = PlainBytes(Base64.getDecoder.decode(nullEncrypted.value))
 
-}
 
 object NoCrypto
 extends NoCrypto

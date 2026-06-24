@@ -27,11 +27,9 @@ case class AgentCheckAuditEvent(
   utr: Option[Utr],
   agentCheckOutcomes: Seq[AgentCheckOutcome]
 )
-extends AuditDetail {
+extends AuditDetail:
   val auditType = "AgentCheck"
-}
 
-object AgentCheckAuditEvent {
+object AgentCheckAuditEvent:
   implicit val writes: OWrites[AgentCheckAuditEvent] = Json.writes
 
-}

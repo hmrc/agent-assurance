@@ -27,11 +27,10 @@ extends MockFactory { this: TestSuite =>
 
   val mockPropertiesRepository = mock[PropertiesRepository]
 
-  def mockPropertyExists(property: Property)(response: Boolean) = {
+  def mockPropertyExists(property: Property)(response: Boolean) =
     (mockPropertiesRepository
       .propertyExists(_: Property))
       .expects(property)
       .returning(toFuture(response))
-  }
 
 }

@@ -26,14 +26,12 @@ case class AgentDetailsResponse(
   optUtr: Option[Utr]
 )
 
-object AgentDetailsResponse {
+object AgentDetailsResponse:
   implicit val agentDetailsResponseWrites: Writes[AgentDetailsResponse] =
-    new Writes[AgentDetailsResponse] {
+    new Writes[AgentDetailsResponse]:
       override def writes(agentDetailsResponse: AgentDetailsResponse): JsValue =
-        if (agentDetailsResponse.optUtr.isDefined)
+        if agentDetailsResponse.optUtr.isDefined then
           Json.obj("agencyDetails" -> agentDetailsResponse.agencyDetails, "utr" -> agentDetailsResponse.optUtr)
         else
           Json.obj("agencyDetails" -> agentDetailsResponse.agencyDetails)
-    }
 
-}

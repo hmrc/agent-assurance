@@ -56,7 +56,7 @@ case class Agent(
   agentCeasedDate: Option[String]
 )
 
-object ClientRelationship {
+object ClientRelationship:
 
   implicit val agentReads: Reads[Agent] = Json.reads[Agent]
 
@@ -64,16 +64,14 @@ object ClientRelationship {
     .readNullable[Seq[Agent]]
     .map(optionalAgents => ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
 
-}
 
 case class RegistrationRelationshipResponse(processingDate: String)
 
-object RegistrationRelationshipResponse {
+object RegistrationRelationshipResponse:
   implicit val reads: Reads[RegistrationRelationshipResponse] = Json.reads[RegistrationRelationshipResponse]
-}
 
 @ImplementedBy(classOf[DesConnectorImpl])
-trait DesConnector {
+trait DesConnector:
 
   def getActiveCesaAgentRelationships(
     clientIdentifier: TaxIdentifier
@@ -91,7 +89,6 @@ trait DesConnector {
 
   def getBusinessName(utr: String)(implicit hc: HeaderCarrier): Future[Option[String]]
 
-}
 
 @Singleton
 class DesConnectorImpl @Inject() (
@@ -105,7 +102,7 @@ class DesConnectorImpl @Inject() (
 )
 extends DesConnector
 with BaseConnector
-with Logging {
+with Logging:
 
   private val baseUrl = appConfig.desBaseUrl
   private val authorizationToken = appConfig.desAuthToken
@@ -116,17 +113,15 @@ with Logging {
 
   def getActiveCesaAgentRelationships(
     clientIdentifier: TaxIdentifier
-  )(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
+  )(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] =
     val encodedClientId = UriEncoding.encodePathSegment(clientIdentifier.value, "UTF-8")
-    val encodedClientType: String = {
+    val encodedClientType: String =
       val clientType =
-        clientIdentifier match {
+        clientIdentifier match
           case nino @ Nino(_) => nino.name
           case _ @Utr(_) => "utr"
           case e => throw new RuntimeException(s"Unacceptable taxIdentifier: $e")
-        }
       UriEncoding.encodePathSegment(clientType, "UTF-8")
-    }
 
     val url = new URI(s"$baseUrl/registration/relationship/$encodedClientType/$encodedClientId").toURL
 
@@ -136,21 +131,18 @@ with Logging {
           .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
           .flatMap(_.agentId)
       )
-      .recoverWith {
+      .recoverWith:
         case e: UpstreamErrorResponse if e.statusCode == 404 =>
           logger.warn(s" NOT_FOUND GET legacy relationship response: 404 ")
           Future.successful(Seq.empty[SaAgentReference])
-      }
-  }
 
   // API #1028 Get Subscription Status
   def getAmlsSubscriptionStatus(
     amlsRegistrationNumber: String
-  )(implicit hc: HeaderCarrier): Future[AmlsSubscriptionRecord] = {
+  )(implicit hc: HeaderCarrier): Future[AmlsSubscriptionRecord] =
     val encodedRegNumber = UriEncoding.encodePathSegment(amlsRegistrationNumber, UTF_8.name)
     val url = new URI(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status").toURL
     getWithDesHeadersWithRetry[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
-  }
 
   // API #1170 (API#4) Get Agent Record
   override def getAgentRecord(
@@ -158,29 +150,24 @@ with Logging {
   )(implicit
     request: Request[?],
     hc: HeaderCarrier
-  ): Future[AgentDetailsDesResponse] = {
+  ): Future[AgentDetailsDesResponse] =
     val url = new URI(s"$baseUrl/registration/personal-details/arn/${arn.value}").toURL
-    agentCacheProvider.agentDetailsCache(arn.value) {
+    agentCacheProvider.agentDetailsCache(arn.value):
       getWithDesHeadersWithRetry[AgentDetailsDesResponse]("GetAgentRecordCached", url)
-    }
-  }
 
   // API#1163 Registration
-  override def getBusinessName(utr: String)(implicit hc: HeaderCarrier): Future[Option[String]] = {
+  override def getBusinessName(utr: String)(implicit hc: HeaderCarrier): Future[Option[String]] =
     val url = new URI(s"$baseUrl/registration/individual/utr/${UriEncoding.encodePathSegment(utr, "UTF-8")}").toURL
-    agentCacheProvider.agentNameCache(utr) {
+    agentCacheProvider.agentNameCache(utr):
       postWithDesHeaders[DesRegistrationRequest, DesAgentNameResponse](
         url = url,
         request = DesRegistrationRequest(isAnAgent = false)
       )
         .map(_.flatMap(_.agentName))
-        .recoverWith {
+        .recoverWith:
           case e: UpstreamErrorResponse if e.statusCode == 503 =>
             logger.warn("[DesConnector] getBusinessName returned a 503")
             Future.successful(Some("Error retrieving name"))
-        }
-    }
-  }
 
   private def postWithDesHeaders[
     B,
@@ -192,7 +179,7 @@ with Logging {
     hc: HeaderCarrier,
     ec: ExecutionContext,
     y: Writes[B]
-  ): Future[Option[A]] = {
+  ): Future[Option[A]] =
 
     val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
 
@@ -207,7 +194,6 @@ with Logging {
       .execute[Option[A]]
     response
 
-  }
   private def getWithDesHeadersWithRetry[A](
     apiName: String,
     url: URL
@@ -215,11 +201,11 @@ with Logging {
     hc: HeaderCarrier,
     ec: ExecutionContext,
     x: Reads[A]
-  ): Future[A] = {
+  ): Future[A] =
 
     val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
 
-    retryFor[A](s"$apiName connector get $url")(retryCondition) {
+    retryFor[A](s"$apiName connector get $url")(retryCondition):
       val response = httpV2
         .get(url)
         .setHeader(desHeaders(
@@ -229,8 +215,6 @@ with Logging {
         )*)
         .executeAndDeserialise[A]
       response
-    }
-  }
 
   /*
    * If the service being called is external (e.g. DES/IF in QA or Prod):
@@ -245,10 +229,10 @@ with Logging {
     isInternalHost: Boolean
   )(
     implicit hc: HeaderCarrier
-  ): Seq[(String, String)] = {
+  ): Seq[(String, String)] =
 
     val additionalHeaders =
-      if (isInternalHost)
+      if isInternalHost then
         Seq.empty
       else
         Seq(
@@ -257,6 +241,4 @@ with Logging {
         ) ++ hc.sessionId.fold(Seq.empty[(String, String)])(x => Seq(HeaderNames.xSessionId -> x.value))
     val commonHeaders = Seq(Environment -> env, CorrelationId -> UUID.randomUUID().toString)
     commonHeaders ++ additionalHeaders
-  }
 
-}

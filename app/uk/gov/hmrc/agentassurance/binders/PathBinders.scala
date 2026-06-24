@@ -23,7 +23,7 @@ import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 
-object PathBinders {
+object PathBinders:
 
 //  implicit object NinoBinder
 //  extends SimpleObjectBinder[Nino](Nino.apply, _.value)
@@ -31,89 +31,78 @@ object PathBinders {
 //  extends SimpleObjectBinder[SaAgentReference](SaAgentReference.apply, _.value)
 
   implicit val ninoBinder: PathBindable[Nino] =
-    new PathBindable[Nino] {
+    new PathBindable[Nino]:
       override def bind(
         key: String,
         value: String
-      ): Either[String, Nino] = {
-        if (Nino.isValid(value))
+      ): Either[String, Nino] =
+        if Nino.isValid(value) then
           Right(Nino(value))
         else
           Left("Invalid NINO")
-      }
 
       override def unbind(
         key: String,
         nino: Nino
       ): String = nino.value
-    }
 
   implicit val saAgentReferenceBinder: PathBindable[SaAgentReference] =
-    new PathBindable[SaAgentReference] {
+    new PathBindable[SaAgentReference]:
       override def bind(
         key: String,
         value: String
-      ): Either[String, SaAgentReference] = {
+      ): Either[String, SaAgentReference] =
 
         Right(SaAgentReference(value))
 
-      }
 
       override def unbind(
         key: String,
         saAgentReference: SaAgentReference
       ): String = saAgentReference.value
-    }
 
   implicit val utrBinder: PathBindable[Utr] =
-    new PathBindable[Utr] {
+    new PathBindable[Utr]:
       override def bind(
         key: String,
         value: String
-      ): Either[String, Utr] = {
-        if (Utr.isValid(value))
+      ): Either[String, Utr] =
+        if Utr.isValid(value) then
           Right(Utr(value))
         else
           Left("Invalid UTR")
-      }
 
       override def unbind(
         key: String,
         utr: Utr
       ): String = utr.value
-    }
 
   implicit val arnBinder: PathBindable[Arn] =
-    new PathBindable[Arn] {
+    new PathBindable[Arn]:
       override def bind(
         key: String,
         value: String
-      ): Either[String, Arn] = {
-        if (Arn.isValid(value))
+      ): Either[String, Arn] =
+        if Arn.isValid(value) then
           Right(Arn(value))
         else
           Left("Invalid ARN")
-      }
 
       override def unbind(
         key: String,
         arn: Arn
       ): String = arn.value
-    }
 
   implicit val utrCheckTypeBinder: PathBindable[CollectionName] =
-    new PathBindable[CollectionName] {
+    new PathBindable[CollectionName]:
       override def bind(
         key: String,
         value: String
-      ): Either[String, CollectionName] = {
+      ): Either[String, CollectionName] =
         CollectionName.fromString(value).toRight(s"Invalid UTR access control: $value")
-      }
 
       override def unbind(
         key: String,
         utrAc: CollectionName
       ): String = utrAc.textValue
-    }
 
-}

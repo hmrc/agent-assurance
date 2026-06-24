@@ -16,6 +16,5 @@
 
 package uk.gov.hmrc.agentassurance.models.audit
 
-trait AuditDetail {
+trait AuditDetail:
   val auditType: String
-}

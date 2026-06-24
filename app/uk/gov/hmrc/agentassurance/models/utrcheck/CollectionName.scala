@@ -28,10 +28,9 @@ end CollectionName
 object CollectionName:
 
   def fromString(textValue: String): Option[CollectionName] =
-    textValue.toLowerCase match {
+    textValue.toLowerCase match
       case "refusal-to-deal-with" => Some(RefusalToDealWith)
       case "manually-assured" => Some(ManuallyAssured)
       case _ => None
-    }
 
 end CollectionName

@@ -27,6 +27,5 @@ case class UtrDetails(
   businessName: Option[String]
 )
 
-object UtrDetails {
+object UtrDetails:
   implicit val utrChecksResponseFormat: OFormat[UtrDetails] = Json.format
-}

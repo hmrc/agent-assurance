@@ -50,21 +50,21 @@ class ManagedUtrsController @Inject() (
   val authConnector: AuthConnector
 )(implicit ec: ExecutionContext)
 extends BackendController(controllerComponents)
-with AuthActions {
+with AuthActions:
 
   def listUtrs(
     pagination: PaginationParameters,
     key: CollectionName
-  ): Action[AnyContent] = BasicAuth {
+  ): Action[AnyContent] = BasicAuth:
     implicit request =>
-      for {
+      for
         (total, utrs) <- repository.findProperties(
           key.textValue,
           pagination.page,
           pagination.pageSize
         )
         businessNamesByUtrSet <- businessNamesService.get(utrs)
-      } yield {
+      yield
         val paginatedResources = PaginatedResources(
           _links = PaginationLinks.apply(
             paginationParams = pagination,
@@ -77,23 +77,21 @@ with AuthActions {
           resources = businessNamesByUtrSet.toSeq
         )
         Ok(Json.toJson(paginatedResources))
-      }
-  }
 
   def getUtrDetails(
     utr: Utr,
     nameRequired_ : Option[Boolean] = None
   ): Action[AnyContent] = Action.async { implicit request => // TODO - this endpoint is called by both stride/normal and internal auth - we should split it into internal and normal auth versions. Unauth version is temporary
     val nameRequired: Boolean = nameRequired_.getOrElse(false)
-    for {
+    for
       isManuallyAssured <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.ManuallyAssured.textValue))
       isRefusalToDealWith <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.RefusalToDealWith.textValue))
       businessName <-
-        if (nameRequired)
+        if nameRequired then
           businessNamesService.get(utr.value)
         else
           Future.successful(None)
-    } yield {
+    yield
 
       val utrChecksResponse = UtrDetails(
         utr = utr,
@@ -102,7 +100,6 @@ with AuthActions {
         businessName = businessName
       )
       Ok(Json.toJson(utrChecksResponse))
-    }
   }
 
   def upsertUtr(collectionName: CollectionName): Action[JsValue] =
@@ -112,7 +109,7 @@ with AuthActions {
           Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_JSON", JsError.toJson(errors).toString))))
         },
         newValue => {
-          if (Utr.isValid(newValue.value)) {
+          if Utr.isValid(newValue.value) then {
             repository
               .upsertProperty(newValue.toProperty(collectionName.textValue))
               .map(_ => Created)
@@ -135,4 +132,3 @@ with AuthActions {
       .map(_ => NoContent)
   }
 
-}

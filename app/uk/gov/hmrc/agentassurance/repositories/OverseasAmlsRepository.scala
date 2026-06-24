@@ -37,7 +37,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @ImplementedBy(classOf[OverseasAmlsRepositoryImpl])
-trait OverseasAmlsRepository {
+trait OverseasAmlsRepository:
 
   def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]]
 
@@ -47,7 +47,6 @@ trait OverseasAmlsRepository {
 
   def deleteByArn(arn: Arn): Future[Unit]
 
-}
 
 @Singleton
 class OverseasAmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit
@@ -63,40 +62,36 @@ extends PlayMongoRepository[OverseasAmlsEntity](
   )
 )
 with OverseasAmlsRepository
-with Logging {
+with Logging:
 
   override lazy val requiresTtlIndex: Boolean = false
 
-  def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]] = {
+  def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]] =
     collection
       .find(equal("arn", amlsEntity.arn.value))
       .headOption()
-      .flatMap {
+      .flatMap:
         case Some(_) => Future.successful(Left(AmlsRecordExists))
         case _ =>
           collection
             .insertOne(amlsEntity.withDefaultCreatedDate)
             .toFuture()
-            .map {
+            .map:
               case insertOneResult if insertOneResult.wasAcknowledged() => Right(())
               case e =>
                 logger.warn(s"Error inserting overseas AMLS record ${e}")
                 Left(AmlsUnexpectedMongoError)
-            }
-      }
-      .recover {
+      .recover:
         case e: MongoException =>
           logger.warn(s"Mongo exception when inserting overseas AMLS record $e")
           Left(AmlsUnexpectedMongoError)
-      }
-  }
 
   override def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]] = collection
     .find(equal("arn", arn.value))
     .headOption()
     .map(_.map(_.amlsDetails))
 
-  override def createOrUpdate(amlsEntity: OverseasAmlsEntity): Future[Option[OverseasAmlsEntity]] = {
+  override def createOrUpdate(amlsEntity: OverseasAmlsEntity): Future[Option[OverseasAmlsEntity]] =
     collection
       .findOneAndReplace(
         equal("arn", amlsEntity.arn.value),
@@ -104,11 +99,9 @@ with Logging {
         FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE)
       )
       .headOption()
-  }
 
   override def deleteByArn(arn: Arn): Future[Unit] = collection
     .deleteOne(equal("arn", arn.value))
     .toFuture()
     .map(_ => ())
 
-}

@@ -44,12 +44,11 @@ extends MockFactory { this: TestSuite =>
     HeaderCarrier,
     Request[?],
     Future[(AmlsStatus, Option[AmlsDetails])]
-  ] = {
+  ] =
     (mockAmlsDetailsService
       .getAmlsDetailsByArn(_: Arn)(using _: HeaderCarrier, _: Request[?]))
       .expects(arn, *, *)
       .returning(response)
-  }
 
   def mockStoreAmlsRequest(
     arn: Arn,
@@ -61,7 +60,7 @@ extends MockFactory { this: TestSuite =>
     HeaderCarrier,
     Request[?],
     Future[Either[AmlsError, AmlsDetails]]
-  ] = {
+  ] =
     (mockAmlsDetailsService
       .storeAmlsRequest(
         _: Arn,
@@ -76,6 +75,5 @@ extends MockFactory { this: TestSuite =>
         *
       )
       .returning(response)
-  }
 
 }
