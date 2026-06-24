@@ -12,7 +12,6 @@ object AppDependencies {
     "uk.gov.hmrc"            %% s"internal-auth-client-$playVer" % "4.4.0",
     "uk.gov.hmrc"            %% s"crypto-json-$playVer"          % "8.4.0",
     "uk.gov.hmrc"            %% s"domain-$playVer"               % "13.0.0",
-//    "org.julienrf"           %% "play-json-derived-codecs"       % "11.0.0",
     "com.beachape"           %% "enumeratum-play-json"           % "1.9.8",
     "io.github.openhtmltopdf" % "openhtmltopdf-pdfbox"           % "1.1.37",
   )
