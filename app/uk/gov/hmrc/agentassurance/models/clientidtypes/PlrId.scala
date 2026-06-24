@@ -30,3 +30,4 @@ object PlrId:
   implicit val reads: SimpleObjectReads[PlrId] = new SimpleObjectReads[PlrId]("value", PlrId.apply)
   implicit val writes: SimpleObjectWrites[PlrId] = new SimpleObjectWrites[PlrId](_.value)
 
+end PlrId

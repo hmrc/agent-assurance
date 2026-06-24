@@ -156,3 +156,4 @@ with BaseController:
           .getOrElse(Future.successful(Forbidden))
   }
 
+end AuthActions

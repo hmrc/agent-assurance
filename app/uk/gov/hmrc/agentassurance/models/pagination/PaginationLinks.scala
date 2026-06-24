@@ -100,4 +100,7 @@ object PaginationLinks:
       ""
     else
       s"?$params"
+    end if
+  end makeQueryParamsString
 
+end PaginationLinks

@@ -30,6 +30,7 @@ case class PaginationParameters(
 
   def lastPage(total: Int): Int = 1 + ((total - 1) / pageSize)
 
+end PaginationParameters
 
 object PaginationParameters:
 
@@ -58,3 +59,4 @@ object PaginationParameters:
         parameters: PaginationParameters
       ): String =
         intBinder.unbind("page", parameters.page) + "&" + intBinder.unbind("pageSize", parameters.pageSize)
+end PaginationParameters

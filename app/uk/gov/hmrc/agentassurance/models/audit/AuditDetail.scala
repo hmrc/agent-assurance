@@ -18,3 +18,4 @@ package uk.gov.hmrc.agentassurance.models.audit
 
 trait AuditDetail:
   val auditType: String
+end AuditDetail

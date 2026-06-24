@@ -26,6 +26,7 @@ case class UkAmlsDetailsResponse(
 
 object UkAmlsDetailsResponse:
   implicit val format: Format[UkAmlsDetailsResponse] = Json.format[UkAmlsDetailsResponse]
+end UkAmlsDetailsResponse
 
 case class OverseasAmlsDetailsResponse(
   status: String,
@@ -34,3 +35,4 @@ case class OverseasAmlsDetailsResponse(
 
 object OverseasAmlsDetailsResponse:
   implicit val format: Format[OverseasAmlsDetailsResponse] = Json.format[OverseasAmlsDetailsResponse]
+end OverseasAmlsDetailsResponse

@@ -18,3 +18,4 @@ package uk.gov.hmrc.agentassurance.models
 
 trait TrustTaxIdentifier:
   val value: String
+end TrustTaxIdentifier

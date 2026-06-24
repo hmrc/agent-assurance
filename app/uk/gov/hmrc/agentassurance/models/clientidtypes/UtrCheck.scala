@@ -24,3 +24,6 @@ extends Modulus11Check:
   def isValid(utr: String): Boolean =
     val suffix: String = utr.substring(1)
     calculateCheckCharacter(suffix) == utr.charAt(0)
+  end isValid
+
+end UtrCheck

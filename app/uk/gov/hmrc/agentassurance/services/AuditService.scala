@@ -87,3 +87,4 @@ class AuditService @Inject() (auditConnector: AuditConnector)(implicit
 
   private val auditSource = "agent-assurance"
 
+end AuditService

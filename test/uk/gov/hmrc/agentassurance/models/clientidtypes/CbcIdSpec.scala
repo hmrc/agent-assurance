@@ -41,3 +41,4 @@ with Matchers:
 
     "fail when it has non-alphanumeric characters" in:
       CbcId.isValid("XACBC012345678!") shouldBe false
+end CbcIdSpec

@@ -28,3 +28,4 @@ case class DmsResponse(
 
 object DmsResponse:
   implicit val format: OFormat[DmsResponse] = Json.format[DmsResponse]
+end DmsResponse

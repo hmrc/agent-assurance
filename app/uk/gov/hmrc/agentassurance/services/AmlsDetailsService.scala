@@ -92,7 +92,8 @@ extends Logging:
               if hasRenewalDateExpired(ukAmlsDetails.membershipExpiresOn) then
                 AmlsStatus.ExpiredAmlsDetailsUK // Scenarios: #4a, #4b
               else
-                AmlsStatus.ValidAmlsDetailsUK, // Scenario #3
+                AmlsStatus.ValidAmlsDetailsUK
+              , // Scenario #3
               Some(ukAmlsDetails)
             )
           )
@@ -142,7 +143,8 @@ extends Logging:
           if isUk then
             AmlsStatus.NoAmlsDetailsUK // Scenario #1
           else
-            AmlsStatus.NoAmlsDetailsNonUK, // Scenario #2
+            AmlsStatus.NoAmlsDetailsNonUK
+          , // Scenario #2
           None
         )
       }
@@ -172,6 +174,7 @@ extends Logging:
               AmlsStatus.ExpiredAmlsDetailsUK
             else
               AmlsStatus.ValidAmlsDetailsUK
+            end if
           case _ =>
             // catch all where we won't use the ETMP record and just use ASA
             if hasRenewalDateExpired(asaAmlsDetails.membershipExpiresOn) then
@@ -361,3 +364,4 @@ extends Logging:
     )
   ).map(_ => ())
 
+end AmlsDetailsService

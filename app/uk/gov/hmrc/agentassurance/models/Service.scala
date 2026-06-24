@@ -45,6 +45,7 @@ sealed abstract class Service(
       case that: Service => this.id.equals(that.id)
       case _ => false
 
+end Service
 
 object Service:
 
@@ -184,6 +185,7 @@ object Service:
   val writes = new SimpleObjectWrites[Service](_.id)
   implicit val format: Format[Service] = Format(reads, writes)
 
+end Service
 
 sealed abstract class ClientIdType[+T <: TaxIdentifier](
   val clazz: Class[?],
@@ -192,6 +194,7 @@ sealed abstract class ClientIdType[+T <: TaxIdentifier](
   val createUnderlying: String => T
 ):
   def isValid(value: String): Boolean
+end ClientIdType
 
 case object NinoType
 extends ClientIdType(
@@ -201,6 +204,7 @@ extends ClientIdType(
   Nino.apply
 ):
   override def isValid(value: String): Boolean = Nino.isValid(value)
+end NinoType
 
 case object MtdItIdType
 extends ClientIdType(
@@ -210,6 +214,7 @@ extends ClientIdType(
   MtdItId.apply
 ):
   override def isValid(value: String): Boolean = MtdItId.isValid(value)
+end MtdItIdType
 
 case object VrnType
 extends ClientIdType(
@@ -219,6 +224,7 @@ extends ClientIdType(
   Vrn.apply
 ):
   override def isValid(value: String): Boolean = Vrn.isValid(value)
+end VrnType
 
 case object UtrType
 extends ClientIdType(
@@ -228,6 +234,7 @@ extends ClientIdType(
   Utr.apply
 ):
   override def isValid(value: String): Boolean = Utr.isValid(value)
+end UtrType
 
 case object UrnType
 extends ClientIdType(
@@ -237,6 +244,7 @@ extends ClientIdType(
   Urn.apply
 ):
   override def isValid(value: String): Boolean = Urn.isValid(value)
+end UrnType
 
 case object CgtRefType
 extends ClientIdType(
@@ -246,6 +254,7 @@ extends ClientIdType(
   CgtRef.apply
 ):
   override def isValid(value: String): Boolean = CgtRef.isValid(value)
+end CgtRefType
 
 case object PptRefType
 extends ClientIdType(
@@ -255,6 +264,7 @@ extends ClientIdType(
   PptRef.apply
 ):
   override def isValid(value: String): Boolean = PptRef.isValid(value)
+end PptRefType
 
 case object CbcIdType
 extends ClientIdType(
@@ -264,6 +274,7 @@ extends ClientIdType(
   CbcId.apply
 ):
   override def isValid(value: String): Boolean = CbcId.isValid(value)
+end CbcIdType
 
 case object PlrIdType
 extends ClientIdType(
@@ -273,3 +284,4 @@ extends ClientIdType(
   PlrId.apply
 ):
   override def isValid(value: String): Boolean = PlrId.isValid(value)
+end PlrIdType

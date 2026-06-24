@@ -34,4 +34,4 @@ object AgentDetailsResponse:
           Json.obj("agencyDetails" -> agentDetailsResponse.agencyDetails, "utr" -> agentDetailsResponse.optUtr)
         else
           Json.obj("agencyDetails" -> agentDetailsResponse.agencyDetails)
-
+end AgentDetailsResponse

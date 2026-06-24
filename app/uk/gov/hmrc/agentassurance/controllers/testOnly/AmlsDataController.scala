@@ -92,7 +92,7 @@ with AuthActions:
         )
       )
       .flatMap(_ => amlsRepository.updateArn(Utr(utr), arn))
-
+  end createUkAmlsRecord
 
   private def createOverseasAmlsRecord(
     arn: Arn,
@@ -114,6 +114,7 @@ with AuthActions:
         createdDate = None
       )
     )
+  end createOverseasAmlsRecord
 
   case class AmlsDataRequest(
     isUk: Boolean,
@@ -125,4 +126,6 @@ with AuthActions:
 
   object AmlsDataRequest:
     implicit val format: Format[AmlsDataRequest] = Json.format[AmlsDataRequest]
+  end AmlsDataRequest
 
+end AmlsDataController

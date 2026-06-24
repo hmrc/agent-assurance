@@ -36,6 +36,7 @@ object Arn:
   implicit val arnReads: SimpleObjectReads[Arn] = new SimpleObjectReads[Arn]("value", Arn.apply)
   implicit val arnWrites: SimpleObjectWrites[Arn] = new SimpleObjectWrites[Arn](_.value)
 
+end Arn
 
 private object ArnCheck
 extends Modulus23Check:
@@ -43,3 +44,6 @@ extends Modulus23Check:
   def isValid(arn: String): Boolean =
     val suffix: String = arn.substring(1)
     calculateCheckCharacter(suffix) == arn.charAt(0)
+  end isValid
+
+end ArnCheck

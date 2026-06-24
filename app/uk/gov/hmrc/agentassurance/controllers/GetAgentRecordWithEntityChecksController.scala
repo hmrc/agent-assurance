@@ -63,3 +63,4 @@ with AuthActions:
     entityCheckService.verifyAgent(arn).map(entityCheckResult => Ok(Json.toJson(entityCheckResult.agentRecord)))
   }
 
+end GetAgentRecordWithEntityChecksController

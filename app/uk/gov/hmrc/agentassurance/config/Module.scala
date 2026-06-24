@@ -43,3 +43,7 @@ extends AbstractModule:
       bind(classOf[InternalAuthTokenInitialiser])
         .to(classOf[NoOpInternalAuthTokenInitialiser])
         .asEagerSingleton()
+    end if
+  end configure
+
+end Module

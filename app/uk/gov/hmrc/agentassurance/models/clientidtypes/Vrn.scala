@@ -35,3 +35,4 @@ object Vrn:
   implicit val vrnReads: SimpleObjectReads[Vrn] = new SimpleObjectReads[Vrn]("value", Vrn.apply)
   implicit val vrnWrites: SimpleObjectWrites[Vrn] = new SimpleObjectWrites[Vrn](_.value)
 
+end Vrn

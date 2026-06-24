@@ -87,7 +87,7 @@ extends Logging {
       case 8080 => randomAvailable
       case 8090 => randomAvailable
       case p: Int =>
-        if (available(p)) {
+        if available(p) then {
           logger.debug("Taking port : " + p)
           usedPorts :+ p
           p
@@ -101,7 +101,7 @@ extends Logging {
   private def available(p: Int): Boolean = {
     var socket: ServerSocket = null
     try {
-      if (!usedPorts.contains(p)) {
+      if !usedPorts.contains(p) then {
         socket = new ServerSocket(p)
         socket.setReuseAddress(true)
         true
@@ -114,7 +114,7 @@ extends Logging {
       case _: Throwable => false
     }
     finally {
-      if (socket != null)
+      if socket != null then
         socket.close()
     }
   }

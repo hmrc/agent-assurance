@@ -151,3 +151,4 @@ class DmsService @Inject() (
         )
       case NonFatal(e) => throw new InternalServerException(s"send PDF failed with error:${e.getCause}")
 
+end DmsService

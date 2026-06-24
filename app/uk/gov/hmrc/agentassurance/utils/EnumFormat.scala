@@ -38,3 +38,4 @@ object EnumFormat:
     },
     Writes(v => JsString(v.entryName))
   )
+end EnumFormat

@@ -23,3 +23,4 @@ case class LinkHref(href: String)
 
 object LinkHref:
   implicit val linkFormat: Format[LinkHref] = Json.format[LinkHref]
+end LinkHref

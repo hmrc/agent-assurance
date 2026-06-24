@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.models.clientidtypes
 
-import org.scalacheck._
+import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -41,3 +41,4 @@ with Matchers:
   it should "be false when it has non-alphanumeric characters" in:
     MtdItId.isValid("00000000000000!") shouldBe false
 
+end MtdItIdSpec

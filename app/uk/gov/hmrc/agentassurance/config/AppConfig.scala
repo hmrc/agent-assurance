@@ -81,3 +81,4 @@ class AppConfig @Inject() (
 
   val maxCallsPerSecondBusinessNames: Int = servicesConfig.getInt("rate-limiter.business-names.max-calls-per-second")
 
+end AppConfig

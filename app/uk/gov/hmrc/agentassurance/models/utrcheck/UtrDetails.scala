@@ -29,3 +29,4 @@ case class UtrDetails(
 
 object UtrDetails:
   implicit val utrChecksResponseFormat: OFormat[UtrDetails] = Json.format
+end UtrDetails

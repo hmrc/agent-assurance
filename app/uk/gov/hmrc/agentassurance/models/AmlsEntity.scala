@@ -54,6 +54,7 @@ object UkAmlsEntity:
 
   implicit val amlsEntityFormat: OFormat[UkAmlsEntity] = OFormat(jsonReads, jsonWrites)
 
+end UkAmlsEntity
 
 case class OverseasAmlsEntity(
   arn: Arn,
@@ -62,6 +63,8 @@ case class OverseasAmlsEntity(
 )
 extends AmlsEntity:
   def withDefaultCreatedDate(implicit clock: Clock): OverseasAmlsEntity = copy(createdDate = Some(createdDate.getOrElse(Instant.now(clock))))
+end OverseasAmlsEntity
 
 object OverseasAmlsEntity:
   implicit val format: Format[OverseasAmlsEntity] = Json.format[OverseasAmlsEntity]
+end OverseasAmlsEntity

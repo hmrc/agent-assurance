@@ -361,7 +361,6 @@ with MockAppConfig:
 
         intercept[Exception](await(service.getAmlsDetailsByArn(testArn))).getMessage mustBe "failed to return a record"
 
-
   "findCorrectExpiryDate" when:
     val defaultDate = Some(LocalDate.now())
     "both expiry dates are populated" should:
@@ -614,3 +613,4 @@ with MockAppConfig:
 
       result mustBe Right(testAmlsDetails)
 
+end AmlsDetailsServiceSpec

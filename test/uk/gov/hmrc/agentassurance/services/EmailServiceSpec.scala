@@ -64,3 +64,4 @@ with MockAppConfig:
 
       await(service.sendEntityCheckNotification(entityChecks)) mustBe ()
 
+end EmailServiceSpec

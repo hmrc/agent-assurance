@@ -124,3 +124,4 @@ with MockFactory:
 
       status(result) mustBe OK
 
+end GetAgentRecordWithEntityChecksControllerSpec

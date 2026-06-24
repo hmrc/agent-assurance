@@ -28,3 +28,4 @@ case class EmailInformation(
 
 object EmailInformation:
   implicit val writes: OWrites[EmailInformation] = Json.writes
+end EmailInformation

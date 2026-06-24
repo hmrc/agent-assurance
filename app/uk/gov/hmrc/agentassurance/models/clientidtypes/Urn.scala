@@ -36,3 +36,4 @@ object Urn:
   implicit val urnReads: SimpleObjectReads[Urn] = new SimpleObjectReads[Urn]("value", Urn.apply)
   implicit val urnWrites: SimpleObjectWrites[Urn] = new SimpleObjectWrites[Urn](_.value)
 
+end Urn

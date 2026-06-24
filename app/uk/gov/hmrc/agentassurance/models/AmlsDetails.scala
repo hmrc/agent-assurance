@@ -41,9 +41,11 @@ extends AmlsDetails:
   val isExpired: Boolean = membershipExpiresOn.forall(LocalDate.now.isAfter(_))
   val hasValidMembershipNumber: Boolean = membershipNumber.exists(validMemNoRegex.matches(_))
 
+end UkAmlsDetails
 
 object UkAmlsDetails:
   implicit val format: Format[UkAmlsDetails] = Json.format[UkAmlsDetails]
+end UkAmlsDetails
 
 case class OverseasAmlsDetails(
   supervisoryBody: String,
@@ -53,3 +55,4 @@ extends AmlsDetails
 
 object OverseasAmlsDetails:
   implicit val format: Format[OverseasAmlsDetails] = Json.format[OverseasAmlsDetails]
+end OverseasAmlsDetails

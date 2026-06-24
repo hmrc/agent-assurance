@@ -21,7 +21,7 @@ import java.time.ZoneId
 
 import scala.concurrent.ExecutionContext
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.Source
@@ -36,7 +36,7 @@ import play.api.libs.json.Json
 import play.api.mvc.MultipartFormData
 import play.api.mvc.MultipartFormData.DataPart
 import play.api.mvc.MultipartFormData.FilePart
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.Application
 import test.uk.gov.hmrc.agentassurance.stubs.DataStreamStub
 import test.uk.gov.hmrc.agentassurance.stubs.DesStubs

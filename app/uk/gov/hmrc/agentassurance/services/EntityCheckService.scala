@@ -118,6 +118,7 @@ class EntityCheckService @Inject() (
             )
             entityCheckExceptions
           case None => Seq.empty[EntityCheckException]
+    end entityChecks
 
     def sendEmail(
       agentRecord: AgentDetailsDesResponse,
@@ -144,6 +145,8 @@ class EntityCheckService @Inject() (
               case None => ()
 
         case _ => Future.successful(())
+      end match
+    end sendEmail
 
     for
       agentRecord <- desConnector.getAgentRecord(arn)
@@ -159,5 +162,7 @@ class EntityCheckService @Inject() (
       agentRecord,
       entityChecksResult
     )
+    end for
+  end verifyAgent
 
-
+end EntityCheckService

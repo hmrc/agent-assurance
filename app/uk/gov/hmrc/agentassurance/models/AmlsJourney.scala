@@ -32,3 +32,4 @@ case class AmlsJourney(
 
 object AmlsJourney:
   implicit val format: Format[AmlsJourney] = Json.format[AmlsJourney]
+end AmlsJourney

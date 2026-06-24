@@ -78,3 +78,4 @@ with MockAuditConnector:
         )
       )
 
+end AuditServiceSpec

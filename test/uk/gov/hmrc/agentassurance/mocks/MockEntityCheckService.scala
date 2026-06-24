@@ -51,3 +51,4 @@ extends MockFactory:
       .expects(arn, *, *, *)
       .returning(Future.successful(returns))
 
+end MockEntityCheckService

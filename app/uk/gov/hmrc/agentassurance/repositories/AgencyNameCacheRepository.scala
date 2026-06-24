@@ -84,5 +84,6 @@ with Cache[Option[String]]:
               putCache(encryptedKey)(Some(notNoneV))
                 .map(_ => Some(notNoneV))
             ).getOrElse(Future.successful(None))
+  end apply
 
-
+end AgencyNameCacheRepository

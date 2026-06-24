@@ -27,3 +27,4 @@ object SelfLink:
 
   def apply(selfUrl: String) = new SelfLink(LinkHref(selfUrl))
 
+end SelfLink

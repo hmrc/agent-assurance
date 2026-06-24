@@ -53,3 +53,4 @@ extends Logging:
   def get(utr: String)(implicit headerCarrier: HeaderCarrier): Future[Option[String]] =
     desConnector.getBusinessName(utr)
 
+end BusinessNamesService

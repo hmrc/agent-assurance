@@ -38,3 +38,4 @@ with Matchers:
 
     "invalid if empty" in:
       PlrId.isValid("") shouldBe false
+end PlrIdSpec

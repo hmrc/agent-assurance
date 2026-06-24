@@ -24,3 +24,4 @@ case class VerifyEntityRequest(identifier: Arn)
 
 object VerifyEntityRequest:
   implicit val format: Format[VerifyEntityRequest] = Json.format[VerifyEntityRequest]
+end VerifyEntityRequest

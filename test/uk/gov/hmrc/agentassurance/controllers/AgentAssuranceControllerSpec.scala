@@ -27,17 +27,17 @@ import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.helpers.TestConstants._
-import uk.gov.hmrc.agentassurance.mocks._
-import uk.gov.hmrc.agentassurance.models._
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.*
+import uk.gov.hmrc.agentassurance.mocks.*
+import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsRecordExists
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.models.AmlsError.UniqueKeyViolationError
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
-import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.affinityGroup
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.credentials
@@ -162,7 +162,6 @@ with BeforeAndAfterEach:
         val response = doRequest()
         status(response) mustBe FORBIDDEN
 
-
       "an agent with non existing utr record should return not found" in:
 
         inSequence:
@@ -173,7 +172,6 @@ with BeforeAndAfterEach:
 
         val response = doRequest()
         status(response) mustBe NOT_FOUND
-
 
       "an agent with existing aml record should return amls details" in:
         inSequence:
@@ -223,7 +221,6 @@ with BeforeAndAfterEach:
 
         val response = doRequest()
         status(response) mustBe OK
-
 
     "storeAmlsDetails" should:
 
@@ -440,7 +437,6 @@ with BeforeAndAfterEach:
 
         status(response) mustBe BAD_REQUEST
 
-
     "storeOverseasAmlsDetails" should:
       val arn = Arn("AARN0000002")
 
@@ -511,3 +507,4 @@ with BeforeAndAfterEach:
 
         status(response) mustBe BAD_REQUEST
 
+end AgentAssuranceControllerSpec

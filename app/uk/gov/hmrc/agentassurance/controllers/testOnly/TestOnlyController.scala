@@ -30,4 +30,4 @@ class TestOnlyController @Inject() (ctrl: AgentAssuranceController):
     service: String,
     minimumAcceptableNumberOfClients: Int
   ): Action[AnyContent] = ctrl.acceptableNumberOfClients(service, minimumAcceptableNumberOfClients)
-
+end TestOnlyController

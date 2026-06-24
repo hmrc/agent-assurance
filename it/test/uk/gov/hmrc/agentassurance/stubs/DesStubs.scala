@@ -16,7 +16,7 @@
 
 package test.uk.gov.hmrc.agentassurance.stubs
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.stubbing.Scenario
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.Eventually.eventually
@@ -307,10 +307,11 @@ trait DesStubs {
          |         "addressLine3" : "Town Centre",
          |         "addressLine4" : "Telford",
          |         "postalCode" : "TF3 4ER",
-         |         "countryCode" : "${if (overseas)
+         |         "countryCode" : "${if overseas then
           "NZ"
         else
-          "GB"}",
+          "GB"
+        }",
          |         "addressLine1" : "Matheson House"
          |      },
          |      "agencyName" : "ABC Accountants",
@@ -525,7 +526,7 @@ trait DesStubs {
   }
 
   private def registrationData(isIndividual: Boolean) =
-    if (isIndividual)
+    if isIndividual then
       registrationDataForIndividual
     else
       registrationDataForOrganisation

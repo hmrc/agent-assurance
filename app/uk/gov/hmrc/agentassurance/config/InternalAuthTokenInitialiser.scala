@@ -35,11 +35,13 @@ import scala.concurrent.duration.DurationInt
 
 abstract class InternalAuthTokenInitialiser:
   val initialised: Future[Done]
+end InternalAuthTokenInitialiser
 
 @Singleton
 class NoOpInternalAuthTokenInitialiser @Inject()
 extends InternalAuthTokenInitialiser:
   override val initialised: Future[Done] = Future.successful(Done)
+end NoOpInternalAuthTokenInitialiser
 
 @Singleton
 class InternalAuthTokenInitialiserImpl @Inject() (
@@ -96,7 +98,7 @@ with Logging:
         else
           Future.failed(new RuntimeException("Unable to initialise internal-auth token"))
       }
-
+  end createClientAuthToken
 
   private def authTokenIsValid: Future[Boolean] =
     logger.info("Checking auth token")
@@ -105,4 +107,6 @@ with Logging:
       .setHeader("Authorization" -> appConfig.internalAuthToken)
       .execute
       .map(_.status == 200)
+  end authTokenIsValid
 
+end InternalAuthTokenInitialiserImpl

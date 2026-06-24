@@ -100,6 +100,7 @@ with AuthActions:
         businessName = businessName
       )
       Ok(Json.toJson(utrChecksResponse))
+    end for
   }
 
   def upsertUtr(collectionName: CollectionName): Action[JsValue] =
@@ -132,3 +133,4 @@ with AuthActions:
       .map(_ => NoContent)
   }
 
+end ManagedUtrsController

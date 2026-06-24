@@ -21,6 +21,7 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import java.io.ByteArrayOutputStream
 
 object PdfGenerator:
+
   def buildPdf(html: String): ByteArrayOutputStream =
     val os = new ByteArrayOutputStream()
     val builder = new PdfRendererBuilder
@@ -37,3 +38,6 @@ object PdfGenerator:
     renderer.close()
 
     os
+  end buildPdf
+
+end PdfGenerator

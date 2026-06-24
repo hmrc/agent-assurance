@@ -29,3 +29,4 @@ object DateTimeService:
   ).withZone(ZoneId.of("Europe/London")).format(
     ZonedDateTime.now(clock)
   )
+end DateTimeService

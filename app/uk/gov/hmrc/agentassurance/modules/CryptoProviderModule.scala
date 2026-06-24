@@ -49,6 +49,7 @@ extends Module:
       & Decrypter].qualifiedWith("aes").toInstance(aesCryptoInstance(configuration))
   )
 
+end CryptoProviderModule
 
 /** Encrypter/decrypter that does nothing (i.e. leaves content in plaintext). Only to be used for debugging.
   */
@@ -63,6 +64,7 @@ with Decrypter:
   def decrypt(notEncrypted: Crypted): PlainText = PlainText(notEncrypted.value)
   def decryptAsBytes(nullEncrypted: Crypted): PlainBytes = PlainBytes(Base64.getDecoder.decode(nullEncrypted.value))
 
+end NoCrypto
 
 object NoCrypto
 extends NoCrypto

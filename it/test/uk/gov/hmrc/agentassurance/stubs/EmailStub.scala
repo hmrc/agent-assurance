@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.stubs
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.Eventually.eventually
 import play.api.libs.json.Json

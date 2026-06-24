@@ -45,6 +45,7 @@ object AgentRecordAmlsDetails:
       details => (details.supervisoryBody, details.membershipNumber, details.evidenceObjectReference)
     )
 
+end AgentRecordAmlsDetails
 
 case class AgentRecordUpdateRequest(
   amlsDetails: Option[AgentRecordAmlsDetails],
@@ -53,3 +54,4 @@ case class AgentRecordUpdateRequest(
 
 object AgentRecordUpdateRequest:
   implicit val format: Format[AgentRecordUpdateRequest] = Json.format[AgentRecordUpdateRequest]
+end AgentRecordUpdateRequest

@@ -64,11 +64,13 @@ object ClientRelationship:
     .readNullable[Seq[Agent]]
     .map(optionalAgents => ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
 
+end ClientRelationship
 
 case class RegistrationRelationshipResponse(processingDate: String)
 
 object RegistrationRelationshipResponse:
   implicit val reads: Reads[RegistrationRelationshipResponse] = Json.reads[RegistrationRelationshipResponse]
+end RegistrationRelationshipResponse
 
 @ImplementedBy(classOf[DesConnectorImpl])
 trait DesConnector:
@@ -89,6 +91,7 @@ trait DesConnector:
 
   def getBusinessName(utr: String)(implicit hc: HeaderCarrier): Future[Option[String]]
 
+end DesConnector
 
 @Singleton
 class DesConnectorImpl @Inject() (
@@ -122,6 +125,7 @@ with Logging:
           case _ @Utr(_) => "utr"
           case e => throw new RuntimeException(s"Unacceptable taxIdentifier: $e")
       UriEncoding.encodePathSegment(clientType, "UTF-8")
+    end encodedClientType
 
     val url = new URI(s"$baseUrl/registration/relationship/$encodedClientType/$encodedClientId").toURL
 
@@ -135,6 +139,7 @@ with Logging:
         case e: UpstreamErrorResponse if e.statusCode == 404 =>
           logger.warn(s" NOT_FOUND GET legacy relationship response: 404 ")
           Future.successful(Seq.empty[SaAgentReference])
+  end getActiveCesaAgentRelationships
 
   // API #1028 Get Subscription Status
   def getAmlsSubscriptionStatus(
@@ -143,6 +148,7 @@ with Logging:
     val encodedRegNumber = UriEncoding.encodePathSegment(amlsRegistrationNumber, UTF_8.name)
     val url = new URI(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status").toURL
     getWithDesHeadersWithRetry[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
+  end getAmlsSubscriptionStatus
 
   // API #1170 (API#4) Get Agent Record
   override def getAgentRecord(
@@ -154,6 +160,7 @@ with Logging:
     val url = new URI(s"$baseUrl/registration/personal-details/arn/${arn.value}").toURL
     agentCacheProvider.agentDetailsCache(arn.value):
       getWithDesHeadersWithRetry[AgentDetailsDesResponse]("GetAgentRecordCached", url)
+  end getAgentRecord
 
   // API#1163 Registration
   override def getBusinessName(utr: String)(implicit hc: HeaderCarrier): Future[Option[String]] =
@@ -168,6 +175,7 @@ with Logging:
           case e: UpstreamErrorResponse if e.statusCode == 503 =>
             logger.warn("[DesConnector] getBusinessName returned a 503")
             Future.successful(Some("Error retrieving name"))
+  end getBusinessName
 
   private def postWithDesHeaders[
     B,
@@ -193,6 +201,7 @@ with Logging:
       )*)
       .execute[Option[A]]
     response
+  end postWithDesHeaders
 
   private def getWithDesHeadersWithRetry[A](
     apiName: String,
@@ -215,6 +224,7 @@ with Logging:
         )*)
         .executeAndDeserialise[A]
       response
+  end getWithDesHeadersWithRetry
 
   /*
    * If the service being called is external (e.g. DES/IF in QA or Prod):
@@ -241,4 +251,6 @@ with Logging:
         ) ++ hc.sessionId.fold(Seq.empty[(String, String)])(x => Seq(HeaderNames.xSessionId -> x.value))
     val commonHeaders = Seq(Environment -> env, CorrelationId -> UUID.randomUUID().toString)
     commonHeaders ++ additionalHeaders
+  end desHeaders
 
+end DesConnectorImpl

@@ -24,12 +24,15 @@ case class Individual(
   lastName: String
 ):
   val name: String = s"$firstName $lastName"
+end Individual
 object Individual:
   implicit val individualFormat: OFormat[Individual] = Json.format[Individual]
+end Individual
 
 case class Organisation(organisationName: String)
 object Organisation:
   implicit val organisationFormat: OFormat[Organisation] = Json.format[Organisation]
+end Organisation
 
 case class DesAgentNameResponse(
   isAnIndividual: Boolean,
@@ -41,6 +44,8 @@ case class DesAgentNameResponse(
       individual.map(_.name)
     else
       organisation.map(_.organisationName)
+end DesAgentNameResponse
 
 object DesAgentNameResponse:
   implicit val responseFormat: OFormat[DesAgentNameResponse] = Json.format[DesAgentNameResponse]
+end DesAgentNameResponse

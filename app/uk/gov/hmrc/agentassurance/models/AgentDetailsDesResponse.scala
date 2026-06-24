@@ -54,3 +54,4 @@ object AgentDetailsDesResponse:
       response => (response.uniqueTaxReference, response.agencyDetails, response.suspensionDetails, response.isAnIndividual, response.amlsDetails)
     )
 
+end AgentDetailsDesResponse

@@ -30,12 +30,14 @@ trait Cache[T]:
   def apply(key: String)(
     body: => Future[T]
   )(implicit ec: ExecutionContext): Future[T]
+end Cache
 
 class DoNotCache[T]
 extends Cache[T]:
   def apply(key: String)(
     body: => Future[T]
   )(implicit ec: ExecutionContext): Future[T] = body
+end DoNotCache
 
 @Singleton
 class CacheProvider @Inject() (
@@ -59,3 +61,4 @@ class CacheProvider @Inject() (
     else
       new DoNotCache[Option[String]]
 
+end CacheProvider

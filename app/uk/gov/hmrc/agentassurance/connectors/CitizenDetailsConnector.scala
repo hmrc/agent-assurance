@@ -40,6 +40,7 @@ object CitizenDeceased:
   implicit val reads: Reads[CitizenDeceased] = (JsPath \ "deceased")
     .readNullable[Boolean]
     .map(x => CitizenDeceased(x.getOrElse(false)))
+end CitizenDeceased
 
 @ImplementedBy(classOf[CitizenDetailsConnectorImpl])
 trait CitizenDetailsConnector:
@@ -50,7 +51,7 @@ trait CitizenDetailsConnector:
     c: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Option[EntityCheckException]]
-
+end CitizenDetailsConnector
 
 @Singleton
 class CitizenDetailsConnectorImpl @Inject() (
@@ -80,4 +81,4 @@ with Logging:
           case e => Some(EntityCheckException.CitizenConnectorRequestFailed(e))
       }
 
-
+end CitizenDetailsConnectorImpl

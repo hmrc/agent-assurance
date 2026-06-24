@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.utils
 
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
-import java.time._
+import java.time.*
 
 class DateTimeServiceSpec
 extends AnyWordSpec
@@ -57,3 +57,4 @@ with Matchers:
       val result = DateTimeService.nowAtLondonTime
 
       result shouldBe "15 July 2025 10:00AM BST"
+end DateTimeServiceSpec

@@ -46,3 +46,4 @@ extends Enum[SubmissionItemStatus]:
 
   override def values: IndexedSeq[SubmissionItemStatus] = findValues
 
+end SubmissionItemStatus

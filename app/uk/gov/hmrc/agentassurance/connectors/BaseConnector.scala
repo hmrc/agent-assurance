@@ -33,6 +33,7 @@ extends Retries:
 
   def retryCondition: PartialFunction[Exception, Boolean] =
     case e: UpstreamErrorResponse if UpstreamErrorResponse.Upstream5xxResponse.unapply(e).isDefined => true
+  end retryCondition
 
   implicit class HttpResponseHelpers(response: HttpResponse):
 
@@ -43,6 +44,7 @@ extends Retries:
 
     def error[A]: Future[A] = Future.failed(UpstreamErrorResponse(response.body, response.status))
 
+  end HttpResponseHelpers
 
   implicit class RequestBuilderHelpers(requestBuilder: RequestBuilder):
 
@@ -65,4 +67,6 @@ extends Retries:
           case _ => response.error
       }
 
+  end RequestBuilderHelpers
 
+end BaseConnector

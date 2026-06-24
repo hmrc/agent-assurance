@@ -47,6 +47,7 @@ trait OverseasAmlsRepository:
 
   def deleteByArn(arn: Arn): Future[Unit]
 
+end OverseasAmlsRepository
 
 @Singleton
 class OverseasAmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit
@@ -105,3 +106,4 @@ with Logging:
     .toFuture()
     .map(_ => ())
 
+end OverseasAmlsRepositoryImpl

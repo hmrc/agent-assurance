@@ -36,6 +36,7 @@ class MongoLockService @Inject() (mongoLockRepository: MongoLockRepository)(impl
       ttl = appConfig.entityChecksLockExpires
     )
     lockService.withRenewedLock(body)
+  end dailyLock
 
   def emailLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] =
     val lockService = TimePeriodLockService(
@@ -44,4 +45,6 @@ class MongoLockService @Inject() (mongoLockRepository: MongoLockRepository)(impl
       ttl = appConfig.entityChecksEmailLockExpires
     )
     lockService.withRenewedLock(body)
+  end emailLock
 
+end MongoLockService

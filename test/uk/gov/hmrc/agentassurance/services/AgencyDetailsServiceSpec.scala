@@ -21,7 +21,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatestplus.play.PlaySpec
 import play.api.mvc.Request
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesAddressUtrResponse
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesOverseas
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesResponse
@@ -56,3 +56,4 @@ with MockDesConnector:
       val result = await(service.agencyDetailsHasUkAddress(testArn))
       result mustBe false
 
+end AgencyDetailsServiceSpec

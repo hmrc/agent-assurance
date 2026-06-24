@@ -38,6 +38,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[ArchivedAmlsRepositoryImpl])
 trait ArchivedAmlsRepository:
   def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]]
+end ArchivedAmlsRepository
 
 @Singleton
 class ArchivedAmlsRepositoryImpl @Inject() (mongoComponent: MongoComponent)(implicit ec: ExecutionContext)
@@ -69,3 +70,4 @@ with Logging:
         else
           Left(AmlsUnexpectedMongoError)
       )
+end ArchivedAmlsRepositoryImpl

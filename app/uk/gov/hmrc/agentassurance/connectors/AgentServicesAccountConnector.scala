@@ -46,6 +46,7 @@ trait AgentServicesAccountConnector:
     hc: HeaderCarrier
   ): Future[Unit]
 
+end AgentServicesAccountConnector
 
 @Singleton
 class AgentServicesAccountConnectorImpl @Inject() (
@@ -73,3 +74,4 @@ with Logging:
     .withBody(Json.toJson(request))
     .executeAndExpect(200)
 
+end AgentServicesAccountConnectorImpl

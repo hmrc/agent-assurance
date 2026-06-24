@@ -55,7 +55,6 @@ object PathBinders:
 
         Right(SaAgentReference(value))
 
-
       override def unbind(
         key: String,
         saAgentReference: SaAgentReference
@@ -106,3 +105,4 @@ object PathBinders:
         utrAc: CollectionName
       ): String = utrAc.textValue
 
+end PathBinders

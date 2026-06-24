@@ -34,7 +34,7 @@ trait MetricTestSupport {
 
   def givenCleanMetricRegistry(): Unit = {
     val registry = app.injector.instanceOf[Metrics].defaultRegistry
-    for (metric <- registry.getMetrics.keySet().iterator().asScala) {
+    for metric <- registry.getMetrics.keySet().iterator().asScala do {
       registry.remove(metric)
     }
     metricsRegistry = registry
@@ -43,8 +43,9 @@ trait MetricTestSupport {
   def timerShouldExistsAndBeenUpdated(metric: String): Unit = {
     val timers = metricsRegistry.getTimers
     val metrics = timers.get(s"$metric")
-    if (metrics == null)
+    if metrics == null then
       throw new Exception(s"Metric [$metric] not found, try one of ${timers.keySet()}")
+    end if
     metrics.getCount should be >= 1L
   }
 
@@ -54,8 +55,9 @@ trait MetricTestSupport {
   ): Unit = {
     val histogram = metricsRegistry.getHistograms
     val metrics = histogram.get(s"Histogram-$metric")
-    if (metrics == null)
+    if metrics == null then
       throw new Exception(s"Metric [$metric] not found, try one of ${histogram.keySet()}")
+    end if
     metrics.getSnapshot.getMax shouldBe max
   }
 

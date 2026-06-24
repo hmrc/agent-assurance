@@ -38,3 +38,4 @@ extends Logging:
     hc: HeaderCarrier,
     request: Request[?]
   ): Future[Boolean] = desConnector.getAgentRecord(arn).map(_.agencyDetails.exists(_.hasUkAddress))
+end AgencyDetailsService

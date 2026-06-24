@@ -207,19 +207,21 @@ with DefaultPlayMongoRepositorySupport[Property] {
       Await.result(createProperty(key, "4000000009"), 10 seconds)
 
       val response = Await.result(isAssured(key, "4000000009   "), 10 seconds)
-      if (isR2dw)
+      if isR2dw then
         response.status shouldBe FORBIDDEN
       else
         response.status shouldBe OK
+      end if
     }
     "return 404 when property is not present" in {
       isLoggedInWithoutUserId
 
       val response = Await.result(isAssured(key, "4000000009"), 10 seconds)
-      if (isR2dw)
+      if isR2dw then
         response.status shouldBe OK
       else
         response.status shouldBe FORBIDDEN
+      end if
     }
 
     "INVALID UTR" in {
@@ -325,10 +327,11 @@ with DefaultPlayMongoRepositorySupport[Property] {
       response.status shouldBe NO_CONTENT
 
       val response2 = Await.result(isAssured(key, "4000000009"), 10 seconds)
-      if (isR2dw)
+      if isR2dw then
         response2.status shouldBe OK
       else
         response2.status shouldBe FORBIDDEN
+      end if
     }
     "return 404 when property is not present" in {
       isLoggedInWithoutUserId

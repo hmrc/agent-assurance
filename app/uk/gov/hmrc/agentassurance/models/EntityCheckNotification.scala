@@ -30,3 +30,4 @@ case class EntityCheckNotification(
 
 object EntityCheckNotification:
   implicit val format: Format[EntityCheckNotification] = Json.format[EntityCheckNotification]
+end EntityCheckNotification

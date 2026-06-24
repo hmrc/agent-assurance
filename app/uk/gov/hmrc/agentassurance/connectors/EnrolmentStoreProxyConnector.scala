@@ -41,6 +41,7 @@ case class ClientAllocation(
 
 object ClientAllocation:
   implicit val formats: Format[ClientAllocation] = format[ClientAllocation]
+end ClientAllocation
 
 case class ClientAllocationResponse(clients: Seq[ClientAllocation])
 
@@ -53,6 +54,7 @@ trait EnrolmentStoreProxyConnector:
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Int]
+end EnrolmentStoreProxyConnector
 
 @Singleton
 class EnrolmentStoreProxyConnectorImpl @Inject() (
@@ -100,8 +102,10 @@ extends EnrolmentStoreProxyConnector:
           }
         }
       })
+  end getClientCount
 
   private def parseClients(jsonResponse: JsValue): Seq[ClientAllocation] =
     fromJson[Seq[ClientAllocation]](jsonResponse).getOrElse:
       throw new RuntimeException(s"Invalid payload received from enrolment store proxy: $jsonResponse")
 
+end EnrolmentStoreProxyConnectorImpl

@@ -50,3 +50,4 @@ with Matchers:
   it should "be false when the checksum doesn't pass" in:
     Arn.isValid("AARN0000001") shouldBe false
 
+end ArnSpec

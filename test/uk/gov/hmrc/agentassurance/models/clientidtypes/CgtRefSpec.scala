@@ -47,3 +47,4 @@ with Matchers:
   it should "be false when CgtRef is too long" in:
     CgtRef.isValid("XMCGTP1234567890") shouldBe false
 
+end CgtRefSpec

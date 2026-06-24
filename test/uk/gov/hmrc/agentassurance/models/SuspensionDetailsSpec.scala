@@ -57,7 +57,6 @@ with Matchers:
     "match provided regimes when input does not contain either 'ALL' or 'AGSV'" in:
       SuspensionDetails(suspensionStatusTrue, Some(inputRegimes)).suspendedRegimes shouldBe Set("aRegime", "bRegime")
 
-
   "isRegimeSuspended" should:
 
     def getServiceOfRegimeName(regimeName: String): Service = SuspensionDetails.serviceToRegime.find(_._2 == regimeName).get._1
@@ -121,3 +120,4 @@ with Matchers:
       SuspensionDetails(suspensionStatus = true, Some(Set("ITSA", "VATC")))
         .isAnyRegimeSuspendedForServices(Set(HMRCCGTPD)) shouldBe false
 
+end SuspensionDetailsSpec

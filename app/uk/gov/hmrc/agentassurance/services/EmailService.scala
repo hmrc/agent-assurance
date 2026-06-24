@@ -51,4 +51,4 @@ class EmailService @Inject() (
         )
       )
     )
-
+end EmailService

@@ -78,3 +78,4 @@ with AuthActions:
       )
   }
 
+end AmlsDetailsByArnController

@@ -31,3 +31,4 @@ case class AmlsSubscriptionRecord(
 
 object AmlsSubscriptionRecord:
   implicit val amlsSubscriptionRecordFormat: Format[AmlsSubscriptionRecord] = Json.format[AmlsSubscriptionRecord]
+end AmlsSubscriptionRecord

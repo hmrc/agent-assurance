@@ -37,3 +37,4 @@ object ErrorResults:
     toJson(ErrorBody("NO_PERMISSION", "The logged in user is not permitted to perform the operation."))
   )
 
+end ErrorResults

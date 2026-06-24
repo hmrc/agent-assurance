@@ -60,3 +60,4 @@ with Matchers:
       NoCrypto.decrypt(Crypted(text)).value shouldBe text
       NoCrypto.decryptAsBytes(Crypted(base64Bytes)).value shouldBe bytes
 
+end CryptoProviderModuleSpec

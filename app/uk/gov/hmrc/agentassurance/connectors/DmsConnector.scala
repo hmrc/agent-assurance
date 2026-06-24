@@ -56,3 +56,4 @@ extends BaseConnector:
         .withBody(body)
         .executeAndExpect(ACCEPTED)
 
+end DmsConnector

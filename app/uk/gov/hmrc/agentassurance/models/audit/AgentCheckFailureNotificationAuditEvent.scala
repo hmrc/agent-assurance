@@ -29,6 +29,7 @@ case class EmailData(
 
 object EmailData:
   implicit val writes: OWrites[EmailData] = Json.writes
+end EmailData
 case class AgentCheckFailureNotificationAuditEvent(
   agentReferenceNumber: Arn,
   utr: String,
@@ -37,6 +38,8 @@ case class AgentCheckFailureNotificationAuditEvent(
 )
 extends AuditDetail:
   val auditType = "AgentCheckFailureNotificationSent"
+end AgentCheckFailureNotificationAuditEvent
 
 object AgentCheckFailureNotificationAuditEvent:
   implicit val writes: OWrites[AgentCheckFailureNotificationAuditEvent] = Json.writes
+end AgentCheckFailureNotificationAuditEvent

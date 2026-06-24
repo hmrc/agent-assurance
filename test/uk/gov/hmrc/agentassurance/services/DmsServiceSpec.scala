@@ -24,10 +24,10 @@ import java.util.Base64
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import org.scalatestplus.play.PlaySpec
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.helpers.ChangeDesiDetailsPayloads
-import uk.gov.hmrc.agentassurance.mocks._
+import uk.gov.hmrc.agentassurance.mocks.*
 import uk.gov.hmrc.agentassurance.models.DmsResponse
 import uk.gov.hmrc.agentassurance.models.DmsSubmissionReference
 import uk.gov.hmrc.http.HeaderCarrier
@@ -124,7 +124,6 @@ with MockAppConfig:
           DmsSubmissionReference("DmsSubmissionReference")
         ))
 
-
     "return upstream error if submission fails with NonFatal code" in:
       val encoded = Base64.getEncoder.encodeToString(html.getBytes)
       mocksendPdfNonFatal()
@@ -145,3 +144,4 @@ with MockAppConfig:
           DmsSubmissionReference("DmsSubmissionReference")
         ))
 
+end DmsServiceSpec

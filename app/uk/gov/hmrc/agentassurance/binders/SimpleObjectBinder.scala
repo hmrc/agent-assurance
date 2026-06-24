@@ -38,3 +38,4 @@ extends PathBindable[T]:
     value: T
   ): String = unbind(value)
 
+end SimpleObjectBinder

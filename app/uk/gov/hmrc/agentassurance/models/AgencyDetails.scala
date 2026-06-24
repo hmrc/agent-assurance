@@ -32,6 +32,7 @@ case class AgencyDetails(
   agencyAddress: Option[BusinessAddress]
 ):
   val hasUkAddress: Boolean = agencyAddress.exists(_.countryCode == "GB")
+end AgencyDetails
 object AgencyDetails:
 
   implicit val agencyDetailsFormat: Format[AgencyDetails] = Json.format[AgencyDetails]
@@ -48,6 +49,7 @@ object AgencyDetails:
       details => (details.agencyName, details.agencyEmail, details.agencyTelephone, details.agencyAddress)
     )
 
+end AgencyDetails
 
 case class BusinessAddress(
   addressLine1: String,
@@ -65,15 +67,15 @@ object BusinessAddress:
   def businessAddressDatabaseFormat(implicit
     crypto: Encrypter
       & Decrypter
-  ): Format[BusinessAddress] =
-    (__ \ "addressLine1")
-      .format[String](using stringEncrypterDecrypter)
-      .and((__ \ "addressLine2").formatNullable[String](using stringEncrypterDecrypter))
-      .and((__ \ "addressLine3").formatNullable[String](using stringEncrypterDecrypter))
-      .and((__ \ "addressLine4").formatNullable[String](using stringEncrypterDecrypter))
-      .and((__ \ "postalCode").formatNullable[String](using stringEncrypterDecrypter))
-      .and((__ \ "countryCode").format[String](using stringEncrypterDecrypter))(
-        BusinessAddress.apply,
-        address => (address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode, address.countryCode)
-      )
+  ): Format[BusinessAddress] = (__ \ "addressLine1")
+    .format[String](using stringEncrypterDecrypter)
+    .and((__ \ "addressLine2").formatNullable[String](using stringEncrypterDecrypter))
+    .and((__ \ "addressLine3").formatNullable[String](using stringEncrypterDecrypter))
+    .and((__ \ "addressLine4").formatNullable[String](using stringEncrypterDecrypter))
+    .and((__ \ "postalCode").formatNullable[String](using stringEncrypterDecrypter))
+    .and((__ \ "countryCode").format[String](using stringEncrypterDecrypter))(
+      BusinessAddress.apply,
+      address => (address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode, address.countryCode)
+    )
 
+end BusinessAddress

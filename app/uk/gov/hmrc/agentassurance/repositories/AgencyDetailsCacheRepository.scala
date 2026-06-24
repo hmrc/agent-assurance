@@ -80,4 +80,6 @@ with Cache[AgentDetailsDesResponse]:
           case Success(v) =>
             record.counter(s"Count-$key-from-source")
             putCache(encryptedKey)(v).map(_ => v)
+  end apply
 
+end AgencyDetailsCacheRepository

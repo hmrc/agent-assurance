@@ -54,6 +54,7 @@ case class SuspensionDetails(
         .getOrElse(throw new IllegalArgumentException(s"Service of ID '$id' not known"))
 
     suspendedRegimes.contains(SuspensionDetails.serviceToRegime(idToService(id)))
+  end isRegimeSuspended
 
   def suspendedRegimesForServices(serviceIds: Set[String]): Set[String] =
     SuspensionDetails.serviceToRegime.view
@@ -66,6 +67,7 @@ case class SuspensionDetails(
 
   override def toString: String = suspendedRegimes.toSeq.sorted.mkString(",")
 
+end SuspensionDetails
 
 object SuspensionDetails:
 
@@ -99,6 +101,7 @@ object SuspensionDetails:
 
   val notSuspended: SuspensionDetails = SuspensionDetails(suspensionStatus = false, None)
 
+end SuspensionDetails
 
 case class SuspensionDetailsNotFound(message: String)
 extends Exception(message)

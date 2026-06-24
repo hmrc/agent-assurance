@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.helpers
 
 import java.time.LocalDate
 
-import uk.gov.hmrc.agentassurance.models._
+import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.auth.core.Enrolment
@@ -189,3 +189,4 @@ object TestConstants:
   )
   val testAgentDetailsDesResponseNoUtr: AgentDetailsDesResponse = testAgentDetailsDesResponse.copy(uniqueTaxReference = None)
 
+end TestConstants

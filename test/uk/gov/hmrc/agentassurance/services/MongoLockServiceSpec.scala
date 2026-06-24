@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 import org.scalatestplus.play.PlaySpec
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.models.Utr
@@ -55,4 +55,4 @@ with MockAppConfig:
       Thread.sleep(600)
       await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
 
-
+end MongoLockServiceSpec

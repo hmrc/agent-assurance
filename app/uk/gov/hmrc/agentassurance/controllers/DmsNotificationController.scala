@@ -63,7 +63,9 @@ with Logging:
             logger.info(
               s"DMS notification received for ${notification.id} with status ${notification.status}"
             )
+          end if
           Ok
         case JsError(_) => BadRequest
     }
 
+end DmsNotificationController

@@ -24,8 +24,8 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import uk.gov.hmrc.agentassurance.helpers.TestConstants._
+import play.api.test.Helpers.*
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.*
 import uk.gov.hmrc.agentassurance.mocks.MockAmlsDetailsService
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
@@ -67,7 +67,6 @@ with ScalaFutures:
 
         val response = controller.getAmlsDetails(testArn)(FakeRequest())
         status(response) mustBe FORBIDDEN
-
 
     "return no content for an agent " when:
       "there are no records found in the database" in:
@@ -179,3 +178,4 @@ with ScalaFutures:
 
       status(response) mustBe CREATED
 
+end AmlsDetailsByArnControllerSpec

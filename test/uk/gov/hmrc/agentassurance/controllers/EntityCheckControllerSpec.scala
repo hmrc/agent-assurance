@@ -93,7 +93,6 @@ with MockFactory:
 
         status(result) mustBe NO_CONTENT
 
-
     "return OK" when:
       "suspended and a POST request to /agent/verify-entity" in:
 
@@ -122,7 +121,6 @@ with MockFactory:
           )
 
         status(result) mustBe OK
-
 
   "clientVerifyEntity" should:
     "return NO_CONTENT" when:
@@ -153,7 +151,6 @@ with MockFactory:
           )
 
         status(result) mustBe NO_CONTENT
-
 
       "return OK" when:
         "suspended and a POST request to /client/verify-entity" in:
@@ -193,7 +190,6 @@ with MockFactory:
             SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))
           )
 
-
       "return Bad request" when:
         "invalid request" in:
           when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
@@ -214,3 +210,4 @@ with MockFactory:
           status(result) mustBe BAD_REQUEST
           contentAsString(result) mustBe "Invalid Arn"
 
+end EntityCheckControllerSpec

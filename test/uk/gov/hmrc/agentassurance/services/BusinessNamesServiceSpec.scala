@@ -87,4 +87,4 @@ with ScalaFutures:
           case (utrStr, name) => BusinessNameByUtr(utrStr.value, name)
       }
 
-
+end BusinessNamesServiceSpec

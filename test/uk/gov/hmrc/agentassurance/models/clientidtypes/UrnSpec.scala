@@ -54,4 +54,4 @@ with Matchers:
   it should "be false when it has non-alphanumeric characters" in:
     Urn.isValid("200000000!") shouldBe false
 
-
+end UrnSpec

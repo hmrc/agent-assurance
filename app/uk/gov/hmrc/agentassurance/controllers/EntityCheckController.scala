@@ -83,4 +83,6 @@ with AuthActions:
     case None => NoContent
     case Some(suspensionDetails) if !suspensionDetails.suspensionStatus => NoContent
     case suspensionDetails => Ok(Json.toJson(suspensionDetails))
+  end createResponse
 
+end EntityCheckController

@@ -61,6 +61,7 @@ with AuthActions:
           case false => repository.upsertProperty(propertyConverted).map(_ => Created)
           case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
       case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
+    end match
   }
 
   def isOnR2dwList(identifier: Utr): Action[AnyContent] = BasicAuth { _ =>
@@ -99,3 +100,4 @@ with AuthActions:
       case false => Future.successful(NotFound)
   }
 
+end R2dwController

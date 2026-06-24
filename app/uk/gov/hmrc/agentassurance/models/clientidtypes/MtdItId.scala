@@ -35,3 +35,4 @@ object MtdItId:
   implicit val reads: SimpleObjectReads[MtdItId] = new SimpleObjectReads[MtdItId]("value", MtdItId.apply)
   implicit val writes: SimpleObjectWrites[MtdItId] = new SimpleObjectWrites[MtdItId](_.value)
 
+end MtdItId

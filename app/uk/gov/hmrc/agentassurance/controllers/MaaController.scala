@@ -62,6 +62,7 @@ with AuthActions:
           case true => Future.successful(Conflict(Json.toJson(ErrorBody("PROPERTY_EXISTS", "Property already exists"))))
       }
       case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
+    end match
   }
 
   def isManuallyAssured(identifier: Utr) = BasicAuth { _ =>
@@ -99,3 +100,4 @@ with AuthActions:
       case false => Future.successful(NotFound)
   }
 
+end MaaController

@@ -49,6 +49,7 @@ trait PropertiesRepository:
 
   def deleteProperty(property: Property): Future[Unit]
 
+end PropertiesRepository
 
 @Singleton
 class PropertiesRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
@@ -89,6 +90,8 @@ with PropertiesRepository:
       size <- collectionSize
       utrs <- utrsForPage
     yield (size, utrs)
+    end for
+  end findProperties
 
   override def propertyExists(property: Property): Future[Boolean] =
     collection
@@ -112,3 +115,4 @@ with PropertiesRepository:
       .toFuture()
       .map(_ => ())
 
+end PropertiesRepositoryImpl

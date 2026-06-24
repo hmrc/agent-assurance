@@ -32,3 +32,4 @@ object CgtRef:
 
   def isValid(value: String): Boolean = value.matches(cgtRegex)
 
+end CgtRef

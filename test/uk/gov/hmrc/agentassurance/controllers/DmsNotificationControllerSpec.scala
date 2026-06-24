@@ -85,7 +85,6 @@ with MockAppConfig:
         val result = controller.dmsCallback()(request)
         status(result) mustBe OK
 
-
     "return BAD_REQUEST" when:
       "when an invalid request is received" in:
         when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
@@ -102,7 +101,6 @@ with MockAppConfig:
         val result = controller.dmsCallback()(request)
         status(result) mustBe BAD_REQUEST
 
-
     "fail" when:
       "for an unauthenticated user" in:
         val request = FakeRequest(POST, routes.DmsNotificationController.dmsCallback().url)
@@ -112,6 +110,7 @@ with MockAppConfig:
         Try(status(result)) match
           case Success(_) => fail()
           case Failure(_) =>
+        end match
 
       "when the user is not authorised" in:
         when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.failed(new RuntimeException()))
@@ -129,5 +128,6 @@ with MockAppConfig:
         Try(status(result)) match
           case Success(_) => fail()
           case Failure(_) =>
+        end match
 
-
+end DmsNotificationControllerSpec

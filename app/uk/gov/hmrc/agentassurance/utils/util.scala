@@ -21,3 +21,4 @@ import scala.concurrent.Future
 
 package object util:
   implicit def toFuture[T](a: T): Future[T] = Future.successful(a)
+end util

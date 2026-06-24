@@ -26,3 +26,4 @@ case class PaginationResult(
 
 object PaginationResult:
   implicit val paginationResultFormat: Format[PaginationResult] = Json.format[PaginationResult]
+end PaginationResult

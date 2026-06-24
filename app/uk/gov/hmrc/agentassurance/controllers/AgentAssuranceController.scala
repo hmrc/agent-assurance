@@ -177,3 +177,4 @@ with AuthActions:
       case None => BadRequest("No JSON found in request body")
   }
 
+end AgentAssuranceController

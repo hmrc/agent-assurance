@@ -41,3 +41,4 @@ with Matchers:
   it should "be false when it has non-alphanumeric characters" in:
     PptRef.isValid("00000000000000!") shouldBe false
 
+end PptRefSpec

@@ -49,3 +49,4 @@ with Matchers:
     Vrn.isValid("\t" + reference97) shouldBe false
     Vrn.isValid("         ") shouldBe false
 
+end VrnSpec

@@ -53,6 +53,7 @@ private object ArnUpsertResult:
   final case class Failure(error: AmlsError)
   extends ArnUpsertResult
 
+end ArnUpsertResult
 
 @ImplementedBy(classOf[AmlsRepositoryImpl])
 trait AmlsRepository:
@@ -82,6 +83,7 @@ trait AmlsRepository:
 
   def deleteByArn(arn: Arn): Future[Unit]
 
+end AmlsRepository
 
 @Singleton
 class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
@@ -141,6 +143,7 @@ with Logging:
             .map:
               case updateResult if updateResult.getModifiedCount < 2L => Right(())
               case _ => Left(AmlsUnexpectedMongoError)
+  end createOrUpdate
 
   override def createOrUpdate(
     arn: Arn,
@@ -170,16 +173,15 @@ with Logging:
               collection
                 .replaceOne(equal("utr", utr.value), toUpdate)
                 .toFuture()
-                .map:
-                  updateResult =>
-                    if updateResult.getModifiedCount == 1L then
-                      Right(toUpdate.amlsDetails)
-                    else
-                      logger.warn(
-                        s"error updating AMLS record with ARN - acknowledged: " +
-                          s"${updateResult.wasAcknowledged()}, modified count: ${updateResult.getModifiedCount}"
-                      )
-                      Left(AmlsUnexpectedMongoError)
+                .map: updateResult =>
+                  if updateResult.getModifiedCount == 1L then
+                    Right(toUpdate.amlsDetails)
+                  else
+                    logger.warn(
+                      s"error updating AMLS record with ARN - acknowledged: " +
+                        s"${updateResult.wasAcknowledged()}, modified count: ${updateResult.getModifiedCount}"
+                    )
+                    Left(AmlsUnexpectedMongoError)
                 .recover:
                   case e: MongoWriteException if e.getError.getCode == 11000 => Left(UniqueKeyViolationError)
                   case e =>
@@ -271,4 +273,6 @@ with Logging:
       maybeEntity match
         case Some(entity) if entity.arn.isEmpty => Some(entity)
         case _ => None
+  end LegacyUtrOnlyRecord
 
+end AmlsRepositoryImpl

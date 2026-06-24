@@ -78,6 +78,7 @@ object ArchivedAmlsEntity:
           membershipExpiresOn = None
         )
 
+end ArchivedAmlsEntity
 
 // for the ASA AMLS journey (using POST /amls/arn/:arn)
 case class AmlsRequest(
@@ -102,6 +103,8 @@ case class AmlsRequest(
         supervisoryBody = amlsRequest.supervisoryBody,
         membershipNumber = Some(amlsRequest.membershipNumber)
       )
+end AmlsRequest
 
 object AmlsRequest:
   implicit val format: Format[AmlsRequest] = Json.format[AmlsRequest]
+end AmlsRequest

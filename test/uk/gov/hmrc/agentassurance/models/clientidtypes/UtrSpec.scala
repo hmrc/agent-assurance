@@ -47,3 +47,4 @@ with Matchers:
   it should "be false when it false when the modulus checksum doesn't pass" in:
     Utr.isValid("0123456789") shouldBe false
 
+end UtrSpec

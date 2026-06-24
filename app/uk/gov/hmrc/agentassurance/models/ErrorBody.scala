@@ -26,3 +26,4 @@ case class ErrorBody(
 
 object ErrorBody:
   implicit val errorBodyFormat: Format[ErrorBody] = Json.format[ErrorBody]
+end ErrorBody

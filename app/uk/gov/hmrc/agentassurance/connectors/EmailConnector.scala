@@ -39,6 +39,7 @@ trait EmailConnector:
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]
+end EmailConnector
 
 class EmailConnectorImpl @Inject() (
   appConfig: AppConfig,
@@ -63,5 +64,4 @@ with Logging:
             logger.error(s"unexpected status from email service, status: $other")
             ()
       }
-
-
+end EmailConnectorImpl

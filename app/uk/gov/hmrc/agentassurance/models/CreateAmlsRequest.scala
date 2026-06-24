@@ -27,3 +27,4 @@ case class CreateAmlsRequest(
 
 object CreateAmlsRequest:
   implicit val format: Format[CreateAmlsRequest] = Json.format[CreateAmlsRequest]
+end CreateAmlsRequest
