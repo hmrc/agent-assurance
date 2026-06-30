@@ -16,25 +16,31 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import enumeratum.Enum
-import enumeratum.EnumEntry
-import enumeratum.PlayJsonEnum
-import uk.gov.hmrc.agentassurance.models
+import play.api.libs.json.*
 
-sealed trait AmlsSource
-extends EnumEntry
+enum AmlsSource:
+  case Subscription, AutomaticUpdate, ManageAccountUpdate
 
-object AmlsSource
-extends Enum[AmlsSource]
-with PlayJsonEnum[AmlsSource]:
+object AmlsSource:
 
-  override val values: IndexedSeq[AmlsSource] = findValues
+  given Format[AmlsSource] = Format(
+    Reads {
+      case JsString(value) =>
+        try JsSuccess(AmlsSource.valueOf(value))
+        catch case _: IllegalArgumentException => JsError(s"Unknown AmlsSource value: $value")
+      case _ => JsError("Can only parse String")
+    },
+    Writes(source => JsString(source.toString))
+  )
 
-  case object Subscription
-  extends AmlsSource
-  case object AutomaticUpdate
-  extends AmlsSource
-  case object ManageAccountUpdate
-  extends AmlsSource
+  override def toString: String =
+
+    this match
+      case Subscription => "Subscription"
+      case AutomaticUpdate => "AutomaticUpdate"
+      case ManageAccountUpdate => "ManageAccountUpdate"
+    end match
+
+  end toString
 
 end AmlsSource

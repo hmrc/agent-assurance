@@ -34,9 +34,9 @@ import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.SuspensionDetails
-import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException
-import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckResult
-import uk.gov.hmrc.agentassurance.models.entityChecks.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.internalauth.client.test.BackendAuthComponentsStub
 import uk.gov.hmrc.internalauth.client.test.StubBehaviour

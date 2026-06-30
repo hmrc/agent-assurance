@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entityChecks
+package uk.gov.hmrc.agentassurance.models.entityCheck
 
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
-import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException
 
 case class EntityCheckResult(
   agentRecord: AgentDetailsDesResponse,

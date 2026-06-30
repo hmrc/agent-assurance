@@ -20,8 +20,8 @@ import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.connectors.CitizenDetailsConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.*
-import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckException
-import uk.gov.hmrc.agentassurance.models.entityChecks.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException
+import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.utils.DateTimeService
 import uk.gov.hmrc.domain.SaUtr
@@ -125,7 +125,8 @@ class EntityCheckService @Inject() (
       entityCheckExceptions: Seq[EntityCheckException]
     ): Future[Unit] =
       val failedChecks: Seq[String] = entityCheckExceptions.collect:
-        case x: EntityCheckException => x.exceptionMessage
+        case EntityCheckException.EntityDeceasedCheckFailed => EntityCheckException.EntityDeceasedCheckFailed.exceptionMessage
+        case EntityCheckException.AgentIsOnRefuseToDealList => EntityCheckException.AgentIsOnRefuseToDealList.exceptionMessage
 
       (agentRecord.uniqueTaxReference, failedChecks) match
         case (Some(utr), nonEmptyFailedChecks) if nonEmptyFailedChecks.nonEmpty =>

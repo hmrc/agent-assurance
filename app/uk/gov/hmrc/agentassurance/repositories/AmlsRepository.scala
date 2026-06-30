@@ -235,9 +235,10 @@ with Logging:
       case e =>
         (e, amlsEntity) match
           case (mongoException: MongoException, amlsEntity: UkAmlsEntity) if mongoException.getCode == 11000 =>
-            val utr = amlsEntity.utr.get
-            ArnUpsertResult.DuplicateUtrIndex(utr)
-//          case DuplicateUtrIndexFor(utr) => ArnUpsertResult.DuplicateUtrIndex(utr)
+            amlsEntity.utr match
+              case Some(utr) => ArnUpsertResult.DuplicateUtrIndex(utr)
+              case None => ArnUpsertResult.Failure(AmlsUnexpectedMongoError)
+          //          case DuplicateUtrIndexFor(utr) => ArnUpsertResult.DuplicateUtrIndex(utr)
           case _ => ArnUpsertResult.Failure(AmlsUnexpectedMongoError)
 
   private def repairLegacyUtrCollision(

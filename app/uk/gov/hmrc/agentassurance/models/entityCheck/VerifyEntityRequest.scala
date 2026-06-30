@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entityChecks
+package uk.gov.hmrc.agentassurance.models.entityCheck
 
-enum EntityCheckException(val exceptionMessage: String)
-extends Product
-with Serializable:
+import play.api.libs.json.Format
+import play.api.libs.json.Json
+import uk.gov.hmrc.agentassurance.models.Arn
 
-  case CitizenConnectorRequestFailed(code: Int)
-  extends EntityCheckException(s"The request to fetch the citizen details failed with a response status code of $code")
-  case EntityDeceasedCheckFailed
-  extends EntityCheckException("Agent is deceased")
-  case AgentIsOnRefuseToDealList
-  extends EntityCheckException("Agent is on the 'Refuse To Deal With' list")
+case class VerifyEntityRequest(identifier: Arn)
 
-end EntityCheckException
+object VerifyEntityRequest:
+  implicit val format: Format[VerifyEntityRequest] = Json.format[VerifyEntityRequest]
+end VerifyEntityRequest
