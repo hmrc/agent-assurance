@@ -101,7 +101,7 @@ with DesStubs {
     15.seconds
   )
 
-  def doPostRequest[T](body: T)(implicit writes: BodyWritable[T]): WSResponse = Await.result(
+  def doPostRequest[T](body: T)(using writes: BodyWritable[T]): WSResponse = Await.result(
     wsClient
       .url(url)
       .withHttpHeaders("Authorization" -> "Bearer XYZ", CONTENT_TYPE -> "application/json")

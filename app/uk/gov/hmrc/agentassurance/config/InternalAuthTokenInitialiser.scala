@@ -47,7 +47,7 @@ end NoOpInternalAuthTokenInitialiser
 class InternalAuthTokenInitialiserImpl @Inject() (
   appConfig: AppConfig,
   httpClient: HttpClientV2
-)(implicit ec: ExecutionContext)
+)(using ec: ExecutionContext)
 extends InternalAuthTokenInitialiser
 with Logging:
 

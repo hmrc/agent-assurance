@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models.entityCheck
+package uk.gov.hmrc.agentassurance.models.entitycheck
 
-enum EntityCheckException(val exceptionMessage: String)
-extends Product
-with Serializable:
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 
-  case CitizenConnectorRequestFailed(code: Int)
-  extends EntityCheckException(s"The request to fetch the citizen details failed with a response status code of $code")
-  case EntityDeceasedCheckFailed
-  extends EntityCheckException("Agent is deceased")
-  case AgentIsOnRefuseToDealList
-  extends EntityCheckException("Agent is on the 'Refuse To Deal With' list")
-
-end EntityCheckException
+case class EntityCheckResult(
+  agentRecord: AgentDetailsDesResponse,
+  entityCheckExceptions: Seq[EntityCheckException]
+)

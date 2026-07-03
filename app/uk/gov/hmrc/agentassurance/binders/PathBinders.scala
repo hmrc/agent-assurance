@@ -25,11 +25,6 @@ import uk.gov.hmrc.domain.SaAgentReference
 
 object PathBinders:
 
-//  implicit object NinoBinder
-//  extends SimpleObjectBinder[Nino](Nino.apply, _.value)
-//  implicit object SaAgentReferenceBinder
-//  extends SimpleObjectBinder[SaAgentReference](SaAgentReference.apply, _.value)
-
   implicit val ninoBinder: PathBindable[Nino] =
     new PathBindable[Nino]:
       override def bind(

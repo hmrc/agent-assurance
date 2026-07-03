@@ -23,7 +23,7 @@ import scala.concurrent.Future
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import uk.gov.hmrc.agentassurance.connectors.CitizenDetailsConnector
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
 

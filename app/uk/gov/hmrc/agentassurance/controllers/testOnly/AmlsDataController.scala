@@ -39,7 +39,7 @@ class AmlsDataController @Inject() (
   cc: ControllerComponents,
   amlsRepository: AmlsRepository,
   override val authConnector: AuthConnector
-)(implicit ex: ExecutionContext)
+)(using ex: ExecutionContext)
 extends BackendController(cc)
 with AuthActions:
 

@@ -29,5 +29,5 @@ case class PaginatedResources[A](
 
 object PaginatedResources:
 
-  implicit def paginatedResourcesFormat[A](implicit resourcesFormat: Format[A]): Format[PaginatedResources[A]] = Json.format[PaginatedResources[A]]
+  implicit def paginatedResourcesFormat[A](using resourcesFormat: Format[A]): Format[PaginatedResources[A]] = Json.format[PaginatedResources[A]]
 end PaginatedResources

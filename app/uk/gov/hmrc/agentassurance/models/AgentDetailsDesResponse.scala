@@ -37,9 +37,8 @@ object AgentDetailsDesResponse:
 
   implicit val agentRecordDetailsFormat: OFormat[AgentDetailsDesResponse] = Json.format[AgentDetailsDesResponse]
 
-  def agentRecordDatabaseDetailsFormat(implicit
-    crypto: Encrypter
-      & Decrypter
+  def agentRecordDatabaseDetailsFormat(
+    using crypto: Encrypter & Decrypter
   ): Format[AgentDetailsDesResponse] = (__ \ "uniqueTaxReference")
     .formatNullable[String](using stringEncrypterDecrypter)
     .bimap[Option[Utr]](

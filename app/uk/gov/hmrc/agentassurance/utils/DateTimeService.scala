@@ -23,7 +23,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object DateTimeService:
-  def nowAtLondonTime(implicit clock: Clock): String = DateTimeFormatter.ofPattern(
+  def nowAtLondonTime(using clock: Clock): String = DateTimeFormatter.ofPattern(
     "d MMMM yyyy h:mma z",
     Locale.ENGLISH
   ).withZone(ZoneId.of("Europe/London")).format(

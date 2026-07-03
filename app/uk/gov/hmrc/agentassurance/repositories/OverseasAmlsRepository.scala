@@ -50,7 +50,7 @@ trait OverseasAmlsRepository:
 end OverseasAmlsRepository
 
 @Singleton
-class OverseasAmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit
+class OverseasAmlsRepositoryImpl @Inject() (mongo: MongoComponent)(using
   ec: ExecutionContext,
   clock: Clock
 )

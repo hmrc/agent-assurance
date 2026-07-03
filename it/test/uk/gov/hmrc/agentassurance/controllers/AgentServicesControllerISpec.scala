@@ -77,7 +77,7 @@ with DmsSubmissionStubs {
     15.seconds
   )
 
-  def doPOSTRequest[T](body: T)(implicit wr: BodyWritable[T]): WSResponse = Await.result(
+  def doPOSTRequest[T](body: T)(using wr: BodyWritable[T]): WSResponse = Await.result(
     wsClient
       .url(url)
       .withHttpHeaders("Authorization" -> "Bearer XYZ")

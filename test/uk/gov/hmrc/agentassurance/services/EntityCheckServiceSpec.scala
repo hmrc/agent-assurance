@@ -25,8 +25,8 @@ import uk.gov.hmrc.agentassurance.helpers.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.*
 import uk.gov.hmrc.agentassurance.mocks.*
 import uk.gov.hmrc.agentassurance.models.*
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.utils.DateTimeService
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier

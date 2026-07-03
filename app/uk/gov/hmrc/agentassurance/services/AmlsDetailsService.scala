@@ -45,12 +45,12 @@ class AmlsDetailsService @Inject() (
   agencyDetailsService: AgencyDetailsService,
   agentServicesAccountConnector: AgentServicesAccountConnector,
   appConfig: AppConfig
-)(implicit ec: ExecutionContext)
+)(using ec: ExecutionContext)
 extends Logging:
 
   def getAmlsDetailsByArn(
     arn: Arn
-  )(implicit
+  )(using
     hc: HeaderCarrier,
     request: Request[?]
   ): Future[(AmlsStatus, Option[AmlsDetails])] =
@@ -61,7 +61,7 @@ extends Logging:
 
   private def getLegacyAmlsDetailsByArn(
     arn: Arn
-  )(implicit
+  )(using
     hc: HeaderCarrier,
     request: Request[?]
   ): Future[(AmlsStatus, Option[AmlsDetails])] =
@@ -101,7 +101,7 @@ extends Logging:
 
   private def getAmlsDetailsFromAgentServicesAccount(
     arn: Arn
-  )(implicit
+  )(using
     hc: HeaderCarrier,
     request: Request[?]
   ): Future[(AmlsStatus, Option[AmlsDetails])] = agentServicesAccountConnector.getAgentRecord(arn).flatMap { agentRecord =>
@@ -131,7 +131,7 @@ extends Logging:
   private def handleNoAmlsDetails(
     arn: Arn,
     isUkOverride: Option[Boolean] = None
-  )(implicit
+  )(using
     hc: HeaderCarrier,
     request: Request[?]
   ): Future[(AmlsStatus, Option[AmlsDetails])] =
@@ -155,7 +155,7 @@ extends Logging:
     membershipNumber: String,
     asaAmlsDetails: UkAmlsDetails
   )(
-    implicit hc: HeaderCarrier
+    using hc: HeaderCarrier
   ): Future[AmlsStatus] =
     desConnector
       .getAmlsSubscriptionStatus(membershipNumber)
@@ -236,7 +236,7 @@ extends Logging:
   private def deriveStatusFromDetails(
     arn: Arn,
     details: AmlsDetails
-  )(implicit hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] =
+  )(using hc: HeaderCarrier): Future[(AmlsStatus, Option[AmlsDetails])] =
     details match
       case overseasAmlsDetails: OverseasAmlsDetails => Future.successful((AmlsStatus.ValidAmlsNonUK, Some(overseasAmlsDetails)))
       case ukAmlsDetails: UkAmlsDetails =>
@@ -261,7 +261,7 @@ extends Logging:
     amlsRequest: AmlsRequest,
     amlsSource: AmlsSource = AmlsSource.Subscription
   )(
-    implicit
+    using
     hc: HeaderCarrier,
     request: Request[?]
   ): Future[Either[AmlsError, AmlsDetails]] =
@@ -332,7 +332,7 @@ extends Logging:
           logger.warn(s"[AmlsDetailsService][storeNewAmlsRequest] Failed to store AMLS record: $error")
           Future.successful(Left(error))
 
-  private def getOrRetrieveUtr(arn: Arn)(implicit
+  private def getOrRetrieveUtr(arn: Arn)(using
     hc: HeaderCarrier,
     request: Request[?]
   ): Future[Option[Utr]] =

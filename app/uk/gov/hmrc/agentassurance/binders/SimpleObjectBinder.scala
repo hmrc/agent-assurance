@@ -21,7 +21,7 @@ import play.api.mvc.PathBindable
 class SimpleObjectBinder[T](
   bind: String => T,
   unbind: T => String
-)(implicit m: Manifest[T])
+)(using m: Manifest[T])
 extends PathBindable[T]:
 
   override def bind(

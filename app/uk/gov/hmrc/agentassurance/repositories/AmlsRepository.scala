@@ -86,7 +86,7 @@ trait AmlsRepository:
 end AmlsRepository
 
 @Singleton
-class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
+class AmlsRepositoryImpl @Inject() (mongo: MongoComponent)(using ec: ExecutionContext)
 extends PlayMongoRepository[UkAmlsEntity](
   mongoComponent = mongo,
   collectionName = "agent-amls",
@@ -211,7 +211,10 @@ with Logging:
     collection
       .updateOne(
         filter = Filters.equal("arn", arn.value),
-        update = Updates.set("amlsDetails.membershipExpiresOn", date.toString)
+        update = Updates.combine(
+          Updates.set("amlsDetails.membershipExpiresOn", date.toString),
+          Updates.set("amlsSource", AmlsSource.AutomaticUpdate.toString)
+        )
       )
       .toFuture()
 

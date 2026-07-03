@@ -37,9 +37,8 @@ object AgencyDetails:
 
   implicit val agencyDetailsFormat: Format[AgencyDetails] = Json.format[AgencyDetails]
 
-  def agencyDetailsDatabaseFormat(implicit
-    crypto: Encrypter
-      & Decrypter
+  def agencyDetailsDatabaseFormat(
+    using crypto: Encrypter & Decrypter
   ): Format[AgencyDetails] = (__ \ "agencyName")
     .formatNullable[String](using stringEncrypterDecrypter)
     .and((__ \ "agencyEmail").formatNullable[String](using stringEncrypterDecrypter))
@@ -64,9 +63,8 @@ object BusinessAddress:
 
   implicit val format: OFormat[BusinessAddress] = Json.format
 
-  def businessAddressDatabaseFormat(implicit
-    crypto: Encrypter
-      & Decrypter
+  def businessAddressDatabaseFormat(
+    using crypto: Encrypter & Decrypter
   ): Format[BusinessAddress] = (__ \ "addressLine1")
     .format[String](using stringEncrypterDecrypter)
     .and((__ \ "addressLine2").formatNullable[String](using stringEncrypterDecrypter))

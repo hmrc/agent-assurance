@@ -26,7 +26,7 @@ import play.api.mvc.Result
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.SuspensionDetails
-import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
 import uk.gov.hmrc.agentassurance.services.EntityCheckService
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.internalauth.client.*

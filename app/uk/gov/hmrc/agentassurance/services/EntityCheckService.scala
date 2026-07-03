@@ -20,8 +20,8 @@ import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.connectors.CitizenDetailsConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.*
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckException
-import uk.gov.hmrc.agentassurance.models.entityCheck.EntityCheckResult
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.utils.DateTimeService
 import uk.gov.hmrc.domain.SaUtr
@@ -46,7 +46,7 @@ class EntityCheckService @Inject() (
 
   def verifyAgent(
     arn: Arn
-  )(implicit
+  )(using
     request: Request[?],
     hc: HeaderCarrier,
     ec: ExecutionContext

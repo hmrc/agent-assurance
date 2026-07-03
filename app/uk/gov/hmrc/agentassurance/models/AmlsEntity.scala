@@ -62,7 +62,7 @@ case class OverseasAmlsEntity(
   createdDate: Option[Instant]
 )
 extends AmlsEntity:
-  def withDefaultCreatedDate(implicit clock: Clock): OverseasAmlsEntity = copy(createdDate = Some(createdDate.getOrElse(Instant.now(clock))))
+  def withDefaultCreatedDate(using clock: Clock): OverseasAmlsEntity = copy(createdDate = Some(createdDate.getOrElse(Instant.now(clock))))
 end OverseasAmlsEntity
 
 object OverseasAmlsEntity:

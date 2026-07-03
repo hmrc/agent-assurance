@@ -49,7 +49,7 @@ import uk.gov.hmrc.agentassurance.repositories.PropertiesRepositoryImpl
 import uk.gov.hmrc.agentassurance.stubs.CitizenDetailsStubs
 import uk.gov.hmrc.agentassurance.stubs.EmailStub
 import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.entityCheck.VerifyEntityRequest
+import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 

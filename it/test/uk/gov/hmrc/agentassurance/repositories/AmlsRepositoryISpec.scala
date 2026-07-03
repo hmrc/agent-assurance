@@ -244,7 +244,10 @@ with InstantClockTestSupport {
 
         val checkResult = repository.collection.find().toFuture().futureValue
         checkResult.size mustBe 1
-        checkResult.head mustBe oldAmlsEntity.copy(amlsDetails = oldUkAmlsDetails.copy(membershipExpiresOn = Some(newExpiryDate)))
+        checkResult.head mustBe oldAmlsEntity.copy(
+          amlsDetails = oldUkAmlsDetails.copy(membershipExpiresOn = Some(newExpiryDate)),
+          amlsSource = AmlsSource.AutomaticUpdate
+        )
       }
     }
   }

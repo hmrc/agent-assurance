@@ -77,19 +77,19 @@ trait DesConnector:
 
   def getActiveCesaAgentRelationships(
     clientIdentifier: TaxIdentifier
-  )(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]]
+  )(using hc: HeaderCarrier): Future[Seq[SaAgentReference]]
   def getAmlsSubscriptionStatus(
     amlsRegistrationNumber: String
-  )(implicit hc: HeaderCarrier): Future[AmlsSubscriptionRecord]
+  )(using hc: HeaderCarrier): Future[AmlsSubscriptionRecord]
 
   def getAgentRecord(
     arn: Arn
-  )(implicit
+  )(using
     request: Request[?],
     hc: HeaderCarrier
   ): Future[AgentDetailsDesResponse]
 
-  def getBusinessName(utr: String)(implicit hc: HeaderCarrier): Future[Option[String]]
+  def getBusinessName(utr: String)(using hc: HeaderCarrier): Future[Option[String]]
 
 end DesConnector
 
@@ -99,7 +99,7 @@ class DesConnectorImpl @Inject() (
   agentCacheProvider: CacheProvider,
   override val configuration: Config,
   override val actorSystem: ActorSystem
-)(implicit
+)(using
   appConfig: AppConfig,
   ec: ExecutionContext
 )
@@ -116,7 +116,7 @@ with Logging:
 
   def getActiveCesaAgentRelationships(
     clientIdentifier: TaxIdentifier
-  )(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] =
+  )(using hc: HeaderCarrier): Future[Seq[SaAgentReference]] =
     val encodedClientId = UriEncoding.encodePathSegment(clientIdentifier.value, "UTF-8")
     val encodedClientType: String =
       val clientType =
@@ -144,7 +144,7 @@ with Logging:
   // API #1028 Get Subscription Status
   def getAmlsSubscriptionStatus(
     amlsRegistrationNumber: String
-  )(implicit hc: HeaderCarrier): Future[AmlsSubscriptionRecord] =
+  )(using hc: HeaderCarrier): Future[AmlsSubscriptionRecord] =
     val encodedRegNumber = UriEncoding.encodePathSegment(amlsRegistrationNumber, UTF_8.name)
     val url = new URI(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status").toURL
     getWithDesHeadersWithRetry[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
@@ -153,7 +153,7 @@ with Logging:
   // API #1170 (API#4) Get Agent Record
   override def getAgentRecord(
     arn: Arn
-  )(implicit
+  )(using
     request: Request[?],
     hc: HeaderCarrier
   ): Future[AgentDetailsDesResponse] =
@@ -163,7 +163,7 @@ with Logging:
   end getAgentRecord
 
   // API#1163 Registration
-  override def getBusinessName(utr: String)(implicit hc: HeaderCarrier): Future[Option[String]] =
+  override def getBusinessName(utr: String)(using hc: HeaderCarrier): Future[Option[String]] =
     val url = new URI(s"$baseUrl/registration/individual/utr/${UriEncoding.encodePathSegment(utr, "UTF-8")}").toURL
     agentCacheProvider.agentNameCache(utr):
       postWithDesHeaders[DesRegistrationRequest, DesAgentNameResponse](
@@ -183,7 +183,7 @@ with Logging:
   ](
     url: URL,
     request: B
-  )(implicit
+  )(using
     hc: HeaderCarrier,
     ec: ExecutionContext,
     y: Writes[B]
@@ -206,7 +206,7 @@ with Logging:
   private def getWithDesHeadersWithRetry[A](
     apiName: String,
     url: URL
-  )(implicit
+  )(using
     hc: HeaderCarrier,
     ec: ExecutionContext,
     x: Reads[A]

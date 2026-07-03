@@ -114,7 +114,7 @@ with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
 
   implicit val defaultTimeout: Duration = 5 seconds
 
-  def await[A](future: Future[A])(implicit timeout: Duration): A = Await.result(future, timeout)
+  def await[A](future: Future[A])(using timeout: Duration): A = Await.result(future, timeout)
 
   override def irAgentReference: String = "IRSA-123"
 
