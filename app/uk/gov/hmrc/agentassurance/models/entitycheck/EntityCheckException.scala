@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.models.entitycheck
 
-enum EntityCheckException(val exceptionMessage: String)
-extends Product
-with Serializable:
+enum EntityCheckException(val exceptionMessage: String):
 
   case CitizenConnectorRequestFailed(code: Int)
   extends EntityCheckException(s"The request to fetch the citizen details failed with a response status code of $code")
