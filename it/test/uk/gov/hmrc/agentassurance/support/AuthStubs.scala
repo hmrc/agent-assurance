@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.support
+package uk.gov.hmrc.agentassurance.support
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import uk.gov.hmrc.agentassurance.models.Arn
 
 trait BasicUserAuthStubs { WiremockAware =>

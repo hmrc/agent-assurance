@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.stubs
+package uk.gov.hmrc.agentassurance.stubs
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout

@@ -16,13 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.modules
 
-import java.nio.charset.StandardCharsets
-import java.util.Base64
-
-import play.api.inject.Binding
-import play.api.inject.Module
 import play.api.Configuration
 import play.api.Environment
+import play.api.inject.Binding
+import play.api.inject.Module
 import uk.gov.hmrc.crypto.Crypted
 import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
@@ -31,12 +28,15 @@ import uk.gov.hmrc.crypto.PlainContent
 import uk.gov.hmrc.crypto.PlainText
 import uk.gov.hmrc.crypto.SymmetricCryptoFactory
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 class CryptoProviderModule
-extends Module {
+extends Module:
 
   def aesCryptoInstance(configuration: Configuration): Encrypter
-    with Decrypter =
-    if (configuration.underlying.getBoolean("fieldLevelEncryption.enable"))
+    & Decrypter =
+    if configuration.underlying.getBoolean("fieldLevelEncryption.enable") then
       SymmetricCryptoFactory.aesCryptoFromConfig("fieldLevelEncryption", configuration.underlying)
     else
       NoCrypto
@@ -44,28 +44,27 @@ extends Module {
   override def bindings(
     environment: Environment,
     configuration: Configuration
-  ): Seq[Binding[_]] = Seq(
+  ): Seq[Binding[?]] = Seq(
     bind[Encrypter
-      with Decrypter].qualifiedWith("aes").toInstance(aesCryptoInstance(configuration))
+      & Decrypter].qualifiedWith("aes").toInstance(aesCryptoInstance(configuration))
   )
 
-}
+end CryptoProviderModule
 
 /** Encrypter/decrypter that does nothing (i.e. leaves content in plaintext). Only to be used for debugging.
   */
 trait NoCrypto
 extends Encrypter
-with Decrypter {
+with Decrypter:
 
   def encrypt(plain: PlainContent): Crypted =
-    plain match {
+    plain match
       case PlainText(text) => Crypted(text)
       case PlainBytes(bytes) => Crypted(new String(Base64.getEncoder.encode(bytes), StandardCharsets.UTF_8))
-    }
   def decrypt(notEncrypted: Crypted): PlainText = PlainText(notEncrypted.value)
   def decryptAsBytes(nullEncrypted: Crypted): PlainBytes = PlainBytes(Base64.getDecoder.decode(nullEncrypted.value))
 
-}
+end NoCrypto
 
 object NoCrypto
 extends NoCrypto

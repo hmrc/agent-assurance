@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import java.time.Instant
-
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
+
+import java.time.Instant
 
 case class DmsResponse(
   processingDate: Instant,
   reference: String
 )
 
-object DmsResponse {
+object DmsResponse:
   implicit val format: OFormat[DmsResponse] = Json.format[DmsResponse]
-}
+end DmsResponse

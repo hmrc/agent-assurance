@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import org.scalamock.handlers.CallHandler4
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.Request
@@ -28,19 +29,26 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 trait MockEntityCheckService
-extends MockFactory {
+extends MockFactory:
   this: TestSuite =>
 
   val mockEntityCheckService: EntityCheckService = mock[EntityCheckService]
 
-  def mockVerifyEntitySuccess(arn: Arn)(returns: EntityCheckResult) =
+  def mockVerifyEntitySuccess(arn: Arn)(returns: EntityCheckResult): CallHandler4[
+    Arn,
+    Request[?],
+    HeaderCarrier,
+    ExecutionContext,
+    Future[EntityCheckResult]
+  ] =
     (mockEntityCheckService
       .verifyAgent(_: Arn)(
-        _: Request[_],
+        using
+        _: Request[?],
         _: HeaderCarrier,
         _: ExecutionContext
       ))
       .expects(arn, *, *, *)
       .returning(Future.successful(returns))
 
-}
+end MockEntityCheckService

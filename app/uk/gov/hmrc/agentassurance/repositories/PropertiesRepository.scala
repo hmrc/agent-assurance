@@ -35,7 +35,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @ImplementedBy(classOf[PropertiesRepositoryImpl])
-trait PropertiesRepository {
+trait PropertiesRepository:
 
   def findProperties(
     key: String,
@@ -49,7 +49,7 @@ trait PropertiesRepository {
 
   def deleteProperty(property: Property): Future[Unit]
 
-}
+end PropertiesRepository
 
 @Singleton
 class PropertiesRepositoryImpl @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
@@ -61,7 +61,7 @@ extends PlayMongoRepository[Property](
     IndexModel(ascending("key"))
   )
 )
-with PropertiesRepository {
+with PropertiesRepository:
 
   override lazy val requiresTtlIndex: Boolean = false
 
@@ -69,7 +69,7 @@ with PropertiesRepository {
     key: String,
     page: Int,
     pageSize: Int
-  ): Future[(Int, Seq[String])] = {
+  ): Future[(Int, Seq[String])] =
 
     val skipDuePageNumber = pageSize * (page - 1)
 
@@ -86,20 +86,20 @@ with PropertiesRepository {
       .toFuture()
       .map(_.map(_.value))
 
-    for {
+    for
       size <- collectionSize
       utrs <- utrsForPage
-    } yield (size, utrs)
-  }
+    yield (size, utrs)
+    end for
+  end findProperties
 
-  override def propertyExists(property: Property): Future[Boolean] = {
+  override def propertyExists(property: Property): Future[Boolean] =
     collection
       .find(and(equal("key", property.key), equal("value", property.value)))
       .headOption()
       .map(_.isDefined)
-  }
 
-  override def upsertProperty(property: Property): Future[Unit] = {
+  override def upsertProperty(property: Property): Future[Unit] =
     collection
       .replaceOne(
         filter = and(equal("key", property.key), equal("value", property.value)),
@@ -108,13 +108,11 @@ with PropertiesRepository {
       )
       .toFuture()
       .map(_ => ())
-  }
 
-  override def deleteProperty(property: Property): Future[Unit] = {
+  override def deleteProperty(property: Property): Future[Unit] =
     collection
       .deleteOne(and(equal("key", property.key), equal("value", property.value)))
       .toFuture()
       .map(_ => ())
-  }
 
-}
+end PropertiesRepositoryImpl

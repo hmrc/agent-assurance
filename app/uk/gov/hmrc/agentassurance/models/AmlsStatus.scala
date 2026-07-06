@@ -16,30 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import julienrf.json.derived
-import play.api.libs.json.Format
+enum AmlsStatus:
 
-sealed trait AmlsStatus
+  case NoAmlsDetailsNonUK,
+    ValidAmlsNonUK,
+    NoAmlsDetailsUK,
+    ValidAmlsDetailsUK,
+    ExpiredAmlsDetailsUK,
+    PendingAmlsDetails,
+    PendingAmlsDetailsRejected
 
-object AmlsStatus {
-
-  implicit val formatAmlsSource: Format[AmlsStatus] = derived.oformat[AmlsStatus]()
-
-  final case object NoAmlsDetailsNonUK
-  extends AmlsStatus
-  final case object ValidAmlsNonUK
-  extends AmlsStatus
-
-  final case object NoAmlsDetailsUK
-  extends AmlsStatus
-  final case object ValidAmlsDetailsUK
-  extends AmlsStatus
-  final case object ExpiredAmlsDetailsUK
-  extends AmlsStatus
-
-  final case object PendingAmlsDetails
-  extends AmlsStatus
-  final case object PendingAmlsDetailsRejected
-  extends AmlsStatus
-
-}
+end AmlsStatus

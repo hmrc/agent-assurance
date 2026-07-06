@@ -16,21 +16,20 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
+import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.stream.Materializer
 import play.api.Logging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
 import uk.gov.hmrc.http.HeaderCarrier
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
 @Singleton
 class BusinessNamesService @Inject() (desConnector: DesConnector)(
@@ -39,21 +38,19 @@ class BusinessNamesService @Inject() (desConnector: DesConnector)(
   mat: Materializer,
   ec: ExecutionContext
 )
-extends Logging {
+extends Logging:
 
-  val maxCallsPerSecondBusinessNames: Int = appConfig.maxCallsPerSecondBusinessNames
+  private val maxCallsPerSecondBusinessNames: Int = appConfig.maxCallsPerSecondBusinessNames
 
-  def get(utrs: Seq[String])(implicit headerCarrier: HeaderCarrier): Future[Set[BusinessNameByUtr]] = {
+  def get(utrs: Seq[String])(implicit headerCarrier: HeaderCarrier): Future[Set[BusinessNameByUtr]] =
     Source(utrs.toList)
       .throttle(maxCallsPerSecondBusinessNames, 1.second)
       .mapAsync(parallelism = 1) { utrStr =>
         get(utrStr).map(an => BusinessNameByUtr(utrStr, an))
       }
       .runWith(Sink.collection[BusinessNameByUtr, Set[BusinessNameByUtr]])
-  }
 
-  def get(utr: String)(implicit headerCarrier: HeaderCarrier): Future[Option[String]] = {
+  def get(utr: String)(implicit headerCarrier: HeaderCarrier): Future[Option[String]] =
     desConnector.getBusinessName(utr)
-  }
 
-}
+end BusinessNamesService

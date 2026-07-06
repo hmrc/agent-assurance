@@ -16,36 +16,35 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.mongo.lock.MongoLockRepository
 import uk.gov.hmrc.mongo.lock.TimePeriodLockService
 
-@Singleton
-class MongoLockService @Inject() (mongoLockRepository: MongoLockRepository)(implicit appConfig: AppConfig) {
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-  def dailyLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] = {
+@Singleton
+class MongoLockService @Inject() (mongoLockRepository: MongoLockRepository)(implicit appConfig: AppConfig):
+
+  def dailyLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] =
     val lockService = TimePeriodLockService(
       mongoLockRepository,
       lockId = s"verify-utr-daily-${utr.value}",
       ttl = appConfig.entityChecksLockExpires
     )
     lockService.withRenewedLock(body)
-  }
+  end dailyLock
 
-  def emailLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] = {
+  def emailLock[T](utr: Utr)(body: => Future[T])(implicit ec: ExecutionContext): Future[Option[T]] =
     val lockService = TimePeriodLockService(
       mongoLockRepository,
       lockId = s"verify-utr-email-${utr.value}",
       ttl = appConfig.entityChecksEmailLockExpires
     )
     lockService.withRenewedLock(body)
-  }
+  end emailLock
 
-}
+end MongoLockService

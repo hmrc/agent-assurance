@@ -19,10 +19,11 @@ package uk.gov.hmrc.agentassurance.models.clientidtypes
 import uk.gov.hmrc.domain.Modulus11Check
 
 object UtrCheck
-extends Modulus11Check {
+extends Modulus11Check:
 
-  def isValid(utr: String): Boolean = {
+  def isValid(utr: String): Boolean =
     val suffix: String = utr.substring(1)
     calculateCheckCharacter(suffix) == utr.charAt(0)
-  }
-}
+  end isValid
+
+end UtrCheck

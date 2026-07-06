@@ -28,6 +28,6 @@ case class EntityCheckNotification(
   dateTime: String
 )
 
-object EntityCheckNotification {
+object EntityCheckNotification:
   implicit val format: Format[EntityCheckNotification] = Json.format[EntityCheckNotification]
-}
+end EntityCheckNotification

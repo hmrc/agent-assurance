@@ -16,12 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.controllers.testOnly
 
-import java.time.LocalDate
-import javax.inject.Inject
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import play.api.libs.json.Format
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
@@ -29,66 +23,60 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
-import uk.gov.hmrc.agentassurance.models.CreateAmlsRequest
-import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
-import uk.gov.hmrc.agentassurance.models.OverseasAmlsEntity
-import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
+import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
-import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import java.time.LocalDate
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class AmlsDataController @Inject() (
   overseasAmlsRepository: OverseasAmlsRepository,
   cc: ControllerComponents,
   amlsRepository: AmlsRepository,
   override val authConnector: AuthConnector
-)(implicit ex: ExecutionContext)
+)(using ex: ExecutionContext)
 extends BackendController(cc)
-with AuthActions {
+with AuthActions:
 
-  def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request => arn: Arn =>
-    request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match {
+  def addAmlsData(): Action[AnyContent] = AuthorisedWithArn { request => arn =>
+    request.body.asText.map(s => Json.parse(s).validate[AmlsDataRequest]) match
       case Some(JsSuccess(amlsRequest, _)) =>
-        if (amlsRequest.isUk) {
-          createUkAmlsRecord(arn, amlsRequest).map {
+        if amlsRequest.isUk then
+          createUkAmlsRecord(arn, amlsRequest).map:
             case Right(_) => Created
             case _ => InternalServerError
-          }
-        }
-        else {
-          createOverseasAmlsRecord(arn, amlsRequest.membershipNumber).map {
+        else
+          createOverseasAmlsRecord(arn, amlsRequest.membershipNumber).map:
             case Right(_) => Created
             case _ => InternalServerError
-          }
-        }
       case _ => Future.successful(BadRequest)
-    }
 
   }
 
   private def createUkAmlsRecord(
     arn: Arn,
     amlsRequest: AmlsDataRequest
-  ) = {
+  ) =
     val body =
-      if (amlsRequest.isHmrc)
+      if amlsRequest.isHmrc then
         "HM Revenue and Customs (HMRC)"
       else
         "Law Society of Scotland"
     val maybeMembershipNumber =
-      if (amlsRequest.membershipNumber.isEmpty)
+      if amlsRequest.membershipNumber.isEmpty then
         None
       else
         Some(amlsRequest.membershipNumber)
     val dateExpiredOn =
-      amlsRequest.isExpired match {
+      amlsRequest.isExpired match
         case Some(true) => Some(LocalDate.now())
         case Some(false) => Some(LocalDate.now().plusMonths(12))
         case _ => None
-      }
     val utr: String = Math.random().*(1000000000).toString.substring(2, 12)
 
     amlsRepository
@@ -104,15 +92,14 @@ with AuthActions {
         )
       )
       .flatMap(_ => amlsRepository.updateArn(Utr(utr), arn))
-
-  }
+  end createUkAmlsRecord
 
   private def createOverseasAmlsRecord(
     arn: Arn,
     membershipNumber: String
-  ) = {
+  ) =
     val maybeMembershipNumber =
-      if (membershipNumber.isEmpty)
+      if membershipNumber.isEmpty then
         None
       else
         Some(membershipNumber)
@@ -127,7 +114,7 @@ with AuthActions {
         createdDate = None
       )
     )
-  }
+  end createOverseasAmlsRecord
 
   case class AmlsDataRequest(
     isUk: Boolean,
@@ -137,8 +124,8 @@ with AuthActions {
     appliedOn: Option[LocalDate] = None
   )
 
-  object AmlsDataRequest {
+  object AmlsDataRequest:
     implicit val format: Format[AmlsDataRequest] = Json.format[AmlsDataRequest]
-  }
+  end AmlsDataRequest
 
-}
+end AmlsDataController

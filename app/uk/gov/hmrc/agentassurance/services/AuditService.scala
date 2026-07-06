@@ -16,44 +16,43 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import java.time.temporal.ChronoUnit
-import java.time.LocalDateTime
-import java.util.UUID
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import play.api.libs.json.Json
 import play.api.libs.json.Writes
 import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.agentassurance.models.audit.AgentCheckAuditEvent
 import uk.gov.hmrc.agentassurance.models.audit.AgentCheckFailureNotificationAuditEvent
 import uk.gov.hmrc.agentassurance.models.audit.AuditDetail
 import uk.gov.hmrc.agentassurance.models.audit.EmailData
-import uk.gov.hmrc.agentassurance.models.AgentCheckOutcome
-import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
-import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
-import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
+
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
+import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton
-class AuditService @Inject() (auditConnector: AuditConnector)(implicit
+class AuditService @Inject() (auditConnector: AuditConnector)(using
   ec: ExecutionContext,
   appConfig: AppConfig
-) {
+):
 
   def auditEntityChecksPerformed(
     arn: Arn,
     utr: Option[Utr],
     agentCheckOutcomes: Seq[AgentCheckOutcome]
   )(
-    implicit hc: HeaderCarrier
+    using hc: HeaderCarrier
   ): Unit = audit(AgentCheckAuditEvent(
     arn,
     utr,
@@ -62,7 +61,7 @@ class AuditService @Inject() (auditConnector: AuditConnector)(implicit
 
   def auditEntityCheckFailureNotificationSent(
     entityCheckNotification: EntityCheckNotification
-  )(implicit hc: HeaderCarrier): Unit = audit(
+  )(using hc: HeaderCarrier): Unit = audit(
     AgentCheckFailureNotificationAuditEvent(
       agentReferenceNumber = entityCheckNotification.arn,
       utr = entityCheckNotification.utr,
@@ -74,7 +73,7 @@ class AuditService @Inject() (auditConnector: AuditConnector)(implicit
     )
   )
 
-  private def audit[A <: AuditDetail: Writes](a: A)(implicit hc: HeaderCarrier): Future[AuditResult] = {
+  private def audit[A <: AuditDetail: Writes](a: A)(using hc: HeaderCarrier): Future[AuditResult] =
     auditConnector
       .sendExtendedEvent(
         ExtendedDataEvent(
@@ -85,8 +84,7 @@ class AuditService @Inject() (auditConnector: AuditConnector)(implicit
           tags = hc.toAuditTags()
         )
       )
-  }
 
   private val auditSource = "agent-assurance"
 
-}
+end AuditService

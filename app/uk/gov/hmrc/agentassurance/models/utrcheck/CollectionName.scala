@@ -16,27 +16,21 @@
 
 package uk.gov.hmrc.agentassurance.models.utrcheck
 
-import CollectionName._
+enum CollectionName(val textValue: String):
 
-sealed trait CollectionName {
-  override def toString: String =
-    this match {
-      case ManuallyAssured => "manually-assured"
-      case RefusalToDealWith => "refusal-to-deal-with"
-    }
-}
-object CollectionName {
+  case ManuallyAssured
+  extends CollectionName("manually-assured")
+  case RefusalToDealWith
+  extends CollectionName("refusal-to-deal-with")
 
-  case object ManuallyAssured
-  extends CollectionName
-  case object RefusalToDealWith
-  extends CollectionName
+end CollectionName
 
-  def fromString(str: String): Option[CollectionName] =
-    str.toLowerCase match {
+object CollectionName:
+
+  def fromString(textValue: String): Option[CollectionName] =
+    textValue.toLowerCase match
       case "refusal-to-deal-with" => Some(RefusalToDealWith)
       case "manually-assured" => Some(ManuallyAssured)
       case _ => None
-    }
 
-}
+end CollectionName

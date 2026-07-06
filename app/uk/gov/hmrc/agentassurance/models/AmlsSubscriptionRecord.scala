@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import java.time.LocalDate
-
 import play.api.libs.json.Format
 import play.api.libs.json.Json
+
+import java.time.LocalDate
 
 case class AmlsSubscriptionRecord(
   formBundleStatus: String,
@@ -29,6 +29,6 @@ case class AmlsSubscriptionRecord(
   suspended: Option[Boolean]
 )
 
-object AmlsSubscriptionRecord {
+object AmlsSubscriptionRecord:
   implicit val amlsSubscriptionRecordFormat: Format[AmlsSubscriptionRecord] = Json.format[AmlsSubscriptionRecord]
-}
+end AmlsSubscriptionRecord

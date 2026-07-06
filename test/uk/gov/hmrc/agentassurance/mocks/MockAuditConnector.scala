@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import org.scalamock.handlers.CallHandler3
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import uk.gov.hmrc.http.HeaderCarrier
@@ -31,9 +32,14 @@ extends MockFactory { this: TestSuite =>
 
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
 
-  def mockSendExtendedEvent(result: AuditResult) =
+  def mockSendExtendedEvent(result: AuditResult): CallHandler3[
+    ExtendedDataEvent,
+    HeaderCarrier,
+    ExecutionContext,
+    Future[AuditResult]
+  ] =
     (mockAuditConnector
-      .sendExtendedEvent(_: ExtendedDataEvent)(_: HeaderCarrier, _: ExecutionContext))
+      .sendExtendedEvent(_: ExtendedDataEvent)(using _: HeaderCarrier, _: ExecutionContext))
       .expects(*, *, *)
       .returning(Future.successful(result))
 

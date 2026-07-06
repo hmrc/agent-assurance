@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import org.scalamock.handlers.CallHandler4
+
 import java.time.Instant
-
 import scala.concurrent.Future
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import uk.gov.hmrc.agentassurance.models.DmsResponse
@@ -30,15 +30,21 @@ import uk.gov.hmrc.http.HeaderCarrier
 trait MockDmsService
 extends MockFactory { this: TestSuite =>
 
-  val mockDmsService = mock[DmsService]
+  val mockDmsService: DmsService = mock[DmsService]
 
-  def mockSubmitToDmsSuccess =
+  def mockSubmitToDmsSuccess: CallHandler4[
+    Option[String],
+    Instant,
+    DmsSubmissionReference,
+    HeaderCarrier,
+    Future[DmsResponse]
+  ] =
     (mockDmsService
       .submitToDms(
         _: Option[String],
         _: Instant,
         _: DmsSubmissionReference
-      )(_: HeaderCarrier))
+      )(using _: HeaderCarrier))
       .expects(*, *, *, *)
       .returning(Future.successful(DmsResponse(Instant.now(), "")))
 

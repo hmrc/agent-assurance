@@ -21,42 +21,33 @@ import org.scalatest.matchers.should.Matchers
 
 class ArnSpec
 extends AnyFlatSpec
-with Matchers {
+with Matchers:
 
-  it should "be true for a valid ARN" in {
+  it should "be true for a valid ARN" in:
     Arn.isValid("TARN0000001") shouldBe true
-  }
 
-  it should "be false when characters 2-4 are not \"ARN\"" in {
+  it should "be false when characters 2-4 are not \"ARN\"" in:
     Arn.isValid("TABC0000001") shouldBe false
-  }
 
-  it should "be false with lowercase \"arn\"" in {
+  it should "be false with lowercase \"arn\"" in:
     Arn.isValid("Tarn0000001") shouldBe false
-  }
 
-  it should "be false when empty" in {
+  it should "be false when empty" in:
     Arn.isValid("") shouldBe false
-  }
 
-  it should "be false when non capital first character" in {
+  it should "be false when non capital first character" in:
     Arn.isValid("tARN0000001") shouldBe false
-  }
 
-  it should "be false when too short" in {
+  it should "be false when too short" in:
     Arn.isValid("TARN00001") shouldBe false
-  }
 
-  it should "be false when too long" in {
+  it should "be false when too long" in:
     Arn.isValid("TARN0000000001") shouldBe false
-  }
 
-  it should "be false when the missing the first character doesn't match" in {
+  it should "be false when the missing the first character doesn't match" in:
     Arn.isValid("ARN0000001") shouldBe false
-  }
 
-  it should "be false when the checksum doesn't pass" in {
+  it should "be false when the checksum doesn't pass" in:
     Arn.isValid("AARN0000001") shouldBe false
-  }
 
-}
+end ArnSpec

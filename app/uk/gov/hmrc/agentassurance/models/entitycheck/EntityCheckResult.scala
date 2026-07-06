@@ -16,12 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.models.entitycheck
 
-import play.api.libs.json.Format
-import play.api.libs.json.Json
-import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 
-case class VerifyEntityRequest(identifier: Arn)
-
-object VerifyEntityRequest {
-  implicit val format: Format[VerifyEntityRequest] = Json.format[VerifyEntityRequest]
-}
+case class EntityCheckResult(
+  agentRecord: AgentDetailsDesResponse,
+  entityCheckExceptions: Seq[EntityCheckException]
+)

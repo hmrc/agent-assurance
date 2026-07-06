@@ -17,15 +17,14 @@
 package uk.gov.hmrc.agentassurance.services
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers.should
 import org.scalatest.time.Seconds
 import org.scalatest.time.Span
 import org.scalatestplus.play.PlaySpec
-import uk.gov.hmrc.agentassurance.mocks._
+import uk.gov.hmrc.agentassurance.mocks.*
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
 import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.http.HeaderCarrier
@@ -34,7 +33,7 @@ class BusinessNamesServiceSpec
 extends PlaySpec
 with MockDesConnector
 with MockAppConfig
-with ScalaFutures {
+with ScalaFutures:
 
   implicit val system: ActorSystem = ActorSystem("test-system")
   implicit val mat: Materializer = Materializer(system)
@@ -42,6 +41,7 @@ with ScalaFutures {
 
   val service =
     new BusinessNamesService(mockDesConnector)(
+      using
       mockAppConfig,
       mat,
       global
@@ -51,26 +51,23 @@ with ScalaFutures {
   val utr2 = Utr("1234567892")
   val utr3 = Utr("1234567893")
 
-  "BusinessNamesService get(utr)" must {
-    "return business name if connector returns Some" in {
+  "BusinessNamesService get(utr)" must:
+    "return business name if connector returns Some" in:
       mockGetBusinessNameRecord(utr.value)(Some("HMRC"))
 
       service.get(utr.value).map { result =>
         result mustBe Some("HMRC")
       }
-    }
 
-    "return None if connector returns None" in {
+    "return None if connector returns None" in:
       mockGetBusinessNameRecord(utr.value)(None)
 
       service.get(utr.value).map { result =>
         result mustBe None
       }
-    }
-  }
 
-  "BusinessNamesService get(Seq[utr])" must {
-    "return set of BusinessNameByUtr for all UTRs" in {
+  "BusinessNamesService get(Seq[utr])" must:
+    "return set of BusinessNameByUtr for all UTRs" in:
       val utrs = Seq(
         utr.value,
         utr1.value,
@@ -82,17 +79,12 @@ with ScalaFutures {
         utr2 -> None
       )
 
-      expectedResults.foreach {
+      expectedResults.foreach:
         case (utr, nameOpt) => mockGetBusinessNameRecord(utr.value)(nameOpt)
-      }
 
       whenReady(service.get(utrs), timeout(Span(2, Seconds))) { result =>
-        result should contain allElementsOf expectedResults.collect {
+        result should contain allElementsOf expectedResults.collect:
           case (utrStr, name) => BusinessNameByUtr(utrStr.value, name)
-        }
       }
 
-    }
-  }
-
-}
+end BusinessNamesServiceSpec

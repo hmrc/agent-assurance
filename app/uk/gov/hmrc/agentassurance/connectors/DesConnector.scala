@@ -16,41 +16,37 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
+import com.google.inject.ImplementedBy
+import com.typesafe.config.Config
+import org.apache.pekko.actor.ActorSystem
+import play.api.Logging
+import play.api.libs.json.*
+import play.api.libs.json.Reads.*
+import play.api.libs.ws.writeableOf_JsValue
+import play.api.mvc.Request
+import play.utils.UriEncoding
+import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.agentassurance.models.*
+import uk.gov.hmrc.agentassurance.models.DesRegistrationRequest.*
+import uk.gov.hmrc.agentassurance.services.CacheProvider
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.domain.SaAgentReference
+import uk.gov.hmrc.domain.TaxIdentifier
+import uk.gov.hmrc.http.HttpReads.Implicits.*
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderNames
+import uk.gov.hmrc.http.HttpReads
+import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.HttpClientV2
+
+import java.net.URI
 import java.net.URL
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
-import com.google.inject.ImplementedBy
-import com.typesafe.config.Config
-import org.apache.pekko.actor.ActorSystem
-import play.api.libs.json._
-import play.api.libs.json.Reads._
-import play.api.mvc.Request
-import play.api.Logging
-import play.utils.UriEncoding
-import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
-import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
-import uk.gov.hmrc.agentassurance.models.DesAgentNameResponse
-import uk.gov.hmrc.agentassurance.models.DesRegistrationRequest
-import uk.gov.hmrc.agentassurance.services.CacheProvider
-import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.Utr
-import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.domain.SaAgentReference
-import uk.gov.hmrc.domain.TaxIdentifier
-import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HeaderNames
-import uk.gov.hmrc.http.HttpReads
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.UpstreamErrorResponse
-import DesRegistrationRequest._
 
 case class ClientRelationship(agents: Seq[Agent])
 
@@ -60,7 +56,7 @@ case class Agent(
   agentCeasedDate: Option[String]
 )
 
-object ClientRelationship {
+object ClientRelationship:
 
   implicit val agentReads: Reads[Agent] = Json.reads[Agent]
 
@@ -68,34 +64,34 @@ object ClientRelationship {
     .readNullable[Seq[Agent]]
     .map(optionalAgents => ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
 
-}
+end ClientRelationship
 
 case class RegistrationRelationshipResponse(processingDate: String)
 
-object RegistrationRelationshipResponse {
+object RegistrationRelationshipResponse:
   implicit val reads: Reads[RegistrationRelationshipResponse] = Json.reads[RegistrationRelationshipResponse]
-}
+end RegistrationRelationshipResponse
 
 @ImplementedBy(classOf[DesConnectorImpl])
-trait DesConnector {
+trait DesConnector:
 
   def getActiveCesaAgentRelationships(
     clientIdentifier: TaxIdentifier
-  )(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]]
+  )(using hc: HeaderCarrier): Future[Seq[SaAgentReference]]
   def getAmlsSubscriptionStatus(
     amlsRegistrationNumber: String
-  )(implicit hc: HeaderCarrier): Future[AmlsSubscriptionRecord]
+  )(using hc: HeaderCarrier): Future[AmlsSubscriptionRecord]
 
   def getAgentRecord(
     arn: Arn
-  )(implicit
-    request: Request[_],
+  )(using
+    request: Request[?],
     hc: HeaderCarrier
   ): Future[AgentDetailsDesResponse]
 
-  def getBusinessName(utr: String)(implicit hc: HeaderCarrier): Future[Option[String]]
+  def getBusinessName(utr: String)(using hc: HeaderCarrier): Future[Option[String]]
 
-}
+end DesConnector
 
 @Singleton
 class DesConnectorImpl @Inject() (
@@ -103,13 +99,13 @@ class DesConnectorImpl @Inject() (
   agentCacheProvider: CacheProvider,
   override val configuration: Config,
   override val actorSystem: ActorSystem
-)(implicit
+)(using
   appConfig: AppConfig,
   ec: ExecutionContext
 )
 extends DesConnector
 with BaseConnector
-with Logging {
+with Logging:
 
   private val baseUrl = appConfig.desBaseUrl
   private val authorizationToken = appConfig.desAuthToken
@@ -120,19 +116,18 @@ with Logging {
 
   def getActiveCesaAgentRelationships(
     clientIdentifier: TaxIdentifier
-  )(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
+  )(using hc: HeaderCarrier): Future[Seq[SaAgentReference]] =
     val encodedClientId = UriEncoding.encodePathSegment(clientIdentifier.value, "UTF-8")
-    val encodedClientType: String = {
+    val encodedClientType: String =
       val clientType =
-        clientIdentifier match {
+        clientIdentifier match
           case nino @ Nino(_) => nino.name
           case _ @Utr(_) => "utr"
           case e => throw new RuntimeException(s"Unacceptable taxIdentifier: $e")
-        }
       UriEncoding.encodePathSegment(clientType, "UTF-8")
-    }
+    end encodedClientType
 
-    val url = new URL(s"$baseUrl/registration/relationship/$encodedClientType/$encodedClientId")
+    val url = new URI(s"$baseUrl/registration/relationship/$encodedClientType/$encodedClientId").toURL
 
     getWithDesHeadersWithRetry[ClientRelationship]("GetStatusAgentRelationship", url)
       .map(
@@ -140,65 +135,59 @@ with Logging {
           .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
           .flatMap(_.agentId)
       )
-      .recoverWith {
+      .recoverWith:
         case e: UpstreamErrorResponse if e.statusCode == 404 =>
           logger.warn(s" NOT_FOUND GET legacy relationship response: 404 ")
           Future.successful(Seq.empty[SaAgentReference])
-      }
-  }
+  end getActiveCesaAgentRelationships
 
   // API #1028 Get Subscription Status
   def getAmlsSubscriptionStatus(
     amlsRegistrationNumber: String
-  )(implicit hc: HeaderCarrier): Future[AmlsSubscriptionRecord] = {
+  )(using hc: HeaderCarrier): Future[AmlsSubscriptionRecord] =
     val encodedRegNumber = UriEncoding.encodePathSegment(amlsRegistrationNumber, UTF_8.name)
-    val url = new URL(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status")
+    val url = new URI(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status").toURL
     getWithDesHeadersWithRetry[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
-  }
+  end getAmlsSubscriptionStatus
 
   // API #1170 (API#4) Get Agent Record
   override def getAgentRecord(
     arn: Arn
-  )(implicit
-    request: Request[_],
+  )(using
+    request: Request[?],
     hc: HeaderCarrier
-  ): Future[AgentDetailsDesResponse] = {
-    val url = new URL(s"$baseUrl/registration/personal-details/arn/${arn.value}")
-    agentCacheProvider.agentDetailsCache(arn.value) {
+  ): Future[AgentDetailsDesResponse] =
+    val url = new URI(s"$baseUrl/registration/personal-details/arn/${arn.value}").toURL
+    agentCacheProvider.agentDetailsCache(arn.value):
       getWithDesHeadersWithRetry[AgentDetailsDesResponse]("GetAgentRecordCached", url)
-    }
-  }
+  end getAgentRecord
 
   // API#1163 Registration
-  override def getBusinessName(utr: String)(implicit hc: HeaderCarrier): Future[Option[String]] = {
-    val url = new URL(s"$baseUrl/registration/individual/utr/${UriEncoding.encodePathSegment(utr, "UTF-8")}")
-    agentCacheProvider.agentNameCache(utr) {
+  override def getBusinessName(utr: String)(using hc: HeaderCarrier): Future[Option[String]] =
+    val url = new URI(s"$baseUrl/registration/individual/utr/${UriEncoding.encodePathSegment(utr, "UTF-8")}").toURL
+    agentCacheProvider.agentNameCache(utr):
       postWithDesHeaders[DesRegistrationRequest, DesAgentNameResponse](
-        apiName = "GetAgentNameCached",
         url = url,
         request = DesRegistrationRequest(isAnAgent = false)
       )
         .map(_.flatMap(_.agentName))
-        .recoverWith {
+        .recoverWith:
           case e: UpstreamErrorResponse if e.statusCode == 503 =>
             logger.warn("[DesConnector] getBusinessName returned a 503")
             Future.successful(Some("Error retrieving name"))
-        }
-    }
-  }
+  end getBusinessName
 
-  def postWithDesHeaders[
+  private def postWithDesHeaders[
     B,
     A: HttpReads
   ](
-    apiName: String,
     url: URL,
     request: B
-  )(implicit
+  )(using
     hc: HeaderCarrier,
     ec: ExecutionContext,
     y: Writes[B]
-  ): Future[Option[A]] = {
+  ): Future[Option[A]] =
 
     val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
 
@@ -209,37 +198,33 @@ with Logging {
         authorizationToken,
         environment,
         isInternalHost
-      ): _*)
+      )*)
       .execute[Option[A]]
     response
+  end postWithDesHeaders
 
-  }
-
-  private def getWithDesHeadersWithRetry[A: HttpReads](
+  private def getWithDesHeadersWithRetry[A](
     apiName: String,
     url: URL
-  )(implicit
+  )(using
     hc: HeaderCarrier,
     ec: ExecutionContext,
     x: Reads[A]
-  ): Future[A] = {
+  ): Future[A] =
 
     val isInternalHost = appConfig.internalHostPatterns.exists(_.pattern.matcher(url.getHost).matches())
 
-    retryFor[A](s"$apiName connector get $url")(retryCondition) {
-      httpV2
+    retryFor[A](s"$apiName connector get $url")(retryCondition):
+      val response = httpV2
         .get(url)
         .setHeader(desHeaders(
           authorizationToken,
           environment,
           isInternalHost
-        ): _*)
+        )*)
         .executeAndDeserialise[A]
-        .map(result => {
-          result
-        })
-    }
-  }
+      response
+  end getWithDesHeadersWithRetry
 
   /*
    * If the service being called is external (e.g. DES/IF in QA or Prod):
@@ -248,16 +233,16 @@ with Logging {
    * See https://github.com/hmrc/http-verbs?tab=readme-ov-file#propagation-of-headers
    * */
 
-  def desHeaders(
+  private def desHeaders(
     authToken: String,
     env: String,
     isInternalHost: Boolean
   )(
     implicit hc: HeaderCarrier
-  ): Seq[(String, String)] = {
+  ): Seq[(String, String)] =
 
     val additionalHeaders =
-      if (isInternalHost)
+      if isInternalHost then
         Seq.empty
       else
         Seq(
@@ -266,6 +251,6 @@ with Logging {
         ) ++ hc.sessionId.fold(Seq.empty[(String, String)])(x => Seq(HeaderNames.xSessionId -> x.value))
     val commonHeaders = Seq(Environment -> env, CorrelationId -> UUID.randomUUID().toString)
     commonHeaders ++ additionalHeaders
-  }
+  end desHeaders
 
-}
+end DesConnectorImpl

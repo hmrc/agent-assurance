@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.connectors
+package uk.gov.hmrc.agentassurance.connectors
 
 import java.time.Clock
 
@@ -23,11 +23,11 @@ import scala.concurrent.ExecutionContext
 import com.google.inject.AbstractModule
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.Application
-import test.uk.gov.hmrc.agentassurance.stubs.EnrolmentStoreProxyStubs
-import test.uk.gov.hmrc.agentassurance.support.UnitSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import uk.gov.hmrc.agentassurance.stubs.EnrolmentStoreProxyStubs
+import uk.gov.hmrc.agentassurance.support.UnitSpec
+import uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.EnrolmentStoreProxyConnectorImpl
 import uk.gov.hmrc.http.HeaderCarrier

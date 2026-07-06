@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatestplus.play.PlaySpec
 import play.api.http.Status.BAD_REQUEST
@@ -46,11 +48,11 @@ class DmsNotificationControllerSpec
 extends PlaySpec
 with DefaultAwaitTimeout
 with MockFactory
-with MockAppConfig {
+with MockAppConfig:
 
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
-  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
+  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(using stubControllerComponents(), implicitly)
 
   val controller =
     new DmsNotificationController(
@@ -65,14 +67,16 @@ with MockAppConfig {
     failureReason = None
   )
 
-  "dmsCallback" should {
-    "return OK" when {
-      "when receiving a correct notifications from DMS" in {
+  "dmsCallback" should:
+    "return OK" when:
+      "when receiving a correct notifications from DMS" in:
 
-        (mockStubBehaviour
-          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-          .expects(*, *)
-          .returning(Future.unit)
+        when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
+
+//        (mockStubBehaviour
+//          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//          .expects(*, *)
+//          .returning(Future.unit)
 
         val request = FakeRequest(POST, routes.DmsNotificationController.dmsCallback().url)
           .withHeaders(HeaderNames.authorisation -> "Some auth token")
@@ -81,15 +85,14 @@ with MockAppConfig {
         val result = controller.dmsCallback()(request)
         status(result) mustBe OK
 
-      }
-    }
+    "return BAD_REQUEST" when:
+      "when an invalid request is received" in:
+        when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
 
-    "return BAD_REQUEST" when {
-      "when an invalid request is received" in {
-        (mockStubBehaviour
-          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-          .expects(*, *)
-          .returning(Future.unit)
+//        (mockStubBehaviour
+//          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//          .expects(*, *)
+//          .returning(Future.unit)
 
         val request = FakeRequest(POST, routes.DmsNotificationController.dmsCallback().url)
           .withHeaders(HeaderNames.authorisation -> "Some auth token")
@@ -98,39 +101,33 @@ with MockAppConfig {
         val result = controller.dmsCallback()(request)
         status(result) mustBe BAD_REQUEST
 
-      }
-    }
-
-    "fail" when {
-      "for an unauthenticated user" in {
+    "fail" when:
+      "for an unauthenticated user" in:
         val request = FakeRequest(POST, routes.DmsNotificationController.dmsCallback().url)
           .withBody(Json.toJson(dmsNotification))
 
         val result = controller.dmsCallback()(request)
-        Try(status(result)) match {
+        Try(status(result)) match
           case Success(_) => fail()
           case Failure(_) =>
-        }
-      }
+        end match
 
-      "when the user is not authorised" in {
-        (mockStubBehaviour
-          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-          .expects(*, *)
-          .returning(Future.failed(new RuntimeException()))
+      "when the user is not authorised" in:
+        when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.failed(new RuntimeException()))
+
+//        (mockStubBehaviour
+//          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//          .expects(*, *)
+//          .returning(Future.failed(new RuntimeException()))
 
         val request = FakeRequest(POST, routes.DmsNotificationController.dmsCallback().url)
           .withHeaders(HeaderNames.authorisation -> "Some auth token")
           .withBody(Json.toJson(dmsNotification))
 
         val result = controller.dmsCallback()(request)
-        Try(status(result)) match {
+        Try(status(result)) match
           case Success(_) => fail()
           case Failure(_) =>
-        }
-      }
-    }
+        end match
 
-  }
-
-}
+end DmsNotificationControllerSpec

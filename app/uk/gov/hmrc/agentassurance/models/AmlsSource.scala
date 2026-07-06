@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,31 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import julienrf.json.derived
-import play.api.libs.json.Format
+import play.api.libs.json.*
 
-sealed trait AmlsSource
+enum AmlsSource:
+  case Subscription, AutomaticUpdate, ManageAccountUpdate
 
-object AmlsSource {
+object AmlsSource:
 
-  implicit val formatAmlsSource: Format[AmlsSource] = derived.oformat[AmlsSource]()
+  given Format[AmlsSource] = Format(
+    Reads {
+      case JsString(value) =>
+        try JsSuccess(AmlsSource.valueOf(value))
+        catch case _: IllegalArgumentException => JsError(s"Unknown AmlsSource value: $value")
+      case _ => JsError("Can only parse String")
+    },
+    Writes(source => JsString(source.toString))
+  )
 
-  final case object Subscription
-  extends AmlsSource
-  final case object AutomaticUpdate
-  extends AmlsSource
-  final case object ManageAccountUpdate
-  extends AmlsSource
+  override def toString: String =
 
-}
+    this match
+      case Subscription => "Subscription"
+      case AutomaticUpdate => "AutomaticUpdate"
+      case ManageAccountUpdate => "ManageAccountUpdate"
+    end match
+
+  end toString
+
+end AmlsSource

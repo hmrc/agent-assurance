@@ -20,27 +20,30 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import org.scalamock.scalatest.MockFactory
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
-import play.api.test._
-import play.api.test.Helpers._
-import uk.gov.hmrc.agentassurance.helpers.TestConstants._
+import play.api.test.*
+import play.api.test.Helpers.*
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.*
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
 import uk.gov.hmrc.agentassurance.mocks.MockEntityCheckService
+import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
+import uk.gov.hmrc.agentassurance.models.SuspensionDetails
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
 import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
-import uk.gov.hmrc.agentassurance.models.SuspensionDetails
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.internalauth.client.test.BackendAuthComponentsStub
 import uk.gov.hmrc.internalauth.client.test.StubBehaviour
 import uk.gov.hmrc.internalauth.client.BackendAuthComponents
 import uk.gov.hmrc.internalauth.client.Predicate
 import uk.gov.hmrc.internalauth.client.Retrieval
+
 import ExecutionContext.Implicits.global
 
 class EntityCheckControllerSpec
@@ -50,12 +53,12 @@ with GuiceOneAppPerTest
 with MockAuthConnector
 with MockAppConfig
 with MockEntityCheckService
-with MockFactory {
+with MockFactory:
 
   val as: ActorSystem = ActorSystem()
   implicit val mat: Materializer = Materializer(as)
   val mockStubBehaviour: StubBehaviour = mock[StubBehaviour]
-  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), implicitly)
+  val stubBackendAuthComponents: BackendAuthComponents = BackendAuthComponentsStub(mockStubBehaviour)(using stubControllerComponents(), implicitly)
 
   val controller =
     new EntityCheckController(
@@ -65,9 +68,9 @@ with MockFactory {
       stubBackendAuthComponents
     )
 
-  "agentVerifyEntity" should {
-    "return NO_CONTENT" when {
-      "not suspended and a POST request to /agent/verify-entity" in {
+  "agentVerifyEntity" should:
+    "return NO_CONTENT" when:
+      "not suspended and a POST request to /agent/verify-entity" in:
 
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
 
@@ -81,7 +84,7 @@ with MockFactory {
         mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException]))
 
         val result = controller
-          .agentVerifyEntity()
+          .agentVerifyEntity
           .apply(
             FakeRequest(POST, "/agent/verify-entity")
               .withHeaders(HeaderNames.authorisation -> "Some auth token")
@@ -90,11 +93,8 @@ with MockFactory {
 
         status(result) mustBe NO_CONTENT
 
-      }
-    }
-
-    "return OK" when {
-      "suspended and a POST request to /agent/verify-entity" in {
+    "return OK" when:
+      "suspended and a POST request to /agent/verify-entity" in:
 
         mockAuth()(Right(enrolmentsWithNoIrSAAgent))
 
@@ -113,7 +113,7 @@ with MockFactory {
         )
 
         val result = controller
-          .agentVerifyEntity()
+          .agentVerifyEntity
           .apply(
             FakeRequest(POST, "/agent/verify-entity")
               .withHeaders(HeaderNames.authorisation -> "Some auth token")
@@ -122,18 +122,16 @@ with MockFactory {
 
         status(result) mustBe OK
 
-      }
-    }
-  }
+  "clientVerifyEntity" should:
+    "return NO_CONTENT" when:
+      "not suspended and a POST request to /client/verify-entity" in:
 
-  "clientVerifyEntity" should {
-    "return NO_CONTENT" when {
-      "not suspended and a POST request to /client/verify-entity" in {
+        when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
 
-        (mockStubBehaviour
-          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-          .expects(*, *)
-          .returning(Future.unit)
+//        (mockStubBehaviour
+//          .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//          .expects(*, *)
+//          .returning(Future.unit)
 
         val agentDetailsDesResponse = AgentDetailsDesResponse(
           uniqueTaxReference = None,
@@ -145,7 +143,7 @@ with MockFactory {
         mockVerifyEntitySuccess(testArn)(EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException]))
 
         val result = controller
-          .clientVerifyEntity()
+          .clientVerifyEntity
           .apply(
             FakeRequest(POST, "/client/verify-entity")
               .withHeaders(HeaderNames.authorisation -> "Some auth token", "Content-Type" -> "application/json")
@@ -154,15 +152,15 @@ with MockFactory {
 
         status(result) mustBe NO_CONTENT
 
-      }
+      "return OK" when:
+        "suspended and a POST request to /client/verify-entity" in:
 
-      "return OK" when {
-        "suspended and a POST request to /client/verify-entity" in {
+          when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
 
-          (mockStubBehaviour
-            .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-            .expects(*, *)
-            .returning(Future.unit)
+//            (mockStubBehaviour
+//            .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//            .expects(*, *)
+//            .returning(Future.unit)
 
           val agentDetailsDesResponse = AgentDetailsDesResponse(
             uniqueTaxReference = None,
@@ -179,7 +177,7 @@ with MockFactory {
           )
 
           val result = controller
-            .clientVerifyEntity()
+            .clientVerifyEntity
             .apply(
               FakeRequest(POST, "/client/verify-entity")
                 .withHeaders(HeaderNames.authorisation -> "Some auth token", "Content-Type" -> "application/json")
@@ -192,19 +190,17 @@ with MockFactory {
             SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))
           )
 
-        }
-      }
+      "return Bad request" when:
+        "invalid request" in:
+          when(mockStubBehaviour.stubAuth[Unit](any[Option[Predicate]], any[Retrieval[Unit]])).thenReturn(Future.unit)
 
-      "return Bad request" when {
-        "invalid request" in {
-
-          (mockStubBehaviour
-            .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
-            .expects(*, *)
-            .returning(Future.unit)
+//            (mockStubBehaviour
+//            .stubAuth[Unit](_: Option[Predicate], _: Retrieval[Unit]))
+//            .expects(*, *)
+//            .returning(Future.unit)
 
           val result = controller
-            .clientVerifyEntity()
+            .clientVerifyEntity
             .apply(
               FakeRequest(POST, "/client/verify-entity")
                 .withHeaders(HeaderNames.authorisation -> "Some auth token", "Content-Type" -> "application/json")
@@ -213,9 +209,5 @@ with MockFactory {
 
           status(result) mustBe BAD_REQUEST
           contentAsString(result) mustBe "Invalid Arn"
-        }
-      }
-    }
-  }
 
-}
+end EntityCheckControllerSpec

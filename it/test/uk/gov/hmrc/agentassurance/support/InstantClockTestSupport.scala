@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.support
+package uk.gov.hmrc.agentassurance.support
 
-import java.time._
+import java.time.*
 
 trait InstantClockTestSupport /*extends AnyFeatureSpec with GuiceOneServerPerSuite*/ {
 

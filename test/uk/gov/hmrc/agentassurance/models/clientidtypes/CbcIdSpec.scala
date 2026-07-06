@@ -21,31 +21,24 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class CbcIdSpec
 extends AnyWordSpec
-with Matchers {
+with Matchers:
 
-  "validation" should {
-    "pass for a valid PPT" in {
+  "validation" should:
+    "pass for a valid PPT" in:
       CbcId.isValid("XACBC0123456789") shouldBe true
-    }
 
-    "fail when it has more than 15 characters" in {
+    "fail when it has more than 15 characters" in:
       CbcId.isValid("XACBC01234567890") shouldBe false
-    }
 
-    "fail when it has less than 15 characters" in {
+    "fail when it has less than 15 characters" in:
       CbcId.isValid("XACBC012345678") shouldBe false
-    }
 
-    "fail when it is empty" in {
+    "fail when it is empty" in:
       CbcId.isValid("") shouldBe false
-    }
 
-    "fail when it contains lowercase characters" in {
+    "fail when it contains lowercase characters" in:
       CbcId.isValid("xacbc0123456789") shouldBe false
-    }
 
-    "fail when it has non-alphanumeric characters" in {
+    "fail when it has non-alphanumeric characters" in:
       CbcId.isValid("XACBC012345678!") shouldBe false
-    }
-  }
-}
+end CbcIdSpec

@@ -16,37 +16,37 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
-import com.typesafe.config.Config
 import com.google.inject.ImplementedBy
+import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
-import play.api.libs.json.Json
-import play.api.mvc.Request
 import play.api.Logging
+import play.api.libs.json.Json
+import play.api.libs.ws.writeableOf_JsValue
+import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AgentRecordUpdateRequest
 import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
+import uk.gov.hmrc.http.client.HttpClientV2
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[AgentServicesAccountConnectorImpl])
-trait AgentServicesAccountConnector {
+trait AgentServicesAccountConnector:
 
   def getAgentRecord(arn: Arn)(implicit hc: HeaderCarrier): Future[AgentDetailsDesResponse]
 
   def updateAmlsDetails(request: AgentRecordUpdateRequest)(implicit
-    request0: Request[_],
+    request0: Request[?],
     hc: HeaderCarrier
   ): Future[Unit]
 
-}
+end AgentServicesAccountConnector
 
 @Singleton
 class AgentServicesAccountConnectorImpl @Inject() (
@@ -57,7 +57,7 @@ class AgentServicesAccountConnectorImpl @Inject() (
 )(implicit ec: ExecutionContext)
 extends AgentServicesAccountConnector
 with BaseConnector
-with Logging {
+with Logging:
 
   private val baseUrl = appConfig.agentServicesAccountBaseUrl
 
@@ -67,11 +67,11 @@ with Logging {
     .executeAndDeserialise[AgentDetailsDesResponse]
 
   override def updateAmlsDetails(request: AgentRecordUpdateRequest)(implicit
-    request0: Request[_],
+    request0: Request[?],
     hc: HeaderCarrier
   ): Future[Unit] = httpClient
     .put(url"$baseUrl/agent-services-account/agent-record-update")
     .withBody(Json.toJson(request))
     .executeAndExpect(200)
 
-}
+end AgentServicesAccountConnectorImpl

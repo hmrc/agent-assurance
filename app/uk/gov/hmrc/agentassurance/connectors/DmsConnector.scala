@@ -16,24 +16,24 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import com.typesafe.config.Config
+import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import org.apache.pekko.NotUsed
 import play.api.http.Status.ACCEPTED
+import play.api.libs.ws.bodyWritableOf_Multipart
 import play.api.mvc.MultipartFormData
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.http.StringContextOps
+import uk.gov.hmrc.http.client.HttpClientV2
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton
 class DmsConnector @Inject() (
@@ -42,19 +42,18 @@ class DmsConnector @Inject() (
   override val configuration: Config,
   override val actorSystem: ActorSystem
 )(implicit ec: ExecutionContext)
-extends BaseConnector {
+extends BaseConnector:
 
   private def dmsHeaders: (String, String) = HeaderNames.authorisation -> appConfig.internalAuthToken
 
   def sendPdf(
     body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed]
   )(implicit hc: HeaderCarrier): Future[Unit] =
-    retryFor[Unit]("DMS submission")(retryCondition) {
+    retryFor[Unit]("DMS submission")(retryCondition):
       httpClient
         .post(url"${appConfig.dmsSubmissionUrl}")
         .setHeader(dmsHeaders)
         .withBody(body)
         .executeAndExpect(ACCEPTED)
-    }
 
-}
+end DmsConnector

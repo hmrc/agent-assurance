@@ -24,29 +24,27 @@ import uk.gov.hmrc.agentassurance.models.Service.HMRCMTDITSUPP
 
 class SuspensionDetailsSpec
 extends AnyWordSpec
-with Matchers {
+with Matchers:
 
   val suspensionStatusTrue = true
   val inputRegimes = Set("aRegime", "bRegime")
 
-  "Suspended regimes" should {
-    "be empty set when input regimes set is not present" in {
+  "Suspended regimes" should:
+    "be empty set when input regimes set is not present" in:
       val regimes = None
 
       val suspensionDetails = SuspensionDetails(suspensionStatusTrue, regimes)
 
       suspensionDetails.suspendedRegimes shouldBe Set.empty[String]
-    }
 
-    "be empty set when input regimes set is empty" in {
+    "be empty set when input regimes set is empty" in:
       val regimes = Some(Set.empty[String])
 
       val suspensionDetails = SuspensionDetails(suspensionStatusTrue, regimes)
 
       suspensionDetails.suspendedRegimes shouldBe Set.empty[String]
-    }
 
-    "be all valid suspension regimes when input regimes contains 'ALL' or 'AGSV'" in {
+    "be all valid suspension regimes when input regimes contains 'ALL' or 'AGSV'" in:
       SuspensionDetails(
         suspensionStatusTrue,
         Some(inputRegimes + "ALL")
@@ -55,19 +53,15 @@ with Matchers {
         suspensionStatusTrue,
         Some(inputRegimes + "AGSV")
       ).suspendedRegimes shouldBe SuspensionDetails.validSuspensionRegimes
-    }
 
-    "match provided regimes when input does not contain either 'ALL' or 'AGSV'" in {
+    "match provided regimes when input does not contain either 'ALL' or 'AGSV'" in:
       SuspensionDetails(suspensionStatusTrue, Some(inputRegimes)).suspendedRegimes shouldBe Set("aRegime", "bRegime")
-    }
 
-  }
-
-  "isRegimeSuspended" should {
+  "isRegimeSuspended" should:
 
     def getServiceOfRegimeName(regimeName: String): Service = SuspensionDetails.serviceToRegime.find(_._2 == regimeName).get._1
 
-    "return false when input regime names do not match well-defined regime names AND input regime names do not contain either 'ALL' or 'AGSV'" in {
+    "return false when input regime names do not match well-defined regime names AND input regime names do not contain either 'ALL' or 'AGSV'" in:
       val regimes = Some(inputRegimes)
 
       val suspensionDetails = SuspensionDetails(suspensionStatusTrue, regimes = regimes)
@@ -77,9 +71,8 @@ with Matchers {
 
         suspensionDetails.isRegimeSuspended(service) shouldBe false
       }
-    }
 
-    "return true when input regime names do not match well-defined regime names BUT input regime names contains 'ALL' or 'AGSV'" in {
+    "return true when input regime names do not match well-defined regime names BUT input regime names contains 'ALL' or 'AGSV'" in:
       SuspensionDetails.validSuspensionRegimes.foreach { regimeName =>
         val service = getServiceOfRegimeName(regimeName)
 
@@ -88,55 +81,43 @@ with Matchers {
         SuspensionDetails(suspensionStatusTrue, regimes = Some(inputRegimes + "AGSV"))
           .isRegimeSuspended(service) shouldBe true
       }
-    }
 
-    "return true when input regimes include well-defined values" in {
+    "return true when input regimes include well-defined values" in:
       SuspensionDetails.serviceToRegime.keySet.foreach { service =>
         val suspensionDetails = SuspensionDetails(suspensionStatusTrue, regimes = Some(Set(SuspensionDetails.serviceToRegime(service))))
 
         suspensionDetails.isRegimeSuspended(service) shouldBe true
       }
-    }
 
-    "return true when the regime is suspended" in {
+    "return true when the regime is suspended" in:
       SuspensionDetails(suspensionStatus = true, Some(Set("ITSA", "VATC"))).isRegimeSuspended(HMRCMTDIT) shouldBe true
-    }
 
-    "return true when ALL regimes are suspended" in {
+    "return true when ALL regimes are suspended" in:
       SuspensionDetails(suspensionStatus = true, Some(Set("ALL"))).isRegimeSuspended(HMRCMTDIT) shouldBe true
-    }
 
-    "return false when the regime is not suspended" in {
+    "return false when the regime is not suspended" in:
       SuspensionDetails(suspensionStatus = true, Some(Set("ITSA", "VATC")))
         .isRegimeSuspended(HMRCCGTPD) shouldBe false
-    }
-  }
 
-  "suspendedRegimesForServices" should {
-    "return only the suspended regimes" in {
+  "suspendedRegimesForServices" should:
+    "return only the suspended regimes" in:
       SuspensionDetails(suspensionStatus = true, Some(Set("ITSA", "VATC")))
         .suspendedRegimesForServices(Set(
           HMRCMTDIT,
           HMRCMTDITSUPP,
           HMRCCGTPD
         )) shouldBe Set("ITSA")
-    }
 
-    "return all of the regimes if ALL are suspended" in {
+    "return all of the regimes if ALL are suspended" in:
       SuspensionDetails(suspensionStatus = true, Some(Set("ALL")))
         .suspendedRegimesForServices(Set(HMRCMTDIT, HMRCCGTPD)) shouldBe Set("ITSA", "CGT")
-    }
-  }
 
-  "isAnyRegimeSuspendedForServices" should {
-    "return true if the agent is suspended for any regimes in the consents" in {
+  "isAnyRegimeSuspendedForServices" should:
+    "return true if the agent is suspended for any regimes in the consents" in:
       SuspensionDetails(suspensionStatus = true, Some(Set("ITSA", "VATC")))
         .isAnyRegimeSuspendedForServices(Set(HMRCMTDITSUPP)) shouldBe true
-    }
-    "return false if the agent is not suspended for any service in the consents" in {
+    "return false if the agent is not suspended for any service in the consents" in:
       SuspensionDetails(suspensionStatus = true, Some(Set("ITSA", "VATC")))
         .isAnyRegimeSuspendedForServices(Set(HMRCCGTPD)) shouldBe false
-    }
-  }
 
-}
+end SuspensionDetailsSpec

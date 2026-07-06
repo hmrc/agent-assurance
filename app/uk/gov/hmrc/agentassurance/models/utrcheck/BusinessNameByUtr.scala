@@ -24,6 +24,6 @@ case class BusinessNameByUtr(
   agentName: Option[String]
 )
 
-object BusinessNameByUtr {
+object BusinessNameByUtr:
   implicit val businessNameFormat: OFormat[BusinessNameByUtr] = Json.format
-}
+end BusinessNameByUtr

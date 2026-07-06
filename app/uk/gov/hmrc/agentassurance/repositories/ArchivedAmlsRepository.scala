@@ -16,30 +16,29 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import com.google.inject.ImplementedBy
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
-import play.api.libs.json.Format
 import play.api.Logging
-import uk.gov.hmrc.agentassurance.models.AmlsError
+import play.api.libs.json.Format
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.AmlsError
 import uk.gov.hmrc.agentassurance.models.ArchivedAmlsEntity
 import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
-import uk.gov.hmrc.mongo.MongoComponent
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[ArchivedAmlsRepositoryImpl])
-trait ArchivedAmlsRepository {
+trait ArchivedAmlsRepository:
   def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]]
-}
+end ArchivedAmlsRepository
 
 @Singleton
 class ArchivedAmlsRepositoryImpl @Inject() (mongoComponent: MongoComponent)(implicit ec: ExecutionContext)
@@ -59,17 +58,16 @@ extends PlayMongoRepository[ArchivedAmlsEntity](
   )
 )
 with ArchivedAmlsRepository
-with Logging {
+with Logging:
 
-  override def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]] = {
+  override def create(archivedAmlsEntity: ArchivedAmlsEntity): Future[Either[AmlsError, Unit]] =
     collection
       .insertOne(archivedAmlsEntity)
       .toFuture()
       .map(result =>
-        if (result.wasAcknowledged())
+        if result.wasAcknowledged() then
           Right(())
         else
           Left(AmlsUnexpectedMongoError)
       )
-  }
-}
+end ArchivedAmlsRepositoryImpl

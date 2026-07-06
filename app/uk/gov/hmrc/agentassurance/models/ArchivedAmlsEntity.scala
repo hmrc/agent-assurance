@@ -16,15 +16,15 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import java.time.temporal.ChronoUnit
-import java.time.Instant
-import java.time.LocalDate
-
 import play.api.libs.json.Format
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
+
+import java.time.Instant
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 case class ArchivedAmlsEntity(
   ukRecord: Boolean,
@@ -40,15 +40,15 @@ case class ArchivedAmlsEntity(
   membershipExpiresOn: Option[LocalDate]
 )
 
-object ArchivedAmlsEntity {
+object ArchivedAmlsEntity:
 
   implicit val format: Format[ArchivedAmlsEntity] = Json.format[ArchivedAmlsEntity]
 
   def apply(
     arn: Arn,
     amlsEntity: AmlsEntity
-  ): ArchivedAmlsEntity = {
-    amlsEntity match {
+  ): ArchivedAmlsEntity =
+    amlsEntity match
       case uk: UkAmlsEntity =>
         val amlsDetails = uk.amlsDetails
         ArchivedAmlsEntity(
@@ -77,10 +77,8 @@ object ArchivedAmlsEntity {
           appliedOn = None,
           membershipExpiresOn = None
         )
-    }
-  }
 
-}
+end ArchivedAmlsEntity
 
 // for the ASA AMLS journey (using POST /amls/arn/:arn)
 case class AmlsRequest(
@@ -89,9 +87,9 @@ case class AmlsRequest(
   membershipNumber: String,
   membershipExpiresOn: Option[LocalDate],
   evidenceObjectReference: Option[String] = None
-) {
-  def toAmlsEntity(amlsRequest: AmlsRequest): AmlsDetails = {
-    if (amlsRequest.ukRecord)
+):
+  def toAmlsEntity(amlsRequest: AmlsRequest): AmlsDetails =
+    if amlsRequest.ukRecord then
       UkAmlsDetails(
         supervisoryBody = amlsRequest.supervisoryBody,
         membershipNumber = Some(amlsRequest.membershipNumber),
@@ -105,9 +103,8 @@ case class AmlsRequest(
         supervisoryBody = amlsRequest.supervisoryBody,
         membershipNumber = Some(amlsRequest.membershipNumber)
       )
-  }
-}
+end AmlsRequest
 
-object AmlsRequest {
+object AmlsRequest:
   implicit val format: Format[AmlsRequest] = Json.format[AmlsRequest]
-}
+end AmlsRequest

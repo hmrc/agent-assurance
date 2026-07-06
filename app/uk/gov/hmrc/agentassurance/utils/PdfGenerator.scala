@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.agentassurance.utils
 
-import java.io.ByteArrayOutputStream
-
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 
-object PdfGenerator {
-  def buildPdf(html: String): ByteArrayOutputStream = {
+import java.io.ByteArrayOutputStream
+
+object PdfGenerator:
+
+  def buildPdf(html: String): ByteArrayOutputStream =
     val os = new ByteArrayOutputStream()
     val builder = new PdfRendererBuilder
     val renderer = builder
@@ -30,12 +31,13 @@ object PdfGenerator {
       .usePdfAConformance(PdfRendererBuilder.PdfAConformance.PDFA_3_U)
       .withHtmlContent(html, null)
       .withProducer("HMRC")
-      .useFastMode
+//      .useFastMode
       .toStream(os)
       .buildPdfRenderer()
     renderer.createPDF()
     renderer.close()
 
     os
-  }
-}
+  end buildPdf
+
+end PdfGenerator

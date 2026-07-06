@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentassurance.models
+package uk.gov.hmrc.agentassurance.models.entitycheck
 
-import play.api.libs.json.Format
-import play.api.libs.json.Json
+enum EntityCheckException(val exceptionMessage: String):
 
-case class ErrorBody(
-  code: String,
-  message: String
-)
+  case CitizenConnectorRequestFailed(code: Int)
+  extends EntityCheckException(s"The request to fetch the citizen details failed with a response status code of $code")
+  case EntityDeceasedCheckFailed
+  extends EntityCheckException("Agent is deceased")
+  case AgentIsOnRefuseToDealList
+  extends EntityCheckException("Agent is on the 'Refuse To Deal With' list")
 
-object ErrorBody:
-  implicit val errorBodyFormat: Format[ErrorBody] = Json.format[ErrorBody]
-end ErrorBody
+end EntityCheckException

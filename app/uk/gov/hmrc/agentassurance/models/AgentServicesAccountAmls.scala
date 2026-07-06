@@ -16,15 +16,13 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import scala.Function.unlift
-
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json.__
 import play.api.libs.json.Format
 import play.api.libs.json.Json
-import uk.gov.hmrc.crypto.json.JsonEncryption.stringEncrypterDecrypter
+import play.api.libs.json.__
 import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
+import uk.gov.hmrc.crypto.json.JsonEncryption.stringEncrypterDecrypter
 
 case class AgentRecordAmlsDetails(
   supervisoryBody: String,
@@ -32,29 +30,28 @@ case class AgentRecordAmlsDetails(
   evidenceObjectReference: Option[String] = None
 )
 
-object AgentRecordAmlsDetails {
+object AgentRecordAmlsDetails:
 
   implicit val format: Format[AgentRecordAmlsDetails] = Json.format[AgentRecordAmlsDetails]
 
   def databaseFormat(implicit
     crypto: Encrypter
-      with Decrypter
-  ): Format[AgentRecordAmlsDetails] =
-    (__ \ "supervisoryBody")
-      .format[String](stringEncrypterDecrypter)
-      .and((__ \ "membershipNumber").format[String](stringEncrypterDecrypter))
-      .and((__ \ "evidenceObjectReference").formatNullable[String](stringEncrypterDecrypter))(
-        AgentRecordAmlsDetails.apply,
-        unlift(AgentRecordAmlsDetails.unapply)
-      )
+      & Decrypter
+  ): Format[AgentRecordAmlsDetails] = (__ \ "supervisoryBody")
+    .format[String](using stringEncrypterDecrypter)
+    .and((__ \ "membershipNumber").format[String](using stringEncrypterDecrypter))
+    .and((__ \ "evidenceObjectReference").formatNullable[String](using stringEncrypterDecrypter))(
+      AgentRecordAmlsDetails.apply,
+      details => (details.supervisoryBody, details.membershipNumber, details.evidenceObjectReference)
+    )
 
-}
+end AgentRecordAmlsDetails
 
 case class AgentRecordUpdateRequest(
   amlsDetails: Option[AgentRecordAmlsDetails],
   agencyDetails: Option[AgencyDetails] = None
 )
 
-object AgentRecordUpdateRequest {
+object AgentRecordUpdateRequest:
   implicit val format: Format[AgentRecordUpdateRequest] = Json.format[AgentRecordUpdateRequest]
-}
+end AgentRecordUpdateRequest

@@ -21,6 +21,6 @@ import play.api.libs.json.Json
 
 case class LinkHref(href: String)
 
-object LinkHref {
+object LinkHref:
   implicit val linkFormat: Format[LinkHref] = Json.format[LinkHref]
-}
+end LinkHref

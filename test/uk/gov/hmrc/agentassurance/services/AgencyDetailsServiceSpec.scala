@@ -21,7 +21,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatestplus.play.PlaySpec
 import play.api.mvc.Request
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesAddressUtrResponse
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesOverseas
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesResponse
@@ -31,33 +31,29 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 class AgencyDetailsServiceSpec
 extends PlaySpec
-with MockDesConnector {
+with MockDesConnector:
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: Request[Any] = FakeRequest()
   val service: AgencyDetailsService = new AgencyDetailsService(mockDesConnector)
 
-  "isUkAddress" should {
-    "return true if agency address country code is GB" in {
+  "isUkAddress" should:
+    "return true if agency address country code is GB" in:
       mockGetAgentRecord(testArn)(testAgentDetailsDesAddressUtrResponse)
 
       val result = await(service.agencyDetailsHasUkAddress(testArn))
       result mustBe true
-    }
 
-    "return false if agency address country code is not GB" in {
+    "return false if agency address country code is not GB" in:
       mockGetAgentRecord(testArn)(testAgentDetailsDesOverseas)
 
       val result = await(service.agencyDetailsHasUkAddress(testArn))
       result mustBe false
-    }
 
-    "return false if no agency address" in {
+    "return false if no agency address" in:
       mockGetAgentRecord(testArn)(testAgentDetailsDesResponse)
 
       val result = await(service.agencyDetailsHasUkAddress(testArn))
       result mustBe false
-    }
-  }
 
-}
+end AgencyDetailsServiceSpec

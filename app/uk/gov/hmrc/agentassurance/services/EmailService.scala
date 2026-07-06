@@ -16,29 +16,28 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.EmailConnector
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.models.EntityCheckNotification
 import uk.gov.hmrc.http.HeaderCarrier
 
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 @Singleton
 class EmailService @Inject() (
   emailConnector: EmailConnector,
   appConfig: AppConfig
-) {
+):
   def sendEntityCheckNotification(
     entityCheckNotification: EntityCheckNotification
   )(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
-  ): Future[Unit] = {
+  ): Future[Unit] =
     emailConnector.sendEmail(
       EmailInformation(
         to = Seq(appConfig.agentMaintainerEmail),
@@ -52,6 +51,4 @@ class EmailService @Inject() (
         )
       )
     )
-  }
-
-}
+end EmailService

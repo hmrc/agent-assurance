@@ -16,26 +16,26 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.JsResult
 import play.api.libs.json.Reads
-import uk.gov.hmrc.http.client.RequestBuilder
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.Retries
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.RequestBuilder
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 trait BaseConnector
-extends Retries {
+extends Retries:
 
-  def retryCondition: PartialFunction[Exception, Boolean] = {
+  def retryCondition: PartialFunction[Exception, Boolean] =
     case e: UpstreamErrorResponse if UpstreamErrorResponse.Upstream5xxResponse.unapply(e).isDefined => true
-  }
+  end retryCondition
 
-  implicit class HttpResponseHelpers(response: HttpResponse) {
+  implicit class HttpResponseHelpers(response: HttpResponse):
 
     def as[A](implicit reads: Reads[A]): Future[A] = response.json
       .validate[A]
@@ -44,9 +44,9 @@ extends Retries {
 
     def error[A]: Future[A] = Future.failed(UpstreamErrorResponse(response.body, response.status))
 
-  }
+  end HttpResponseHelpers
 
-  implicit class RequestBuilderHelpers(requestBuilder: RequestBuilder) {
+  implicit class RequestBuilderHelpers(requestBuilder: RequestBuilder):
 
     def executeAndDeserialise[T](implicit
       ec: ExecutionContext,
@@ -54,21 +54,19 @@ extends Retries {
     ): Future[T] = requestBuilder
       .execute[HttpResponse]
       .flatMap { response =>
-        response.status match {
+        response.status match
           case OK | CREATED | ACCEPTED => response.as[T]
           case _ => response.error
-        }
       }
 
     def executeAndExpect(expected: Int)(implicit ec: ExecutionContext): Future[Unit] = requestBuilder
       .execute[HttpResponse]
       .flatMap { response =>
-        response.status match {
+        response.status match
           case `expected` => Future.successful(())
           case _ => response.error
-        }
       }
 
-  }
+  end RequestBuilderHelpers
 
-}
+end BaseConnector

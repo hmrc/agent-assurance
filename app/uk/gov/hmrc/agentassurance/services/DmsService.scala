@@ -16,25 +16,9 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import java.io.ByteArrayOutputStream
-import java.time.format.DateTimeFormatter
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.util.Base64
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.util.control.NonFatal
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-
+import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import org.apache.pekko.NotUsed
 import play.api.mvc.MultipartFormData
 import play.api.mvc.MultipartFormData.DataPart
 import play.api.mvc.MultipartFormData.FilePart
@@ -47,11 +31,26 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
+import java.io.ByteArrayOutputStream
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Base64
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+import scala.util.control.NonFatal
+
 @Singleton
 class DmsService @Inject() (
   dmsConnector: DmsConnector,
   appConfig: AppConfig
-)(implicit ec: ExecutionContext) {
+)(implicit ec: ExecutionContext):
 
   def submitToDms(
     base64EncodedDmsSubmissionHtml: Option[String],
@@ -60,15 +59,15 @@ class DmsService @Inject() (
   )(
     implicit hc: HeaderCarrier
   ): Future[DmsResponse] =
-    for {
+    for
       pdf <- createPdf(base64EncodedDmsSubmissionHtml)
       body <- createBody(
         pdf,
         now,
         submissionReference
       )
-      response <- sendPdf(body, now)(hc)
-    } yield response
+      response <- sendPdf(body, now)(using hc)
+    yield response
 
   private def createPdf(
     base64EncodedDmsSubmissionHtml: Option[String]
@@ -111,7 +110,7 @@ class DmsService @Inject() (
     pdf: ByteArrayOutputStream,
     dateOfReceipt: String,
     submissionReference: DmsSubmissionReference
-  ): Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed] = {
+  ): Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed] =
 
     Source(
       Seq(
@@ -131,7 +130,6 @@ class DmsService @Inject() (
         )
       )
     )
-  }
 
   def sendPdf(
     body: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed],
@@ -139,8 +137,8 @@ class DmsService @Inject() (
   )(implicit hc: HeaderCarrier): Future[DmsResponse] = dmsConnector
     .sendPdf(body)
     .map(_ => DmsResponse(now, ""))
-    .recover {
-      case error @ UpstreamErrorResponse(
+    .recover:
+      case UpstreamErrorResponse(
             message,
             code,
             _,
@@ -152,6 +150,5 @@ class DmsService @Inject() (
           code
         )
       case NonFatal(e) => throw new InternalServerException(s"send PDF failed with error:${e.getCause}")
-    }
 
-}
+end DmsService

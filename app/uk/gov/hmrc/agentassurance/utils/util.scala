@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.agentassurance
 
+import scala.language.implicitConversions
 import scala.concurrent.Future
 
-package object util {
+package object util:
   implicit def toFuture[T](a: T): Future[T] = Future.successful(a)
-}
+end util

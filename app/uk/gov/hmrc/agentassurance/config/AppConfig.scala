@@ -16,19 +16,19 @@
 
 package uk.gov.hmrc.agentassurance.config
 
-import scala.concurrent.duration.Duration
-import scala.util.matching.Regex
-
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import scala.concurrent.duration.Duration
+import scala.util.matching.Regex
+
 @Singleton
 class AppConfig @Inject() (
   config: Configuration,
   servicesConfig: ServicesConfig
-) {
+):
 
   val appName = "agent-assurance"
 
@@ -81,4 +81,4 @@ class AppConfig @Inject() (
 
   val maxCallsPerSecondBusinessNames: Int = servicesConfig.getInt("rate-limiter.business-names.max-calls-per-second")
 
-}
+end AppConfig

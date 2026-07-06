@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.controllers
+package uk.gov.hmrc.agentassurance.controllers
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import com.google.inject.AbstractModule
+import org.mongodb.scala.ObservableFuture
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
@@ -30,9 +30,10 @@ import play.api.test.Helpers.await
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.CONTENT_TYPE
 import play.api.Application
-import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
-import test.uk.gov.hmrc.agentassurance.support.IntegrationSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import uk.gov.hmrc.agentassurance.support.AgentAuthStubs
+import uk.gov.hmrc.agentassurance.support.IntegrationSpec
+import uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
 import uk.gov.hmrc.agentassurance.models.OverseasAmlsEntity
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepositoryImpl
@@ -46,7 +47,7 @@ with GuiceOneServerPerSuite
 with WireMockSupport
 with DefaultPlayMongoRepositorySupport[OverseasAmlsEntity] {
 
-  override lazy val repository = new OverseasAmlsRepositoryImpl(mongoComponent)
+  override val repository: OverseasAmlsRepositoryImpl = new OverseasAmlsRepositoryImpl(mongoComponent)
 
   override implicit lazy val app: Application = appBuilder.build()
 

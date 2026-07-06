@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.agentassurance.models.pagination
 
-import java.net.URLEncoder
-
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
+
+import java.net.URLEncoder
 
 case class PaginationLinks(
   self: LinkHref,
@@ -30,7 +30,7 @@ case class PaginationLinks(
   last: LinkHref
 )
 
-object PaginationLinks {
+object PaginationLinks:
 
   implicit val format: Format[PaginationLinks] = Json.format[PaginationLinks]
 
@@ -73,10 +73,9 @@ object PaginationLinks {
     total: Int,
     f: PaginationParameters => String
   ): Option[LinkHref] =
-    if (paginationParams.page > 1) {
+    if paginationParams.page > 1 then
       Some(LinkHref(f(paginationParams.copy(page = paginationParams.page - 1))))
         .filter(_ => Range.inclusive(2, paginationParams.lastPage(total)).contains(paginationParams.page))
-    }
     else
       None
 
@@ -93,14 +92,15 @@ object PaginationLinks {
     f: PaginationParameters => String
   ): LinkHref = LinkHref(f(paginationParams.copy(page = Math.max(1, ((total - 1) / paginationParams.pageSize) + 1))))
 
-  def makeQueryParamsString(queryParams: Seq[(String, String)]): String = {
+  def makeQueryParamsString(queryParams: Seq[(String, String)]): String =
     val paramPairs = queryParams.map(Function.tupled((k, v) => s"$k=${URLEncoder.encode(v, "utf-8")}"))
     val params = paramPairs.mkString("&")
 
-    if (params.isEmpty)
+    if params.isEmpty then
       ""
     else
       s"?$params"
-  }
+    end if
+  end makeQueryParamsString
 
-}
+end PaginationLinks

@@ -16,20 +16,20 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
+import play.api.Logging
 import play.api.libs.json.JsError
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.JsValue
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
-import play.api.Logging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.dms.DmsNotification
 import uk.gov.hmrc.agentassurance.models.dms.SubmissionItemStatus
-import uk.gov.hmrc.internalauth.client._
+import uk.gov.hmrc.internalauth.client.*
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 class DmsNotificationController @Inject() (
@@ -38,7 +38,7 @@ class DmsNotificationController @Inject() (
   appConfig: AppConfig
 )
 extends BackendController(cc)
-with Logging {
+with Logging:
 
   private val predicate = Predicate.Permission(
     resource = Resource(
@@ -52,22 +52,20 @@ with Logging {
 
   def dmsCallback: Action[JsValue] =
     authorised(parse.json) { implicit request =>
-      request.body.validate[DmsNotification] match {
+      request.body.validate[DmsNotification] match
         case JsSuccess(notification, _) =>
-          if (notification.status == SubmissionItemStatus.Failed) {
+          if notification.status == SubmissionItemStatus.Failed then
             logger.error(
               s"DMS notification error received for ${notification.id} with error: ${notification.failureReason
                   .getOrElse("")}"
             )
-          }
-          else {
+          else
             logger.info(
               s"DMS notification received for ${notification.id} with status ${notification.status}"
             )
-          }
+          end if
           Ok
         case JsError(_) => BadRequest
-      }
     }
 
-}
+end DmsNotificationController

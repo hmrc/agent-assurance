@@ -24,18 +24,18 @@ case class Property(
   value: String
 )
 
-object Property {
+object Property:
   implicit val propertyFormat: Format[Property] = Json.format[Property]
-}
+end Property
 
-case class Value(value: String) {
+case class Value(value: String):
   def toProperty(key: String) = Property(
     key = key,
     value = this.value.replace(" ", "")
   )
-}
+end Value
 
-object Value {
+object Value:
 
   implicit val valueFormat: Format[Value] = Json.format[Value]
-}
+end Value

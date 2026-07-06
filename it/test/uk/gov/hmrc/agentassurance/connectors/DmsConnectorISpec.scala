@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.connectors
+package uk.gov.hmrc.agentassurance.connectors
 
 import java.time.LocalDateTime
 import java.time.ZoneId
 
 import scala.concurrent.ExecutionContext
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.Source
@@ -36,13 +36,13 @@ import play.api.libs.json.Json
 import play.api.mvc.MultipartFormData
 import play.api.mvc.MultipartFormData.DataPart
 import play.api.mvc.MultipartFormData.FilePart
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.Application
-import test.uk.gov.hmrc.agentassurance.stubs.DataStreamStub
-import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
-import test.uk.gov.hmrc.agentassurance.support.MetricTestSupport
-import test.uk.gov.hmrc.agentassurance.support.UnitSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import uk.gov.hmrc.agentassurance.stubs.DataStreamStub
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
+import uk.gov.hmrc.agentassurance.support.MetricTestSupport
+import uk.gov.hmrc.agentassurance.support.UnitSpec
+import uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DmsConnector
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -111,8 +111,7 @@ with MetricTestSupport {
 
     val sourcePart: Source[ByteString, NotUsed] = Source.single(ByteString.fromString("SomePdfBytes"))
     val source: Source[
-      MultipartFormData.Part[Source[ByteString, NotUsed]]
-        with Serializable,
+      MultipartFormData.Part[Source[ByteString, NotUsed]] & Serializable,
       NotUsed
     ] = Source(
       Seq(
@@ -167,7 +166,7 @@ with MetricTestSupport {
           )
       )
 
-      dmsConnector.sendPdf(source)(hc).futureValue
+      dmsConnector.sendPdf(source)(using hc).futureValue
     }
 
     "must fail when the server returns another status" in {
@@ -179,7 +178,7 @@ with MetricTestSupport {
               .withStatus(INTERNAL_SERVER_ERROR)
           )
       )
-      dmsConnector.sendPdf(source)(hc).failed.futureValue
+      dmsConnector.sendPdf(source)(using hc).failed.futureValue
     }
   }
 

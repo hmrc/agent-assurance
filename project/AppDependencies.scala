@@ -6,22 +6,20 @@ object AppDependencies {
   private val bootstrapVer: String = "10.7.0"
   private val playVer: String = "play-30"
 
-  lazy val compile: Seq[ModuleID] = Seq(
+  val compile: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"            %% s"bootstrap-backend-$playVer"    % bootstrapVer,
     "uk.gov.hmrc.mongo"      %% s"hmrc-mongo-$playVer"           % mongoVer,
     "uk.gov.hmrc"            %% s"internal-auth-client-$playVer" % "4.4.0",
     "uk.gov.hmrc"            %% s"crypto-json-$playVer"          % "8.4.0",
-    "uk.gov.hmrc"            %% s"domain-$playVer"               % "11.0.0",
-    "org.julienrf"           %% "play-json-derived-codecs"       % "11.0.0",
-    "com.beachape"           %% "enumeratum-play-json"           % "1.9.0",
-    "io.github.openhtmltopdf" % "openhtmltopdf-pdfbox"           % "1.1.30"
+    "uk.gov.hmrc"            %% s"domain-$playVer"               % "13.0.0",
+    "io.github.openhtmltopdf" % "openhtmltopdf-pdfbox"           % "1.1.37",
   )
 
-  lazy val test: Seq[ModuleID] = Seq(
+  val test: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"       %% s"bootstrap-test-$playVer"  % bootstrapVer,
     "uk.gov.hmrc.mongo" %% s"hmrc-mongo-test-$playVer" % mongoVer,
-    "org.scalamock"     %% "scalamock"                 % "7.4.1",
-    "org.scalacheck"    %% "scalacheck"                % "1.18.1"
+    "org.scalamock"     %% "scalamock"                 % "7.5.5",
+    "org.scalacheck"    %% "scalacheck"                % "1.19.0"
   ).map(_ % Test)
 
 }

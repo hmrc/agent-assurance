@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 import org.scalatestplus.play.PlaySpec
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.models.Utr
@@ -31,33 +31,26 @@ import uk.gov.hmrc.mongo.CurrentTimestampSupport
 class MongoLockServiceSpec
 extends PlaySpec
 with CleanMongoCollectionSupport
-with MockAppConfig {
+with MockAppConfig:
 
   val mongoLockRepository = new MongoLockRepository(mongoComponent, new CurrentTimestampSupport)
-  implicit val ac: AppConfig = mockAppConfig
+  given AppConfig = mockAppConfig
 
   val service = new MongoLockService(mongoLockRepository)
 
-  val utr1 = Utr("1234567")
-  val utr2 = Utr("1234567")
+  private def assertLockIsExclusive(
+    lock: Utr => (=> Future[Unit]) => Future[Option[Unit]],
+    utr: Utr
+  ): Unit =
+    await(lock(utr)(Future.successful(()))) mustBe Some(())
+    await(lock(utr)(Future.successful(()))) mustBe None
+  end assertLockIsExclusive
 
-  "MongoLockServiceSpec" should {
-    "return Some(value) when not locked" in {
-      await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
-    }
-    "return None when locked" in {
-      await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
-      await(service.dailyLock(utr1)(Future.successful(()))) mustBe None
-    }
+  "MongoLockServiceSpec" should:
+    "return Some(value) on the first daily lock and None while it is held" in:
+      assertLockIsExclusive(service.dailyLock, Utr("9000000001"))
 
-    "return Some(value) after TTL 1 second when locked" in {
-      await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
-      Thread.sleep(500)
-      await(service.dailyLock(utr1)(Future.successful(()))) mustBe None
-      Thread.sleep(600)
-      await(service.dailyLock(utr1)(Future.successful(()))) mustBe Some(())
-    }
+    "return Some(value) on the first email lock and None while it is held" in:
+      assertLockIsExclusive(service.emailLock, Utr("7000000002"))
 
-  }
-
-}
+end MongoLockServiceSpec

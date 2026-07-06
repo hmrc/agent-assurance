@@ -16,30 +16,28 @@
 
 package uk.gov.hmrc.agentassurance.repositories
 
-import java.time.Clock
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import com.google.inject.ImplementedBy
 import com.mongodb.client.model.ReturnDocument
+import org.mongodb.scala.MongoException
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.FindOneAndReplaceOptions
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.MongoException
 import play.api.Logging
-import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.models.AmlsError._
-import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.agentassurance.models.*
+import uk.gov.hmrc.agentassurance.models.AmlsError.*
 import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+
+import java.time.Clock
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[OverseasAmlsRepositoryImpl])
-trait OverseasAmlsRepository {
+trait OverseasAmlsRepository:
 
   def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]]
 
@@ -49,10 +47,10 @@ trait OverseasAmlsRepository {
 
   def deleteByArn(arn: Arn): Future[Unit]
 
-}
+end OverseasAmlsRepository
 
 @Singleton
-class OverseasAmlsRepositoryImpl @Inject() (mongo: MongoComponent)(implicit
+class OverseasAmlsRepositoryImpl @Inject() (mongo: MongoComponent)(using
   ec: ExecutionContext,
   clock: Clock
 )
@@ -65,40 +63,36 @@ extends PlayMongoRepository[OverseasAmlsEntity](
   )
 )
 with OverseasAmlsRepository
-with Logging {
+with Logging:
 
   override lazy val requiresTtlIndex: Boolean = false
 
-  def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]] = {
+  def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]] =
     collection
       .find(equal("arn", amlsEntity.arn.value))
       .headOption()
-      .flatMap {
+      .flatMap:
         case Some(_) => Future.successful(Left(AmlsRecordExists))
         case _ =>
           collection
             .insertOne(amlsEntity.withDefaultCreatedDate)
             .toFuture()
-            .map {
+            .map:
               case insertOneResult if insertOneResult.wasAcknowledged() => Right(())
               case e =>
                 logger.warn(s"Error inserting overseas AMLS record ${e}")
                 Left(AmlsUnexpectedMongoError)
-            }
-      }
-      .recover {
+      .recover:
         case e: MongoException =>
           logger.warn(s"Mongo exception when inserting overseas AMLS record $e")
           Left(AmlsUnexpectedMongoError)
-      }
-  }
 
   override def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]] = collection
     .find(equal("arn", arn.value))
     .headOption()
     .map(_.map(_.amlsDetails))
 
-  override def createOrUpdate(amlsEntity: OverseasAmlsEntity): Future[Option[OverseasAmlsEntity]] = {
+  override def createOrUpdate(amlsEntity: OverseasAmlsEntity): Future[Option[OverseasAmlsEntity]] =
     collection
       .findOneAndReplace(
         equal("arn", amlsEntity.arn.value),
@@ -106,11 +100,10 @@ with Logging {
         FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE)
       )
       .headOption()
-  }
 
   override def deleteByArn(arn: Arn): Future[Unit] = collection
     .deleteOne(equal("arn", arn.value))
     .toFuture()
     .map(_ => ())
 
-}
+end OverseasAmlsRepositoryImpl

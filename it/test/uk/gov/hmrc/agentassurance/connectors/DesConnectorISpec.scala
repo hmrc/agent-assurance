@@ -25,13 +25,13 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.Application
 import play.api.Configuration
-import test.uk.gov.hmrc.agentassurance.stubs.DataStreamStub
-import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
-import test.uk.gov.hmrc.agentassurance.support.UnitSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import uk.gov.hmrc.agentassurance.stubs.DataStreamStub
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
+import uk.gov.hmrc.agentassurance.support.UnitSpec
+import uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
@@ -69,8 +69,7 @@ with CleanMongoCollectionSupport {
   private implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
   private implicit val config: Config = app.injector.instanceOf[Config]
   private implicit lazy val as: ActorSystem = ActorSystem()
-  private implicit val crypto: Encrypter
-    with Decrypter = aesCrypto("0xbYzrPV9/GmVEGazywGswm7yRYoWy2BraeJnjOUgcY=")
+  private implicit val crypto: Encrypter & Decrypter = aesCrypto("0xbYzrPV9/GmVEGazywGswm7yRYoWy2BraeJnjOUgcY=")
 
   private def encryptKey(key: String): String = crypto.encrypt(PlainText(key)).value
 
@@ -216,7 +215,7 @@ with CleanMongoCollectionSupport {
       await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
       Thread.sleep(500)
       await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
-      verifyDESGetAgentRecord(arn, 1)
+      verifyDESGetAgentRecord(arn)
     }
 
     "return agency details cached for a given ARN and save record to cache for two agents" in {
@@ -238,8 +237,8 @@ with CleanMongoCollectionSupport {
       Thread.sleep(500)
       await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
       await(desConnector.getAgentRecord(arn2)) shouldBe agentDetailsDesResponse2
-      verifyDESGetAgentRecord(arn, 1)
-      verifyDESGetAgentRecord(arn2, 1)
+      verifyDESGetAgentRecord(arn)
+      verifyDESGetAgentRecord(arn2)
     }
 
     "must fail when the server returns another 5xx status" in {
@@ -298,7 +297,7 @@ with CleanMongoCollectionSupport {
       await(desConnector.getBusinessName(utr.value)) shouldBe Some(organisationBusinessName)
       Thread.sleep(500)
       await(desConnector.getBusinessName(utr.value)) shouldBe Some(organisationBusinessName)
-      verifyDESGetAgentRegistrationData(utr, 1)
+      verifyDESGetAgentRegistrationData(utr)
     }
 
     "return business name cached for a given UTR and save record to cache for two agents" in {
@@ -319,7 +318,7 @@ with CleanMongoCollectionSupport {
 
   }
 
-  private def aCheckEndpoint(identifier: TaxIdentifier) = {
+  private def aCheckEndpoint(identifier: TaxIdentifier): Unit = {
     "return one Agent when client has a single active agent" in {
       val agentId = SaAgentReference("bar")
       givenClientHasRelationshipWithAgentInCESA(identifier, agentId)

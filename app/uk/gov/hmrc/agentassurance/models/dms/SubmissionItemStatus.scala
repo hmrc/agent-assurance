@@ -16,34 +16,33 @@
 
 package uk.gov.hmrc.agentassurance.models.dms
 
-import enumeratum.Enum
-import enumeratum.EnumEntry
-import play.api.libs.json.Format
-import uk.gov.hmrc.agentassurance.utils.EnumFormat
+import play.api.libs.json.*
 
-sealed abstract class SubmissionItemStatus
-extends EnumEntry
+enum SubmissionItemStatus:
+  case Completed, Failed, Forwarded, Processed, Submitted
 
-object SubmissionItemStatus
-extends Enum[SubmissionItemStatus] {
+object SubmissionItemStatus:
 
-  implicit val format: Format[SubmissionItemStatus] = EnumFormat(SubmissionItemStatus)
+  given Format[SubmissionItemStatus] = Format(
+    Reads {
+      case JsString(value) =>
+        try JsSuccess(SubmissionItemStatus.valueOf(value))
+        catch case _: IllegalArgumentException => JsError(s"Unknown SubmissionItemStatus value: $value")
+      case _ => JsError("Can only parse String")
+    },
+    Writes(status => JsString(status.toString))
+  )
 
-  case object Completed
-  extends SubmissionItemStatus
+  override def toString: String =
 
-  case object Failed
-  extends SubmissionItemStatus
+    this match
+      case Completed => "Completed"
+      case Failed => "Failed"
+      case Forwarded => "Forwarded"
+      case Processed => "Processed"
+      case Submitted => "Submitted"
+    end match
 
-  case object Forwarded
-  extends SubmissionItemStatus
+  end toString
 
-  case object Processed
-  extends SubmissionItemStatus
-
-  case object Submitted
-  extends SubmissionItemStatus
-
-  override def values: IndexedSeq[SubmissionItemStatus] = findValues
-
-}
+end SubmissionItemStatus

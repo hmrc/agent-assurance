@@ -25,6 +25,6 @@ final case class DmsNotification(
   failureReason: Option[String]
 )
 
-object DmsNotification {
+object DmsNotification:
   implicit val format: OFormat[DmsNotification] = Json.format[DmsNotification]
-}
+end DmsNotification

@@ -17,10 +17,10 @@
 package uk.gov.hmrc.agentassurance.mocks
 
 import scala.concurrent.Future
-
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import org.apache.pekko.NotUsed
+import org.scalamock.handlers.CallHandler2
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.MultipartFormData
@@ -34,27 +34,36 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 trait MockDmsConnector
 extends MockFactory { this: TestSuite =>
 
-  val mockDmsConnector = mock[DmsConnector]
+  val mockDmsConnector: DmsConnector = mock[DmsConnector]
 
-  def mocksendPdfAccepted() = {
+  def mocksendPdfAccepted(): CallHandler2[
+    Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed],
+    HeaderCarrier,
+    Future[Unit]
+  ] =
     (mockDmsConnector
-      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
+      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(using _: HeaderCarrier))
       .expects(*, *)
       .returning(Future.successful(HttpResponse.apply(ACCEPTED, "")))
-  }
 
-  def mocksendPdfUpstreamErrorResponse() = {
+  def mocksendPdfUpstreamErrorResponse(): CallHandler2[
+    Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed],
+    HeaderCarrier,
+    Future[Unit]
+  ] =
     (mockDmsConnector
-      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
+      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(using _: HeaderCarrier))
       .expects(*, *)
       .returning(Future.failed(UpstreamErrorResponse.apply("Error message", BAD_GATEWAY)))
-  }
 
-  def mocksendPdfNonFatal() = {
+  def mocksendPdfNonFatal(): CallHandler2[
+    Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed],
+    HeaderCarrier,
+    Future[Unit]
+  ] =
     (mockDmsConnector
-      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(_: HeaderCarrier))
+      .sendPdf(_: Source[MultipartFormData.Part[Source[ByteString, NotUsed]], NotUsed])(using _: HeaderCarrier))
       .expects(*, *)
       .returning(Future.failed(new Exception("Error message")))
-  }
 
 }

@@ -22,32 +22,30 @@ import play.api.libs.json.OFormat
 case class Individual(
   firstName: String,
   lastName: String
-) {
+):
   val name: String = s"$firstName $lastName"
-}
-object Individual {
+end Individual
+object Individual:
   implicit val individualFormat: OFormat[Individual] = Json.format[Individual]
-}
+end Individual
 
 case class Organisation(organisationName: String)
-object Organisation {
+object Organisation:
   implicit val organisationFormat: OFormat[Organisation] = Json.format[Organisation]
-}
+end Organisation
 
 case class DesAgentNameResponse(
   isAnIndividual: Boolean,
   organisation: Option[Organisation],
   individual: Option[Individual]
-) {
+):
   val agentName: Option[String] =
-    if (isAnIndividual) {
+    if isAnIndividual then
       individual.map(_.name)
-    }
-    else {
+    else
       organisation.map(_.organisationName)
-    }
-}
+end DesAgentNameResponse
 
-object DesAgentNameResponse {
+object DesAgentNameResponse:
   implicit val responseFormat: OFormat[DesAgentNameResponse] = Json.format[DesAgentNameResponse]
-}
+end DesAgentNameResponse

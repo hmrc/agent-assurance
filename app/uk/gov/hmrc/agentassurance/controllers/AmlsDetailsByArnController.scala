@@ -16,12 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import play.api.libs.json.JsError
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
@@ -30,16 +24,16 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.models.AmlsRequest
-import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
-import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetailsResponse
-import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
-import uk.gov.hmrc.agentassurance.models.UkAmlsDetailsResponse
+import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
-import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @Singleton
 class AmlsDetailsByArnController @Inject() (
@@ -51,41 +45,37 @@ class AmlsDetailsByArnController @Inject() (
   ec: ExecutionContext
 )
 extends BackendController(controllerComponents)
-with AuthActions {
+with AuthActions:
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 
   def getAmlsDetails(arn: Arn): Action[AnyContent] =
     withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
-      amlsDetailsService.getAmlsDetailsByArn(arn).map {
+      amlsDetailsService.getAmlsDetailsByArn(arn).map:
         case (amlsStatus, None) => Ok(Json.toJson(UkAmlsDetailsResponse(amlsStatus.toString)))
         case (amlsStatus, Some(amlsDetails: UkAmlsDetails)) => Ok(Json.toJson(UkAmlsDetailsResponse(amlsStatus.toString, Some(amlsDetails))))
         case (amlsStatus, Some(overseasAmlsDetails: OverseasAmlsDetails)) =>
           Ok(Json.toJson(OverseasAmlsDetailsResponse(amlsStatus.toString, Some(overseasAmlsDetails))))
-      }
     }
 
   def postAmlsDetails(arn: Arn): Action[AnyContent] = withAffinityGroupAgent { implicit request =>
     request.body.asJson
-      .map {
-        _.validate[AmlsRequest] match {
+      .map:
+        _.validate[AmlsRequest] match
           case JsSuccess(amlsRequest, _) =>
-            amlsDetailsService.storeAmlsRequest(arn, amlsRequest).map {
+            amlsDetailsService.storeAmlsRequest(arn, amlsRequest).map:
               case Right(_) => Created
               case Left(error) =>
                 throw new InternalServerException(
                   s"[AmlsDetailsByArnController][postAmlsDetails] failed to store new AMLS details. Error - ${error.toString}"
                 )
-            }
           case JsError(errors) =>
             Future.successful(
               BadRequest(s"[AmlsDetailsByArnController][postAmlsDetails] Could not parse JSON body: $errors")
             )
-        }
-      }
       .getOrElse(
         Future.successful(BadRequest("[AmlsDetailsByArnController][postAmlsDetails] No JSON found in request"))
       )
   }
 
-}
+end AmlsDetailsByArnController

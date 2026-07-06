@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.agentassurance.models
 
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
-
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
+
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
 
 sealed trait AmlsEntity
 
@@ -37,35 +37,34 @@ case class UkAmlsEntity(
 )
 extends AmlsEntity
 
-object UkAmlsEntity {
+object UkAmlsEntity:
 
-  import play.api.libs.functional.syntax._
-  import play.api.libs.json._
+  import play.api.libs.functional.syntax.*
+  import play.api.libs.json.*
 
-  val jsonReads: Reads[UkAmlsEntity] =
-    (__ \ "utr")
-      .readNullable[Utr]
-      .and((__ \ "amlsDetails").read[UkAmlsDetails])
-      .and((__ \ "arn").readNullable[Arn])
-      .and((__ \ "createdOn").read[LocalDate])
-      .and((__ \ "updatedArnOn").readNullable[LocalDate])
-      .and((__ \ "amlsSource").readWithDefault[AmlsSource](AmlsSource.Subscription))(UkAmlsEntity.apply _)
+  private val jsonReads: Reads[UkAmlsEntity] = (JsPath \ "utr")
+    .readNullable[Utr]
+    .and((JsPath \ "amlsDetails").read[UkAmlsDetails])
+    .and((JsPath \ "arn").readNullable[Arn])
+    .and((JsPath \ "createdOn").read[LocalDate])
+    .and((JsPath \ "updatedArnOn").readNullable[LocalDate])
+    .and((JsPath \ "amlsSource").readWithDefault[AmlsSource](AmlsSource.Subscription))(UkAmlsEntity.apply)
 
-  val jsonWrites: OWrites[UkAmlsEntity] = Json.writes[UkAmlsEntity]
+  private val jsonWrites: OWrites[UkAmlsEntity] = Json.writes[UkAmlsEntity]
 
   implicit val amlsEntityFormat: OFormat[UkAmlsEntity] = OFormat(jsonReads, jsonWrites)
 
-}
+end UkAmlsEntity
 
 case class OverseasAmlsEntity(
   arn: Arn,
   amlsDetails: OverseasAmlsDetails,
   createdDate: Option[Instant]
 )
-extends AmlsEntity {
-  def withDefaultCreatedDate(implicit clock: Clock): OverseasAmlsEntity = copy(createdDate = Some(createdDate.getOrElse(Instant.now(clock))))
-}
+extends AmlsEntity:
+  def withDefaultCreatedDate(using clock: Clock): OverseasAmlsEntity = copy(createdDate = Some(createdDate.getOrElse(Instant.now(clock))))
+end OverseasAmlsEntity
 
-object OverseasAmlsEntity {
+object OverseasAmlsEntity:
   implicit val format: Format[OverseasAmlsEntity] = Json.format[OverseasAmlsEntity]
-}
+end OverseasAmlsEntity

@@ -25,15 +25,15 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.binders.PaginationParameters
 import uk.gov.hmrc.agentassurance.models.ErrorBody
+import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.agentassurance.models.Value
 import uk.gov.hmrc.agentassurance.models.pagination.PaginatedResources
 import uk.gov.hmrc.agentassurance.models.pagination.PaginationLinks
-import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr._
+import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr.*
 import uk.gov.hmrc.agentassurance.models.utrcheck.CollectionName
 import uk.gov.hmrc.agentassurance.models.utrcheck.UtrDetails
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.services.BusinessNamesService
-import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -50,21 +50,21 @@ class ManagedUtrsController @Inject() (
   val authConnector: AuthConnector
 )(implicit ec: ExecutionContext)
 extends BackendController(controllerComponents)
-with AuthActions {
+with AuthActions:
 
   def listUtrs(
     pagination: PaginationParameters,
     key: CollectionName
-  ): Action[AnyContent] = BasicAuth {
+  ): Action[AnyContent] = BasicAuth:
     implicit request =>
-      for {
+      for
         (total, utrs) <- repository.findProperties(
-          key.toString,
+          key.textValue,
           pagination.page,
           pagination.pageSize
         )
         businessNamesByUtrSet <- businessNamesService.get(utrs)
-      } yield {
+      yield
         val paginatedResources = PaginatedResources(
           _links = PaginationLinks.apply(
             paginationParams = pagination,
@@ -77,23 +77,21 @@ with AuthActions {
           resources = businessNamesByUtrSet.toSeq
         )
         Ok(Json.toJson(paginatedResources))
-      }
-  }
 
   def getUtrDetails(
     utr: Utr,
     nameRequired_ : Option[Boolean] = None
-  ) = Action.async { implicit request => // TODO - this endpoint is called by both stride/normal and internal auth - we should split it into internal and normal auth versions. Unauth version is temporary
+  ): Action[AnyContent] = Action.async { implicit request => // TODO - this endpoint is called by both stride/normal and internal auth - we should split it into internal and normal auth versions. Unauth version is temporary
     val nameRequired: Boolean = nameRequired_.getOrElse(false)
-    for {
-      isManuallyAssured <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.ManuallyAssured.toString))
-      isRefusalToDealWith <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.RefusalToDealWith.toString))
+    for
+      isManuallyAssured <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.ManuallyAssured.textValue))
+      isRefusalToDealWith <- repository.propertyExists(Value(utr.value).toProperty(CollectionName.RefusalToDealWith.textValue))
       businessName <-
-        if (nameRequired)
+        if nameRequired then
           businessNamesService.get(utr.value)
         else
           Future.successful(None)
-    } yield {
+    yield
 
       val utrChecksResponse = UtrDetails(
         utr = utr,
@@ -102,7 +100,7 @@ with AuthActions {
         businessName = businessName
       )
       Ok(Json.toJson(utrChecksResponse))
-    }
+    end for
   }
 
   def upsertUtr(collectionName: CollectionName): Action[JsValue] =
@@ -112,12 +110,13 @@ with AuthActions {
           Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_JSON", JsError.toJson(errors).toString))))
         },
         newValue => {
-          Utr.isValid(newValue.value) match {
-            case true =>
-              repository
-                .upsertProperty(newValue.toProperty(collectionName.toString))
-                .map(_ => Created)
-            case false => Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
+          if Utr.isValid(newValue.value) then {
+            repository
+              .upsertProperty(newValue.toProperty(collectionName.textValue))
+              .map(_ => Created)
+          }
+          else {
+            Future.successful(BadRequest(Json.toJson(ErrorBody("INVALID_UTR", "You must provide a valid UTR"))))
           }
         }
       )
@@ -129,9 +128,9 @@ with AuthActions {
   ): Action[AnyContent] = BasicAuth { _ =>
     repository
       .deleteProperty(
-        Value(identifier.value).toProperty(key.toString)
+        Value(identifier.value).toProperty(key.textValue)
       )
       .map(_ => NoContent)
   }
 
-}
+end ManagedUtrsController

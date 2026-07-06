@@ -24,10 +24,10 @@ import java.util.Base64
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import org.scalatestplus.play.PlaySpec
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.helpers.ChangeDesiDetailsPayloads
-import uk.gov.hmrc.agentassurance.mocks._
+import uk.gov.hmrc.agentassurance.mocks.*
 import uk.gov.hmrc.agentassurance.models.DmsResponse
 import uk.gov.hmrc.agentassurance.models.DmsSubmissionReference
 import uk.gov.hmrc.http.HeaderCarrier
@@ -37,7 +37,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 class DmsServiceSpec
 extends PlaySpec
 with MockDmsConnector
-with MockAppConfig {
+with MockAppConfig:
 
   val html = "<html><head></head><body></body></html>"
   val now: Instant = Instant.now
@@ -46,8 +46,8 @@ with MockAppConfig {
 
   val service = new DmsService(mockDmsConnector, appConfig)
 
-  "submitToDms" should {
-    "handle escaped special chars in desi details changes" in {
+  "submitToDms" should:
+    "handle escaped special chars in desi details changes" in:
       val encoded = Base64.getEncoder.encodeToString(ChangeDesiDetailsPayloads.specialChars.getBytes)
 
       val timestamp =
@@ -69,12 +69,11 @@ with MockAppConfig {
         Some(encoded),
         timestamp,
         DmsSubmissionReference("DmsSubmissionReference")
-      )(hc))
+      )(using hc))
 
       result mustBe DmsResponse(timestamp, "")
-    }
 
-    "return correct value when the submission is successful" in {
+    "return correct value when the submission is successful" in:
       val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
       val timestamp =
@@ -96,12 +95,11 @@ with MockAppConfig {
         Some(encoded),
         timestamp,
         DmsSubmissionReference("DmsSubmissionReference")
-      )(hc))
+      )(using hc))
 
       result mustBe DmsResponse(timestamp, "")
-    }
 
-    "return upstream error if submission fails" in {
+    "return upstream error if submission fails" in:
       val encoded = Base64.getEncoder.encodeToString(html.getBytes)
 
       val timestamp =
@@ -119,39 +117,31 @@ with MockAppConfig {
 
       mocksendPdfUpstreamErrorResponse()
 
-      an[UpstreamErrorResponse] mustBe thrownBy {
+      an[UpstreamErrorResponse] mustBe thrownBy:
         await(service.submitToDms(
           Some(encoded),
           timestamp,
           DmsSubmissionReference("DmsSubmissionReference")
         ))
-      }
 
-    }
-
-    "return upstream error if submission fails with NonFatal code" in {
+    "return upstream error if submission fails with NonFatal code" in:
       val encoded = Base64.getEncoder.encodeToString(html.getBytes)
       mocksendPdfNonFatal()
 
-      an[InternalServerException] mustBe thrownBy {
+      an[InternalServerException] mustBe thrownBy:
         await(service.submitToDms(
           Some(encoded),
           now,
           DmsSubmissionReference("DmsSubmissionReference")
         ))
-      }
-    }
 
-    "return upstream error if no data to submit" in {
+    "return upstream error if no data to submit" in:
 
-      an[InternalServerException] mustBe thrownBy {
+      an[InternalServerException] mustBe thrownBy:
         await(service.submitToDms(
           None,
           now,
           DmsSubmissionReference("DmsSubmissionReference")
         ))
-      }
-    }
-  }
 
-}
+end DmsServiceSpec

@@ -32,14 +32,14 @@ class EmailServiceSpec
 extends PlaySpec
 with DefaultAwaitTimeout
 with MockEmailConnector
-with MockAppConfig {
+with MockAppConfig:
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
   val service: EmailService = new EmailService(mockEmailConnector, mockAppConfig)
 
-  "sendEntityCheckEmail" should {
-    "be successful when request is valid" in {
+  "sendEntityCheckEmail" should:
+    "be successful when request is valid" in:
       val entityChecks = EntityCheckNotification(
         arn = Arn("238799"),
         utr = "1248798",
@@ -63,7 +63,5 @@ with MockAppConfig {
       )
 
       await(service.sendEntityCheckNotification(entityChecks)) mustBe ()
-    }
-  }
 
-}
+end EmailServiceSpec

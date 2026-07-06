@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.helpers
 
-object ChangeDesiDetailsPayloads {
+object ChangeDesiDetailsPayloads:
 
   // this is actual output taken from agent-services-account-frontend
   val specialChars: String =
@@ -302,5 +302,4 @@ object ChangeDesiDetailsPayloads {
       |    </body>
       |</html>
       |""".stripMargin
-
-}
+end ChangeDesiDetailsPayloads

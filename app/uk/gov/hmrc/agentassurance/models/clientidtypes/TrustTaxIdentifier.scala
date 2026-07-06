@@ -16,6 +16,6 @@
 
 package uk.gov.hmrc.agentassurance.models.clientidtypes
 
-trait TrustTaxIdentifier {
+trait TrustTaxIdentifier:
   val value: String
-}
+end TrustTaxIdentifier

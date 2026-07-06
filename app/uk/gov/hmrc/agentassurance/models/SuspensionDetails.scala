@@ -33,47 +33,43 @@ import uk.gov.hmrc.agentassurance.models.Service.Vat
 case class SuspensionDetails(
   suspensionStatus: Boolean,
   regimes: Option[Set[String]]
-) {
+):
 
-  val suspendedRegimes: Set[String] = {
+  val suspendedRegimes: Set[String] =
     regimes.fold(Set.empty[String]) { rs =>
-      if (rs.contains("ALL") || rs.contains("AGSV"))
+      if rs.contains("ALL") || rs.contains("AGSV") then
         SuspensionDetails.validSuspensionRegimes
       else
         rs
     }
-  }
 
-  def isRegimeSuspended(service: Service): Boolean = {
+  def isRegimeSuspended(service: Service): Boolean =
     suspendedRegimes.contains(SuspensionDetails.serviceToRegime(service))
-  }
 
-  def isRegimeSuspended(id: String): Boolean = {
-    def idToService(id: String): Service = {
+  def isRegimeSuspended(id: String): Boolean =
+    def idToService(id: String): Service =
       SuspensionDetails.serviceToRegime
         .find(_._1.id == id)
         .map(_._1)
         .getOrElse(throw new IllegalArgumentException(s"Service of ID '$id' not known"))
-    }
 
     suspendedRegimes.contains(SuspensionDetails.serviceToRegime(idToService(id)))
-  }
+  end isRegimeSuspended
 
-  def suspendedRegimesForServices(serviceIds: Set[String]): Set[String] = {
+  def suspendedRegimesForServices(serviceIds: Set[String]): Set[String] =
     SuspensionDetails.serviceToRegime.view
       .filterKeys(s => serviceIds.contains(s.id))
       .values
       .toSet
       .intersect(suspendedRegimes)
-  }
 
   def isAnyRegimeSuspendedForServices(ids: Set[String]): Boolean = suspendedRegimesForServices(ids).nonEmpty
 
   override def toString: String = suspendedRegimes.toSeq.sorted.mkString(",")
 
-}
+end SuspensionDetails
 
-object SuspensionDetails {
+object SuspensionDetails:
 
   lazy val serviceToRegime: Map[Service, String] = Map(
     MtdIt -> "ITSA",
@@ -105,7 +101,7 @@ object SuspensionDetails {
 
   val notSuspended: SuspensionDetails = SuspensionDetails(suspensionStatus = false, None)
 
-}
+end SuspensionDetails
 
 case class SuspensionDetailsNotFound(message: String)
 extends Exception(message)

@@ -16,38 +16,37 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.util.Try
-
 import com.google.inject.ImplementedBy
 import play.api.libs.json.Format
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.format
 import play.api.libs.json.Json.fromJson
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
+import uk.gov.hmrc.http.client.HttpClientV2
+
+import javax.inject.Inject
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.Try
 
 case class ClientAllocation(
   friendlyName: String,
   state: String
 )
 
-object ClientAllocation {
+object ClientAllocation:
   implicit val formats: Format[ClientAllocation] = format[ClientAllocation]
-}
+end ClientAllocation
 
 case class ClientAllocationResponse(clients: Seq[ClientAllocation])
 
 @ImplementedBy(classOf[EnrolmentStoreProxyConnectorImpl])
-trait EnrolmentStoreProxyConnector {
+trait EnrolmentStoreProxyConnector:
   def getClientCount(
     service: String,
     userId: String
@@ -55,7 +54,7 @@ trait EnrolmentStoreProxyConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Int]
-}
+end EnrolmentStoreProxyConnector
 
 @Singleton
 class EnrolmentStoreProxyConnectorImpl @Inject() (
@@ -63,17 +62,17 @@ class EnrolmentStoreProxyConnectorImpl @Inject() (
 )(
   implicit appConfig: AppConfig
 )
-extends EnrolmentStoreProxyConnector {
+extends EnrolmentStoreProxyConnector:
 
   private val emacBaseUrl: String = s"${appConfig.esProxyUrl}/enrolment-store-proxy/enrolment-store"
 
   implicit val responseHandler: HttpReads[ClientAllocationResponse] =
-    new HttpReads[ClientAllocationResponse] {
+    new HttpReads[ClientAllocationResponse]:
       override def read(
         method: String,
         url: String,
         response: HttpResponse
-      ) = {
+      ) =
         Try(response.status match {
           case 200 => ClientAllocationResponse(parseClients((response.json \ "enrolments").get))
           case 204 => ClientAllocationResponse(Seq.empty)
@@ -82,8 +81,6 @@ extends EnrolmentStoreProxyConnector {
             s"Error retrieving client list from $url: status ${response.status} body ${response.body}"
           )
         )
-      }
-    }
 
   def getClientCount(
     service: String,
@@ -91,7 +88,7 @@ extends EnrolmentStoreProxyConnector {
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Int] = {
+  ): Future[Int] =
     val clientListUrl = s"$emacBaseUrl/users/$userId/enrolments?type=delegated&service=$service"
     httpGet
       .get(url"$clientListUrl")
@@ -105,12 +102,10 @@ extends EnrolmentStoreProxyConnector {
           }
         }
       })
-  }
+  end getClientCount
 
-  private def parseClients(jsonResponse: JsValue): Seq[ClientAllocation] = {
-    fromJson[Seq[ClientAllocation]](jsonResponse).getOrElse {
+  private def parseClients(jsonResponse: JsValue): Seq[ClientAllocation] =
+    fromJson[Seq[ClientAllocation]](jsonResponse).getOrElse:
       throw new RuntimeException(s"Invalid payload received from enrolment store proxy: $jsonResponse")
-    }
-  }
 
-}
+end EnrolmentStoreProxyConnectorImpl

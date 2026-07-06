@@ -16,26 +16,31 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
+import org.scalamock.handlers.CallHandler3
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import uk.gov.hmrc.agentassurance.connectors.CitizenDetailsConnector
-import uk.gov.hmrc.agentassurance.models.entitycheck.DeceasedCheckException
+import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
 
 trait MockCitizenDetailsConnector
 extends MockFactory { this: TestSuite =>
 
-  val mockCitizenDetailsConnector = mock[CitizenDetailsConnector]
+  val mockCitizenDetailsConnector: CitizenDetailsConnector = mock[CitizenDetailsConnector]
 
-  def mockGetCitizenDeceasedFlag(saUtr: SaUtr)(response: Option[DeceasedCheckException]) = {
+  def mockGetCitizenDeceasedFlag(saUtr: SaUtr)(response: Option[EntityCheckException]): CallHandler3[
+    SaUtr,
+    HeaderCarrier,
+    ExecutionContext,
+    Future[Option[EntityCheckException]]
+  ] =
     (mockCitizenDetailsConnector
-      .getCitizenDeceasedFlag(_: SaUtr)(_: HeaderCarrier, _: ExecutionContext))
+      .getCitizenDeceasedFlag(_: SaUtr)(using _: HeaderCarrier, _: ExecutionContext))
       .expects(saUtr, *, *)
       .returning(Future.successful(response))
-  }
 
 }

@@ -19,16 +19,14 @@ package uk.gov.hmrc.agentassurance.services
 import org.scalatestplus.play.PlaySpec
 import play.api.mvc.Request
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.helpers.InstantClockTestSupport
-import uk.gov.hmrc.agentassurance.helpers.TestConstants._
-import uk.gov.hmrc.agentassurance.mocks._
-import uk.gov.hmrc.agentassurance.models._
-import uk.gov.hmrc.agentassurance.models.entitycheck.DeceasedCheckException.EntityDeceasedCheckFailed
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.*
+import uk.gov.hmrc.agentassurance.mocks.*
+import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckResult
-import uk.gov.hmrc.agentassurance.models.entitycheck.RefusalCheckException.AgentIsOnRefuseToDealList
 import uk.gov.hmrc.agentassurance.utils.DateTimeService
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
@@ -47,12 +45,12 @@ with InstantClockTestSupport
 with MockAppConfig
 with MockEmailService
 with MockPropertiesRepository
-with MockAuditService {
+with MockAuditService:
 
   implicit val ac: AppConfig = mockAppConfig
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-  implicit val req: Request[_] = FakeRequest()
+  implicit val req: Request[?] = FakeRequest()
 
   val mongoLockRepository = new MongoLockRepository(mongoComponent, new CurrentTimestampSupport)
   val mongoLockService = new MongoLockService(mongoLockRepository)
@@ -68,8 +66,8 @@ with MockAuditService {
       clock
     )
 
-  "verifyAgent" should {
-    "return Some(SuspensionDetails) when the agent is suspended" in {
+  "verifyAgent" should:
+    "return Some(SuspensionDetails) when the agent is suspended" in:
 
       val agentDetailsDesResponse = AgentDetailsDesResponse(
         uniqueTaxReference = None,
@@ -88,9 +86,8 @@ with MockAuditService {
         agentDetailsDesResponse,
         Seq.empty[EntityCheckException]
       )
-    }
 
-    "return None when the agent is not suspended" in {
+    "return None when the agent is not suspended" in:
 
       val agentDetailsDesResponse = AgentDetailsDesResponse(
         uniqueTaxReference = None,
@@ -105,11 +102,10 @@ with MockAuditService {
       val result = await(service.verifyAgent(testArn))
 
       result mustBe EntityCheckResult(agentDetailsDesResponse, Seq.empty[EntityCheckException])
-    }
 
-    "return Some(SuspensionDetails) and do entityChecks and do not sent email" in {
+    "return Some(SuspensionDetails) and do entityChecks and do not sent email" in:
 
-      val utr = Utr("1234567")
+      val utr = Utr("9000000001")
       val agentDetailsDesResponse = AgentDetailsDesResponse(
         uniqueTaxReference = Some(utr),
         agencyDetails = None,
@@ -131,11 +127,10 @@ with MockAuditService {
         agentDetailsDesResponse,
         Seq.empty[EntityCheckException]
       )
-    }
 
-    "return Some(SuspensionDetails) and do entityChecks and sent email with deceased failed" in {
+    "return Some(SuspensionDetails) and do entityChecks and sent email with deceased failed" in:
 
-      val utr = Utr("1234567")
+      val utr = Utr("7000000002")
       val agentDetailsDesResponse = AgentDetailsDesResponse(
         uniqueTaxReference = Some(utr),
         agencyDetails = None,
@@ -146,7 +141,7 @@ with MockAuditService {
         agentDetailsDesResponse
       )
 
-      mockGetCitizenDeceasedFlag(SaUtr(utr.value))(Some(EntityDeceasedCheckFailed))
+      mockGetCitizenDeceasedFlag(SaUtr(utr.value))(Some(EntityCheckException.EntityDeceasedCheckFailed))
       mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(response = false)
       mockAuditEntityChecksPerformed
       mockAuditEntityCheckFailureNotificationSent
@@ -165,13 +160,12 @@ with MockAuditService {
 
       result mustBe EntityCheckResult(
         agentDetailsDesResponse,
-        List(EntityDeceasedCheckFailed)
+        List(EntityCheckException.EntityDeceasedCheckFailed)
       )
-    }
 
-    "return Some(SuspensionDetails) and do entityChecks and sent email with refusal to do list" in {
+    "return Some(SuspensionDetails) and do entityChecks and sent email with refusal to do list" in:
 
-      val utr = Utr("1234567")
+      val utr = Utr("5000000003")
       val agentDetailsDesResponse = AgentDetailsDesResponse(
         uniqueTaxReference = Some(utr),
         agencyDetails = None,
@@ -200,10 +194,32 @@ with MockAuditService {
 
       result mustBe EntityCheckResult(
         agentDetailsDesResponse,
-        List(AgentIsOnRefuseToDealList)
+        List(EntityCheckException.AgentIsOnRefuseToDealList)
       )
-    }
 
-  }
+    "return a technical deceased check failure without sending an email" in:
 
-}
+      val utr = Utr("3000000004")
+      val agentDetailsDesResponse = AgentDetailsDesResponse(
+        uniqueTaxReference = Some(utr),
+        agencyDetails = None,
+        suspensionDetails = Some(SuspensionDetails(suspensionStatus = true, regimes = Some(Set("ITSA")))),
+        isAnIndividual = Some(true)
+      )
+
+      mockGetAgentRecord(testArn)(
+        agentDetailsDesResponse
+      )
+
+      mockGetCitizenDeceasedFlag(SaUtr(utr.value))(Some(EntityCheckException.CitizenConnectorRequestFailed(500)))
+      mockPropertyExists(Value(utr.value).toProperty("refusal-to-deal-with"))(response = false)
+      mockAuditEntityChecksPerformed
+
+      val result = await(service.verifyAgent(testArn))
+
+      result mustBe EntityCheckResult(
+        agentDetailsDesResponse,
+        List(EntityCheckException.CitizenConnectorRequestFailed(500))
+      )
+
+end EntityCheckServiceSpec

@@ -24,15 +24,15 @@ case class UkAmlsDetailsResponse(
   details: Option[UkAmlsDetails] = None
 )
 
-object UkAmlsDetailsResponse {
+object UkAmlsDetailsResponse:
   implicit val format: Format[UkAmlsDetailsResponse] = Json.format[UkAmlsDetailsResponse]
-}
+end UkAmlsDetailsResponse
 
 case class OverseasAmlsDetailsResponse(
   status: String,
   details: Option[OverseasAmlsDetails] = None
 )
 
-object OverseasAmlsDetailsResponse {
+object OverseasAmlsDetailsResponse:
   implicit val format: Format[OverseasAmlsDetailsResponse] = Json.format[OverseasAmlsDetailsResponse]
-}
+end OverseasAmlsDetailsResponse

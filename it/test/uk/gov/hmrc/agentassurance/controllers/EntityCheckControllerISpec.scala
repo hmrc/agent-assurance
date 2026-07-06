@@ -18,11 +18,10 @@ package uk.gov.hmrc.agentassurance.controllers
 
 import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
-
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import com.google.inject.AbstractModule
+import org.mongodb.scala.SingleObservableFuture
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
@@ -31,15 +30,17 @@ import play.api.http.Status.OK
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
+import play.api.libs.ws.WSResponse
 import play.api.test.Helpers.CONTENT_TYPE
 import play.api.Application
-import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
-import test.uk.gov.hmrc.agentassurance.stubs.InternalAuthStub
-import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
-import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
-import uk.gov.hmrc.agentassurance.helpers.TestConstants._
-import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
+import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
+import uk.gov.hmrc.agentassurance.stubs.InternalAuthStub
+import uk.gov.hmrc.agentassurance.support.AgentAuthStubs
+import uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
+import uk.gov.hmrc.agentassurance.support.WireMockSupport
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.*
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.models.Value
@@ -48,6 +49,7 @@ import uk.gov.hmrc.agentassurance.repositories.PropertiesRepositoryImpl
 import uk.gov.hmrc.agentassurance.stubs.CitizenDetailsStubs
 import uk.gov.hmrc.agentassurance.stubs.EmailStub
 import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.entitycheck.VerifyEntityRequest
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
@@ -103,7 +105,7 @@ with EmailStub {
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  def doClientPostRequest(body: VerifyEntityRequest) = Await.result(
+  def doClientPostRequest(body: VerifyEntityRequest): WSResponse = Await.result(
     wsClient
       .url(clientUrl)
       .withHttpHeaders("Authorization" -> "internal auth token", CONTENT_TYPE -> "application/json")
@@ -111,7 +113,7 @@ with EmailStub {
     15.seconds
   )
 
-  def doAgentPostRequest() = Await.result(
+  def doAgentPostRequest(): WSResponse = Await.result(
     wsClient
       .url(agentUrl)
       .withHttpHeaders("Authorization" -> "Bearer XYZ", CONTENT_TYPE -> "application/json")
@@ -168,8 +170,7 @@ with EmailStub {
             "agencyName" -> "ABC Accountants",
             "failedChecks" -> "Agent is deceased",
             "utr" -> "7000000002"
-          ),
-          force = true
+          )
         )
       )
 
@@ -208,8 +209,7 @@ with EmailStub {
             "agencyName" -> "ABC Accountants",
             "failedChecks" -> "Agent is on the 'Refuse To Deal With' list",
             "utr" -> "7000000002"
-          ),
-          force = true
+          )
         )
       )
 
