@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.connectors
+package uk.gov.hmrc.agentassurance.connectors
 
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -38,11 +38,11 @@ import play.api.mvc.MultipartFormData.DataPart
 import play.api.mvc.MultipartFormData.FilePart
 import play.api.test.Helpers.*
 import play.api.Application
-import test.uk.gov.hmrc.agentassurance.stubs.DataStreamStub
-import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
-import test.uk.gov.hmrc.agentassurance.support.MetricTestSupport
-import test.uk.gov.hmrc.agentassurance.support.UnitSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import uk.gov.hmrc.agentassurance.stubs.DataStreamStub
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
+import uk.gov.hmrc.agentassurance.support.MetricTestSupport
+import uk.gov.hmrc.agentassurance.support.UnitSpec
+import uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.DmsConnector
 import uk.gov.hmrc.http.client.HttpClientV2

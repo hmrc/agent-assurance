@@ -29,10 +29,10 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.WSResponse
 import play.api.test.Helpers.NOT_FOUND
-import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
-import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
-import test.uk.gov.hmrc.agentassurance.support.UnitSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
+import uk.gov.hmrc.agentassurance.support.AgentAuthStubs
+import uk.gov.hmrc.agentassurance.support.UnitSpec
+import uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
 import uk.gov.hmrc.agentassurance.models.utrcheck.UtrDetails

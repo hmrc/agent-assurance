@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.controllers
+package uk.gov.hmrc.agentassurance.controllers
 
 import java.time.Clock
 import scala.concurrent.duration.DurationInt
@@ -33,9 +33,9 @@ import play.api.libs.ws.WSResponse
 import play.api.Application
 import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
-import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
-import test.uk.gov.hmrc.agentassurance.support.UnitSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import uk.gov.hmrc.agentassurance.support.AgentAuthStubs
+import uk.gov.hmrc.agentassurance.support.UnitSpec
+import uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.models.Property
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepository
 import uk.gov.hmrc.agentassurance.repositories.PropertiesRepositoryImpl

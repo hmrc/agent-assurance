@@ -28,10 +28,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import play.api.Application
 import play.api.Configuration
-import test.uk.gov.hmrc.agentassurance.stubs.DataStreamStub
-import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
-import test.uk.gov.hmrc.agentassurance.support.UnitSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import uk.gov.hmrc.agentassurance.stubs.DataStreamStub
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
+import uk.gov.hmrc.agentassurance.support.UnitSpec
+import uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.AgencyDetails
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse

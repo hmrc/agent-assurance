@@ -34,11 +34,11 @@ import play.api.test.Helpers.CONTENT_TYPE
 import play.api.Application
 import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
-import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
-import test.uk.gov.hmrc.agentassurance.stubs.EnrolmentStoreProxyStubs
-import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
-import test.uk.gov.hmrc.agentassurance.support.IntegrationSpec
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
+import uk.gov.hmrc.agentassurance.stubs.EnrolmentStoreProxyStubs
+import uk.gov.hmrc.agentassurance.support.AgentAuthStubs
+import uk.gov.hmrc.agentassurance.support.IntegrationSpec
+import uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
 import uk.gov.hmrc.agentassurance.models.Arn

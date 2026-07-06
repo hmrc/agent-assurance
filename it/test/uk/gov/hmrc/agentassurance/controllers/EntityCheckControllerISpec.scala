@@ -35,11 +35,11 @@ import play.api.test.Helpers.CONTENT_TYPE
 import play.api.Application
 import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
-import test.uk.gov.hmrc.agentassurance.stubs.DesStubs
-import test.uk.gov.hmrc.agentassurance.stubs.InternalAuthStub
-import test.uk.gov.hmrc.agentassurance.support.AgentAuthStubs
-import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
-import test.uk.gov.hmrc.agentassurance.support.WireMockSupport
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
+import uk.gov.hmrc.agentassurance.stubs.InternalAuthStub
+import uk.gov.hmrc.agentassurance.support.AgentAuthStubs
+import uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
+import uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.*
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.agentassurance.models.Property

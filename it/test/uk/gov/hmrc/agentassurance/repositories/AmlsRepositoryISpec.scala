@@ -14,41 +14,44 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.repositories
+package uk.gov.hmrc.agentassurance.repositories
+
+import com.google.inject.AbstractModule
+import org.mongodb.scala.Document
+import org.mongodb.scala.ObservableFuture
+import org.mongodb.scala.bson.BsonString
+import org.mongodb.scala.model.Filters
+import org.mongodb.scala.SingleObservableFuture
+import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.Application
+import uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
+import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
+import uk.gov.hmrc.agentassurance.models.Arn
+import uk.gov.hmrc.agentassurance.models.AmlsSource
+import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
+import uk.gov.hmrc.agentassurance.models.UkAmlsEntity
+import uk.gov.hmrc.agentassurance.models.Utr
+import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
+import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import java.time.Clock
 import java.time.LocalDate
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.google.inject.AbstractModule
-import org.mongodb.scala.ObservableFuture
-import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import org.scalatestplus.play.PlaySpec
-import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.Application
-import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
-import uk.gov.hmrc.agentassurance.models.AmlsSource
-import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
-import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
-import uk.gov.hmrc.agentassurance.models.UkAmlsEntity
-import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
-import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.Utr
-import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 class AmlsRepositoryISpec
 extends PlaySpec
 with DefaultPlayMongoRepositorySupport[UkAmlsEntity]
 with GuiceOneServerPerSuite
-with InstantClockTestSupport {
+with InstantClockTestSupport:
 
   override implicit lazy val app: Application = appBuilder.build()
 
   val moduleWithOverrides: AbstractModule =
-    new AbstractModule() {
-      override def configure(): Unit = {
+    new AbstractModule():
+      override def configure(): Unit =
         bind(classOf[Clock]).toInstance(clock)
-      }
-    }
 
   protected def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder()
     .configure("internal-auth-token-enabled-on-start" -> false)
@@ -194,7 +197,6 @@ with InstantClockTestSupport {
         val result = repository.getUtr(arn).futureValue
 
         result mustBe Some(utr)
-
       }
 
       "return None" in {
@@ -249,7 +251,70 @@ with InstantClockTestSupport {
           amlsSource = AmlsSource.AutomaticUpdate
         )
       }
+
+      "round trip through mongo and update amlsSource to AutomaticUpdate" in {
+        val newExpiryDate = LocalDate.now().plusWeeks(4)
+        val amlsDetails = UkAmlsDetails(
+          supervisoryBody = "ACCA",
+          membershipNumber = Some("ABC123"),
+          appliedOn = None,
+          membershipExpiresOn = Some(LocalDate.parse("2020-12-31"))
+        )
+        val amlsEntity = UkAmlsEntity(
+          utr = Some(utr),
+          amlsDetails = amlsDetails,
+          arn = Some(arn),
+          createdOn = LocalDate.parse("2020-01-01"),
+          amlsSource = AmlsSource.Subscription
+        )
+
+        repository.createOrUpdate(arn, amlsEntity).futureValue mustBe Right(None)
+
+        val storedAfterCreate =
+          mongoComponent.database
+            .getCollection("agent-amls")
+            .find(Filters.equal("arn", arn.value))
+            .headOption()
+            .futureValue
+
+        storedAfterCreate.flatMap(_.collectFirst { case ("amlsSource", b: BsonString) => b.getValue }) mustBe Some("Subscription")
+        repository.collection.find(Filters.equal("arn", arn.value)).headOption().futureValue mustBe Some(amlsEntity)
+
+        repository.updateExpiryDate(arn, newExpiryDate).futureValue
+
+        val storedAfterUpdate =
+          mongoComponent.database
+            .getCollection("agent-amls")
+            .find(Filters.equal("arn", arn.value))
+            .headOption()
+            .futureValue
+
+        storedAfterUpdate.flatMap(_.collectFirst { case ("amlsSource", b: BsonString) => b.getValue }) mustBe Some("AutomaticUpdate")
+        repository.collection.find(Filters.equal("arn", arn.value)).headOption().futureValue mustBe Some(
+          amlsEntity.copy(
+            amlsDetails = amlsDetails.copy(membershipExpiresOn = Some(newExpiryDate)),
+            amlsSource = AmlsSource.AutomaticUpdate
+          )
+        )
+      }
+
+      "default a missing amlsSource when reading a raw Mongo document" in {
+        val rawAmlsEntity = Document(
+          "utr" -> utr.value,
+          "amlsDetails" -> Document(
+            "supervisoryBody" -> "ACCA",
+            "membershipNumber" -> "ABC123",
+            "membershipExpiresOn" -> LocalDate.parse("2020-12-31").toString
+          ),
+          "arn" -> arn.value,
+          "createdOn" -> LocalDate.parse("2020-01-01").toString
+        )
+
+        mongoComponent.database.getCollection("agent-amls").insertOne(rawAmlsEntity).toFuture().futureValue
+
+        repository.collection.find(Filters.equal("arn", arn.value)).headOption().futureValue.value.amlsSource mustBe AmlsSource.Subscription
+      }
     }
   }
 
-}
+end AmlsRepositoryISpec

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package test.uk.gov.hmrc.agentassurance.repositories
+package uk.gov.hmrc.agentassurance.repositories
 
 import org.mongodb.scala.ObservableFuture
 
 import java.time.LocalDate
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatestplus.play.PlaySpec
-import test.uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
+import uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
 import uk.gov.hmrc.agentassurance.models.OverseasAmlsEntity
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepositoryImpl
