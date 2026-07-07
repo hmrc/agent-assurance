@@ -22,7 +22,6 @@ import scala.concurrent.Await
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
 import play.api.libs.ws.BodyWritable
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.WSResponse
@@ -108,64 +107,6 @@ with DmsSubmissionStubs {
     createdOn = testCreatedDate,
     amlsSource = AmlsSource.Subscription
   )
-
-  "GET /agent/agency-details/:arn" should {
-
-    s"return OK with status when Agent details and Utr for the ARN" in {
-      isLoggedInAsStride("stride")
-      givenDESGetAgentRecord(arn, Some(testUtr))
-      val response = doGETRequest()
-      response.status mustBe OK
-      response.json mustBe Json.obj(
-        "agencyDetails" -> Json.obj(
-          "agencyName" -> "ABC Accountants",
-          "agencyEmail" -> "abc@xyz.com",
-          "agencyTelephone" -> "07345678901",
-          "agencyAddress" -> Json.obj(
-            "addressLine1" -> "Matheson House",
-            "addressLine2" -> "Grange Central",
-            "addressLine3" -> "Town Centre",
-            "addressLine4" -> "Telford",
-            "postalCode" -> "TF3 4ER",
-            "countryCode" -> "GB"
-          )
-        ),
-        "utr" -> "7000000002"
-      )
-
-    }
-
-    s"return OK with status when Agent details and No Utr for the ARN" in {
-      isLoggedInAsStride("stride")
-      givenDESGetAgentRecord(arn, None)
-      val response = doGETRequest()
-      response.status mustBe OK
-      response.json mustBe Json.obj(
-        "agencyDetails" -> Json.obj(
-          "agencyName" -> "ABC Accountants",
-          "agencyEmail" -> "abc@xyz.com",
-          "agencyTelephone" -> "07345678901",
-          "agencyAddress" -> Json.obj(
-            "addressLine1" -> "Matheson House",
-            "addressLine2" -> "Grange Central",
-            "addressLine3" -> "Town Centre",
-            "addressLine4" -> "Telford",
-            "postalCode" -> "TF3 4ER",
-            "countryCode" -> "GB"
-          )
-        )
-      )
-
-    }
-
-    s"return NO_CONTENT when no Agent Details found for ARN" in {
-      isLoggedInAsStride("stride")
-      givenNoDESGetAgentRecord(arn, None)
-      val response = doGETRequest()
-      response.status mustBe NO_CONTENT
-    }
-
-  }
 
   "POST /agent/agency-details/:arn" should {
     "return ACCEPTED status when the DMS submission was successful" in {

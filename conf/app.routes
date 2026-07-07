@@ -26,7 +26,6 @@ POST          /overseas-agents/amls                                             
 GET           /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.getAmlsDetails(arn: Arn)
 POST          /amls/arn/:arn                                                               @uk.gov.hmrc.agentassurance.controllers.AmlsDetailsByArnController.postAmlsDetails(arn: Arn)
 
-GET           /agent/agency-details/arn/:arn                                                @uk.gov.hmrc.agentassurance.controllers.AgentServicesController.getAgencyDetails(arn: Arn)
 POST          /agent/agency-details/arn/:arn                                                @uk.gov.hmrc.agentassurance.controllers.AgentServicesController.postAgencyDetails(arn: Arn)
 
 POST           /agent/verify-entity                                                          @uk.gov.hmrc.agentassurance.controllers.EntityCheckController.agentVerifyEntity()
