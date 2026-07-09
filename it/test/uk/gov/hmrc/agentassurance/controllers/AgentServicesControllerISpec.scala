@@ -105,8 +105,7 @@ with DmsSubmissionStubs {
     utr = Some(testUtr),
     amlsDetails = testAmlsDetails,
     arn = Some(arn),
-    createdOn = testCreatedDate,
-    amlsSource = AmlsSource.Subscription
+    createdOn = testCreatedDate
   )
 
   "GET /agent/agency-details/:arn" should {

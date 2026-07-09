@@ -17,23 +17,20 @@
 package uk.gov.hmrc.agentassurance.repositories
 
 import com.google.inject.AbstractModule
-import org.mongodb.scala.Document
 import org.mongodb.scala.ObservableFuture
-import org.mongodb.scala.bson.BsonString
-import org.mongodb.scala.model.Filters
 import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.model.Filters
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.Application
-import uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
+import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.models.Arn
-import uk.gov.hmrc.agentassurance.models.AmlsSource
 import uk.gov.hmrc.agentassurance.models.UkAmlsDetails
 import uk.gov.hmrc.agentassurance.models.UkAmlsEntity
 import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepositoryImpl
+import uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import java.time.Clock
@@ -75,8 +72,7 @@ with InstantClockTestSupport:
         utr = Some(utr),
         amlsDetails = newUkAmlsDetails,
         arn = Some(arn),
-        createdOn = today,
-        amlsSource = AmlsSource.Subscription
+        createdOn = today
       )
 
       val result = repository.createOrUpdate(arn, amlsEntity).futureValue
@@ -99,15 +95,13 @@ with InstantClockTestSupport:
         utr = Some(utr),
         amlsDetails = newUkAmlsDetails,
         arn = Some(arn),
-        createdOn = today,
-        amlsSource = AmlsSource.Subscription
+        createdOn = today
       )
       val oldAmlsEntity = UkAmlsEntity(
         utr = Some(utr),
         amlsDetails = oldUkAmlsDetails,
         arn = Some(arn),
-        createdOn = LocalDate.parse("2020-01-01"),
-        amlsSource = AmlsSource.Subscription
+        createdOn = LocalDate.parse("2020-01-01")
       )
 
       repository.collection.find().toFuture().futureValue.size mustBe 0
@@ -132,15 +126,13 @@ with InstantClockTestSupport:
           membershipExpiresOn = Some(LocalDate.parse("2020-12-31"))
         ),
         arn = None,
-        createdOn = LocalDate.parse("2020-01-01"),
-        amlsSource = AmlsSource.Subscription
+        createdOn = LocalDate.parse("2020-01-01")
       )
       val newAmlsEntity = UkAmlsEntity(
         utr = Some(utr),
         amlsDetails = newUkAmlsDetails,
         arn = Some(arn),
-        createdOn = today,
-        amlsSource = AmlsSource.Subscription
+        createdOn = today
       )
 
       repository.collection.insertOne(oldAmlsEntity).toFuture().futureValue
@@ -160,15 +152,13 @@ with InstantClockTestSupport:
         utr = Some(utr),
         amlsDetails = newUkAmlsDetails,
         arn = Some(Arn("TARN0000009")),
-        createdOn = LocalDate.parse("2020-01-01"),
-        amlsSource = AmlsSource.Subscription
+        createdOn = LocalDate.parse("2020-01-01")
       )
       val newAmlsEntity = UkAmlsEntity(
         utr = Some(utr),
         amlsDetails = newUkAmlsDetails.copy(supervisoryBody = "CIOT"),
         arn = Some(arn),
-        createdOn = today,
-        amlsSource = AmlsSource.Subscription
+        createdOn = today
       )
 
       repository.collection.insertOne(conflictingAmlsEntity).toFuture().futureValue
@@ -188,8 +178,7 @@ with InstantClockTestSupport:
           utr = Some(utr),
           amlsDetails = newUkAmlsDetails,
           arn = Some(arn),
-          createdOn = today,
-          amlsSource = AmlsSource.Subscription
+          createdOn = today
         )
 
         repository.collection.insertOne(amlsEntity).toFuture().futureValue
@@ -204,8 +193,7 @@ with InstantClockTestSupport:
           utr = None,
           amlsDetails = newUkAmlsDetails,
           arn = Some(arn),
-          createdOn = today,
-          amlsSource = AmlsSource.Subscription
+          createdOn = today
         )
 
         repository.collection.insertOne(amlsEntity).toFuture().futureValue
@@ -231,8 +219,7 @@ with InstantClockTestSupport:
           utr = Some(utr),
           amlsDetails = oldUkAmlsDetails,
           arn = Some(arn),
-          createdOn = LocalDate.parse("2020-01-01"),
-          amlsSource = AmlsSource.Subscription
+          createdOn = LocalDate.parse("2020-01-01")
         )
 
         repository.collection.find().toFuture().futureValue.size mustBe 0
@@ -247,12 +234,11 @@ with InstantClockTestSupport:
         val checkResult = repository.collection.find().toFuture().futureValue
         checkResult.size mustBe 1
         checkResult.head mustBe oldAmlsEntity.copy(
-          amlsDetails = oldUkAmlsDetails.copy(membershipExpiresOn = Some(newExpiryDate)),
-          amlsSource = AmlsSource.AutomaticUpdate
+          amlsDetails = oldUkAmlsDetails.copy(membershipExpiresOn = Some(newExpiryDate))
         )
       }
 
-      "round trip through mongo and update amlsSource to AutomaticUpdate" in {
+      "round trip through mongo" in {
         val newExpiryDate = LocalDate.now().plusWeeks(4)
         val amlsDetails = UkAmlsDetails(
           supervisoryBody = "ACCA",
@@ -264,57 +250,24 @@ with InstantClockTestSupport:
           utr = Some(utr),
           amlsDetails = amlsDetails,
           arn = Some(arn),
-          createdOn = LocalDate.parse("2020-01-01"),
-          amlsSource = AmlsSource.Subscription
+          createdOn = LocalDate.parse("2020-01-01")
         )
 
         repository.createOrUpdate(arn, amlsEntity).futureValue mustBe Right(None)
 
-        val storedAfterCreate =
-          mongoComponent.database
-            .getCollection("agent-amls")
-            .find(Filters.equal("arn", arn.value))
-            .headOption()
-            .futureValue
-
-        storedAfterCreate.flatMap(_.collectFirst { case ("amlsSource", b: BsonString) => b.getValue }) mustBe Some("Subscription")
         repository.collection.find(Filters.equal("arn", arn.value)).headOption().futureValue mustBe Some(amlsEntity)
 
         repository.updateExpiryDate(arn, newExpiryDate).futureValue
 
-        val storedAfterUpdate =
-          mongoComponent.database
-            .getCollection("agent-amls")
-            .find(Filters.equal("arn", arn.value))
-            .headOption()
-            .futureValue
-
-        storedAfterUpdate.flatMap(_.collectFirst { case ("amlsSource", b: BsonString) => b.getValue }) mustBe Some("AutomaticUpdate")
         repository.collection.find(Filters.equal("arn", arn.value)).headOption().futureValue mustBe Some(
           amlsEntity.copy(
-            amlsDetails = amlsDetails.copy(membershipExpiresOn = Some(newExpiryDate)),
-            amlsSource = AmlsSource.AutomaticUpdate
+            amlsDetails = amlsDetails.copy(membershipExpiresOn = Some(newExpiryDate))
           )
         )
       }
 
-      "default a missing amlsSource when reading a raw Mongo document" in {
-        val rawAmlsEntity = Document(
-          "utr" -> utr.value,
-          "amlsDetails" -> Document(
-            "supervisoryBody" -> "ACCA",
-            "membershipNumber" -> "ABC123",
-            "membershipExpiresOn" -> LocalDate.parse("2020-12-31").toString
-          ),
-          "arn" -> arn.value,
-          "createdOn" -> LocalDate.parse("2020-01-01").toString
-        )
-
-        mongoComponent.database.getCollection("agent-amls").insertOne(rawAmlsEntity).toFuture().futureValue
-
-        repository.collection.find(Filters.equal("arn", arn.value)).headOption().futureValue.value.amlsSource mustBe AmlsSource.Subscription
-      }
     }
+
   }
 
 end AmlsRepositoryISpec

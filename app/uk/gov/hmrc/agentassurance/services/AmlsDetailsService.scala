@@ -74,7 +74,7 @@ extends Logging:
           ukAmlsDetails.membershipNumber
             .map { membershipNumber =>
               if ukAmlsDetails.hasValidMembershipNumber then
-                // this call may have update ASA AMLS expiry date side-effect
+                // this call may have update ASA AMLS expiry date side effect
                 processUkHmrcAmlsDetails(
                   arn,
                   membershipNumber,
@@ -258,8 +258,7 @@ extends Logging:
 
   def storeAmlsRequest(
     arn: Arn,
-    amlsRequest: AmlsRequest,
-    amlsSource: AmlsSource = AmlsSource.Subscription
+    amlsRequest: AmlsRequest
   )(
     using
     hc: HeaderCarrier,
@@ -300,8 +299,7 @@ extends Logging:
                     utr = mUtr,
                     amlsDetails = ukAmlsDetails,
                     arn = Some(arn),
-                    createdOn = LocalDate.now,
-                    amlsSource = amlsSource
+                    createdOn = LocalDate.now
                   )
                 )
               )
