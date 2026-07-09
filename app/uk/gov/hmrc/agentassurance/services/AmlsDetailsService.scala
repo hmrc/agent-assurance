@@ -258,8 +258,7 @@ extends Logging:
 
   def storeAmlsRequest(
     arn: Arn,
-    amlsRequest: AmlsRequest,
-    amlsSource: AmlsSource = AmlsSource.Subscription
+    amlsRequest: AmlsRequest
   )(
     using
     hc: HeaderCarrier,
@@ -300,8 +299,7 @@ extends Logging:
                     utr = mUtr,
                     amlsDetails = ukAmlsDetails,
                     arn = Some(arn),
-                    createdOn = LocalDate.now,
-                    amlsSource = amlsSource
+                    createdOn = LocalDate.now
                   )
                 )
               )

@@ -17,20 +17,15 @@
 package uk.gov.hmrc.agentassurance.mocks
 
 import org.scalamock.handlers.CallHandler3
-import org.scalamock.handlers.CallHandler5
-
-import scala.concurrent.Future
+import org.scalamock.handlers.CallHandler4
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.mvc.Request
-import uk.gov.hmrc.agentassurance.models.AmlsDetails
-import uk.gov.hmrc.agentassurance.models.AmlsError
-import uk.gov.hmrc.agentassurance.models.AmlsRequest
-import uk.gov.hmrc.agentassurance.models.AmlsSource
-import uk.gov.hmrc.agentassurance.models.AmlsStatus
+import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.services.AmlsDetailsService
-import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.http.HeaderCarrier
+
+import scala.concurrent.Future
 
 trait MockAmlsDetailsService
 extends MockFactory { this: TestSuite =>
@@ -53,10 +48,9 @@ extends MockFactory { this: TestSuite =>
   def mockStoreAmlsRequest(
     arn: Arn,
     amlsRequest: AmlsRequest
-  )(response: Future[Either[AmlsError, AmlsDetails]]): CallHandler5[
+  )(response: Future[Either[AmlsError, AmlsDetails]]): CallHandler4[
     Arn,
     AmlsRequest,
-    AmlsSource,
     HeaderCarrier,
     Request[?],
     Future[Either[AmlsError, AmlsDetails]]
@@ -64,13 +58,11 @@ extends MockFactory { this: TestSuite =>
     (mockAmlsDetailsService
       .storeAmlsRequest(
         _: Arn,
-        _: AmlsRequest,
-        _: AmlsSource
+        _: AmlsRequest
       )(using _: HeaderCarrier, _: Request[?]))
       .expects(
         arn,
         amlsRequest,
-        AmlsSource.Subscription,
         *,
         *
       )

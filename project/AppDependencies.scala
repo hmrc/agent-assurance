@@ -3,7 +3,7 @@ import sbt.*
 object AppDependencies {
 
   private val mongoVer: String = "2.12.0"
-  private val bootstrapVer: String = "10.7.0"
+  private val bootstrapVer: String = "10.8.0"
   private val playVer: String = "play-30"
 
   val compile: Seq[ModuleID] = Seq(
@@ -12,7 +12,7 @@ object AppDependencies {
     "uk.gov.hmrc"            %% s"internal-auth-client-$playVer" % "4.4.0",
     "uk.gov.hmrc"            %% s"crypto-json-$playVer"          % "8.4.0",
     "uk.gov.hmrc"            %% s"domain-$playVer"               % "13.0.0",
-    "io.github.openhtmltopdf" % "openhtmltopdf-pdfbox"           % "1.1.37",
+    "io.github.openhtmltopdf" % "openhtmltopdf-pdfbox"           % "1.1.40"
   )
 
   val test: Seq[ModuleID] = Seq(

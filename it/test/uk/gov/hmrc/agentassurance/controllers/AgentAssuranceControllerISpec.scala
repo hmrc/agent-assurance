@@ -799,8 +799,7 @@ with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
               utr = Some(utr),
               amlsDetails = amlsDetails,
               arn = Some(arn),
-              createdOn = LocalDate.now(),
-              amlsSource = AmlsSource.Subscription
+              createdOn = LocalDate.now()
             )
           )
           .toFuture()
@@ -812,8 +811,7 @@ with DefaultPlayMongoRepositorySupport[UkAmlsEntity] {
               utr = Some(newUtr),
               amlsDetails = amlsDetails,
               arn = None,
-              createdOn = LocalDate.now(),
-              amlsSource = AmlsSource.Subscription
+              createdOn = LocalDate.now()
             )
           )
           .toFuture()
