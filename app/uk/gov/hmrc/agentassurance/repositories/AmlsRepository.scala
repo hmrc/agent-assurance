@@ -134,8 +134,7 @@ with Logging:
                 utr = Option(Utr(utr)),
                 amlsDetails = createAmlsRequest.amlsDetails,
                 arn = None,
-                createdOn = LocalDate.now(),
-                amlsSource = AmlsSource.Subscription
+                createdOn = LocalDate.now()
               ),
               ReplaceOptions().upsert(true)
             )
@@ -211,10 +210,7 @@ with Logging:
     collection
       .updateOne(
         filter = Filters.equal("arn", arn.value),
-        update = Updates.combine(
-          Updates.set("amlsDetails.membershipExpiresOn", date.toString),
-          Updates.set("amlsSource", AmlsSource.AutomaticUpdate.toString)
-        )
+        update = Updates.set("amlsDetails.membershipExpiresOn", date.toString)
       )
       .toFuture()
 

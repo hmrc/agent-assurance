@@ -143,8 +143,7 @@ with DesStubs {
     utr = Some(testUtr),
     amlsDetails = testAmlsDetails,
     arn = Some(arn),
-    createdOn = testCreatedDate,
-    amlsSource = AmlsSource.Subscription
+    createdOn = testCreatedDate
   )
 
   "GET /amls/arn/:arn" should {
@@ -237,8 +236,7 @@ with DesStubs {
             membershipExpiresOn = Some(LocalDate.parse("2019-10-10"))
           ),
           arn = Some(arn),
-          createdOn = LocalDate.parse("2020-10-10"),
-          amlsSource = AmlsSource.Subscription
+          createdOn = LocalDate.parse("2020-10-10")
         )
 
         ukAmlsRepository.collection.insertOne(ukAmlsEntity).toFuture().futureValue
@@ -272,8 +270,7 @@ with DesStubs {
             membershipExpiresOn = Some(LocalDate.parse("2019-10-10"))
           ),
           arn = Some(arn),
-          createdOn = LocalDate.parse("2020-10-10"),
-          amlsSource = AmlsSource.Subscription
+          createdOn = LocalDate.parse("2020-10-10")
         )
 
         ukAmlsRepository.collection.insertOne(ukAmlsEntity).toFuture().futureValue
@@ -308,8 +305,7 @@ with DesStubs {
             membershipExpiresOn = Some(LocalDate.parse("2019-10-10"))
           ),
           arn = None,
-          createdOn = LocalDate.parse("2020-10-10"),
-          amlsSource = AmlsSource.Subscription
+          createdOn = LocalDate.parse("2020-10-10")
         )
 
         ukAmlsRepository.collection.insertOne(legacyAmlsEntity).toFuture().futureValue
