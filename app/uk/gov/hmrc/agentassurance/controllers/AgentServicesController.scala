@@ -17,15 +17,11 @@
 package uk.gov.hmrc.agentassurance.controllers
 
 import play.api.Logging
-import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
-import uk.gov.hmrc.agentassurance.models.AgentDetailsResponse
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.DmsSubmissionReference
 import uk.gov.hmrc.agentassurance.services.DmsService
@@ -40,7 +36,6 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class AgentServicesController @Inject() (
-  desConnector: DesConnector,
   val authConnector: AuthConnector,
   dmsService: DmsService,
   cc: ControllerComponents
@@ -53,22 +48,6 @@ with AuthActions
 with Logging:
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
-
-  def getAgencyDetails(arn: Arn): Action[AnyContent] =
-    withAffinityGroupAgentOrStride(strideRoles) { implicit request =>
-      desConnector
-        .getAgentRecord(arn)
-        .map:
-          case _ @AgentDetailsDesResponse(
-                optUtr,
-                Some(agencyDetails),
-                _,
-                _,
-                _
-              ) =>
-            Ok(Json.toJson(AgentDetailsResponse(agencyDetails, optUtr)))
-          case _ => NoContent
-    }
 
   def postAgencyDetails(arn: Arn): Action[AnyContent] =
     withAffinityGroupAgentOrStride(strideRoles):

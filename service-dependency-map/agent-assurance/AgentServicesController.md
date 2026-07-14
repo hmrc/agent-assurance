@@ -4,31 +4,6 @@
 
 ---
 
-## `GET /agent/agency-details/arn/:arn`
-
-**Description:** Retrieves agency details for a given ARN.
-
-### Sequence of Interactions
-
-1. **API Call:** `GET /registration/personal-details/arn/:arn` to `des` - Get agent record from DES
-
-### Sequence Diagram
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Upstream
-    participant agent-assurance
-    participant des
-
-    Upstream->>+agent-assurance: GET /agent/agency-details/arn/:arn
-    agent-assurance->>+des: GET /registration/personal-details/arn/:arn
-    des-->>-agent-assurance: Agent record
-    agent-assurance-->>-Upstream: Final Response
-```
-
----
-
 ## `POST /agent/agency-details/arn/:arn`
 
 **Description:** Submits agency details to DMS.

@@ -92,4 +92,26 @@ with InstantClockTestSupport {
     }
   }
 
+  "deleteByArn" should {
+    "delete a record when one exists for that arn" in {
+      val amlsEntity = OverseasAmlsEntity(
+        arn,
+        newOverseasAmlsDetails,
+        None
+      )
+
+      repository.createOrUpdate(amlsEntity).futureValue
+
+      val checkResult = repository.collection.find().toFuture().futureValue
+      checkResult.size mustBe 1
+
+      repository.deleteByArn(arn).futureValue
+
+      val checkResult2 = repository.collection.find().toFuture().futureValue
+      checkResult2.size mustBe 0
+
+    }
+
+  }
+
 }

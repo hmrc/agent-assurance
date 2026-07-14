@@ -327,26 +327,6 @@ paths:
           description: AMLS details stored successfully.
 
   /agent/agency-details/arn/{arn}:
-    get:
-      summary: Get Agency Details
-      description: Retrieves agency details for a given ARN.
-      tags:
-        - Agent Services
-      parameters:
-        - name: arn
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Agency details.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AgencyDetails"
-        "204":
-          description: No content.
     post:
       summary: Submit Agency Details to DMS
       description: Submits agency details to the DMS queue.
@@ -362,43 +342,6 @@ paths:
         "201":
           description: Successfully submitted to DMS.
 
-  /agent/verify-entity:
-    post:
-      summary: Verify Agent Entity
-      description: Verifies an agent's entity based on their ARN.
-      tags:
-        - Entity Check
-      responses:
-        "200":
-          description: Suspension details.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SuspensionDetails"
-        "204":
-          description: No suspension details found.
-
-  /client/verify-entity:
-    post:
-      summary: Verify Agent Entity (for Clients)
-      description: Verifies an agent's entity based on an identifier provided by a client.
-      tags:
-        - Entity Check
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/VerifyEntityRequest"
-      responses:
-        "200":
-          description: Suspension details.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SuspensionDetails"
-        "204":
-          description: No suspension details found.
-
   /dms-agent-callback:
     post:
       summary: DMS Callback
@@ -408,40 +351,6 @@ paths:
       responses:
         "200":
           description: Callback received.
-
-  /agent-record-with-checks:
-    get:
-      summary: Get Agent Record with Checks
-      description: Retrieves the agent record with entity checks for the authenticated agent.
-      tags:
-        - Get Agent Record With Entity Checks
-      responses:
-        "200":
-          description: Agent record.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AgentRecord"
-
-  /agent-record-with-checks/arn/{arn}:
-    get:
-      summary: Get Agent Record with Checks by ARN
-      description: Retrieves the agent record with entity checks for a given ARN.
-      tags:
-        - Get Agent Record With Entity Checks
-      parameters:
-        - name: arn
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Agent record.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AgentRecord"
 
   /manually-assured:
     get:
@@ -659,12 +568,6 @@ components:
           type: string
           format: date
 
-    VerifyEntityRequest:
-      type: object
-      properties:
-        identifier:
-          type: string
-
     UtrListResponse:
       type: object
       properties:
@@ -711,16 +614,6 @@ components:
         amlsDetails:
           $ref: "#/components/schemas/AmlsDetails"
 
-    AgentRecord:
-      type: object
-      properties:
-        arn:
-          type: string
-        agentName:
-          type: string
-        status:
-          type: string
-
     ErrorResponse:
       type: object
       properties:
@@ -729,22 +622,3 @@ components:
         message:
           type: string
 
-    SuspensionDetails:
-      type: object
-      properties:
-        suspensionStatus:
-          type: boolean
-        regimePayload:
-          type: array
-          items:
-            type: object
-
-    AgencyDetails:
-      type: object
-      properties:
-        arn:
-          type: string
-        agencyName:
-          type: string
-        agencyAddress:
-          type: object

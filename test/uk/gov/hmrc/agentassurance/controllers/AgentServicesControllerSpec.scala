@@ -47,7 +47,6 @@ with ScalaFutures:
 
   val controller =
     new AgentServicesController(
-      mockDesConnector,
       mockAuthConnector,
       mockDmsService,
       stubControllerComponents()
@@ -56,79 +55,6 @@ with ScalaFutures:
       mockAppConfig,
       ExecutionContext.global
     )
-
-  "getAgencyDetails" should:
-    "return forbidden" when:
-      "not an agent or stride" in:
-        inSequence:
-          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
-            enrolmentsWithoutIrSAAgent.and(None).and(None)
-          )
-
-        val response = controller.getAgencyDetails(testArn)(FakeRequest())
-        status(response) mustBe FORBIDDEN
-
-    "return no content for an agent " when:
-      "there are no records found in the database" in:
-        inSequence:
-          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
-            enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
-          )
-          mockGetAgentRecord(testArn)(testAgentDetailsDesEmptyResponse)
-
-        val response = controller.getAgencyDetails(testArn)(FakeRequest())
-        status(response) mustBe NO_CONTENT
-
-    "return no content for a stride user " when:
-      "there are no records found in the database" in:
-        inSequence:
-          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
-            enrolmentsWithStride.and(None).and(Some(Credentials("", "PrivilegedApplication")))
-          )
-          mockGetAgentRecord(testArn)(testAgentDetailsDesEmptyResponse)
-
-        val response = controller.getAgencyDetails(testArn)(FakeRequest())
-        status(response) mustBe NO_CONTENT
-
-    "return OK" when:
-      "and Utr and Agent Details for an agent" in:
-        inSequence:
-          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
-            enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
-          )
-          mockGetAgentRecord(testArn)(testAgentDetailsDesAddressUtrResponse)
-
-        val response = controller.getAgencyDetails(testArn)(FakeRequest())
-
-        status(response) mustBe OK
-        contentAsJson(response) mustBe Json.obj(
-          "agencyDetails" -> Json.obj(
-            "agencyName" -> "agencyName",
-            "agencyEmail" -> "agencyEmail",
-            "agencyTelephone" -> "agencyTelephone",
-            "agencyAddress" -> Json.obj("addressLine1" -> "addressLine1", "countryCode" -> "GB")
-          ),
-          "utr" -> "7000000002"
-        )
-      "and Agent Details No UTR for an agent" in:
-        inSequence:
-          mockAuthWithNoRetrievals(allEnrolments.and(affinityGroup).and(credentials))(
-            enrolmentsWithNoIrSAAgent.and(Some(AffinityGroup.Agent)).and(Some(Credentials("", "GovernmentGateway")))
-          )
-          mockGetAgentRecord(testArn)(testAgentDetailsDesAddressUtrResponse)
-
-        val response = controller.getAgencyDetails(testArn)(FakeRequest())
-
-        status(response) mustBe OK
-        contentAsJson(response) mustBe Json.obj(
-          "agencyDetails" -> Json.obj(
-            "agencyName" -> "agencyName",
-            "agencyEmail" -> "agencyEmail",
-            "agencyTelephone" -> "agencyTelephone",
-            "agencyAddress" -> Json.obj("addressLine1" -> "addressLine1", "countryCode" -> "GB")
-          ),
-          "utr" -> "7000000002"
-        )
 
   "PostAgencyDetails" should:
     "return Created when successful" in:
