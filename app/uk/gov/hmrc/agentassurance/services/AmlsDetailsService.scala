@@ -18,12 +18,10 @@ package uk.gov.hmrc.agentassurance.services
 
 import play.api.Logging
 import play.api.mvc.Request
-import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.AgentServicesAccountConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.repositories.AmlsRepository
-import uk.gov.hmrc.agentassurance.repositories.ArchivedAmlsRepository
 import uk.gov.hmrc.agentassurance.repositories.OverseasAmlsRepository
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.InternalServerException
@@ -40,84 +38,26 @@ import scala.concurrent.Future
 class AmlsDetailsService @Inject() (
   overseasAmlsRepository: OverseasAmlsRepository,
   amlsRepository: AmlsRepository,
-  archivedAmlsRepository: ArchivedAmlsRepository,
   desConnector: DesConnector,
-  agencyDetailsService: AgencyDetailsService,
-  agentServicesAccountConnector: AgentServicesAccountConnector,
-  appConfig: AppConfig
+  agentServicesAccountConnector: AgentServicesAccountConnector
 )(using ec: ExecutionContext)
 extends Logging:
 
   def getAmlsDetailsByArn(
     arn: Arn
   )(using
-    hc: HeaderCarrier,
-    request: Request[?]
-  ): Future[(AmlsStatus, Option[AmlsDetails])] =
-    if appConfig.useAgentServicesAccountAmls then
-      getAmlsDetailsFromAgentServicesAccount(arn)
-    else
-      getLegacyAmlsDetailsByArn(arn)
-
-  private def getLegacyAmlsDetailsByArn(
-    arn: Arn
-  )(using
-    hc: HeaderCarrier,
-    request: Request[?]
-  ): Future[(AmlsStatus, Option[AmlsDetails])] =
-    getLegacyAmlsDetails(arn).map {
-      case None => // No AMLS record found
-        handleNoAmlsDetails(arn) // Scenarios: #1, #2
-      case Some(overseasAmlsDetails: OverseasAmlsDetails) => Future.successful((AmlsStatus.ValidAmlsNonUK, Some(overseasAmlsDetails))) // Scenario #7
-      case Some(ukAmlsDetails: UkAmlsDetails) =>
-        if ukAmlsDetails.supervisoryBodyIsHmrc then
-          ukAmlsDetails.membershipNumber
-            .map { membershipNumber =>
-              if ukAmlsDetails.hasValidMembershipNumber then
-                // this call may have update ASA AMLS expiry date side effect
-                processUkHmrcAmlsDetails(
-                  arn,
-                  membershipNumber,
-                  ukAmlsDetails
-                ).map { amlsStatus =>
-                  (amlsStatus, Some(ukAmlsDetails)) // Scenarios: #5a, #5b, #6a, #6b #8, #9
-                }
-              else
-                Future.successful((AmlsStatus.ValidAmlsDetailsUK, Some(ukAmlsDetails)))
-            }
-            .getOrElse(Future.successful((AmlsStatus.NoAmlsDetailsUK, None))) // Scenario #10
-        else // supervisoryBodyIsNotHmrc
-          Future.successful(
-            (
-              if hasRenewalDateExpired(ukAmlsDetails.membershipExpiresOn) then
-                AmlsStatus.ExpiredAmlsDetailsUK // Scenarios: #4a, #4b
-              else
-                AmlsStatus.ValidAmlsDetailsUK
-              , // Scenario #3
-              Some(ukAmlsDetails)
-            )
-          )
-    }.flatten
-
-  private def getAmlsDetailsFromAgentServicesAccount(
-    arn: Arn
-  )(using
-    hc: HeaderCarrier,
-    request: Request[?]
+    hc: HeaderCarrier
   ): Future[(AmlsStatus, Option[AmlsDetails])] = agentServicesAccountConnector.getAgentRecord(arn).flatMap { agentRecord =>
     agentRecord.amlsDetails match
       case Some(amlsDetails) =>
-        agentRecord.agencyDetails.map(_.hasUkAddress) match
-          case Some(true) => deriveStatusFromDetails(arn, toUkAmlsDetails(amlsDetails))
-          case Some(false) => deriveStatusFromDetails(arn, toOverseasAmlsDetails(amlsDetails))
-          case None =>
-            getLegacyAmlsDetails(arn).flatMap:
-              case Some(details) => deriveStatusFromDetails(arn, details)
-              case None => handleNoAmlsDetails(arn)
+        if agentRecord.agencyDetails.exists(_.hasUkAddress) then
+          deriveStatusFromDetails(arn, toUkAmlsDetails(amlsDetails))
+        else
+          deriveStatusFromDetails(arn, toOverseasAmlsDetails(amlsDetails))
       case None =>
         getLegacyAmlsDetails(arn).flatMap:
           case Some(details) => deriveStatusFromDetails(arn, details)
-          case None => handleNoAmlsDetails(arn, agentRecord.agencyDetails.map(_.hasUkAddress))
+          case None => handleNoAmlsDetails(agentRecord.agencyDetails.exists(_.hasUkAddress))
   }
 
   // if today's date >= renewal date then it has expired
@@ -129,25 +69,18 @@ extends Logging:
 
   // User has no AMLS record with us, if their agency is based in the UK then we deem them as UK
   private def handleNoAmlsDetails(
-    arn: Arn,
-    isUkOverride: Option[Boolean] = None
-  )(using
-    hc: HeaderCarrier,
-    request: Request[?]
+    isUkOverride: Boolean
   ): Future[(AmlsStatus, Option[AmlsDetails])] =
-    isUkOverride
-      .map(Future.successful)
-      .getOrElse(agencyDetailsService.agencyDetailsHasUkAddress(arn))
-      .map { isUk =>
-        (
-          if isUk then
-            AmlsStatus.NoAmlsDetailsUK // Scenario #1
-          else
-            AmlsStatus.NoAmlsDetailsNonUK
-          , // Scenario #2
-          None
-        )
-      }
+    Future.successful(
+      (
+        if isUkOverride then
+          AmlsStatus.NoAmlsDetailsUK // Scenario #1
+        else
+          AmlsStatus.NoAmlsDetailsNonUK // Scenario #2
+        ,
+        None
+      )
+    )
 
   // TODO - Add test when upgrading play to test private methods
   private def processUkHmrcAmlsDetails(
@@ -264,84 +197,27 @@ extends Logging:
     hc: HeaderCarrier,
     request: Request[?]
   ): Future[Either[AmlsError, AmlsDetails]] =
-    if appConfig.useAgentServicesAccountAmls then
-      val updateRequest = AgentRecordUpdateRequest(
-        amlsDetails = Some(AgentRecordAmlsDetails(
-          supervisoryBody = amlsRequest.supervisoryBody,
-          membershipNumber = amlsRequest.membershipNumber,
-          evidenceObjectReference = amlsRequest.evidenceObjectReference
-        ))
-      )
 
-      agentServicesAccountConnector
-        .updateAmlsDetails(updateRequest)
-        .flatMap { _ =>
-          deleteLegacyAmlsDetails(arn)
-            .recover { case error =>
-              logger.warn(s"[AmlsDetailsService][storeAmlsRequest] ASA update succeeded but legacy AMLS cleanup failed: ${error.getMessage}", error)
-              ()
-            }
-            .map(_ => Right(amlsRequest.toAmlsEntity(amlsRequest)))
-        }
-        .recover { case _ => Left(AmlsError.AmlsUnexpectedMongoError) }
-    else
+    val updateRequest = AgentRecordUpdateRequest(
+      amlsDetails = Some(AgentRecordAmlsDetails(
+        supervisoryBody = amlsRequest.supervisoryBody,
+        membershipNumber = amlsRequest.membershipNumber,
+        evidenceObjectReference = amlsRequest.evidenceObjectReference
+      ))
+    )
 
-      val newAmlsDetails: AmlsDetails = amlsRequest.toAmlsEntity(amlsRequest)
-
-      val storedAmlsDetails: Future[Either[AmlsError, Option[AmlsEntity]]] =
-        newAmlsDetails match
-          case ukAmlsDetails: UkAmlsDetails =>
-            getOrRetrieveUtr(arn)
-              .flatMap(mUtr =>
-                amlsRepository.createOrUpdate(
-                  arn,
-                  UkAmlsEntity(
-                    utr = mUtr,
-                    amlsDetails = ukAmlsDetails,
-                    arn = Some(arn),
-                    createdOn = LocalDate.now
-                  )
-                )
-              )
-              .map:
-                case Right(maybeUkAmlsEntity) => Right(maybeUkAmlsEntity)
-                case Left(error) => Left(error)
-          case overseasAmlsDetails: OverseasAmlsDetails =>
-            overseasAmlsRepository.createOrUpdate(
-              OverseasAmlsEntity(
-                arn = arn,
-                amlsDetails = overseasAmlsDetails,
-                createdDate = None
-              )
-            ).map(maybeOverseasAmlsEntity => Right(maybeOverseasAmlsEntity))
-
-      storedAmlsDetails.flatMap:
-        case Right(Some(oldAmlsEntity)) =>
-          logger.info(
-            s"[AmlsDetailsService][storeNewAmlsRequest] Old AMLS record archived, stored and returned new record"
-          )
-          archivedAmlsRepository.create(ArchivedAmlsEntity(arn, oldAmlsEntity)).map:
-            case Right(_) => Right(newAmlsDetails)
-            case Left(error) => Left(error)
-        case Right(None) =>
-          logger.info(s"[AmlsDetailsService][storeNewAmlsRequest] No old AMLS record found, returning new record")
-          Future.successful(Right(newAmlsDetails))
-        case Left(error) =>
-          logger.warn(s"[AmlsDetailsService][storeNewAmlsRequest] Failed to store AMLS record: $error")
-          Future.successful(Left(error))
-
-  private def getOrRetrieveUtr(arn: Arn)(using
-    hc: HeaderCarrier,
-    request: Request[?]
-  ): Future[Option[Utr]] =
-    for
-      a <- amlsRepository.getUtr(arn)
-      b <-
-        if a.isEmpty then
-          desConnector.getAgentRecord(arn).map(_.uniqueTaxReference)
-        else
-          Future.successful(a)
-    yield b
+    agentServicesAccountConnector
+      .updateAmlsDetails(updateRequest)
+      .flatMap { _ =>
+        deleteLegacyAmlsDetails(arn)
+          .recover { case error =>
+            logger.warn(s"[AmlsDetailsService][storeAmlsRequest] ASA update succeeded but legacy AMLS cleanup failed: ${error.getMessage}", error)
+            ()
+          }
+          .map(_ => Right(amlsRequest.toAmlsEntity(amlsRequest)))
+      }
+      .recover { case _ => Left(AmlsError.AmlsUnexpectedMongoError) }
+  end storeAmlsRequest
 
   private def toUkAmlsDetails(amlsDetails: AgentRecordAmlsDetails): UkAmlsDetails = UkAmlsDetails(
     supervisoryBody = amlsDetails.supervisoryBody,

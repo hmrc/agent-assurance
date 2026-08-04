@@ -63,9 +63,6 @@ extends MockitoSugar { this: TestSuite =>
   when(mockConfig.get[String](equal("agent-maintainer-email"))(using any[ConfigLoader[String]]))
     .thenReturn("test@example.com")
 
-  when(mockConfig.get[Boolean](equal("features.use-agent-services-account-amls"))(using any[ConfigLoader[Boolean]]))
-    .thenReturn(false)
-
   implicit val mockAppConfig: AppConfig = new AppConfig(mockConfig, mockServiceConfig)
 
 }
