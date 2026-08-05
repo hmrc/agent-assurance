@@ -217,7 +217,11 @@ with Logging:
   override def deleteByArn(arn: Arn): Future[Unit] = collection
     .deleteOne(and(equal("arn", arn.value)))
     .toFuture()
-    .map(_ => ())
+    .map(deleteResult => {
+      logger.info("test")
+      logger.error(deleteResult.toString)
+      ()
+    })
 
   private def upsertByArn(
     arn: Arn,

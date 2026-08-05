@@ -23,6 +23,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import com.google.inject.AbstractModule
 import org.mongodb.scala.ObservableFuture
 import org.mongodb.scala.SingleObservableFuture
+import org.scalatest.concurrent.Eventually.eventually
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
+import org.scalatest.time.{Seconds, Span}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -34,7 +37,10 @@ import play.api.test.Helpers.*
 import play.api.Application
 import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
-import uk.gov.hmrc.agentassurance.stubs.{ASAStubs, DesStubs}
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesAddressUtrResponse
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesOverseas
+import uk.gov.hmrc.agentassurance.stubs.ASAStubs
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
 import uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
 import uk.gov.hmrc.agentassurance.support.WireMockSupport
@@ -148,7 +154,7 @@ with ASAStubs {
   "GET /amls/arn/:arn" should {
     s"return OK with status NoAmlsDetailsUK when no AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
-      givenDESGetAgentRecord(arn, Some(testUtr))
+      givenASAGetAgentRecord(arn, testAgentDetailsDesAddressUtrResponse)
       val response = doRequest()
       response.status mustBe OK
       response.json mustBe Json.obj("status" -> "NoAmlsDetailsUK")
@@ -156,18 +162,40 @@ with ASAStubs {
 
     s"return OK with status NoAmlsDetailsNonUK when no AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
-      givenDESGetAgentRecord(
-        arn,
-        Some(testUtr),
-        overseas = true
-      )
+      givenASAGetAgentRecord(arn, testAgentDetailsDesOverseas)
       val response = doRequest()
       response.status mustBe OK
       response.json mustBe Json.obj("status" -> "NoAmlsDetailsNonUK")
     }
 
-    s"return OK with status when UK AMLS records found for the ARN" in {
+    s"return OK with status when UK AMLS records found for the ARN through agent record" in {
       isLoggedInAsStride("stride")
+      givenASAGetAgentRecord(
+        arn,
+        testAgentDetailsDesAddressUtrResponse.copy(
+          amlsDetails = Some(
+            AgentRecordAmlsDetails(
+              supervisoryBody = "supervisory",
+              membershipNumber = "0123456789"
+            )
+          )
+        )
+      )
+
+      val response = doRequest()
+      response.status mustBe OK
+      response.json mustBe Json.obj(
+        "status" -> "ValidAmlsDetailsUK",
+        "details" -> Json.obj(
+          "supervisoryBody" -> "supervisory",
+          "membershipNumber" -> "0123456789"
+        )
+      )
+    }
+
+    s"return OK with status when UK AMLS records found for the ARN through amls repository" in {
+      isLoggedInAsStride("stride")
+      givenASAGetAgentRecord(arn, testAgentDetailsDesAddressUtrResponse)
       ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
       val response = doRequest()
       response.status mustBe OK
@@ -176,13 +204,35 @@ with ASAStubs {
         "details" -> Json.obj(
           "supervisoryBody" -> "supervisory",
           "membershipNumber" -> "0123456789",
-          "membershipExpiresOn" -> membershipExpiresOnDate
+          "membershipExpiresOn" -> "2026-09-02"
         )
       )
     }
 
-    s"return OK with status when overseas AMLS details found for the ARN" in {
+    s"return OK with status when overseas AMLS details found for the ARN through agent record" in {
       isLoggedInAsStride("stride")
+      givenASAGetAgentRecord(
+        arn,
+        testAgentDetailsDesOverseas.copy(
+          amlsDetails = Some(
+            AgentRecordAmlsDetails(
+              supervisoryBody = "supervisory",
+              membershipNumber = "0123456789"
+            )
+          )
+        )
+      )
+      val response = doRequest()
+      response.status mustBe OK
+      response.json mustBe Json.obj(
+        "status" -> "ValidAmlsNonUK",
+        "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789")
+      )
+    }
+
+    s"return OK with status when overseas AMLS details found for the ARN through overseas amls repository" in {
+      isLoggedInAsStride("stride")
+      givenASAGetAgentRecord(arn, testAgentDetailsDesOverseas)
       overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
       val response = doRequest()
       response.status mustBe OK
@@ -194,6 +244,7 @@ with ASAStubs {
 
     "return INTERNAL_SERVER_ERROR when overseas and UK AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
+      givenASAGetAgentRecord(arn, testAgentDetailsDesOverseas)
       overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
       ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
       val response = doRequest()
@@ -203,26 +254,35 @@ with ASAStubs {
 
   "POST /amls/arn/:arn" should {
     "return CREATED for UK AMLS" when {
-      "no previous record exists for the ARN" in {
+      "UK record is deleted from repository if record exists for the ARN" in {
         isLoggedInAsAnAfinityGroupAgent("agent1")
-        givenDESGetAgentRecord(arn, Some(testUtr))
+        givenASAAgentRecordUpdateSuccess()
+
+        ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
+        ukAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
 
         val amlsRequest = AmlsRequest(
           ukRecord = true,
-          supervisoryBody = "ACCA",
-          membershipNumber = "A123",
-          membershipExpiresOn = Some(LocalDate.parse("2024-12-31"))
+          supervisoryBody = "supervisory",
+          membershipNumber = "0123456789",
+          membershipExpiresOn = None
         )
 
         val response = doPostRequest(Json.toJson(amlsRequest))
         response.status mustBe CREATED
 
-        ukAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
+        eventually(Timeout(Span(5, Seconds))){
+          ukAmlsRepository.collection.find().toFuture().futureValue.size mustBe 0
+        }
       }
     }
     "return 201 Created for overseas AMLS" when {
-      "no previous record exists for the ARN" in {
+      "UK record is deleted from repository if record exists for the ARN" in {
         isLoggedInAsAnAfinityGroupAgent("agent1")
+        givenASAAgentRecordUpdateSuccess()
+
+        overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
+        overseasAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
 
         val amlsRequest = AmlsRequest(
           ukRecord = false,
@@ -234,7 +294,7 @@ with ASAStubs {
         val response = doPostRequest(Json.toJson(amlsRequest))
         response.status mustBe CREATED
 
-        overseasAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
+        overseasAmlsRepository.collection.find().toFuture().futureValue.size mustBe 0
 
       }
 
