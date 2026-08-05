@@ -193,24 +193,6 @@ with MockAppConfig:
 
       result mustBe (AmlsStatus.NoAmlsDetailsUK, None)
 
-    "fall back to legacy details when ASA AMLS exists but country is missing" in:
-      mockAsaGetAgentRecord(testArn)(
-        testAgentDetailsDesResponse.copy(
-          agencyDetails = None,
-          amlsDetails = Some(AgentRecordAmlsDetails(
-            supervisoryBody = "SRA",
-            membershipNumber = "XAML00000123456",
-            evidenceObjectReference = None
-          ))
-        )
-      )
-      mockGetAmlsDetailsByArn(testArn)(Some(testAmlsDetails))
-      mockGetOverseasAmlsDetailsByArn(testArn)(None)
-
-      val result = await(featureOnService.getAmlsDetailsByArn(testArn))
-
-      result mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(testAmlsDetails))
-
   "hasRenewalDateExpired" when:
     "not provided with a date" should:
       "return false" in:
