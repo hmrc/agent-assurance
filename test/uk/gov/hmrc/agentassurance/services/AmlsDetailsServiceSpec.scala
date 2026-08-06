@@ -16,30 +16,21 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import java.time.LocalDate
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import com.mongodb.client.result.UpdateResult
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.PrivateMethodTester
 import org.scalatestplus.play.PlaySpec
-import play.api.Configuration
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.*
 import uk.gov.hmrc.agentassurance.mocks.*
-import uk.gov.hmrc.agentassurance.models.AgentRecordAmlsDetails
-import uk.gov.hmrc.agentassurance.models.AgentRecordUpdateRequest
-import uk.gov.hmrc.agentassurance.models.AmlsStatus
-import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
+import uk.gov.hmrc.agentassurance.models.{AgentRecordAmlsDetails, AgentRecordUpdateRequest, AmlsStatus, OverseasAmlsDetails}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import scala.concurrent.duration.Duration.Zero
+import java.time.LocalDate
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class AmlsDetailsServiceSpec
 extends PlaySpec
@@ -54,37 +45,7 @@ with MockAppConfig:
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: Request[Any] = FakeRequest()
 
-  val featureOnServicesConfig: ServicesConfig = mock[ServicesConfig]
-  val featureOnConfiguration: Configuration = Configuration.from(
-    Map(
-      "internalServiceHostPatterns" -> Seq(
-        "^.*\\.service$",
-        "^.*\\.mdtp$",
-        "^localhost$"
-      ),
-      "agent-maintainer-email" -> "test@example.com"
-    )
-  )
-
-  when(featureOnServicesConfig.getInt(any[String])).thenReturn(1)
-  when(featureOnServicesConfig.baseUrl(any[String])).thenReturn("http://localhost:1234")
-//  when(featureOnServicesConfig.getConfString(any[String], any[String])).thenReturn("some-string")
-  when(featureOnServicesConfig.getString(any[String])).thenReturn("some-string")
-  when(featureOnServicesConfig.getBoolean(any[String])).thenReturn(false)
-  when(featureOnServicesConfig.getDuration(any[String])).thenReturn(Zero)
-
-//  (featureOnServicesConfig.getInt: String => Int).expects(*).anyNumberOfTimes().returning(1)
-//  (featureOnServicesConfig.baseUrl: String => String).expects(*).anyNumberOfTimes().returning("http://localhost:1234")
-//  (featureOnServicesConfig.getConfString(_: String, _: String)).expects(*, *).anyNumberOfTimes().returning("some-string")
-//  (featureOnServicesConfig.getString: String => String).expects(*).anyNumberOfTimes().returning("some-string")
-//  (featureOnServicesConfig.getBoolean: String => Boolean).expects(*).anyNumberOfTimes().returning(false)
-//  (featureOnServicesConfig.getDuration: String => scala.concurrent.duration.Duration).expects(
-//    *
-//  ).anyNumberOfTimes().returning(scala.concurrent.duration.Duration.Zero)
-
-  val featureOnAppConfig: AppConfig = new AppConfig(featureOnConfiguration, featureOnServicesConfig)
-
-  def featureOnService: AmlsDetailsService =
+  def service: AmlsDetailsService =
     new AmlsDetailsService(
       mockOverseasAmlsRepository,
       mockAmlsRepository,
@@ -100,7 +61,7 @@ with MockAppConfig:
         val asa = defaultDate
         mockUpdateExpiryDate(testArn, des.get)(UpdateResult.acknowledged(1, null, null))
 
-        val result = featureOnService.findCorrectExpiryDate(
+        val result = service.findCorrectExpiryDate(
           testArn,
           des,
           asa
@@ -110,7 +71,7 @@ with MockAppConfig:
       "return the ASA expiry date if it is after the DES expiry date" in:
         val des = defaultDate
         val asa = defaultDate.map(_.plusWeeks(1))
-        val result = featureOnService.findCorrectExpiryDate(
+        val result = service.findCorrectExpiryDate(
           testArn,
           des,
           asa
@@ -120,7 +81,7 @@ with MockAppConfig:
       "return the ASA expiry date if it is equal to the DES expiry date" in:
         val des = defaultDate
         val asa = defaultDate
-        val result = featureOnService.findCorrectExpiryDate(
+        val result = service.findCorrectExpiryDate(
           testArn,
           des,
           asa
@@ -132,7 +93,7 @@ with MockAppConfig:
       "return the ASA expiry date" in:
         val des = None
         val asa = defaultDate
-        val result = featureOnService.findCorrectExpiryDate(
+        val result = service.findCorrectExpiryDate(
           testArn,
           des,
           asa
@@ -146,7 +107,7 @@ with MockAppConfig:
         val asa = None
         mockUpdateExpiryDate(testArn, des.get)(UpdateResult.acknowledged(1, null, null))
 
-        val result = featureOnService.findCorrectExpiryDate(
+        val result = service.findCorrectExpiryDate(
           testArn,
           des,
           asa
@@ -156,7 +117,7 @@ with MockAppConfig:
 
     "neither expiry dates are provided" should:
       "return None" in:
-        featureOnService.findCorrectExpiryDate(
+        service.findCorrectExpiryDate(
           testArn,
           None,
           None
@@ -174,7 +135,7 @@ with MockAppConfig:
         )
       )
 
-      val result = await(featureOnService.getAmlsDetailsByArn(testArn))
+      val result = await(service.getAmlsDetailsByArn(testArn))
 
       result mustBe (
         AmlsStatus.ValidAmlsNonUK,
@@ -189,26 +150,26 @@ with MockAppConfig:
       mockGetAmlsDetailsByArn(testArn)(None)
       mockGetOverseasAmlsDetailsByArn(testArn)(None)
 
-      val result = await(featureOnService.getAmlsDetailsByArn(testArn))
+      val result = await(service.getAmlsDetailsByArn(testArn))
 
       result mustBe (AmlsStatus.NoAmlsDetailsUK, None)
 
   "hasRenewalDateExpired" when:
     "not provided with a date" should:
       "return false" in:
-        featureOnService.hasRenewalDateExpired(None) mustBe false
+        service.hasRenewalDateExpired(None) mustBe false
 
     "provided with a date that is in the future" should:
       "return false" in:
-        featureOnService.hasRenewalDateExpired(Some(LocalDate.now().plusWeeks(1))) mustBe false
+        service.hasRenewalDateExpired(Some(LocalDate.now().plusWeeks(1))) mustBe false
 
     "provided with a date that is in the past" should:
       "return true" in:
-        featureOnService.hasRenewalDateExpired(Some(LocalDate.now().minusWeeks(1))) mustBe true
+        service.hasRenewalDateExpired(Some(LocalDate.now().minusWeeks(1))) mustBe true
 
     "provided with today's date" should:
       "return true" in:
-        featureOnService.hasRenewalDateExpired(Some(LocalDate.now())) mustBe true
+        service.hasRenewalDateExpired(Some(LocalDate.now())) mustBe true
 
   "storeAmlsRequest with ASA feature enabled" should:
     "update ASA and delete legacy Mongo records on success" in:
@@ -225,7 +186,7 @@ with MockAppConfig:
       mockDeleteUkAmlsByArn(testArn)(Future.successful(()))
       mockDeleteOverseasAmlsByArn(testArn)(Future.successful(()))
 
-      val result = await(featureOnService.storeAmlsRequest(testArn, testUKAmlsRequest))
+      val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
 
       result mustBe Right(testAmlsDetails)
 
@@ -245,7 +206,7 @@ with MockAppConfig:
       mockDeleteUkAmlsByArn(testArn)(Future.successful(()))
       mockDeleteOverseasAmlsByArn(testArn)(Future.successful(()))
 
-      val result = await(featureOnService.storeAmlsRequest(testArn, requestWithEvidence))
+      val result = await(service.storeAmlsRequest(testArn, requestWithEvidence))
 
       result mustBe Right(testAmlsDetails)
 
@@ -263,7 +224,7 @@ with MockAppConfig:
       mockDeleteUkAmlsByArn(testArn)(Future.failed(new RuntimeException("cleanup failed")))
       mockDeleteOverseasAmlsByArn(testArn)(Future.successful(()))
 
-      val result = await(featureOnService.storeAmlsRequest(testArn, testUKAmlsRequest))
+      val result = await(service.storeAmlsRequest(testArn, testUKAmlsRequest))
 
       result mustBe Right(testAmlsDetails)
 

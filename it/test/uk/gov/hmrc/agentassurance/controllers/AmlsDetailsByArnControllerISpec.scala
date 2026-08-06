@@ -23,9 +23,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import com.google.inject.AbstractModule
 import org.mongodb.scala.ObservableFuture
 import org.mongodb.scala.SingleObservableFuture
-import org.scalatest.concurrent.Eventually.eventually
-import org.scalatest.concurrent.PatienceConfiguration.Timeout
-import org.scalatest.time.{Seconds, Span}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -204,7 +201,7 @@ with ASAStubs {
         "details" -> Json.obj(
           "supervisoryBody" -> "supervisory",
           "membershipNumber" -> "0123456789",
-          "membershipExpiresOn" -> "2026-09-02"
+          "membershipExpiresOn" -> membershipExpiresOnDate.toString
         )
       )
     }
@@ -271,13 +268,11 @@ with ASAStubs {
         val response = doPostRequest(Json.toJson(amlsRequest))
         response.status mustBe CREATED
 
-        eventually(Timeout(Span(5, Seconds))){
-          ukAmlsRepository.collection.find().toFuture().futureValue.size mustBe 0
-        }
+        ukAmlsRepository.collection.find().toFuture().futureValue.size mustBe 0
       }
     }
     "return 201 Created for overseas AMLS" when {
-      "UK record is deleted from repository if record exists for the ARN" in {
+      "overseas record is deleted from repository if record exists for the ARN" in {
         isLoggedInAsAnAfinityGroupAgent("agent1")
         givenASAAgentRecordUpdateSuccess()
 
