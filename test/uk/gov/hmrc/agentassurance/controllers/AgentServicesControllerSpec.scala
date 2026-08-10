@@ -27,7 +27,6 @@ import play.api.test.Helpers.*
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.*
 import uk.gov.hmrc.agentassurance.mocks.MockAppConfig
 import uk.gov.hmrc.agentassurance.mocks.MockAuthConnector
-import uk.gov.hmrc.agentassurance.mocks.MockDesConnector
 import uk.gov.hmrc.agentassurance.mocks.MockDmsService
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.affinityGroup
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
@@ -40,7 +39,6 @@ class AgentServicesControllerSpec
 extends PlaySpec
 with MockAuthConnector
 with MockAppConfig
-with MockDesConnector
 with MockDmsService
 with BeforeAndAfterEach
 with ScalaFutures:

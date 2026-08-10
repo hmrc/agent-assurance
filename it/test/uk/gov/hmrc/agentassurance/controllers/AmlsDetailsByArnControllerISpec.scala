@@ -34,6 +34,9 @@ import play.api.test.Helpers.*
 import play.api.Application
 import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesAddressUtrResponse
+import uk.gov.hmrc.agentassurance.helpers.TestConstants.testAgentDetailsDesOverseas
+import uk.gov.hmrc.agentassurance.stubs.ASAStubs
 import uk.gov.hmrc.agentassurance.stubs.DesStubs
 import uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import uk.gov.hmrc.agentassurance.support.InstantClockTestSupport
@@ -52,7 +55,8 @@ with GuiceOneServerPerSuite
 with WireMockSupport
 with CleanMongoCollectionSupport
 with InstantClockTestSupport
-with DesStubs {
+with DesStubs
+with ASAStubs {
 
   override implicit lazy val app: Application = appBuilder.build()
 
@@ -60,14 +64,11 @@ with DesStubs {
 
   protected val overseasAmlsRepository: PlayMongoRepository[OverseasAmlsEntity] = new OverseasAmlsRepositoryImpl(mongoComponent)
 
-  protected val archivedAmlsRepository: PlayMongoRepository[ArchivedAmlsEntity] = new ArchivedAmlsRepositoryImpl(mongoComponent)
-
   val moduleWithOverrides: AbstractModule =
     new AbstractModule() {
       override def configure(): Unit = {
         bind(classOf[OverseasAmlsRepository]).toInstance(overseasAmlsRepository.asInstanceOf[OverseasAmlsRepositoryImpl])
         bind(classOf[AmlsRepository]).toInstance(ukAmlsRepository.asInstanceOf[AmlsRepositoryImpl])
-        bind(classOf[ArchivedAmlsRepository]).toInstance(archivedAmlsRepository.asInstanceOf[ArchivedAmlsRepositoryImpl])
       }
     }
 
@@ -77,11 +78,12 @@ with DesStubs {
       "microservice.services.auth.port" -> wireMockPort,
       "microservice.services.des.host" -> wireMockHost,
       "microservice.services.des.port" -> wireMockPort,
+      "microservice.services.agent-services-account.host" -> wireMockHost,
+      "microservice.services.agent-services-account.port" -> wireMockPort,
       "auditing.enabled" -> false,
       "stride.roles.agent-assurance" -> "maintain_agent_manually_assure",
       "internal-auth-token-enabled-on-start" -> false,
       "http-verbs.retries.intervals" -> List("1ms"),
-      "features.use-agent-services-account-amls" -> false,
       "agent.cache.enabled" -> false
     )
     .overrides(moduleWithOverrides)
@@ -149,7 +151,7 @@ with DesStubs {
   "GET /amls/arn/:arn" should {
     s"return OK with status NoAmlsDetailsUK when no AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
-      givenDESGetAgentRecord(arn, Some(testUtr))
+      givenASAGetAgentRecord(arn, testAgentDetailsDesAddressUtrResponse)
       val response = doRequest()
       response.status mustBe OK
       response.json mustBe Json.obj("status" -> "NoAmlsDetailsUK")
@@ -157,18 +159,40 @@ with DesStubs {
 
     s"return OK with status NoAmlsDetailsNonUK when no AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
-      givenDESGetAgentRecord(
-        arn,
-        Some(testUtr),
-        overseas = true
-      )
+      givenASAGetAgentRecord(arn, testAgentDetailsDesOverseas)
       val response = doRequest()
       response.status mustBe OK
       response.json mustBe Json.obj("status" -> "NoAmlsDetailsNonUK")
     }
 
-    s"return OK with status when UK AMLS records found for the ARN" in {
+    s"return OK with status when UK AMLS records found for the ARN through agent record" in {
       isLoggedInAsStride("stride")
+      givenASAGetAgentRecord(
+        arn,
+        testAgentDetailsDesAddressUtrResponse.copy(
+          amlsDetails = Some(
+            AgentRecordAmlsDetails(
+              supervisoryBody = "supervisory",
+              membershipNumber = "0123456789"
+            )
+          )
+        )
+      )
+
+      val response = doRequest()
+      response.status mustBe OK
+      response.json mustBe Json.obj(
+        "status" -> "ValidAmlsDetailsUK",
+        "details" -> Json.obj(
+          "supervisoryBody" -> "supervisory",
+          "membershipNumber" -> "0123456789"
+        )
+      )
+    }
+
+    s"return OK with status when UK AMLS records found for the ARN through amls repository" in {
+      isLoggedInAsStride("stride")
+      givenASAGetAgentRecord(arn, testAgentDetailsDesAddressUtrResponse)
       ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
       val response = doRequest()
       response.status mustBe OK
@@ -177,13 +201,35 @@ with DesStubs {
         "details" -> Json.obj(
           "supervisoryBody" -> "supervisory",
           "membershipNumber" -> "0123456789",
-          "membershipExpiresOn" -> membershipExpiresOnDate
+          "membershipExpiresOn" -> membershipExpiresOnDate.toString
         )
       )
     }
 
-    s"return OK with status when overseas AMLS details found for the ARN" in {
+    s"return OK with status when overseas AMLS details found for the ARN through agent record" in {
       isLoggedInAsStride("stride")
+      givenASAGetAgentRecord(
+        arn,
+        testAgentDetailsDesOverseas.copy(
+          amlsDetails = Some(
+            AgentRecordAmlsDetails(
+              supervisoryBody = "supervisory",
+              membershipNumber = "0123456789"
+            )
+          )
+        )
+      )
+      val response = doRequest()
+      response.status mustBe OK
+      response.json mustBe Json.obj(
+        "status" -> "ValidAmlsNonUK",
+        "details" -> Json.obj("supervisoryBody" -> "supervisory", "membershipNumber" -> "0123456789")
+      )
+    }
+
+    s"return OK with status when overseas AMLS details found for the ARN through overseas amls repository" in {
+      isLoggedInAsStride("stride")
+      givenASAGetAgentRecord(arn, testAgentDetailsDesOverseas)
       overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
       val response = doRequest()
       response.status mustBe OK
@@ -195,6 +241,7 @@ with DesStubs {
 
     "return INTERNAL_SERVER_ERROR when overseas and UK AMLS records found for the ARN" in {
       isLoggedInAsStride("stride")
+      givenASAGetAgentRecord(arn, testAgentDetailsDesOverseas)
       overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
       ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
       val response = doRequest()
@@ -204,132 +251,33 @@ with DesStubs {
 
   "POST /amls/arn/:arn" should {
     "return CREATED for UK AMLS" when {
-      "no previous record exists for the ARN" in {
+      "UK record is deleted from repository if record exists for the ARN" in {
         isLoggedInAsAnAfinityGroupAgent("agent1")
-        givenDESGetAgentRecord(arn, Some(testUtr))
+        givenASAAgentRecordUpdateSuccess()
 
-        val amlsRequest = AmlsRequest(
-          ukRecord = true,
-          supervisoryBody = "ACCA",
-          membershipNumber = "A123",
-          membershipExpiresOn = Some(LocalDate.parse("2024-12-31"))
-        )
-
-        val response = doPostRequest(Json.toJson(amlsRequest))
-        response.status mustBe CREATED
-
+        ukAmlsRepository.collection.insertOne(amlsEntity).toFuture().futureValue
         ukAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
-        archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 0
-      }
-
-      "an existing record (including UTR) exists for the ARN, archiving the existing AMLS record" in {
-        isLoggedInAsAnAfinityGroupAgent("agent1")
-
-        val ukAmlsEntity = UkAmlsEntity(
-          utr = Some(Utr("1234567890")),
-          amlsDetails = UkAmlsDetails(
-            supervisoryBody = "ICAEW",
-            membershipNumber = Some("123"),
-            amlsSafeId = None,
-            agentBPRSafeId = None,
-            appliedOn = None,
-            membershipExpiresOn = Some(LocalDate.parse("2019-10-10"))
-          ),
-          arn = Some(arn),
-          createdOn = LocalDate.parse("2020-10-10")
-        )
-
-        ukAmlsRepository.collection.insertOne(ukAmlsEntity).toFuture().futureValue
 
         val amlsRequest = AmlsRequest(
           ukRecord = true,
-          supervisoryBody = "ACCA",
-          membershipNumber = "A123",
-          membershipExpiresOn = Some(LocalDate.parse("2024-12-31"))
+          supervisoryBody = "supervisory",
+          membershipNumber = "0123456789",
+          membershipExpiresOn = None
         )
 
         val response = doPostRequest(Json.toJson(amlsRequest))
         response.status mustBe CREATED
 
-        ukAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
-        archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
-      }
-
-      "an existing record (without a UTR) exists for the ARN, archiving the existing AMLS record" in {
-        isLoggedInAsAnAfinityGroupAgent("agent1")
-        givenDESGetAgentRecord(arn, Some(testUtr))
-
-        val ukAmlsEntity = UkAmlsEntity(
-          utr = None,
-          amlsDetails = UkAmlsDetails(
-            supervisoryBody = "ICAEW",
-            membershipNumber = Some("123"),
-            amlsSafeId = None,
-            agentBPRSafeId = None,
-            appliedOn = None,
-            membershipExpiresOn = Some(LocalDate.parse("2019-10-10"))
-          ),
-          arn = Some(arn),
-          createdOn = LocalDate.parse("2020-10-10")
-        )
-
-        ukAmlsRepository.collection.insertOne(ukAmlsEntity).toFuture().futureValue
-
-        val amlsRequest = AmlsRequest(
-          ukRecord = true,
-          supervisoryBody = "ACCA",
-          membershipNumber = "A123",
-          membershipExpiresOn = Some(LocalDate.parse("2024-12-31"))
-        )
-
-        val response = doPostRequest(Json.toJson(amlsRequest))
-        response.status mustBe CREATED
-
-        ukAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
-        archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
-      }
-
-      "a legacy UTR-only record exists, updating that record and archiving it" in {
-        isLoggedInAsAnAfinityGroupAgent("agent1")
-        givenDESGetAgentRecord(arn, Some(testUtr))
-        await(ukAmlsRepository.ensureIndexes())
-
-        val legacyAmlsEntity = UkAmlsEntity(
-          utr = Some(testUtr),
-          amlsDetails = UkAmlsDetails(
-            supervisoryBody = "ICAEW",
-            membershipNumber = Some("123"),
-            amlsSafeId = None,
-            agentBPRSafeId = None,
-            appliedOn = None,
-            membershipExpiresOn = Some(LocalDate.parse("2019-10-10"))
-          ),
-          arn = None,
-          createdOn = LocalDate.parse("2020-10-10")
-        )
-
-        ukAmlsRepository.collection.insertOne(legacyAmlsEntity).toFuture().futureValue
-
-        val amlsRequest = AmlsRequest(
-          ukRecord = true,
-          supervisoryBody = "ACCA",
-          membershipNumber = "A123",
-          membershipExpiresOn = Some(LocalDate.parse("2024-12-31"))
-        )
-
-        val response = doPostRequest(Json.toJson(amlsRequest))
-        response.status mustBe CREATED
-
-        val ukAmlsRecords = ukAmlsRepository.collection.find().toFuture().futureValue
-        ukAmlsRecords.size mustBe 1
-        ukAmlsRecords.head.arn mustBe Some(arn)
-        ukAmlsRecords.head.utr mustBe Some(testUtr)
-        archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
+        ukAmlsRepository.collection.find().toFuture().futureValue.size mustBe 0
       }
     }
     "return 201 Created for overseas AMLS" when {
-      "no previous record exists for the ARN" in {
+      "overseas record is deleted from repository if record exists for the ARN" in {
         isLoggedInAsAnAfinityGroupAgent("agent1")
+        givenASAAgentRecordUpdateSuccess()
+
+        overseasAmlsRepository.collection.insertOne(testOverseasAmlsEntity).toFuture().futureValue
+        overseasAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
 
         val amlsRequest = AmlsRequest(
           ukRecord = false,
@@ -341,39 +289,7 @@ with DesStubs {
         val response = doPostRequest(Json.toJson(amlsRequest))
         response.status mustBe CREATED
 
-        overseasAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
-        archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 0
-
-      }
-      "an existing record exists for the ARN, archiving the existing AMLS record" in {
-        isLoggedInAsAnAfinityGroupAgent("agent1")
-
-        val overseasAmlsEntity = OverseasAmlsEntity(
-          amlsDetails = OverseasAmlsDetails(supervisoryBody = "Indian ACA", membershipNumber = Some("CC123")),
-          arn = arn,
-          createdDate = None
-        )
-
-        overseasAmlsRepository.collection.insertOne(overseasAmlsEntity).toFuture().futureValue
-
-        val amlsRequest = AmlsRequest(
-          ukRecord = false,
-          supervisoryBody = "Indian BC",
-          membershipNumber = "B343",
-          membershipExpiresOn = Some(LocalDate.parse("2024-12-31"))
-        )
-
-        val response = doPostRequest(Json.toJson(amlsRequest))
-        response.status mustBe CREATED
-
-        overseasAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
-        overseasAmlsRepository.collection.find().toFuture().futureValue.head mustBe OverseasAmlsEntity(
-          arn,
-          OverseasAmlsDetails("Indian BC", Some("B343")),
-          Some(frozenInstant)
-        )
-
-        archivedAmlsRepository.collection.find().toFuture().futureValue.size mustBe 1
+        overseasAmlsRepository.collection.find().toFuture().futureValue.size mustBe 0
 
       }
 

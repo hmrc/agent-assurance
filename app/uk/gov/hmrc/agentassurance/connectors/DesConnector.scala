@@ -23,7 +23,6 @@ import play.api.Logging
 import play.api.libs.json.*
 import play.api.libs.json.Reads.*
 import play.api.libs.ws.writeableOf_JsValue
-import play.api.mvc.Request
 import play.utils.UriEncoding
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.*
@@ -81,13 +80,6 @@ trait DesConnector:
   def getAmlsSubscriptionStatus(
     amlsRegistrationNumber: String
   )(using hc: HeaderCarrier): Future[AmlsSubscriptionRecord]
-
-  def getAgentRecord(
-    arn: Arn
-  )(using
-    request: Request[?],
-    hc: HeaderCarrier
-  ): Future[AgentDetailsDesResponse]
 
   def getBusinessName(utr: String)(using hc: HeaderCarrier): Future[Option[String]]
 
@@ -149,18 +141,6 @@ with Logging:
     val url = new URI(s"$baseUrl/anti-money-laundering/subscription/$encodedRegNumber/status").toURL
     getWithDesHeadersWithRetry[AmlsSubscriptionRecord]("GetAmlsSubscriptionStatus", url)
   end getAmlsSubscriptionStatus
-
-  // API #1170 (API#4) Get Agent Record
-  override def getAgentRecord(
-    arn: Arn
-  )(using
-    request: Request[?],
-    hc: HeaderCarrier
-  ): Future[AgentDetailsDesResponse] =
-    val url = new URI(s"$baseUrl/registration/personal-details/arn/${arn.value}").toURL
-    agentCacheProvider.agentDetailsCache(arn.value):
-      getWithDesHeadersWithRetry[AgentDetailsDesResponse]("GetAgentRecordCached", url)
-  end getAgentRecord
 
   // API#1163 Registration
   override def getBusinessName(utr: String)(using hc: HeaderCarrier): Future[Option[String]] =

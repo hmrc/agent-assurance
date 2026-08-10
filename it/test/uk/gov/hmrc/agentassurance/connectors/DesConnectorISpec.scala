@@ -192,67 +192,6 @@ with CleanMongoCollectionSupport {
     behave.like(aCheckEndpoint(Utr("7000000002"))) // 7000000002
   }
 
-  "DesConnector getAgentRecord" should {
-    "return agency details for a given ARN" in {
-
-      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
-
-      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
-    }
-  }
-  "DesConnector getAgentRecord caching check" should {
-    "return agency details cached for a given ARN and save record to cache" in {
-      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
-
-      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
-      Thread.sleep(500)
-      await(agentDataCache.getFromCache(cacheId = encryptKey(arn.value))) shouldBe Some(agentDetailsDesResponse)
-
-    }
-
-    "return agency details cached for a given ARN,  second from cache" in {
-      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
-      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
-      Thread.sleep(500)
-      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
-      verifyDESGetAgentRecord(arn)
-    }
-
-    "return agency details cached for a given ARN and save record to cache for two agents" in {
-      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
-      givenDESGetAgentRecord(Arn(arn2.value), Some(Utr("0123456788")))
-
-      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
-      await(desConnector.getAgentRecord(arn2)) shouldBe agentDetailsDesResponse2
-      Thread.sleep(500)
-      await(agentDataCache.getFromCache(cacheId = encryptKey(arn.value))) shouldBe Some(agentDetailsDesResponse)
-      await(agentDataCache.getFromCache(cacheId = encryptKey(arn2.value))) shouldBe Some(agentDetailsDesResponse2)
-    }
-
-    "return agency details cached for a given ARN,  second from cache for two agents" in {
-      givenDESGetAgentRecord(Arn(arn.value), Some(Utr("0123456789")))
-      givenDESGetAgentRecord(Arn(arn2.value), Some(Utr("0123456788")))
-      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
-      await(desConnector.getAgentRecord(arn2)) shouldBe agentDetailsDesResponse2
-      Thread.sleep(500)
-      await(desConnector.getAgentRecord(arn)) shouldBe agentDetailsDesResponse
-      await(desConnector.getAgentRecord(arn2)) shouldBe agentDetailsDesResponse2
-      verifyDESGetAgentRecord(arn)
-      verifyDESGetAgentRecord(arn2)
-    }
-
-    "must fail when the server returns another 5xx status" in {
-      givenDesReturnsServerError()
-      an[Exception] should be thrownBy await(desConnector.getAgentRecord(arn))
-    }
-
-    "must fail when the server returns agent unknown status" in {
-      givenAgentIsUnknown404(Arn(arn.value))
-      an[Exception] should be thrownBy await(desConnector.getAgentRecord(arn))
-    }
-
-  }
-
   "DesConnector getBusinessNameRecord" should {
     "return business name for individual for a given UTR" in {
       givenDESRespondsWithRegistrationData(identifier = utr, isIndividual = true)

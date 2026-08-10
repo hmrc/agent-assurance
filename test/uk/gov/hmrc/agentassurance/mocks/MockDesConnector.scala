@@ -19,15 +19,11 @@ package uk.gov.hmrc.agentassurance.mocks
 import scala.concurrent.Future
 
 import org.scalamock.handlers.CallHandler2
-import org.scalamock.handlers.CallHandler3
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
-import play.api.mvc.Request
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
-import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
 import uk.gov.hmrc.agentassurance.util.toFuture
-import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
@@ -62,19 +58,6 @@ extends MockFactory { this: TestSuite =>
       .getAmlsSubscriptionStatus(_: String)(using _: HeaderCarrier))
       .expects(registrationNumber, *)
       .returning(response)
-
-  def mockGetAgentRecord(
-    arn: Arn
-  )(response: AgentDetailsDesResponse): CallHandler3[
-    Arn,
-    Request[?],
-    HeaderCarrier,
-    Future[AgentDetailsDesResponse]
-  ] =
-    (mockDesConnector
-      .getAgentRecord(_: Arn)(using _: Request[?], _: HeaderCarrier))
-      .expects(arn, *, *)
-      .returning(Future.successful(response))
 
   def mockGetBusinessNameRecord(
     utr: String

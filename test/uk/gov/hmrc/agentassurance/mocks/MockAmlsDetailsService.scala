@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.mocks
 
-import org.scalamock.handlers.CallHandler3
+import org.scalamock.handlers.CallHandler2
 import org.scalamock.handlers.CallHandler4
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
@@ -34,15 +34,14 @@ extends MockFactory { this: TestSuite =>
 
   def mockGetAmlsDetailsByArn(arn: Arn)(
     response: Future[(AmlsStatus, Option[AmlsDetails])]
-  ): CallHandler3[
+  ): CallHandler2[
     Arn,
     HeaderCarrier,
-    Request[?],
     Future[(AmlsStatus, Option[AmlsDetails])]
   ] =
     (mockAmlsDetailsService
-      .getAmlsDetailsByArn(_: Arn)(using _: HeaderCarrier, _: Request[?]))
-      .expects(arn, *, *)
+      .getAmlsDetailsByArn(_: Arn)(using _: HeaderCarrier))
+      .expects(arn, *)
       .returning(response)
 
   def mockStoreAmlsRequest(
