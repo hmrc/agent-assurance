@@ -24,7 +24,8 @@ import org.mongodb.scala.model.FindOneAndReplaceOptions
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
-import play.api.Logging
+import uk.gov.hmrc.agentaccesscontrol.support.NoRequest
+import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.AmlsError.*
 import uk.gov.hmrc.mongo.MongoComponent
@@ -63,7 +64,7 @@ extends PlayMongoRepository[OverseasAmlsEntity](
   )
 )
 with OverseasAmlsRepository
-with Logging:
+with RequestAwareLogging:
 
   override lazy val requiresTtlIndex: Boolean = false
 
@@ -80,11 +81,11 @@ with Logging:
             .map:
               case insertOneResult if insertOneResult.wasAcknowledged() => Right(())
               case e =>
-                logger.warn(s"Error inserting overseas AMLS record ${e}")
+                logger.warn(s"Error inserting overseas AMLS record ${e}")(using NoRequest)
                 Left(AmlsUnexpectedMongoError)
       .recover:
         case e: MongoException =>
-          logger.warn(s"Mongo exception when inserting overseas AMLS record $e")
+          logger.warn(s"Mongo exception when inserting overseas AMLS record $e")(using NoRequest)
           Left(AmlsUnexpectedMongoError)
 
   override def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]] = collection

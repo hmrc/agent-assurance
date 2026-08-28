@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.agentassurance.services
 
-import play.api.Logging
 import play.api.mvc.Request
+import uk.gov.hmrc.agentaccesscontrol.support.NoRequest
+import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.connectors.AgentServicesAccountConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.*
@@ -41,7 +42,7 @@ class AmlsDetailsService @Inject() (
   desConnector: DesConnector,
   agentServicesAccountConnector: AgentServicesAccountConnector
 )(using ec: ExecutionContext)
-extends Logging:
+extends RequestAwareLogging:
 
   def getAmlsDetailsByArn(
     arn: Arn
@@ -119,13 +120,13 @@ extends Logging:
         case error: UpstreamErrorResponse if UpstreamErrorResponse.Upstream4xxResponse.unapply(error).isDefined =>
           logger.warn(
             s"DES API#1028 returned the following response - status: ${error.statusCode}, message: ${error.message}"
-          )
+          )(using NoRequest)
           AmlsStatus.ValidAmlsDetailsUK // temp fix for initial release todo - create a new status to handle errors
         case Upstream5xxResponse(error)
             if error.statusCode == 503 && (error.message.contains("REGIME") | error.message.contains("Technical")) =>
           logger.warn(
             s"DES API#1028 returned the following response - status: ${error.statusCode}, message: ${error.message}"
-          )
+          )(using NoRequest)
           AmlsStatus.ValidAmlsDetailsUK // temp fix for initial release todo - create a new status to handle errors
 
   // we have two potential optional dates to use so this logic will select the correct date

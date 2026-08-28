@@ -19,11 +19,12 @@ package uk.gov.hmrc.agentassurance.connectors
 import com.google.inject.ImplementedBy
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
-import play.api.Logging
 import play.api.libs.json.*
 import play.api.libs.json.Reads.*
 import play.api.libs.ws.writeableOf_JsValue
 import play.utils.UriEncoding
+import uk.gov.hmrc.agentaccesscontrol.support.NoRequest
+import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.DesRegistrationRequest.*
@@ -97,7 +98,7 @@ class DesConnectorImpl @Inject() (
 )
 extends DesConnector
 with BaseConnector
-with Logging:
+with RequestAwareLogging:
 
   private val baseUrl = appConfig.desBaseUrl
   private val authorizationToken = appConfig.desAuthToken
@@ -129,7 +130,7 @@ with Logging:
       )
       .recoverWith:
         case e: UpstreamErrorResponse if e.statusCode == 404 =>
-          logger.warn(s" NOT_FOUND GET legacy relationship response: 404 ")
+          logger.warn(s" NOT_FOUND GET legacy relationship response: 404 ")(using NoRequest)
           Future.successful(Seq.empty[SaAgentReference])
   end getActiveCesaAgentRelationships
 
@@ -153,7 +154,7 @@ with Logging:
         .map(_.flatMap(_.agentName))
         .recoverWith:
           case e: UpstreamErrorResponse if e.statusCode == 503 =>
-            logger.warn("[DesConnector] getBusinessName returned a 503")
+            logger.warn("[DesConnector] getBusinessName returned a 503")(using NoRequest)
             Future.successful(Some("Error retrieving name"))
   end getBusinessName
 

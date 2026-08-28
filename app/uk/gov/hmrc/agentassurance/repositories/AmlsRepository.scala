@@ -25,7 +25,8 @@ import org.mongodb.scala.model.Filters.and
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.result.UpdateResult
-import play.api.Logging
+import uk.gov.hmrc.agentaccesscontrol.support.NoRequest
+import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.models.AmlsError.ArnAlreadySetError
@@ -113,7 +114,7 @@ extends PlayMongoRepository[UkAmlsEntity](
   replaceIndexes = true // TODO WG - remove that
 )
 with AmlsRepository
-with Logging:
+with RequestAwareLogging:
 
   override lazy val requiresTtlIndex: Boolean = false
 
@@ -179,12 +180,12 @@ with Logging:
                     logger.warn(
                       s"error updating AMLS record with ARN - acknowledged: " +
                         s"${updateResult.wasAcknowledged()}, modified count: ${updateResult.getModifiedCount}"
-                    )
+                    )(using NoRequest)
                     Left(AmlsUnexpectedMongoError)
                 .recover:
                   case e: MongoWriteException if e.getError.getCode == 11000 => Left(UniqueKeyViolationError)
                   case e =>
-                    logger.warn(s"unexpected error when updating AMLS record with ARN ${e.getMessage}")
+                    logger.warn(s"unexpected error when updating AMLS record with ARN ${e.getMessage}")(using NoRequest)
                     Left(AmlsUnexpectedMongoError)
         case None => Left(NoExistingAmlsError)
 

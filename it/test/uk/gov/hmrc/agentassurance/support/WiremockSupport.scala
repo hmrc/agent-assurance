@@ -29,6 +29,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.Suite
 import play.api.Logging
+import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
 
 case class WireMockBaseUrl(value: URL)
 
@@ -75,7 +76,7 @@ with BeforeAndAfterEach {
 
 // This class was copy-pasted from the hmrctest project, which is now deprecated.
 object Port
-extends Logging {
+extends RequestAwareLogging {
 
   val rnd = new scala.util.Random
   val range: Seq[Int] = 8000 to 39999

@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.agentassurance.controllers
 
-import play.api.Logging
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
+import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.auth.AuthActions
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.Arn
@@ -45,7 +45,7 @@ class AgentServicesController @Inject() (
 )
 extends BackendController(cc)
 with AuthActions
-with Logging:
+with RequestAwareLogging:
 
   private val strideRoles = Seq(appConfig.manuallyAssuredStrideRole)
 

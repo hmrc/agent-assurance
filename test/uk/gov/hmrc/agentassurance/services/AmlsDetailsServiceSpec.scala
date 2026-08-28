@@ -25,7 +25,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import uk.gov.hmrc.agentassurance.helpers.TestConstants.*
 import uk.gov.hmrc.agentassurance.mocks.*
-import uk.gov.hmrc.agentassurance.models.{AgentRecordAmlsDetails, AgentRecordUpdateRequest, AmlsStatus, OverseasAmlsDetails}
+import uk.gov.hmrc.agentassurance.models.AgentRecordAmlsDetails
+import uk.gov.hmrc.agentassurance.models.AgentRecordUpdateRequest
+import uk.gov.hmrc.agentassurance.models.AmlsStatus
+import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.LocalDate
