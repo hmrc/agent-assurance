@@ -21,7 +21,7 @@ import play.api.libs.json.JsSuccess
 import play.api.libs.json.JsValue
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
-import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.dms.DmsNotification
 import uk.gov.hmrc.agentassurance.models.dms.SubmissionItemStatus

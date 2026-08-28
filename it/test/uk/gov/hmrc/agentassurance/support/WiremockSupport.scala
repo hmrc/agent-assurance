@@ -28,8 +28,8 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.Suite
-import play.api.Logging
-import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
+import uk.gov.hmrc.agentassurance.support.NoRequest
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 
 case class WireMockBaseUrl(value: URL)
 
@@ -89,12 +89,12 @@ extends RequestAwareLogging {
       case 8090 => randomAvailable
       case p: Int =>
         if available(p) then {
-          logger.debug("Taking port : " + p)
+          logger.debug("Taking port : " + p)(using NoRequest)
           usedPorts :+ p
           p
         }
         else {
-          logger.debug(s"Port $p is in use, trying another")
+          logger.debug(s"Port $p is in use, trying another")(using NoRequest)
           randomAvailable
         }
     }

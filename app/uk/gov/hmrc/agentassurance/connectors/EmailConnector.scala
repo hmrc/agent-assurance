@@ -19,8 +19,8 @@ package uk.gov.hmrc.agentassurance.connectors
 import com.google.inject.ImplementedBy
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
-import uk.gov.hmrc.agentaccesscontrol.support.NoRequest
-import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
+import uk.gov.hmrc.agentassurance.support.NoRequest
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.http.HttpReads.Implicits.*

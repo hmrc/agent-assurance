@@ -24,8 +24,8 @@ import org.mongodb.scala.model.FindOneAndReplaceOptions
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
-import uk.gov.hmrc.agentaccesscontrol.support.NoRequest
-import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
+import uk.gov.hmrc.agentassurance.support.NoRequest
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.AmlsError.*
 import uk.gov.hmrc.mongo.MongoComponent

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentaccesscontrol.util
+package uk.gov.hmrc.agentassurance.utils
 
 import play.api.Logger
 
@@ -23,3 +23,4 @@ trait RequestAwareLogging:
     new RequestAwareLogger(
       delegateLogger = Logger(getClass)
     )
+end RequestAwareLogging

@@ -25,8 +25,8 @@ import org.mongodb.scala.model.Filters.and
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.result.UpdateResult
-import uk.gov.hmrc.agentaccesscontrol.support.NoRequest
-import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
+import uk.gov.hmrc.agentassurance.support.NoRequest
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.AmlsError.AmlsUnexpectedMongoError
 import uk.gov.hmrc.agentassurance.models.AmlsError.ArnAlreadySetError

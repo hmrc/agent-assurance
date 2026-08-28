@@ -17,8 +17,8 @@
 package uk.gov.hmrc.agentassurance.services
 
 import play.api.mvc.Request
-import uk.gov.hmrc.agentaccesscontrol.support.NoRequest
-import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
+import uk.gov.hmrc.agentassurance.support.NoRequest
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.connectors.AgentServicesAccountConnector
 import uk.gov.hmrc.agentassurance.connectors.DesConnector
 import uk.gov.hmrc.agentassurance.models.*

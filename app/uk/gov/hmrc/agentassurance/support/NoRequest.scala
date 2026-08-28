@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentaccesscontrol.support
+package uk.gov.hmrc.agentassurance.support
 
 import java.net.URI
 
@@ -24,11 +24,12 @@ import play.api.mvc.request.RequestTarget
 import play.api.mvc.Headers
 import play.api.mvc.Request
 
-object NoRequest extends Request[Any] {
+object NoRequest
+extends Request[Any] {
 
-  override def body: Any        = ""
-  override def method: String   = ""
-  override def version: String  = ""
+  override def body: Any = ""
+  override def method: String = ""
+  override def version: String = ""
   override def headers: Headers = Headers.create()
 
   override def connection: RemoteConnection = RemoteConnection(

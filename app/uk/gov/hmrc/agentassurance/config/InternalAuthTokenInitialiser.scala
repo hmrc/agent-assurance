@@ -20,8 +20,8 @@ import org.apache.pekko.Done
 import play.api.http.Status.CREATED
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
-import uk.gov.hmrc.agentaccesscontrol.support.NoRequest
-import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
+import uk.gov.hmrc.agentassurance.support.NoRequest
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps

@@ -22,7 +22,7 @@ import org.apache.pekko.actor.ActorSystem
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
 import play.api.mvc.Request
-import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AgentRecordUpdateRequest

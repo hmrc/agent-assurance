@@ -23,8 +23,8 @@ import play.api.libs.json.*
 import play.api.libs.json.Reads.*
 import play.api.libs.ws.writeableOf_JsValue
 import play.utils.UriEncoding
-import uk.gov.hmrc.agentaccesscontrol.support.NoRequest
-import uk.gov.hmrc.agentaccesscontrol.util.RequestAwareLogging
+import uk.gov.hmrc.agentassurance.support.NoRequest
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.DesRegistrationRequest.*
