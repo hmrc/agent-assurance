@@ -28,6 +28,7 @@ import uk.gov.hmrc.agentassurance.mocks.*
 import uk.gov.hmrc.agentassurance.models.AgentRecordAmlsDetails
 import uk.gov.hmrc.agentassurance.models.AgentRecordUpdateRequest
 import uk.gov.hmrc.agentassurance.models.AmlsStatus
+import uk.gov.hmrc.agentassurance.models.AmlsSubscriptionRecord
 import uk.gov.hmrc.agentassurance.models.OverseasAmlsDetails
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -156,6 +157,26 @@ with MockAppConfig:
       val result = await(service.getAmlsDetailsByArn(testArn))
 
       result mustBe (AmlsStatus.NoAmlsDetailsUK, None)
+
+    "call DES to verify the AMLS status when the legacy UK AMLS supervisory body is HMRC" in:
+      val hmrcAmlsDetails = testHmrcAmlsDetails.copy(membershipExpiresOn = Some(LocalDate.now().plusYears(1)))
+
+      mockAsaGetAgentRecord(testArn)(testAgentDetailsDesAddressUtrResponse.copy(amlsDetails = None))
+      mockGetAmlsDetailsByArn(testArn)(Some(hmrcAmlsDetails))
+      mockGetOverseasAmlsDetailsByArn(testArn)(None)
+      mockGetAmlsSubscriptionStatus(testValidApplicationReferenceNumber)(
+        Future.successful(AmlsSubscriptionRecord(
+          formBundleStatus = "Approved",
+          safeId = "safeId",
+          currentRegYearStartDate = None,
+          currentRegYearEndDate = None,
+          suspended = Some(false)
+        ))
+      )
+
+      val result = await(service.getAmlsDetailsByArn(testArn))
+
+      result mustBe (AmlsStatus.ValidAmlsDetailsUK, Some(hmrcAmlsDetails))
 
   "hasRenewalDateExpired" when:
     "not provided with a date" should:
