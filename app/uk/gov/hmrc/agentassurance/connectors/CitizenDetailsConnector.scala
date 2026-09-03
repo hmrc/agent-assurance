@@ -17,11 +17,11 @@
 package uk.gov.hmrc.agentassurance.connectors
 
 import com.google.inject.ImplementedBy
-import play.api.Logging
 import play.api.http.Status
 import play.api.libs.json.JsPath
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.entitycheck.EntityCheckException
 import uk.gov.hmrc.domain.SaUtr
@@ -59,7 +59,7 @@ class CitizenDetailsConnectorImpl @Inject() (
   http: HttpClientV2
 )
 extends CitizenDetailsConnector
-with Logging:
+with RequestAwareLogging:
 
   private val baseUrl = appConfig.citizenDetailsBaseUrl
 

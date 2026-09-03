@@ -28,7 +28,8 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.Suite
-import play.api.Logging
+import uk.gov.hmrc.agentassurance.support.NoRequest
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 
 case class WireMockBaseUrl(value: URL)
 
@@ -75,7 +76,7 @@ with BeforeAndAfterEach {
 
 // This class was copy-pasted from the hmrctest project, which is now deprecated.
 object Port
-extends Logging {
+extends RequestAwareLogging {
 
   val rnd = new scala.util.Random
   val range: Seq[Int] = 8000 to 39999
@@ -88,12 +89,12 @@ extends Logging {
       case 8090 => randomAvailable
       case p: Int =>
         if available(p) then {
-          logger.debug("Taking port : " + p)
+          logger.debug("Taking port : " + p)(using NoRequest)
           usedPorts :+ p
           p
         }
         else {
-          logger.debug(s"Port $p is in use, trying another")
+          logger.debug(s"Port $p is in use, trying another")(using NoRequest)
           randomAvailable
         }
     }

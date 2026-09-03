@@ -17,9 +17,10 @@
 package uk.gov.hmrc.agentassurance.connectors
 
 import com.google.inject.ImplementedBy
-import play.api.Logging
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
+import uk.gov.hmrc.agentassurance.support.NoRequest
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.EmailInformation
 import uk.gov.hmrc.http.HttpReads.Implicits.*
@@ -47,7 +48,7 @@ class EmailConnectorImpl @Inject() (
 )
 extends EmailConnector
 with HttpErrorFunctions
-with Logging:
+with RequestAwareLogging:
 
   def sendEmail(emailInformation: EmailInformation)(implicit
     hc: HeaderCarrier,
@@ -61,7 +62,7 @@ with Logging:
         response.status match
           case status if is2xx(status) => ()
           case other =>
-            logger.error(s"unexpected status from email service, status: $other")
+            logger.error(s"unexpected status from email service, status: $other")(using NoRequest)
             ()
       }
 end EmailConnectorImpl

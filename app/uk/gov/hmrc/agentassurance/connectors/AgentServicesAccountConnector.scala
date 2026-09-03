@@ -19,10 +19,10 @@ package uk.gov.hmrc.agentassurance.connectors
 import com.google.inject.ImplementedBy
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
-import play.api.Logging
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
 import play.api.mvc.Request
+import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.models.AgentDetailsDesResponse
 import uk.gov.hmrc.agentassurance.models.AgentRecordUpdateRequest
@@ -57,7 +57,7 @@ class AgentServicesAccountConnectorImpl @Inject() (
 )(implicit ec: ExecutionContext)
 extends AgentServicesAccountConnector
 with BaseConnector
-with Logging:
+with RequestAwareLogging:
 
   private val baseUrl = appConfig.agentServicesAccountBaseUrl
 
