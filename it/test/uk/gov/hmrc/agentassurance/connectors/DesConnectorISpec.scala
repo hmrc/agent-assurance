@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentassurance.connectors
 
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import scala.concurrent.ExecutionContext
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
@@ -51,6 +52,9 @@ import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderNames
+import uk.gov.hmrc.http.RequestId
+import uk.gov.hmrc.http.SessionId
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 import uk.gov.hmrc.mongo.CurrentTimestampSupport
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
@@ -190,6 +194,25 @@ with CleanMongoCollectionSupport {
 
   "DesConnector getActiveCesaAgentRelationships with a valid UTR" should {
     behave.like(aCheckEndpoint(Utr("7000000002"))) // 7000000002
+  }
+
+  "DesConnector" should {
+    "send request and session identifiers to DES" in {
+      given HeaderCarrier = HeaderCarrier(
+        requestId = Some(RequestId("request-id")),
+        sessionId = Some(SessionId("session-id"))
+      )
+      val identifier = Utr("1234567890")
+
+      stubFor(
+        get(urlEqualTo(s"/registration/relationship/utr/${identifier.value}"))
+          .withHeader(HeaderNames.xRequestId, equalTo("request-id"))
+          .withHeader(HeaderNames.xSessionId, equalTo("session-id"))
+          .willReturn(aResponse().withStatus(200).withBody("""{"agents":[]}"""))
+      )
+
+      await(desConnector.getActiveCesaAgentRelationships(identifier)) shouldBe Seq.empty
+    }
   }
 
   "DesConnector getBusinessNameRecord" should {
