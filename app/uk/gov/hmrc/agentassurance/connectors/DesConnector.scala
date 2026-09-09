@@ -26,6 +26,7 @@ import play.utils.UriEncoding
 import uk.gov.hmrc.agentassurance.support.NoRequest
 import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
+import uk.gov.hmrc.agentassurance.connectors.helpers.CommonHeaders
 import uk.gov.hmrc.agentassurance.models.*
 import uk.gov.hmrc.agentassurance.models.DesRegistrationRequest.*
 import uk.gov.hmrc.agentassurance.services.CacheProvider
@@ -222,16 +223,13 @@ with RequestAwareLogging:
     implicit hc: HeaderCarrier
   ): Seq[(String, String)] =
 
-    val additionalHeaders =
+    val platformHeaders =
       if isInternalHost then
-        Seq.empty
+        CommonHeaders()
       else
-        Seq(
-          HeaderNames.authorisation -> s"Bearer $authToken",
-          HeaderNames.xRequestId -> hc.requestId.map(_.value).getOrElse(UUID.randomUUID().toString)
-        ) ++ hc.sessionId.fold(Seq.empty[(String, String)])(x => Seq(HeaderNames.xSessionId -> x.value))
+        Seq(HeaderNames.authorisation -> s"Bearer $authToken") ++ CommonHeaders()
     val commonHeaders = Seq(Environment -> env, CorrelationId -> UUID.randomUUID().toString)
-    commonHeaders ++ additionalHeaders
+    commonHeaders ++ platformHeaders
   end desHeaders
 
 end DesConnectorImpl
