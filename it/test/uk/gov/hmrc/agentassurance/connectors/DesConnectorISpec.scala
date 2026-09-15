@@ -45,8 +45,7 @@ import uk.gov.hmrc.agentassurance.repositories.AgencyNameCacheRepository
 import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.crypto.Decrypter
 import uk.gov.hmrc.crypto.Encrypter
-import uk.gov.hmrc.crypto.PlainText
-import uk.gov.hmrc.crypto.SymmetricCryptoFactory.aesCrypto
+import uk.gov.hmrc.crypto.SymmetricCryptoFactory.aesGcmCrypto
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
@@ -57,7 +56,6 @@ import uk.gov.hmrc.http.RequestId
 import uk.gov.hmrc.http.SessionId
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 import uk.gov.hmrc.mongo.CurrentTimestampSupport
-import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 class DesConnectorISpec
 extends UnitSpec
@@ -73,24 +71,20 @@ with CleanMongoCollectionSupport {
   private implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
   private implicit val config: Config = app.injector.instanceOf[Config]
   private implicit lazy val as: ActorSystem = ActorSystem()
-  private implicit val crypto: Encrypter & Decrypter = aesCrypto("0xbYzrPV9/GmVEGazywGswm7yRYoWy2BraeJnjOUgcY=")
-
-  private def encryptKey(key: String): String = crypto.encrypt(PlainText(key)).value
+  private implicit val crypto: Encrypter & Decrypter = aesGcmCrypto("0xbYzrPV9/GmVEGazywGswm7yRYoWy2BraeJnjOUgcY=")
 
   private val agentDataCache =
     new AgencyDetailsCacheRepository(
       app.injector.instanceOf[Configuration],
       mongoComponent,
-      new CurrentTimestampSupport,
-      app.injector.instanceOf[Metrics]
+      new CurrentTimestampSupport
     )
 
   private val agentNameCache =
     new AgencyNameCacheRepository(
       app.injector.instanceOf[Configuration],
       mongoComponent,
-      new CurrentTimestampSupport,
-      app.injector.instanceOf[Metrics]
+      new CurrentTimestampSupport
     )
 
   override implicit lazy val app: Application = appBuilder
@@ -241,7 +235,7 @@ with CleanMongoCollectionSupport {
 
       await(desConnector.getBusinessName(utr.value)) shouldBe Some(organisationBusinessName)
       Thread.sleep(500)
-      await(agentNameCache.getFromCache(cacheId = encryptKey(utr.value))).get shouldBe Some(organisationBusinessName)
+      await(agentNameCache.getFromCache(cacheId = utr.value)).get shouldBe Some(organisationBusinessName)
 
     }
 
@@ -250,7 +244,7 @@ with CleanMongoCollectionSupport {
 
       await(desConnector.getBusinessName(utr.value)) shouldBe None
       Thread.sleep(500)
-      await(agentNameCache.getFromCache(cacheId = encryptKey(utr.value))) shouldBe None
+      await(agentNameCache.getFromCache(cacheId = utr.value)) shouldBe None
 
     }
 
@@ -269,8 +263,8 @@ with CleanMongoCollectionSupport {
       await(desConnector.getBusinessName(utr.value)) shouldBe Some(organisationBusinessName)
       await(desConnector.getBusinessName(utr2.value)) shouldBe Some(individualBusinessName)
       Thread.sleep(500)
-      await(agentNameCache.getFromCache(cacheId = encryptKey(utr.value))).get shouldBe Some(organisationBusinessName)
-      await(agentNameCache.getFromCache(cacheId = encryptKey(utr2.value))).get shouldBe Some(individualBusinessName)
+      await(agentNameCache.getFromCache(cacheId = utr.value)).get shouldBe Some(organisationBusinessName)
+      await(agentNameCache.getFromCache(cacheId = utr2.value)).get shouldBe Some(individualBusinessName)
     }
 
     "return None and do not thow exception when the DES server returns another 5xx status" in {

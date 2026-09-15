@@ -37,7 +37,7 @@ extends Module:
   def aesCryptoInstance(configuration: Configuration): Encrypter
     & Decrypter =
     if configuration.underlying.getBoolean("fieldLevelEncryption.enable") then
-      SymmetricCryptoFactory.aesCryptoFromConfig("fieldLevelEncryption", configuration.underlying)
+      SymmetricCryptoFactory.aesGcmCryptoFromConfig("fieldLevelEncryption", configuration.underlying)
     else
       NoCrypto
 

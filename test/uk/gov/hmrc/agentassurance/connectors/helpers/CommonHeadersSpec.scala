@@ -22,7 +22,8 @@ import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.http.RequestId
 import uk.gov.hmrc.http.SessionId
 
-class CommonHeadersSpec extends PlaySpec:
+class CommonHeadersSpec
+extends PlaySpec:
 
   "CommonHeaders" should {
     "propagate request and session identifiers from the header carrier" in {
