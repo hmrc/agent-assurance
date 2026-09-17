@@ -124,7 +124,7 @@ with RequestAwareLogging:
 
     collection
       .find(equal("utr", utr))
-      .headOption()
+      .first().toFutureOption()
       .flatMap:
         case Some(amlsEntity) if amlsEntity.arn.isDefined => Left(ArnAlreadySetError)
         case _ =>
@@ -159,7 +159,8 @@ with RequestAwareLogging:
   ): Future[Either[AmlsError, UkAmlsDetails]] =
     collection
       .find(equal("utr", utr.value))
-      .headOption()
+      .first()
+      .toFutureOption()
       .flatMap:
         case Some(existingEntity) =>
           existingEntity.arn match
@@ -191,17 +192,20 @@ with RequestAwareLogging:
 
   override def getAmlDetails(utr: Utr): Future[Option[UkAmlsDetails]] = collection
     .find(equal("utr", utr.value))
-    .headOption()
+    .first()
+    .toFutureOption()
     .map(_.map(_.amlsDetails))
 
   override def getAmlsDetailsByArn(arn: Arn): Future[Option[UkAmlsDetails]] = collection
     .find(equal("arn", arn.value))
-    .headOption()
+    .first()
+    .toFutureOption()
     .map(_.map(_.amlsDetails))
 
   override def getUtr(arn: Arn): Future[Option[Utr]] = collection
     .find(equal("arn", arn.value))
-    .headOption()
+    .first()
+    .toFutureOption()
     .map(_.flatMap(_.utr))
 
   override def updateExpiryDate(
@@ -229,7 +233,7 @@ with RequestAwareLogging:
       amlsEntity,
       FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE)
     )
-    .headOption()
+    .toFutureOption()
     .map(ArnUpsertResult.Success(_))
     .recover:
       case e =>
@@ -246,7 +250,8 @@ with RequestAwareLogging:
     amlsEntity: UkAmlsEntity
   ): Future[Either[AmlsError, Option[UkAmlsEntity]]] = collection
     .find(equal("utr", utr.value))
-    .headOption()
+    .first()
+    .toFutureOption()
     .flatMap {
       case LegacyUtrOnlyRecord(_) => replaceLegacyUtrOnlyRecord(utr, amlsEntity)
       // Reaching a non-legacy row here means the ARN<->UTR mapping invariant has already been broken,
@@ -264,7 +269,7 @@ with RequestAwareLogging:
       amlsEntity,
       FindOneAndReplaceOptions().returnDocument(ReturnDocument.BEFORE)
     )
-    .headOption()
+    .toFutureOption()
     .map:
       case Some(oldAmlsEntity) => Right(Some(oldAmlsEntity))
       case None => Left(AmlsUnexpectedMongoError)
