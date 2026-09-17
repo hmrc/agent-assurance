@@ -71,7 +71,8 @@ with RequestAwareLogging:
   def create(amlsEntity: OverseasAmlsEntity): Future[Either[AmlsError, Unit]] =
     collection
       .find(equal("arn", amlsEntity.arn.value))
-      .headOption()
+      .first()
+      .toFutureOption()
       .flatMap:
         case Some(_) => Future.successful(Left(AmlsRecordExists))
         case _ =>
@@ -90,7 +91,8 @@ with RequestAwareLogging:
 
   override def getOverseasAmlsDetailsByArn(arn: Arn): Future[Option[OverseasAmlsDetails]] = collection
     .find(equal("arn", arn.value))
-    .headOption()
+    .first()
+    .toFutureOption()
     .map(_.map(_.amlsDetails))
 
   override def createOrUpdate(amlsEntity: OverseasAmlsEntity): Future[Option[OverseasAmlsEntity]] =
@@ -100,7 +102,7 @@ with RequestAwareLogging:
         amlsEntity.withDefaultCreatedDate,
         FindOneAndReplaceOptions().upsert(true).returnDocument(ReturnDocument.BEFORE)
       )
-      .headOption()
+      .toFutureOption()
 
   override def deleteByArn(arn: Arn): Future[Unit] = collection
     .deleteOne(equal("arn", arn.value))

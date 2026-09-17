@@ -96,7 +96,8 @@ with PropertiesRepository:
   override def propertyExists(property: Property): Future[Boolean] =
     collection
       .find(and(equal("key", property.key), equal("value", property.value)))
-      .headOption()
+      .first()
+      .toFutureOption()
       .map(_.isDefined)
 
   override def upsertProperty(property: Property): Future[Unit] =
