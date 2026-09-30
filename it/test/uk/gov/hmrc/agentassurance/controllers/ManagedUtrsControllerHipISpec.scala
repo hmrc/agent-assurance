@@ -45,15 +45,14 @@ import java.time.Clock
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ManagedUtrsControllerISpec
-extends UnitSpec
-with GuiceOneServerPerSuite
-with BeforeAndAfterEach
-with AgentAuthStubs
-with DesStubs 
-with HipStubs
-with WireMockSupport
-with DefaultPlayMongoRepositorySupport[Property] {
+class ManagedUtrsControllerHipISpec
+  extends UnitSpec
+    with GuiceOneServerPerSuite
+    with BeforeAndAfterEach
+    with AgentAuthStubs
+    with HipStubs
+    with WireMockSupport
+    with DefaultPlayMongoRepositorySupport[Property] {
 
   override val repository: PropertiesRepositoryImpl = new PropertiesRepositoryImpl(mongoComponent)
 
@@ -80,7 +79,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       "auditing.consumer.baseUri.port" -> wireMockPort,
       "internal-auth-token-enabled-on-start" -> false,
       "agent.name.cache.enabled" -> false,
-      "features.registration-1163-use-hip" -> false,
+      "features.registration-1163-use-hip" -> true,
       "microservice.services.hip.host" -> wireMockHost,
       "microservice.services.hip.port" -> wireMockPort,
       "microservice.services.hip.authorization-token" -> "secret"
@@ -94,37 +93,21 @@ with DefaultPlayMongoRepositorySupport[Property] {
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
   def getUtrDetails(
-    utr: Utr,
-    nameRequired: java.lang.Boolean = null
-  ): Future[WSResponse] = wsClient
+                     utr: Utr,
+                     nameRequired: java.lang.Boolean = null
+                   ): Future[WSResponse] = wsClient
     .url(s"$baseUrl/agent-assurance/managed-utrs/utr/${utr.value}${Option(nameRequired).map(nr => s"?nameRequired=$nr").getOrElse("")}")
     .withHttpHeaders("Authorization" -> "Bearer XYZ")
     .get()
 
   def listUtrs(
-    collectionName: String,
-    page: Int,
-    pageSize: Int
-  ): Future[WSResponse] = wsClient
+                collectionName: String,
+                page: Int,
+                pageSize: Int
+              ): Future[WSResponse] = wsClient
     .url(s"$baseUrl/agent-assurance/managed-utrs/collection/$collectionName?page=$page&pageSize=$pageSize")
     .withHttpHeaders("Authorization" -> "Bearer XYZ")
     .get()
-
-  def removeUtr(
-    collectionName: String,
-    utr: String
-  ): Future[WSResponse] = wsClient
-    .url(s"$baseUrl/agent-assurance/managed-utrs/collection/$collectionName/utr/$utr")
-    .withHttpHeaders("Authorization" -> "Bearer XYZ")
-    .delete()
-
-  def upsertUtr(
-    collectionName: String,
-    value: String
-  ): Future[WSResponse] = wsClient
-    .url(s"$baseUrl/agent-assurance/managed-utrs/collection/$collectionName")
-    .withHttpHeaders("Authorization" -> "Bearer XYZ")
-    .post(Json.obj("value" -> value))
 
   "a getProperty entire List for refusal-to-deal-with" should {
     behave.like(extractUtrDetailsList("refusal-to-deal-with"))
@@ -138,32 +121,16 @@ with DefaultPlayMongoRepositorySupport[Property] {
     behave.like(checkUtr())
   }
 
-  "a createProperty endpoint for refusal-to-deal-with" should {
-    behave.like(upsertUtrTests("refusal-to-deal-with"))
-  }
-
-  "a createProperty endpoint for manually-assured" should {
-    behave.like(upsertUtrTests("manually-assured"))
-  }
-
-  "a deleteIdentifierInProperty endpoint for refusal-to-deal-with" should {
-    behave.like(deletePropertyTests("refusal-to-deal-with"))
-  }
-
-  "a deleteIdentifierInProperty endpoint for manually-assured" should {
-    behave.like(deletePropertyTests("manually-assured"))
-  }
-
   private val utr4000000009: Utr = Utr("4000000009")
 
   def extractUtrDetailsList(collection: String): Unit = {
     "return 200 OK when properties are present in first page" in {
       isLoggedInWithoutUserId
 
-      givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
-      givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
+      givenHIPRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
+      givenHIPRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
 
       repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture().futureValue
       repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture().futureValue
@@ -201,11 +168,11 @@ with DefaultPlayMongoRepositorySupport[Property] {
     "return 200 OK when properties are present in second page" in {
       isLoggedInWithoutUserId
 
-      givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
-      givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
-      givenDESRespondsWithRegistrationData(identifier = Utr("9660717105"), isIndividual = false)
+      givenHIPRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
+      givenHIPRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
+      givenHIPRespondsWithRegistrationData(identifier = Utr("9660717105"), isIndividual = false)
 
       repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture().futureValue
       repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture().futureValue
@@ -245,10 +212,10 @@ with DefaultPlayMongoRepositorySupport[Property] {
     "return 200 OK when properties are present in last page" in {
       isLoggedInWithoutUserId
 
-      givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
-      givenDESRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
-      givenDESRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
+      givenHIPRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = Utr("6660717101"), isIndividual = false)
+      givenHIPRespondsWithRegistrationData(identifier = Utr("4660717102"), isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = Utr("2660717103"), isIndividual = false)
 
       repository.collection.insertOne(Property(key = collection, value = "4000000009")).toFuture().futureValue
       repository.collection.insertOne(Property(key = collection, value = "6660717101")).toFuture().futureValue
@@ -300,7 +267,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr on manually-assured and not refusal-to-deal-with" in {
       isLoggedInWithoutUserId
-      givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
 
       repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
 
@@ -317,7 +284,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr on manually-assured and on refusal-to-deal-with" in {
       isLoggedInWithoutUserId
-      givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
 
       repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
       repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture().futureValue
@@ -335,7 +302,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr not on  manually-assured and on refusal-to-deal-with" in {
       isLoggedInWithoutUserId
-      givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
 
       repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture().futureValue
 
@@ -352,7 +319,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr not on  manually-assured and not on refusal-to-deal-with" in {
       isLoggedInWithoutUserId
-      givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
@@ -368,7 +335,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr on manually-assured and not refusal-to-deal-with and no name" in {
       isLoggedInWithoutUserId
-      givenDESReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
+      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
 
       repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
 
@@ -385,7 +352,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr on manually-assured and on refusal-to-deal-with and no name" in {
       isLoggedInWithoutUserId
-      givenDESReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
+      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
       repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
       repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture().futureValue
 
@@ -402,7 +369,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr not on  manually-assured and on refusal-to-deal-with and no name" in {
       isLoggedInWithoutUserId
-      givenDESReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
+      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
 
       repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture().futureValue
 
@@ -419,7 +386,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr not on  manually-assured and not on refusal-to-deal-with and no name" in {
       isLoggedInWithoutUserId
-      givenDESReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
+      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
@@ -434,7 +401,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr on manually-assured and not refusal-to-deal-with and no name is not required" in {
       isLoggedInWithoutUserId
-      givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
       repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = false).futureValue
@@ -450,7 +417,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "nameRequired is optional and defaults to false" in {
       isLoggedInWithoutUserId
-      givenDESRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
+      givenHIPRespondsWithRegistrationData(identifier = utr4000000009, isIndividual = true)
       repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
 
       val response = getUtrDetails(utr = utr4000000009).futureValue
@@ -462,87 +429,6 @@ with DefaultPlayMongoRepositorySupport[Property] {
         isRefusalToDealWith = false,
         businessName = None
       )
-    }
-  }
-
-  def upsertUtrTests(collectionName: String): Unit = {
-
-    "return 201 when property is not already present" in {
-      isLoggedInWithoutUserId
-
-      val response: WSResponse = upsertUtr(collectionName, "4000000009").futureValue
-      response.status shouldBe CREATED
-    }
-
-    "upsert updates if the utr is already there" in {
-      isLoggedInWithoutUserId
-
-      val response: WSResponse = upsertUtr(collectionName, "4000000009").futureValue
-      response.status shouldBe CREATED
-
-      val response2: WSResponse = upsertUtr(collectionName, "4000000009").futureValue
-      response2.status shouldBe CREATED
-    }
-
-    "return 400 (with appropriate reason) json is not well formed" in {
-      isLoggedInWithoutUserId
-
-      val badlyFormedJson =
-        s"""
-           |{
-           |   "value": "missingQuote
-           |}
-                 """.stripMargin
-
-      val response: WSResponse =
-        wsClient
-          .url(s"$baseUrl/agent-assurance/managed-utrs/collection/$collectionName")
-          .withHttpHeaders("Content-Type" -> "application/json")
-          .post(badlyFormedJson).futureValue
-      response.status shouldBe BAD_REQUEST
-      response.body.toLowerCase.contains("invalid json: illegal unquoted character") shouldBe true
-    }
-
-    "return 400 (with appropriate reason) json does not conform to the api" in {
-      isLoggedInWithoutUserId
-      val payload = Json.obj("foo" -> "ewrewr", "bar" -> "retrwt")
-
-      val response: WSResponse =
-        wsClient
-          .url(s"$baseUrl/agent-assurance/managed-utrs/collection/$collectionName")
-          .withHttpHeaders("Authorization" -> "Bearer XYZ")
-          .post(payload)
-          .futureValue
-      response.status shouldBe BAD_REQUEST
-      response.body.contains("INVALID_JSON") shouldBe true
-    }
-  }
-
-  def deletePropertyTests(
-    key: String
-  ): Unit = {
-    "return 204 when property is present" in {
-      isLoggedInWithoutUserId
-      upsertUtr(key, "4000000009").futureValue
-
-      val response = removeUtr(key, "4000000009").futureValue
-      response.status shouldBe NO_CONTENT
-
-      val response2 = getUtrDetails(utr = utr4000000009, nameRequired = false).futureValue
-      response2.status shouldBe OK
-    }
-
-    "return Accepted when property is not present" in {
-      isLoggedInWithoutUserId
-      val response = removeUtr(key, "4000000009").futureValue
-      response.status shouldBe NO_CONTENT
-    }
-
-    "INVALID UTR" in {
-      isLoggedInWithoutUserId
-      val response = removeUtr(key, "INVALID_UTR").futureValue
-      response.status shouldBe BAD_REQUEST
-      response.statusText shouldBe "Bad Request"
     }
   }
 

@@ -42,6 +42,9 @@ class AppConfig @Inject() (
   val esProxyUrl: String = baseUrl("enrolment-store-proxy")
   val citizenDetailsBaseUrl: String = baseUrl("citizen-details")
 
+  val hipBaseUrl: String = servicesConfig.baseUrl("hip")
+  val hipAuthToken: String = servicesConfig.getString("microservice.services.hip.authorization-token")
+
   val minimumIRPAYEClients: Int = servicesConfig.getInt("minimumIRPAYEClients")
   val minimumIRSAClients: Int = servicesConfig.getInt("minimumIRSAClients")
   val minimumVatDecOrgClients: Int = servicesConfig.getInt("minimumVatDecOrgClients")
@@ -79,5 +82,7 @@ class AppConfig @Inject() (
   val agentMaintainerEmail: String = config.get[String]("agent-maintainer-email")
 
   val maxCallsPerSecondBusinessNames: Int = servicesConfig.getInt("rate-limiter.business-names.max-calls-per-second")
+
+  def registrationApiUseHip: Boolean = servicesConfig.getBoolean("features.registration-1163-use-hip")
 
 end AppConfig
