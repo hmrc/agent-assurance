@@ -30,7 +30,6 @@ import play.api.libs.ws.WSClient
 import play.api.libs.ws.WSResponse
 import play.api.test.Helpers.NOT_FOUND
 import uk.gov.hmrc.agentassurance.stubs.DesStubs
-import uk.gov.hmrc.agentassurance.stubs.HipStubs
 import uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import uk.gov.hmrc.agentassurance.support.UnitSpec
 import uk.gov.hmrc.agentassurance.support.WireMockSupport
@@ -46,13 +45,12 @@ import java.time.Clock
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ManagedUtrsControllerISpec
+class ManagedUtrsControllerDesISpec
 extends UnitSpec
 with GuiceOneServerPerSuite
 with BeforeAndAfterEach
 with AgentAuthStubs
 with DesStubs
-with HipStubs
 with WireMockSupport
 with DefaultPlayMongoRepositorySupport[Property] {
 
@@ -81,10 +79,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
       "auditing.consumer.baseUri.port" -> wireMockPort,
       "internal-auth-token-enabled-on-start" -> false,
       "agent.name.cache.enabled" -> false,
-      "features.registration-1163-use-hip" -> false,
-      "microservice.services.hip.host" -> wireMockHost,
-      "microservice.services.hip.port" -> wireMockPort,
-      "microservice.services.hip.authorization-token" -> "secret"
+      "features.registration-1163-use-hip" -> false
     )
     .overrides(moduleWithOverrides)
 
