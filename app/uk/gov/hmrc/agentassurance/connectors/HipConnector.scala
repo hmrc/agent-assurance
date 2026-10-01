@@ -45,14 +45,14 @@ import scala.concurrent.Future
 
 @Singleton
 class HipConnector @Inject() (
-                               appConfig: AppConfig,
-                               httpV2: HttpClientV2,
-                               agentCacheProvider: CacheProvider,
-                               override val configuration: Config,
-                               override val actorSystem: ActorSystem
-                             )(using ec: ExecutionContext)
-  extends BaseConnector
-    with RequestAwareLogging {
+  appConfig: AppConfig,
+  httpV2: HttpClientV2,
+  agentCacheProvider: CacheProvider,
+  override val configuration: Config,
+  override val actorSystem: ActorSystem
+)(using ec: ExecutionContext)
+extends BaseConnector
+with RequestAwareLogging {
 
   private val baseUrl = appConfig.hipBaseUrl
   private val authToken = appConfig.hipAuthToken
@@ -78,13 +78,13 @@ class HipConnector @Inject() (
     B,
     A: HttpReads
   ](
-     url: URL,
-     request: B
-   )(using
-     hc: HeaderCarrier,
-     ec: ExecutionContext,
-     y: Writes[B]
-   ): Future[Option[A]] =
+    url: URL,
+    request: B
+  )(using
+    hc: HeaderCarrier,
+    ec: ExecutionContext,
+    y: Writes[B]
+  ): Future[Option[A]] =
 
     val response = httpV2
       .post(url)
@@ -110,4 +110,5 @@ class HipConnector @Inject() (
       "X-Transmitting-System" -> transmittingSystem
     )
   }
+
 }

@@ -32,9 +32,9 @@ import uk.gov.hmrc.domain.TaxIdentifier
 trait HipStubs {
 
   def givenHIPRespondsWithRegistrationData(
-                                            identifier: TaxIdentifier,
-                                            isIndividual: Boolean
-                                          ): StubMapping = stubFor(
+    identifier: TaxIdentifier,
+    isIndividual: Boolean
+  ): StubMapping = stubFor(
     post(urlEqualTo(s"/RESTAdapter/registration/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
       .willReturn(
         aResponse()
@@ -44,9 +44,9 @@ trait HipStubs {
   )
 
   def verifyHIPGetAgentRegistrationData(
-                                         identifier: TaxIdentifier,
-                                         count: Int = 1
-                                       ): Unit =
+    identifier: TaxIdentifier,
+    count: Int = 1
+  ): Unit =
     eventually(Timeout(Span(5, Seconds))) {
       verify(
         count,
@@ -66,10 +66,10 @@ trait HipStubs {
   )
 
   def givenHIPReturnsErrorForRegistration(
-                                           identifier: TaxIdentifier,
-                                           responseCode: Int,
-                                           errorMessage: String = failureResponseBody422
-                                         ): StubMapping = stubFor(
+    identifier: TaxIdentifier,
+    responseCode: Int,
+    errorMessage: String = failureResponseBody422
+  ): StubMapping = stubFor(
     post(urlEqualTo(s"/RESTAdapter/registration/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
       .inScenario("HIP failure")
       .whenScenarioStateIs(Scenario.STARTED)
@@ -81,10 +81,10 @@ trait HipStubs {
   )
 
   def givenHIPReturnsErrorFirstAndValidDataLater(
-                                                  identifier: TaxIdentifier,
-                                                  isIndividual: Boolean,
-                                                  responseCode: Int
-                                                ): StubMapping = {
+    identifier: TaxIdentifier,
+    isIndividual: Boolean,
+    responseCode: Int
+  ): StubMapping = {
     stubFor(
       post(urlEqualTo(s"/RESTAdapter/registration/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
         .inScenario("Retry")

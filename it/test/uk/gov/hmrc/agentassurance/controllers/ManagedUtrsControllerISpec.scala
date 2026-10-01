@@ -29,7 +29,8 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.WSResponse
 import play.api.test.Helpers.NOT_FOUND
-import uk.gov.hmrc.agentassurance.stubs.{DesStubs, HipStubs}
+import uk.gov.hmrc.agentassurance.stubs.DesStubs
+import uk.gov.hmrc.agentassurance.stubs.HipStubs
 import uk.gov.hmrc.agentassurance.support.AgentAuthStubs
 import uk.gov.hmrc.agentassurance.support.UnitSpec
 import uk.gov.hmrc.agentassurance.support.WireMockSupport
@@ -50,7 +51,7 @@ extends UnitSpec
 with GuiceOneServerPerSuite
 with BeforeAndAfterEach
 with AgentAuthStubs
-with DesStubs 
+with DesStubs
 with HipStubs
 with WireMockSupport
 with DefaultPlayMongoRepositorySupport[Property] {

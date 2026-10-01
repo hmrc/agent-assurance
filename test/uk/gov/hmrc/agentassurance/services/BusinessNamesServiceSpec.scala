@@ -53,7 +53,6 @@ with ScalaFutures:
   val utr2 = Utr("1234567892")
   val utr3 = Utr("1234567893")
 
-
   "DES BusinessNamesService get(utr)" must:
     "return business name if connector returns Some" in:
       mockDesGetBusinessNameRecord(utr.value)(Some("HMRC"))
@@ -90,8 +89,8 @@ with ScalaFutures:
           case (utrStr, name) => BusinessNameByUtr(utrStr.value, name)
       }
 
-  "HIP BusinessNamesService get(utr)" must :
-    "return business name if connector returns Some" in :
+  "HIP BusinessNamesService get(utr)" must:
+    "return business name if connector returns Some" in:
       when(mockServiceConfig.getBoolean("features.registration-1163-use-hip")).thenReturn(true)
       mockHipGetBusinessNameRecord(utr.value)(Some("HMRC"))
 
@@ -99,7 +98,7 @@ with ScalaFutures:
         result mustBe Some("HMRC")
       }
 
-    "return None if connector returns None" in :
+    "return None if connector returns None" in:
       when(mockServiceConfig.getBoolean("features.registration-1163-use-hip")).thenReturn(true)
       mockHipGetBusinessNameRecord(utr.value)(None)
 
@@ -107,8 +106,8 @@ with ScalaFutures:
         result mustBe None
       }
 
-  "HIP BusinessNamesService get(Seq[utr])" must :
-    "return set of BusinessNameByUtr for all UTRs" in :
+  "HIP BusinessNamesService get(Seq[utr])" must:
+    "return set of BusinessNameByUtr for all UTRs" in:
       when(mockServiceConfig.getBoolean("features.registration-1163-use-hip")).thenReturn(true)
       val utrs = Seq(
         utr.value,

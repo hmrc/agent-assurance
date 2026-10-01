@@ -21,7 +21,8 @@ import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
-import uk.gov.hmrc.agentassurance.connectors.{DesConnector, HipConnector}
+import uk.gov.hmrc.agentassurance.connectors.DesConnector
+import uk.gov.hmrc.agentassurance.connectors.HipConnector
 import uk.gov.hmrc.agentassurance.models.utrcheck.BusinessNameByUtr
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -32,7 +33,10 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
 @Singleton
-class BusinessNamesService @Inject() (desConnector: DesConnector, hipConnector: HipConnector)(
+class BusinessNamesService @Inject() (
+  desConnector: DesConnector,
+  hipConnector: HipConnector
+)(
   implicit
   val appConfig: AppConfig,
   mat: Materializer,
@@ -51,9 +55,10 @@ extends RequestAwareLogging:
       .runWith(Sink.collection[BusinessNameByUtr, Set[BusinessNameByUtr]])
 
   def get(utr: String)(implicit headerCarrier: HeaderCarrier): Future[Option[String]] = {
-    if (appConfig.registrationApiUseHip) {
+    if appConfig.registrationApiUseHip then {
       hipConnector.getBusinessName(utr)
-    } else {
+    }
+    else {
       desConnector.getBusinessName(utr)
     }
   }
