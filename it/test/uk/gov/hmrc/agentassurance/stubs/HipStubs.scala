@@ -80,6 +80,15 @@ trait HipStubs {
       )
   )
 
+  def givenHIPReturnsServerError(): StubMapping = {
+    stubFor(
+      post(urlMatching(s"/RESTAdapter/registration/utr/.*"))
+        .willReturn(aResponse()
+          .withStatus(500)
+          .withBody(internalServerError))
+    )
+  }
+
   def givenHIPReturnsErrorFirstAndValidDataLater(
     identifier: TaxIdentifier,
     isIndividual: Boolean,
@@ -215,9 +224,25 @@ trait HipStubs {
     """
       |{
       |  "errors": {
-      |    "code": "001",
+      |    "code": "002",
       |    "processingDate": "2022-01-31T09:26:17Z",
-      |    "text": "Request cannot be processed"
+      |    "text": "No Match"
+      |  }
+      |}
+       """.stripMargin
+  }
+
+  private val internalServerError: String = {
+    """
+      |{
+      |  "origin": "HIP",
+      |  "response": {
+      |    "failures": [
+      |      {
+      |        "type": "Type of Failure",
+      |        "reason": "Reason for Failure"
+      |      }
+      |    ]
       |  }
       |}
        """.stripMargin

@@ -18,6 +18,8 @@ package uk.gov.hmrc.agentassurance.connectors
 
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
+import play.api.http.Status.OK
+import play.api.http.Status.UNPROCESSABLE_ENTITY
 import play.api.libs.json.*
 import play.api.libs.ws.writeableOf_JsValue
 import play.utils.UriEncoding
@@ -31,17 +33,17 @@ import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads
-import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.client.HttpClientV2
 
 import java.net.URI
-import java.net.URL
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.Try
 
 @Singleton
 class HipConnector @Inject() (
@@ -56,43 +58,35 @@ with RequestAwareLogging {
 
   private val baseUrl = appConfig.hipBaseUrl
   private val authToken = appConfig.hipAuthToken
-  private val originatingSystem = "MDTP-ASA"
+  private val originatingSystem = "MDTP"
   private val transmittingSystem = "HIP"
 
   // API#1163 Registration
   def getBusinessName(utr: String)(using hc: HeaderCarrier): Future[Option[String]] =
     val url = new URI(s"$baseUrl/RESTAdapter/registration/utr/${UriEncoding.encodePathSegment(utr, "UTF-8")}").toURL
     agentCacheProvider.agentNameCache(utr):
-      postWithHipHeaders[DesRegistrationRequest, DesAgentNameResponse](
-        url = url,
-        request = DesRegistrationRequest(isAnAgent = false)
-      )
-        .map(_.flatMap(_.agentName))
-        .recoverWith:
-          case e: UpstreamErrorResponse if e.statusCode == 422 =>
-            logger.warn("[HipConnector] getBusinessName returned a 422")(using NoRequest)
-            Future.successful(Some("Error retrieving name"))
+      httpV2
+        .post(url)
+        .withBody(Json.toJson(DesRegistrationRequest(isAnAgent = false)))
+        .setHeader(hipHeaders*)
+        .execute[HttpResponse]
+        .map { response =>
+          response.status match
+            case OK => response.json.asOpt[DesAgentNameResponse].flatMap(_.agentName)
+            case UNPROCESSABLE_ENTITY if isNoMatchFound(response.body) =>
+              logger.warn("[HipConnector] getBusinessName returned a 422 No Match Found")(using NoRequest)
+              None
+            case status =>
+              logger.warn(s"[HipConnector] getBusinessName returned a $status")(using NoRequest)
+              Some("Error retrieving name")
+        }
   end getBusinessName
 
-  private def postWithHipHeaders[
-    B,
-    A: HttpReads
-  ](
-    url: URL,
-    request: B
-  )(using
-    hc: HeaderCarrier,
-    ec: ExecutionContext,
-    y: Writes[B]
-  ): Future[Option[A]] =
-
-    val response = httpV2
-      .post(url)
-      .withBody(Json.toJson(request))
-      .setHeader(hipHeaders*)
-      .execute[Option[A]]
-    response
-  end postWithHipHeaders
+  private def isNoMatchFound(body: String): Boolean =
+    Try(Json.parse(body))
+      .toOption
+      .flatMap(json => (json \ "errors" \ "code").asOpt[String])
+      .contains("002")
 
   /*
    * If the service being called is external (e.g. DES/IF in QA or Prod):

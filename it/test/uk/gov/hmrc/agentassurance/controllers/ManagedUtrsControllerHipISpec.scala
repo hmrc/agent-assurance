@@ -363,7 +363,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr on manually-assured and not refusal-to-deal-with and no name" in {
       isLoggedInWithoutUserId
-      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
+      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = UNPROCESSABLE_ENTITY)
 
       repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
 
@@ -380,7 +380,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr on manually-assured and on refusal-to-deal-with and no name" in {
       isLoggedInWithoutUserId
-      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
+      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = UNPROCESSABLE_ENTITY)
       repository.collection.insertOne(Property(key = "manually-assured", value = "4000000009")).toFuture().futureValue
       repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture().futureValue
 
@@ -397,7 +397,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr not on  manually-assured and on refusal-to-deal-with and no name" in {
       isLoggedInWithoutUserId
-      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
+      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = UNPROCESSABLE_ENTITY)
 
       repository.collection.insertOne(Property(key = "refusal-to-deal-with", value = "4000000009")).toFuture().futureValue
 
@@ -414,7 +414,7 @@ with DefaultPlayMongoRepositorySupport[Property] {
 
     "return 200 OK and correct payload when utr not on  manually-assured and not on refusal-to-deal-with and no name" in {
       isLoggedInWithoutUserId
-      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = NOT_FOUND)
+      givenHIPReturnsErrorForRegistration(identifier = utr4000000009, responseCode = UNPROCESSABLE_ENTITY)
 
       val response = getUtrDetails(utr = utr4000000009, nameRequired = true).futureValue
       response.status shouldBe OK
