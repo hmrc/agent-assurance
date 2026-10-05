@@ -19,12 +19,12 @@ package uk.gov.hmrc.agentassurance.models
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-case class DesRegistrationRequest(
+case class RegistrationRequest(
   requiresNameMatch: Boolean = false,
   regime: String = "ITSA",
   isAnAgent: Boolean
 )
 
-object DesRegistrationRequest:
-  implicit val formats: Format[DesRegistrationRequest] = Json.format[DesRegistrationRequest]
-end DesRegistrationRequest
+object RegistrationRequest:
+  implicit val formats: Format[RegistrationRequest] = Json.format[RegistrationRequest]
+end RegistrationRequest

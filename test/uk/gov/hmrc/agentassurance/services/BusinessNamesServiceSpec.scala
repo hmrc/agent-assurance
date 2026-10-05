@@ -19,6 +19,7 @@ package uk.gov.hmrc.agentassurance.services
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
+import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers.should
 import org.scalatest.time.Seconds
@@ -32,6 +33,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 class BusinessNamesServiceSpec
 extends PlaySpec
 with MockDesConnector
+with MockHipConnector
 with MockAppConfig
 with ScalaFutures:
 
@@ -40,7 +42,7 @@ with ScalaFutures:
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val service =
-    new BusinessNamesService(mockDesConnector)(
+    new BusinessNamesService(mockDesConnector, mockHipConnector)(
       using
       mockAppConfig,
       mat,
@@ -51,22 +53,22 @@ with ScalaFutures:
   val utr2 = Utr("1234567892")
   val utr3 = Utr("1234567893")
 
-  "BusinessNamesService get(utr)" must:
+  "DES BusinessNamesService get(utr)" must:
     "return business name if connector returns Some" in:
-      mockGetBusinessNameRecord(utr.value)(Some("HMRC"))
+      mockDesGetBusinessNameRecord(utr.value)(Some("HMRC"))
 
       service.get(utr.value).map { result =>
         result mustBe Some("HMRC")
       }
 
     "return None if connector returns None" in:
-      mockGetBusinessNameRecord(utr.value)(None)
+      mockDesGetBusinessNameRecord(utr.value)(None)
 
       service.get(utr.value).map { result =>
         result mustBe None
       }
 
-  "BusinessNamesService get(Seq[utr])" must:
+  "DES BusinessNamesService get(Seq[utr])" must:
     "return set of BusinessNameByUtr for all UTRs" in:
       val utrs = Seq(
         utr.value,
@@ -80,7 +82,46 @@ with ScalaFutures:
       )
 
       expectedResults.foreach:
-        case (utr, nameOpt) => mockGetBusinessNameRecord(utr.value)(nameOpt)
+        case (utr, nameOpt) => mockDesGetBusinessNameRecord(utr.value)(nameOpt)
+
+      whenReady(service.get(utrs), timeout(Span(2, Seconds))) { result =>
+        result should contain allElementsOf expectedResults.collect:
+          case (utrStr, name) => BusinessNameByUtr(utrStr.value, name)
+      }
+
+  "HIP BusinessNamesService get(utr)" must:
+    "return business name if connector returns Some" in:
+      when(mockServiceConfig.getBoolean("features.registration-1163-use-hip")).thenReturn(true)
+      mockHipGetBusinessNameRecord(utr.value)(Some("HMRC"))
+
+      service.get(utr.value).map { result =>
+        result mustBe Some("HMRC")
+      }
+
+    "return None if connector returns None" in:
+      when(mockServiceConfig.getBoolean("features.registration-1163-use-hip")).thenReturn(true)
+      mockHipGetBusinessNameRecord(utr.value)(None)
+
+      service.get(utr.value).map { result =>
+        result mustBe None
+      }
+
+  "HIP BusinessNamesService get(Seq[utr])" must:
+    "return set of BusinessNameByUtr for all UTRs" in:
+      when(mockServiceConfig.getBoolean("features.registration-1163-use-hip")).thenReturn(true)
+      val utrs = Seq(
+        utr.value,
+        utr1.value,
+        utr2.value
+      )
+      val expectedResults = Map(
+        utr -> Some("Name1"),
+        utr1 -> Some("Name2"),
+        utr2 -> None
+      )
+
+      expectedResults.foreach:
+        case (utr, nameOpt) => mockHipGetBusinessNameRecord(utr.value)(nameOpt)
 
       whenReady(service.get(utrs), timeout(Span(2, Seconds))) { result =>
         result should contain allElementsOf expectedResults.collect:

@@ -59,7 +59,7 @@ extends MockFactory { this: TestSuite =>
       .expects(registrationNumber, *)
       .returning(response)
 
-  def mockGetBusinessNameRecord(
+  def mockDesGetBusinessNameRecord(
     utr: String
   )(response: Option[String]): CallHandler2[
     String,

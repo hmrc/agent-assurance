@@ -45,7 +45,7 @@ import java.time.Clock
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ManagedUtrsControllerISpec
+class ManagedUtrsControllerDesISpec
 extends UnitSpec
 with GuiceOneServerPerSuite
 with BeforeAndAfterEach
@@ -78,7 +78,8 @@ with DefaultPlayMongoRepositorySupport[Property] {
       "auditing.consumer.baseUri.host" -> wireMockHost,
       "auditing.consumer.baseUri.port" -> wireMockPort,
       "internal-auth-token-enabled-on-start" -> false,
-      "agent.name.cache.enabled" -> false
+      "agent.name.cache.enabled" -> false,
+      "features.registration-1163-use-hip" -> false
     )
     .overrides(moduleWithOverrides)
 

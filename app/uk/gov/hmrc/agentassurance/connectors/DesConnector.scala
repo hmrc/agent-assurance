@@ -28,7 +28,7 @@ import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.helpers.CommonHeaders
 import uk.gov.hmrc.agentassurance.models.*
-import uk.gov.hmrc.agentassurance.models.DesRegistrationRequest.*
+import uk.gov.hmrc.agentassurance.models.RegistrationRequest.*
 import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
@@ -148,9 +148,9 @@ with RequestAwareLogging:
   override def getBusinessName(utr: String)(using hc: HeaderCarrier): Future[Option[String]] =
     val url = new URI(s"$baseUrl/registration/individual/utr/${UriEncoding.encodePathSegment(utr, "UTF-8")}").toURL
     agentCacheProvider.agentNameCache(utr):
-      postWithDesHeaders[DesRegistrationRequest, DesAgentNameResponse](
+      postWithDesHeaders[RegistrationRequest, AgentNameResponse](
         url = url,
-        request = DesRegistrationRequest(isAnAgent = false)
+        request = RegistrationRequest(isAnAgent = false)
       )
         .map(_.flatMap(_.agentName))
         .recoverWith:

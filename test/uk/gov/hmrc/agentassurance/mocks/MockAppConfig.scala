@@ -49,6 +49,8 @@ extends MockitoSugar { this: TestSuite =>
   when(mockServiceConfig.getDuration(equal("agent.entity-check.lock.expires"))).thenReturn(1.second)
   when(mockServiceConfig.getDuration(equal("agent.entity-check.email.lock.expires"))).thenReturn(1.second)
 
+  when(mockServiceConfig.getBoolean(equal("features.registration-1163-use-hip"))).thenReturn(false)
+
   when(mockConfig.get[Seq[String]](equal("internalServiceHostPatterns"))(using any[ConfigLoader[Seq[String]]]))
     .thenReturn(Seq(
       "^.*\\.service$",

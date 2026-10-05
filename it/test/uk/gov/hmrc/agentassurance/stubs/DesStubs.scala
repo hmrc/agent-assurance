@@ -531,7 +531,7 @@ trait DesStubs {
     else
       registrationDataForOrganisation
 
-  val registrationDataForOrganisation: String =
+  private val registrationDataForOrganisation: String =
     s"""
        |{
        |   "contactDetails" : {},
@@ -558,7 +558,7 @@ trait DesStubs {
        |}
      """.stripMargin
 
-  val registrationDataForIndividual: String =
+  private val registrationDataForIndividual: String =
     s"""
        |{
        |   "isAnIndividual" : true,
@@ -585,7 +585,7 @@ trait DesStubs {
        |}
      """.stripMargin
 
-  val invalidRegistrationData: String =
+  private val invalidRegistrationData: String =
     s"""
        |{
        |   "isAnIndividual" : true,
@@ -607,7 +607,7 @@ trait DesStubs {
        |}
      """.stripMargin
 
-  val failureResponseBody: String =
+  private val failureResponseBody: String =
     """
       |{
       |   "code" : "SOME_FAILURE",
