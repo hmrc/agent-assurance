@@ -34,7 +34,7 @@ object Organisation:
   implicit val organisationFormat: OFormat[Organisation] = Json.format[Organisation]
 end Organisation
 
-case class DesAgentNameResponse(
+case class AgentNameResponse(
   isAnIndividual: Boolean,
   organisation: Option[Organisation],
   individual: Option[Individual]
@@ -44,8 +44,8 @@ case class DesAgentNameResponse(
       individual.map(_.name)
     else
       organisation.map(_.organisationName)
-end DesAgentNameResponse
+end AgentNameResponse
 
-object DesAgentNameResponse:
-  implicit val responseFormat: OFormat[DesAgentNameResponse] = Json.format[DesAgentNameResponse]
-end DesAgentNameResponse
+object AgentNameResponse:
+  implicit val responseFormat: OFormat[AgentNameResponse] = Json.format[AgentNameResponse]
+end AgentNameResponse

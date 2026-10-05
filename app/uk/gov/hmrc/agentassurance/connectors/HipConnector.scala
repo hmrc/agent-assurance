@@ -28,7 +28,7 @@ import uk.gov.hmrc.agentassurance.utils.RequestAwareLogging
 import uk.gov.hmrc.agentassurance.config.AppConfig
 import uk.gov.hmrc.agentassurance.connectors.helpers.CommonHeaders
 import uk.gov.hmrc.agentassurance.models.*
-import uk.gov.hmrc.agentassurance.models.DesRegistrationRequest.*
+import uk.gov.hmrc.agentassurance.models.RegistrationRequest.*
 import uk.gov.hmrc.agentassurance.services.CacheProvider
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.HeaderCarrier
@@ -67,12 +67,12 @@ with RequestAwareLogging {
     agentCacheProvider.agentNameCache(utr):
       httpV2
         .post(url)
-        .withBody(Json.toJson(DesRegistrationRequest(isAnAgent = false)))
+        .withBody(Json.toJson(RegistrationRequest(isAnAgent = false)))
         .setHeader(hipHeaders*)
         .execute[HttpResponse]
         .map { response =>
           response.status match
-            case OK => response.json.asOpt[DesAgentNameResponse].flatMap(_.agentName)
+            case OK => response.json.asOpt[AgentNameResponse].flatMap(_.agentName)
             case UNPROCESSABLE_ENTITY if isNoMatchFound(response.body) =>
               logger.warn("[HipConnector] getBusinessName returned a 422 No Match Found")(using NoRequest)
               None

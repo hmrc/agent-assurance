@@ -31,7 +31,8 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import play.api.Application
 import play.api.Configuration
-import uk.gov.hmrc.agentassurance.stubs.{DataStreamStub, HipStubs}
+import uk.gov.hmrc.agentassurance.stubs.DataStreamStub
+import uk.gov.hmrc.agentassurance.stubs.HipStubs
 import uk.gov.hmrc.agentassurance.support.UnitSpec
 import uk.gov.hmrc.agentassurance.support.WireMockSupport
 import uk.gov.hmrc.agentassurance.config.AppConfig
@@ -51,12 +52,12 @@ import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 import uk.gov.hmrc.mongo.CurrentTimestampSupport
 
 class HipConnectorISpec
-  extends UnitSpec
-    with GuiceOneAppPerSuite
-    with WireMockSupport
-    with HipStubs
-    with DataStreamStub
-    with CleanMongoCollectionSupport {
+extends UnitSpec
+with GuiceOneAppPerSuite
+with WireMockSupport
+with HipStubs
+with DataStreamStub
+with CleanMongoCollectionSupport {
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val ec: ExecutionContext = ExecutionContext.global
@@ -247,7 +248,7 @@ class HipConnectorISpec
     }
   }
 
-  "DesConnector getBusinessName caching check" should {
+  "HipConnector getBusinessName caching check" should {
     "return business name cached for a given UTR and save record to cache" in {
       givenHIPRespondsWithRegistrationData(identifier = utr, isIndividual = false)
 
@@ -276,4 +277,5 @@ class HipConnectorISpec
       await(agentNameCache.getFromCache(cacheId = utr2.value)).get shouldBe Some(individualBusinessName)
     }
   }
+
 }
