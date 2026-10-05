@@ -23,6 +23,7 @@ import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.time.Seconds
 import org.scalatest.time.Span
+import play.api.http.Status.CREATED
 import uk.gov.hmrc.agentassurance.models.Arn
 import uk.gov.hmrc.agentassurance.models.Utr
 import uk.gov.hmrc.domain.Nino
@@ -35,10 +36,10 @@ trait HipStubs {
     identifier: TaxIdentifier,
     isIndividual: Boolean
   ): StubMapping = stubFor(
-    post(urlEqualTo(s"/RESTAdapter/registration/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
+    post(urlEqualTo(s"/etmp/RESTAdapter/registration/${identifier.getClass.getSimpleName.toUpperCase}/${identifier.value}"))
       .willReturn(
         aResponse()
-          .withStatus(200)
+          .withStatus(CREATED)
           .withBody(registrationData(isIndividual))
       )
   )
@@ -51,16 +52,16 @@ trait HipStubs {
       verify(
         count,
         postRequestedFor(
-          urlEqualTo(s"/RESTAdapter/registration/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}")
+          urlEqualTo(s"/etmp/RESTAdapter/registration/${identifier.getClass.getSimpleName.toUpperCase}/${identifier.value}")
         )
       )
     }
 
   def givenHIPRespondsWithoutRegistrationData(identifier: TaxIdentifier): StubMapping = stubFor(
-    post(urlEqualTo(s"/RESTAdapter/registration/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
+    post(urlEqualTo(s"/etmp/RESTAdapter/registration/${identifier.getClass.getSimpleName.toUpperCase}/${identifier.value}"))
       .willReturn(
         aResponse()
-          .withStatus(200)
+          .withStatus(CREATED)
           .withBody(invalidRegistrationData)
       )
   )
@@ -70,7 +71,7 @@ trait HipStubs {
     responseCode: Int,
     errorMessage: String = failureResponseBody422
   ): StubMapping = stubFor(
-    post(urlEqualTo(s"/RESTAdapter/registration/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
+    post(urlEqualTo(s"/etmp/RESTAdapter/registration/${identifier.getClass.getSimpleName.toUpperCase}/${identifier.value}"))
       .inScenario("HIP failure")
       .whenScenarioStateIs(Scenario.STARTED)
       .willReturn(
@@ -82,7 +83,7 @@ trait HipStubs {
 
   def givenHIPReturnsServerError(): StubMapping = {
     stubFor(
-      post(urlMatching(s"/RESTAdapter/registration/utr/.*"))
+      post(urlMatching(s"/etmp/RESTAdapter/registration/UTR/.*"))
         .willReturn(aResponse()
           .withStatus(500)
           .withBody(internalServerError))
@@ -95,7 +96,7 @@ trait HipStubs {
     responseCode: Int
   ): StubMapping = {
     stubFor(
-      post(urlEqualTo(s"/RESTAdapter/registration/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
+      post(urlEqualTo(s"/etmp/RESTAdapter/registration/${identifier.getClass.getSimpleName.toUpperCase}/${identifier.value}"))
         .inScenario("Retry")
         .whenScenarioStateIs(Scenario.STARTED)
         .willReturn(
@@ -106,7 +107,7 @@ trait HipStubs {
         .willSetStateTo("HIP Failure #2")
     )
     stubFor(
-      post(urlEqualTo(s"/RESTAdapter/registration/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
+      post(urlEqualTo(s"/etmp/RESTAdapter/registration/${identifier.getClass.getSimpleName.toUpperCase}/${identifier.value}"))
         .inScenario("Retry")
         .whenScenarioStateIs("HIP Failure #2")
         .willReturn(
@@ -117,12 +118,12 @@ trait HipStubs {
         .willSetStateTo("HIP Success")
     )
     stubFor(
-      post(urlEqualTo(s"/RESTAdapter/registration/${identifier.getClass.getSimpleName.toLowerCase}/${identifier.value}"))
+      post(urlEqualTo(s"/etmp/RESTAdapter/registration/${identifier.getClass.getSimpleName.toUpperCase}/${identifier.value}"))
         .inScenario("Retry")
         .whenScenarioStateIs("HIP Success")
         .willReturn(
           aResponse()
-            .withStatus(200)
+            .withStatus(CREATED)
             .withBody(registrationData(isIndividual))
         )
         .willSetStateTo(Scenario.STARTED)
@@ -138,76 +139,82 @@ trait HipStubs {
   private val registrationDataForOrganisation: String =
     s"""
        |{
-       |   "contactDetails" : {},
-       |   "organisation" : {
-       |      "organisationName" : "CT AGENT 165",
-       |      "organisationType" : "Not Specified",
-       |      "isAGroup" : false
-       |   },
-       |   "address" : {
-       |      "addressLine1" : "Matheson House 165",
-       |      "countryCode" : "GB",
-       |      "addressLine2" : "Grange Central 165",
-       |      "addressLine4" : "Shropshire 165",
-       |      "addressLine3" : "Telford 165",
-       |      "postalCode" : "TF3 4ER"
-       |   },
-       |   "isEditable" : false,
-       |   "isAnAgent" : true,
-       |   "safeId" : "XH0000100100761",
-       |   "agentReferenceNumber" : "SARN0001028",
-       |   "isAnASAgent" : true,
-       |   "isAnIndividual" : false,
-       |   "sapNumber" : "0100100761"
+       |   "success" : {
+       |      "contactDetails" : {},
+       |      "organisation" : {
+       |         "organisationName" : "CT AGENT 165",
+       |         "organisationType" : "Not Specified",
+       |         "isAGroup" : false
+       |      },
+       |      "address" : {
+       |         "addressLine1" : "Matheson House 165",
+       |         "countryCode" : "GB",
+       |         "addressLine2" : "Grange Central 165",
+       |         "addressLine4" : "Shropshire 165",
+       |         "addressLine3" : "Telford 165",
+       |         "postalCode" : "TF3 4ER"
+       |      },
+       |      "isEditable" : false,
+       |      "isAnAgent" : true,
+       |      "safeId" : "XH0000100100761",
+       |      "agentReferenceNumber" : "SARN0001028",
+       |      "isAnASAgent" : true,
+       |      "isAnIndividual" : false,
+       |      "sapNumber" : "0100100761"
+       |   }
        |}
      """.stripMargin
 
   private val registrationDataForIndividual: String =
     s"""
        |{
-       |   "isAnIndividual" : true,
-       |   "isAnASAgent" : true,
-       |   "isEditable" : false,
-       |   "isAnAgent" : true,
-       |   "contactDetails" : {},
-       |   "safeId" : "XR0000100115180",
-       |   "agentReferenceNumber" : "PARN0002156",
-       |   "individual" : {
-       |      "firstName" : "First Name QM",
-       |      "dateOfBirth" : "1992-05-10",
-       |      "lastName" : "Last Name QM"
-       |   },
-       |   "address" : {
-       |      "postalCode" : "TF3 4ER",
-       |      "addressLine4" : "AddressFour 190",
-       |      "addressLine2" : "AddressTwo 190",
-       |      "addressLine1" : "AddressOne 190",
-       |      "addressLine3" : "AddressThree 190",
-       |      "countryCode" : "GB"
-       |   },
-       |   "sapNumber" : "0100115180"
+       |   "success" : {
+       |      "isAnIndividual" : true,
+       |      "isAnASAgent" : true,
+       |      "isEditable" : false,
+       |      "isAnAgent" : true,
+       |      "contactDetails" : {},
+       |      "safeId" : "XR0000100115180",
+       |      "agentReferenceNumber" : "PARN0002156",
+       |      "individual" : {
+       |         "firstName" : "First Name QM",
+       |         "dateOfBirth" : "1992-05-10",
+       |         "lastName" : "Last Name QM"
+       |      },
+       |      "address" : {
+       |         "postalCode" : "TF3 4ER",
+       |         "addressLine4" : "AddressFour 190",
+       |         "addressLine2" : "AddressTwo 190",
+       |         "addressLine1" : "AddressOne 190",
+       |         "addressLine3" : "AddressThree 190",
+       |         "countryCode" : "GB"
+       |      },
+       |      "sapNumber" : "0100115180"
+       |   }
        |}
      """.stripMargin
 
   private val invalidRegistrationData: String =
     s"""
        |{
-       |   "isAnIndividual" : true,
-       |   "isAnASAgent" : true,
-       |   "isEditable" : false,
-       |   "isAnAgent" : true,
-       |   "contactDetails" : {},
-       |   "safeId" : "XR0000100115180",
-       |   "agentReferenceNumber" : "PARN0002156",
-       |   "address" : {
-       |      "postalCode" : "TF3 4ER",
-       |      "addressLine4" : "AddressFour 190",
-       |      "addressLine2" : "AddressTwo 190",
-       |      "addressLine1" : "AddressOne 190",
-       |      "addressLine3" : "AddressThree 190",
-       |      "countryCode" : "GB"
-       |   },
-       |   "sapNumber" : "0100115180"
+       |   "success" : {
+       |      "isAnIndividual" : true,
+       |      "isAnASAgent" : true,
+       |      "isEditable" : false,
+       |      "isAnAgent" : true,
+       |      "contactDetails" : {},
+       |      "safeId" : "XR0000100115180",
+       |      "agentReferenceNumber" : "PARN0002156",
+       |      "address" : {
+       |         "postalCode" : "TF3 4ER",
+       |         "addressLine4" : "AddressFour 190",
+       |         "addressLine2" : "AddressTwo 190",
+       |         "addressLine1" : "AddressOne 190",
+       |         "addressLine3" : "AddressThree 190",
+       |         "countryCode" : "GB"
+       |      },
+       |      "sapNumber" : "0100115180"
+       |   }
        |}
      """.stripMargin
 

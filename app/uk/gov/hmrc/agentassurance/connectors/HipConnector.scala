@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentassurance.connectors
 
 import com.typesafe.config.Config
 import org.apache.pekko.actor.ActorSystem
-import play.api.http.Status.OK
+import play.api.http.Status.CREATED
 import play.api.http.Status.UNPROCESSABLE_ENTITY
 import play.api.libs.json.*
 import play.api.libs.ws.writeableOf_JsValue
@@ -63,7 +63,7 @@ with RequestAwareLogging {
 
   // API#1163 Registration
   def getBusinessName(utr: String)(using hc: HeaderCarrier): Future[Option[String]] =
-    val url = new URI(s"$baseUrl/RESTAdapter/registration/utr/${UriEncoding.encodePathSegment(utr, "UTF-8")}").toURL
+    val url = new URI(s"$baseUrl/etmp/RESTAdapter/registration/UTR/${UriEncoding.encodePathSegment(utr, "UTF-8")}").toURL
     agentCacheProvider.agentNameCache(utr):
       httpV2
         .post(url)
@@ -72,13 +72,14 @@ with RequestAwareLogging {
         .execute[HttpResponse]
         .map { response =>
           response.status match
-            case OK => response.json.asOpt[AgentNameResponse].flatMap(_.agentName)
+            case CREATED => (response.json \ "success").asOpt[AgentNameResponse].flatMap(_.agentName)
             case UNPROCESSABLE_ENTITY if isNoMatchFound(response.body) =>
               logger.warn("[HipConnector] getBusinessName returned a 422 No Match Found")(using NoRequest)
               None
             case status =>
               logger.warn(s"[HipConnector] getBusinessName returned a $status")(using NoRequest)
               Some("Error retrieving name")
+          end match
         }
   end getBusinessName
 

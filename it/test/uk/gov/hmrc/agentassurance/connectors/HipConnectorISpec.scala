@@ -137,7 +137,7 @@ with CleanMongoCollectionSupport {
       )
 
       stubFor(
-        post(urlEqualTo(s"/RESTAdapter/registration/utr/${identifier.value}"))
+        post(urlEqualTo(s"/etmp/RESTAdapter/registration/UTR/${identifier.value}"))
           .withHeader("Authorization", equalTo("Basic secret"))
           .withHeader("correlationid", matching(".+"))
           .withHeader("X-Originating-System", equalTo("MDTP"))
@@ -145,7 +145,7 @@ with CleanMongoCollectionSupport {
           .withHeader("X-Transmitting-System", equalTo("HIP"))
           .withHeader(HeaderNames.xRequestId, equalTo("request-id"))
           .withHeader(HeaderNames.xSessionId, equalTo("session-id"))
-          .willReturn(aResponse().withStatus(OK).withBody(Json.obj().toString()))
+          .willReturn(aResponse().withStatus(CREATED).withBody(Json.obj("success" -> Json.obj()).toString()))
       )
 
       await(hipConnector.getBusinessName(identifier.value)) shouldBe None
